@@ -90,7 +90,7 @@ export default async function BonsPlansPage({
   const hasFilters = Boolean(category || city || q);
 
   return (
-    <main className="mx-auto max-w-md pb-12 sm:max-w-2xl">
+    <main className="mx-auto max-w-md pb-12 animate-in fade-in duration-300 sm:max-w-2xl">
       <div className="sticky top-0 z-10 -mx-0 border-b border-border bg-background/95 px-4 pb-3 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-0 sm:pt-6">
         <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
           Bons plans

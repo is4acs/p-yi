@@ -64,7 +64,7 @@ function NavLink({
     <Link
       href={href}
       className={cn(
-        "rounded-full px-3 py-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground",
+        "rounded-full px-3 py-1.5 text-muted-foreground transition active:scale-95 hover:bg-muted hover:text-foreground",
       )}
     >
       {children}

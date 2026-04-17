@@ -61,7 +61,7 @@ export function BottomNav() {
                 href={tab.href}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "flex flex-1 flex-col items-center justify-end gap-0.5 px-1 pb-1 pt-2 text-[10px] font-medium transition",
+                  "flex flex-1 flex-col items-center justify-end gap-0.5 px-1 pb-1 pt-2 text-[10px] font-medium transition active:scale-95",
                   tab.primary
                     ? "text-peyi-orange-700"
                     : isActive

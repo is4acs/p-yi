@@ -165,7 +165,7 @@ export default async function ListingDetailPage({
     : listing.city.name;
 
   return (
-    <main className="mx-auto max-w-md pb-16 sm:max-w-2xl">
+    <main className="mx-auto max-w-md pb-16 animate-in fade-in duration-300 sm:max-w-2xl">
       <div className="px-4 pt-4 sm:px-0 sm:pt-6">
         <Link
           href="/annonces"

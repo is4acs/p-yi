@@ -35,7 +35,7 @@ export default async function ProfilPage() {
   const level = LEVEL_META[user.level];
 
   return (
-    <main className="mx-auto max-w-md px-4 pb-16 pt-6 sm:max-w-2xl sm:pt-10">
+    <main className="mx-auto max-w-md px-4 pb-16 pt-6 animate-in fade-in duration-300 sm:max-w-2xl sm:pt-10">
       <section className="flex flex-col items-center text-center">
         <UserAvatar
           username={user.username}
