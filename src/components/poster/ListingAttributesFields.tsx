@@ -114,8 +114,9 @@ function AttributeField({
     );
   }
 
-  // text ou number
+  // text / number / date
   const isNumber = field.type === "number";
+  const isDate = field.type === "date";
   const current =
     defaultValue === null || defaultValue === undefined
       ? ""
@@ -131,7 +132,7 @@ function AttributeField({
       <Input
         id={inputId}
         name={inputName}
-        type={isNumber ? "text" : "text"}
+        type={isDate ? "date" : "text"}
         inputMode={isNumber ? "numeric" : undefined}
         pattern={isNumber ? "[0-9]+([.,][0-9]{1,2})?" : undefined}
         required={field.required}

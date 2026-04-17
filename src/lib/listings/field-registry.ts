@@ -16,7 +16,7 @@
  * dans la Server Action de persistance et dans le formulaire client.
  */
 
-export type FieldType = "text" | "number" | "select" | "boolean";
+export type FieldType = "text" | "number" | "select" | "boolean" | "date";
 
 export type FieldOption = {
   value: string;
@@ -404,6 +404,208 @@ const BATEAU_FIELDS: FieldDef[] = [
   { name: "remorque_incluse", label: "Remorque incluse", type: "boolean" },
 ];
 
+// ----- Animaux ------------------------------------------------------------
+
+const ESPECE_OPTIONS: FieldOption[] = [
+  { value: "chien", label: "Chien" },
+  { value: "chat", label: "Chat" },
+  { value: "rongeur", label: "Rongeur" },
+  { value: "oiseau", label: "Oiseau" },
+  { value: "reptile", label: "Reptile / amphibien" },
+  { value: "poisson", label: "Poisson" },
+  { value: "cheval", label: "Équidé" },
+  { value: "ferme", label: "Animal de ferme" },
+  { value: "autre", label: "Autre" },
+];
+
+const SEXE_OPTIONS: FieldOption[] = [
+  { value: "male", label: "Mâle" },
+  { value: "femelle", label: "Femelle" },
+  { value: "inconnu", label: "Non connu" },
+];
+
+const ANIMAUX_FIELDS: FieldDef[] = [
+  { name: "espece", label: "Espèce", type: "select", required: true, options: ESPECE_OPTIONS },
+  { name: "race", label: "Race", type: "text", placeholder: "Labrador, européen…" },
+  { name: "age_annees", label: "Âge", type: "number", unit: "ans", min: 0, max: 40 },
+  { name: "sexe", label: "Sexe", type: "select", options: SEXE_OPTIONS },
+  { name: "lof_pedigree", label: "Pedigree / LOF", type: "boolean" },
+  { name: "vaccine", label: "Vacciné", type: "boolean" },
+  { name: "sterilise", label: "Stérilisé / castré", type: "boolean" },
+  { name: "identifie", label: "Identifié (puce ou tatouage)", type: "boolean" },
+];
+
+// ----- Loisirs & Sport ----------------------------------------------------
+
+const GENRE_LOISIRS_OPTIONS: FieldOption[] = [
+  { value: "femme", label: "Femme" },
+  { value: "homme", label: "Homme" },
+  { value: "unisexe", label: "Unisexe" },
+  { value: "enfant", label: "Enfant" },
+];
+
+const TYPE_LOISIR_OPTIONS: FieldOption[] = [
+  { value: "fitness_musculation", label: "Fitness / musculation" },
+  { value: "sport_collectif", label: "Sport collectif" },
+  { value: "sport_individuel", label: "Sport individuel" },
+  { value: "nautique", label: "Nautique / nage / surf" },
+  { value: "peche_chasse", label: "Pêche / chasse" },
+  { value: "camping_plein_air", label: "Camping / plein air" },
+  { value: "musique", label: "Musique / instrument" },
+  { value: "jeux_jouets", label: "Jeux / jouets" },
+  { value: "collection", label: "Collection" },
+  { value: "autre", label: "Autre" },
+];
+
+const LOISIRS_FIELDS: FieldDef[] = [
+  { name: "type_loisir", label: "Catégorie", type: "select", required: true, options: TYPE_LOISIR_OPTIONS },
+  { name: "marque", label: "Marque", type: "text", placeholder: "Decathlon, Nike…" },
+  { name: "genre", label: "Genre", type: "select", options: GENRE_LOISIRS_OPTIONS },
+  { name: "taille_ou_pointure", label: "Taille / pointure", type: "text", placeholder: "M, 42…" },
+];
+
+// ----- Maison & Mobilier --------------------------------------------------
+
+const TYPE_MOBILIER_OPTIONS: FieldOption[] = [
+  { value: "canape_fauteuil", label: "Canapé / fauteuil" },
+  { value: "table_chaise", label: "Table / chaise" },
+  { value: "rangement_armoire", label: "Rangement / armoire" },
+  { value: "lit_literie", label: "Lit / literie" },
+  { value: "cuisine_equipement", label: "Cuisine / équipement" },
+  { value: "electromenager", label: "Électroménager" },
+  { value: "decoration", label: "Décoration" },
+  { value: "luminaire", label: "Luminaire" },
+  { value: "jardin_exterieur", label: "Jardin / extérieur" },
+  { value: "bricolage", label: "Bricolage" },
+  { value: "autre", label: "Autre" },
+];
+
+const PIECE_DESTINATION_OPTIONS: FieldOption[] = [
+  { value: "salon", label: "Salon / séjour" },
+  { value: "chambre", label: "Chambre" },
+  { value: "cuisine", label: "Cuisine" },
+  { value: "salle_bain", label: "Salle de bain" },
+  { value: "bureau", label: "Bureau" },
+  { value: "exterieur", label: "Extérieur / terrasse" },
+  { value: "autre", label: "Autre" },
+];
+
+const MOBILIER_FIELDS: FieldDef[] = [
+  { name: "type_mobilier", label: "Type", type: "select", required: true, options: TYPE_MOBILIER_OPTIONS },
+  { name: "piece_destination", label: "Pièce de destination", type: "select", options: PIECE_DESTINATION_OPTIONS },
+  { name: "marque", label: "Marque", type: "text", placeholder: "Ikea, But…" },
+  { name: "matiere", label: "Matière", type: "text", placeholder: "Bois, métal, tissu…" },
+  { name: "couleur", label: "Couleur", type: "text" },
+  { name: "longueur_cm", label: "Longueur", type: "number", unit: "cm", min: 0, max: 10_000 },
+  { name: "largeur_cm", label: "Largeur", type: "number", unit: "cm", min: 0, max: 10_000 },
+  { name: "hauteur_cm", label: "Hauteur", type: "number", unit: "cm", min: 0, max: 10_000 },
+];
+
+// ----- Matériel Pro / BTP -------------------------------------------------
+
+const TYPE_MATERIEL_PRO_OPTIONS: FieldOption[] = [
+  { value: "outillage_main", label: "Outillage à main" },
+  { value: "outillage_electroportatif", label: "Électroportatif" },
+  { value: "machine_atelier", label: "Machine d'atelier" },
+  { value: "engin_chantier", label: "Engin de chantier" },
+  { value: "echafaudage", label: "Échafaudage" },
+  { value: "groupe_electrogene", label: "Groupe électrogène" },
+  { value: "compresseur", label: "Compresseur" },
+  { value: "consommable", label: "Consommable / fournitures" },
+  { value: "securite_epi", label: "Sécurité / EPI" },
+  { value: "autre", label: "Autre" },
+];
+
+const ETAT_FONCTIONNEMENT_OPTIONS: FieldOption[] = [
+  { value: "neuf", label: "Neuf" },
+  { value: "bon_etat", label: "Bon état de marche" },
+  { value: "a_reviser", label: "À réviser" },
+  { value: "en_panne", label: "En panne / pour pièces" },
+];
+
+const MATERIEL_PRO_FIELDS: FieldDef[] = [
+  { name: "type_materiel", label: "Type de matériel", type: "select", required: true, options: TYPE_MATERIEL_PRO_OPTIONS },
+  { name: "marque", label: "Marque", type: "text", placeholder: "Makita, Hilti…" },
+  { name: "modele", label: "Modèle / référence", type: "text" },
+  { name: "etat_fonctionnement", label: "État de fonctionnement", type: "select", options: ETAT_FONCTIONNEMENT_OPTIONS },
+  { name: "puissance", label: "Puissance", type: "text", placeholder: "1200 W, 20 V, 5 kW…" },
+  { name: "heures_usage", label: "Heures d'usage", type: "number", unit: "h", min: 0 },
+  { name: "annee_achat", label: "Année d'achat", type: "number", min: 1970, max: new Date().getFullYear() },
+  { name: "facture_dispo", label: "Facture d'origine disponible", type: "boolean" },
+  { name: "louable", label: "Disponible à la location", type: "boolean" },
+];
+
+// ----- Covoiturage --------------------------------------------------------
+
+const BAGAGES_OPTIONS: FieldOption[] = [
+  { value: "petit", label: "Petit bagage (sac à dos)" },
+  { value: "moyen", label: "Bagage moyen (valise cabine)" },
+  { value: "grand", label: "Gros bagage (valise soute)" },
+  { value: "aucun", label: "Pas de bagage" },
+];
+
+const COVOITURAGE_FIELDS: FieldDef[] = [
+  { name: "ville_depart", label: "Ville de départ", type: "text", required: true, placeholder: "Cayenne" },
+  { name: "ville_arrivee", label: "Ville d'arrivée", type: "text", required: true, placeholder: "Saint-Laurent" },
+  { name: "date_depart", label: "Date de départ", type: "date", required: true },
+  { name: "heure_depart", label: "Heure de départ", type: "text", placeholder: "08:30", help: "Format HH:MM." },
+  { name: "places_disponibles", label: "Places disponibles", type: "number", required: true, unit: "pers.", min: 1, max: 8 },
+  { name: "bagages_autorises", label: "Bagages autorisés", type: "select", options: BAGAGES_OPTIONS },
+  { name: "fumeur_autorise", label: "Fumeurs autorisés", type: "boolean" },
+  { name: "animaux_autorises", label: "Animaux autorisés", type: "boolean" },
+  { name: "aller_retour", label: "Retour prévu", type: "boolean", help: "Si tu proposes aussi le trajet retour." },
+];
+
+// ----- Perdu / Trouvé -----------------------------------------------------
+
+const STATUT_PERDU_TROUVE_OPTIONS: FieldOption[] = [
+  { value: "perdu", label: "J'ai perdu cet objet" },
+  { value: "trouve", label: "J'ai trouvé cet objet" },
+];
+
+const PERDU_TROUVE_FIELDS: FieldDef[] = [
+  { name: "statut", label: "Je cherche ou je signale ?", type: "select", required: true, options: STATUT_PERDU_TROUVE_OPTIONS },
+  { name: "type_objet", label: "Type d'objet", type: "text", required: true, placeholder: "Sac à dos noir, clés de voiture…" },
+  { name: "lieu", label: "Lieu précis", type: "text", placeholder: "Parking du Carrefour Matoury" },
+  { name: "date_evenement", label: "Date", type: "date" },
+  { name: "recompense", label: "Récompense prévue", type: "boolean" },
+];
+
+// ----- Pièces & Accessoires véhicules ------------------------------------
+
+const TYPE_PIECE_OPTIONS: FieldOption[] = [
+  { value: "moteur", label: "Moteur / transmission" },
+  { value: "carrosserie", label: "Carrosserie" },
+  { value: "roues_pneus", label: "Roues / pneus / jantes" },
+  { value: "interieur", label: "Intérieur / sellerie" },
+  { value: "electrique_electronique", label: "Électrique / électronique" },
+  { value: "eclairage", label: "Éclairage" },
+  { value: "freinage", label: "Freinage / suspension" },
+  { value: "accessoire", label: "Accessoire / équipement" },
+  { value: "autre", label: "Autre" },
+];
+
+const ETAT_PIECE_OPTIONS: FieldOption[] = [
+  { value: "neuf", label: "Neuve" },
+  { value: "reconditionne", label: "Reconditionnée" },
+  { value: "occasion", label: "Occasion" },
+  { value: "pour_pieces", label: "Pour pièces" },
+];
+
+const PIECES_VEHICULE_FIELDS: FieldDef[] = [
+  { name: "type_piece", label: "Type de pièce", type: "select", required: true, options: TYPE_PIECE_OPTIONS },
+  { name: "etat_piece", label: "État", type: "select", options: ETAT_PIECE_OPTIONS },
+  { name: "marque_vehicule", label: "Marque du véhicule compatible", type: "text", placeholder: "Toyota, Renault…" },
+  { name: "modele_vehicule", label: "Modèle compatible", type: "text", placeholder: "Hilux, Clio…" },
+  { name: "reference_piece", label: "Référence constructeur", type: "text" },
+];
+
+// ----- Fallback générique -------------------------------------------------
+
+const AUTRES_FIELDS: FieldDef[] = [
+  { name: "type_objet", label: "Type d'objet", type: "text", placeholder: "Décris en 2-3 mots ce que tu proposes." },
+];
+
 // ----- Map slug → champs --------------------------------------------------
 
 /**
@@ -419,6 +621,7 @@ export const FIELD_REGISTRY: Record<string, FieldDef[]> = {
   "utilitaires-4x4": UTILITAIRE_FIELDS,
   "pirogues-bateaux": BATEAU_FIELDS,
   velos: VELO_FIELDS,
+  "pieces-accessoires-vehicules": PIECES_VEHICULE_FIELDS,
 
   // Immobilier
   "vente-appartement": VENTE_APPART_FIELDS,
@@ -438,6 +641,15 @@ export const FIELD_REGISTRY: Record<string, FieldDef[]> = {
 
   // Mode
   "mode-vide-dressing": MODE_FIELDS,
+
+  // Reste du périmètre (catégories parents sans sous-catégories)
+  animaux: ANIMAUX_FIELDS,
+  "loisirs-sport": LOISIRS_FIELDS,
+  "maison-mobilier": MOBILIER_FIELDS,
+  "materiel-pro-btp": MATERIEL_PRO_FIELDS,
+  covoiturage: COVOITURAGE_FIELDS,
+  "perdu-trouve": PERDU_TROUVE_FIELDS,
+  autres: AUTRES_FIELDS,
 };
 
 /**
@@ -488,6 +700,11 @@ export function coerceAttribute(field: FieldDef, raw: FormDataEntryValue | null)
       if (!field.options) return null;
       return field.options.some((o) => o.value === str) ? str : null;
     }
+    case "date": {
+      // On attend un `YYYY-MM-DD` (format HTML natif). Toute autre forme
+      // est rejetée pour ne pas polluer la DB avec des variantes locales.
+      return /^\d{4}-\d{2}-\d{2}$/.test(str) ? str : null;
+    }
     case "text":
     default:
       // Garde-fou : pas de texte monstrueux persisté en base.
@@ -518,7 +735,108 @@ export function formatAttribute(field: FieldDef, value: AttributeValue): string 
     return field.unit ? `${nf} ${field.unit}` : nf;
   }
 
+  if (field.type === "date" && typeof value === "string") {
+    // YYYY-MM-DD → Date locale FR. On construit en UTC puis on formate
+    // pour éviter les dérives de fuseau sur des dates pures.
+    const [y, m, d] = value.split("-").map((x) => Number(x));
+    if (Number.isFinite(y) && Number.isFinite(m) && Number.isFinite(d)) {
+      const date = new Date(Date.UTC(y, m - 1, d));
+      return new Intl.DateTimeFormat("fr-FR", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+        timeZone: "UTC",
+      }).format(date);
+    }
+    return value;
+  }
+
   return String(value);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Résumé compact pour les cards de liste                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Pour chaque catégorie, les 2-3 clés à exposer sur la vignette de liste.
+ * L'ordre des entrées détermine l'ordre d'affichage. Les clés manquantes
+ * dans `attributes` sont simplement sautées — pas de placeholder "—".
+ */
+const CARD_SUMMARY_KEYS: Record<string, string[]> = {
+  // Véhicules : année + km + carburant est l'info la plus lue d'un coup d'œil
+  voitures: ["annee", "kilometrage", "carburant"],
+  "motos-scooters": ["annee", "kilometrage", "cylindree"],
+  "quads-buggy": ["annee", "kilometrage", "cylindree"],
+  "utilitaires-4x4": ["annee", "kilometrage", "carburant"],
+  velos: ["type_velo", "annee"],
+  "pirogues-bateaux": ["type_embarcation", "longueur", "moteur"],
+  "pieces-accessoires-vehicules": ["type_piece", "marque_vehicule", "etat_piece"],
+
+  // Immobilier : surface / pièces / étage (ou terrain)
+  "vente-appartement": ["surface", "pieces", "etage"],
+  "location-appartement": ["surface", "pieces", "meuble"],
+  "vente-maison": ["surface", "pieces", "surface_terrain"],
+  "location-maison": ["surface", "pieces", "meuble"],
+  "vente-terrain": ["surface_terrain", "constructible"],
+  colocation: ["surface_chambre", "meuble"],
+  "location-saisonniere": ["capacite_personnes", "chambres", "piscine"],
+  "bureau-local-commercial": ["surface", "type_local"],
+
+  // Tech
+  "multimedia-tech": ["marque", "modele", "capacite_stockage"],
+
+  // Emploi
+  "emploi-services": ["type_contrat", "temps_travail", "experience_requise"],
+
+  // Mode
+  "mode-vide-dressing": ["marque", "taille", "genre"],
+
+  // Périmètre secondaire
+  animaux: ["espece", "sexe", "age_annees"],
+  "loisirs-sport": ["type_loisir", "marque"],
+  "maison-mobilier": ["type_mobilier", "marque", "matiere"],
+  "materiel-pro-btp": ["type_materiel", "marque", "etat_fonctionnement"],
+  covoiturage: ["ville_depart", "ville_arrivee", "date_depart"],
+  "perdu-trouve": ["statut", "type_objet", "lieu"],
+  autres: ["type_objet"],
+};
+
+/**
+ * Renvoie une chaîne courte "A · B · C" décrivant les attributs-clés d'une
+ * annonce, pour l'afficher sous le prix dans une card de liste. Gère les
+ * booléens en affichant seulement le label quand la valeur est `true` (pas
+ * de "Oui"/"Non" qui ne porte pas d'info utile sur une vignette).
+ *
+ * Retourne `null` si rien à afficher — l'appelant masque alors la ligne.
+ */
+export function summarizeAttributesForCard(
+  categorySlug: string | null | undefined,
+  attributes: unknown,
+): string | null {
+  if (!categorySlug) return null;
+  const keys = CARD_SUMMARY_KEYS[categorySlug];
+  if (!keys || keys.length === 0) return null;
+
+  const fields = getFieldsForCategory(categorySlug);
+  if (fields.length === 0) return null;
+  const byName = new Map(fields.map((f) => [f.name, f]));
+  const values = pickRegisteredAttributes(categorySlug, attributes);
+
+  const parts: string[] = [];
+  for (const key of keys) {
+    const field = byName.get(key);
+    const value = values[key];
+    if (!field || value === undefined || value === null) continue;
+    if (field.type === "boolean") {
+      if (value === true) parts.push(field.label);
+      continue;
+    }
+    const formatted = formatAttribute(field, value);
+    if (formatted) parts.push(formatted);
+  }
+
+  return parts.length > 0 ? parts.join(" · ") : null;
 }
 
 /**
@@ -540,7 +858,11 @@ export function pickRegisteredAttributes(
     if (v === undefined || v === null) continue;
     if (f.type === "number" && typeof v === "number") out[f.name] = v;
     else if (f.type === "boolean" && typeof v === "boolean") out[f.name] = v;
-    else if ((f.type === "text" || f.type === "select") && typeof v === "string") out[f.name] = v;
+    else if (
+      (f.type === "text" || f.type === "select" || f.type === "date") &&
+      typeof v === "string"
+    )
+      out[f.name] = v;
   }
   return out;
 }
