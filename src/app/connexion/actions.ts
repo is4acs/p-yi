@@ -1,12 +1,12 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { signInSchema, signUpSchema } from "@/lib/validation/auth";
 import { ensureUserProfile } from "@/lib/auth/ensure-profile";
+import { getSiteUrl } from "@/lib/site-url";
 
 function redirectWithError(path: string, message: string): never {
   redirect(`${path}?error=${encodeURIComponent(message)}`);
@@ -64,13 +64,12 @@ export async function signUpAction(formData: FormData) {
   }
 
   const supabase = createSupabaseServerClient();
-  const origin = headers().get("origin") ?? "";
 
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${origin}/auth/callback`,
+      emailRedirectTo: `${getSiteUrl()}/auth/callback`,
       data: { username },
     },
   });
@@ -102,12 +101,11 @@ export async function signOutAction() {
 
 export async function signInWithGoogleAction() {
   const supabase = createSupabaseServerClient();
-  const origin = headers().get("origin") ?? "";
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${origin}/auth/callback`,
+      redirectTo: `${getSiteUrl()}/auth/callback`,
     },
   });
 
