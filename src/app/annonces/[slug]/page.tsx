@@ -30,6 +30,7 @@ import { DealImagePlaceholder } from "@/components/deals/DealImagePlaceholder";
 import { ListingFavoriteButton } from "@/components/listings/ListingFavoriteButton";
 import { ListingTypeChip } from "@/components/listings/ListingTypeChip";
 import { ListingAuthorControls } from "@/components/listings/ListingAuthorControls";
+import { ContactSellerForm } from "@/components/messages/ContactSellerForm";
 
 export const dynamic = "force-dynamic";
 
@@ -273,15 +274,10 @@ export default async function ListingDetailPage({
             </a>
           )}
           {listing.allowMessages && currentUser && (
-            <button
-              type="button"
-              disabled
-              title="Messagerie à venir."
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-md border border-border bg-card text-sm font-semibold text-muted-foreground"
-            >
-              <MessageSquare className="h-4 w-4" aria-hidden />
-              Envoyer un message (bientôt)
-            </button>
+            <ContactSellerForm
+              recipientUsername={listing.author.username}
+              listingSlug={listing.slug}
+            />
           )}
           {listing.allowMessages && !currentUser && (
             <Link
