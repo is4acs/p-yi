@@ -14,9 +14,10 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/current-user";
 import { createListingSchema } from "@/lib/validation/listing";
 import { makeListingSlug } from "@/lib/listings/slug";
+import { maxPhotosForCategory } from "@/lib/listings/photo-limits";
 import {
-  removeListingImage,
-  uploadListingImage,
+  removeListingImages,
+  uploadListingImages,
 } from "@/lib/storage/listing-images";
 
 const KARMA_POST_LISTING = 3;
@@ -52,6 +53,101 @@ function needsPrice(priceType: PriceType): boolean {
   );
 }
 
+/**
+ * Rebuild the final ordered list of photo URLs from the client payload
+ * (see `PhotosUploader` for the contract). Uploads every "new" file up
+ * front, then walks the order tokens to interleave kept URLs with the
+ * freshly-uploaded ones.
+ *
+ * Throws on :
+ *  - malformed `photoOrder` JSON
+ *  - invalid token shape (not `existing:<url>` / `new:<idx>`)
+ *  - order length exceeding the category cap (client bypass attempt)
+ *  - `existing:<url>` referencing a URL not in the listing's prior set
+ *  - `new:<idx>` out of bounds
+ *
+ * On throw, any successfully-uploaded new files are removed from storage
+ * to keep the bucket clean.
+ */
+async function resolvePhotoOrder({
+  formData,
+  userId,
+  categorySlug,
+  existingUrls,
+}: {
+  formData: FormData;
+  userId: string;
+  categorySlug: string;
+  existingUrls: Set<string>;
+}): Promise<{ finalUrls: string[]; urlsToDelete: string[] }> {
+  const raw = formData.get("photoOrder");
+  let tokens: string[] = [];
+  if (typeof raw === "string" && raw.trim().length > 0) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) throw new Error("not-array");
+      tokens = parsed.filter((t): t is string => typeof t === "string");
+    } catch {
+      throw new Error("Photos : format invalide.");
+    }
+  }
+
+  const max = maxPhotosForCategory(categorySlug);
+  if (tokens.length > max) {
+    throw new Error(`Tu ne peux pas ajouter plus de ${max} photos.`);
+  }
+
+  const existingPrefix = "existing:";
+  const newPrefix = "new:";
+  for (const t of tokens) {
+    if (!t.startsWith(existingPrefix) && !t.startsWith(newPrefix)) {
+      throw new Error("Photos : jeton invalide.");
+    }
+  }
+
+  // Collect new files in FormData order — PhotosUploader writes them in
+  // the order of their `new:<N>` indices via a DataTransfer sync.
+  const newFiles: File[] = [];
+  for (const entry of formData.getAll("newPhotos")) {
+    if (entry instanceof File && entry.size > 0) newFiles.push(entry);
+  }
+
+  // Upload before we touch the DB. If one fails we haven't mutated yet.
+  const uploadedUrls =
+    newFiles.length > 0 ? await uploadListingImages(newFiles, userId) : [];
+
+  try {
+    const finalUrls: string[] = [];
+    const keptExisting = new Set<string>();
+
+    for (const tok of tokens) {
+      if (tok.startsWith(existingPrefix)) {
+        const url = tok.slice(existingPrefix.length);
+        if (!existingUrls.has(url)) {
+          throw new Error("Une photo référencée n'existe plus.");
+        }
+        finalUrls.push(url);
+        keptExisting.add(url);
+      } else {
+        const idx = Number(tok.slice(newPrefix.length));
+        if (!Number.isInteger(idx) || idx < 0 || idx >= uploadedUrls.length) {
+          throw new Error("Photos mal alignées.");
+        }
+        finalUrls.push(uploadedUrls[idx]);
+      }
+    }
+
+    const urlsToDelete = Array.from(existingUrls).filter(
+      (u) => !keptExisting.has(u),
+    );
+    return { finalUrls, urlsToDelete };
+  } catch (err) {
+    // Rollback uploads — we never want orphans in the bucket.
+    await removeListingImages(uploadedUrls);
+    throw err;
+  }
+}
+
 export async function createListingAction(formData: FormData): Promise<void> {
   const user = await requireUser("/poster/annonce");
 
@@ -81,17 +177,20 @@ export async function createListingAction(formData: FormData): Promise<void> {
   const price =
     data.price && needsPrice(priceType) ? new Prisma.Decimal(data.price) : null;
 
-  let coverImageUrl: string | null = null;
-  const file = formData.get("coverImage");
-  if (file instanceof File && file.size > 0) {
-    try {
-      coverImageUrl = await uploadListingImage(file, user.id);
-    } catch (err) {
-      redirectWithError(
-        "/poster/annonce",
-        err instanceof Error ? err.message : "Échec de l'upload.",
-      );
-    }
+  let finalUrls: string[] = [];
+  try {
+    const resolved = await resolvePhotoOrder({
+      formData,
+      userId: user.id,
+      categorySlug: data.categorySlug,
+      existingUrls: new Set(),
+    });
+    finalUrls = resolved.finalUrls;
+  } catch (err) {
+    redirectWithError(
+      "/poster/annonce",
+      err instanceof Error ? err.message : "Échec de l'upload.",
+    );
   }
 
   const slug = makeListingSlug(data.title);
@@ -99,28 +198,52 @@ export async function createListingAction(formData: FormData): Promise<void> {
     Date.now() + DEFAULT_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
   );
 
-  await prisma.listing.create({
-    data: {
-      slug,
-      title: data.title,
-      description: data.description,
-      type: data.type as ListingType,
-      priceType,
-      price,
-      condition: (data.condition as ItemCondition | undefined) ?? null,
-      coverImageUrl,
-      neighborhood: data.neighborhood ?? null,
-      contactPhone: data.contactPhone ?? null,
-      showPhone: data.showPhone === "on",
-      allowMessages: data.allowMessages !== "off",
-      status: ListingStatus.PUBLISHED,
-      publishedAt: new Date(),
-      expiresAt,
-      authorId: user.id,
-      categoryId: category.id,
-      cityId: city.id,
-    },
-  });
+  try {
+    await prisma.$transaction(async (tx) => {
+      const listing = await tx.listing.create({
+        data: {
+          slug,
+          title: data.title,
+          description: data.description,
+          type: data.type as ListingType,
+          priceType,
+          price,
+          condition: (data.condition as ItemCondition | undefined) ?? null,
+          // First photo is always the cover. We keep `coverImageUrl`
+          // populated for backward-compat with ListingCard / OG metadata
+          // which already read it.
+          coverImageUrl: finalUrls[0] ?? null,
+          neighborhood: data.neighborhood ?? null,
+          contactPhone: data.contactPhone ?? null,
+          showPhone: data.showPhone === "on",
+          allowMessages: data.allowMessages !== "off",
+          status: ListingStatus.PUBLISHED,
+          publishedAt: new Date(),
+          expiresAt,
+          authorId: user.id,
+          categoryId: category.id,
+          cityId: city.id,
+        },
+      });
+
+      if (finalUrls.length > 0) {
+        await tx.listingImage.createMany({
+          data: finalUrls.map((url, i) => ({
+            listingId: listing.id,
+            url,
+            sortOrder: i,
+          })),
+        });
+      }
+    });
+  } catch (err) {
+    // DB failed after upload — clean up orphan photos.
+    await removeListingImages(finalUrls);
+    redirectWithError(
+      "/poster/annonce",
+      err instanceof Error ? err.message : "Impossible de créer l'annonce.",
+    );
+  }
 
   await prisma.user.update({
     where: { id: user.id },
@@ -141,7 +264,16 @@ export async function updateListingAction(formData: FormData): Promise<void> {
 
   const existing = await prisma.listing.findUnique({
     where: { id: listingId },
-    select: { id: true, slug: true, authorId: true, coverImageUrl: true },
+    select: {
+      id: true,
+      slug: true,
+      authorId: true,
+      coverImageUrl: true,
+      images: {
+        orderBy: { sortOrder: "asc" },
+        select: { url: true },
+      },
+    },
   });
   if (!existing) redirectWithError("/annonces", "Annonce introuvable.");
   if (existing.authorId !== user.id) {
@@ -175,41 +307,82 @@ export async function updateListingAction(formData: FormData): Promise<void> {
   const price =
     data.price && needsPrice(priceType) ? new Prisma.Decimal(data.price) : null;
 
-  let coverImageUrl: string | null = existing.coverImageUrl;
-  const file = formData.get("coverImage");
-  if (file instanceof File && file.size > 0) {
-    try {
-      const newUrl = await uploadListingImage(file, user.id);
-      if (existing.coverImageUrl) {
-        await removeListingImage(existing.coverImageUrl);
-      }
-      coverImageUrl = newUrl;
-    } catch (err) {
-      redirectWithError(
-        editPath,
-        err instanceof Error ? err.message : "Échec de l'upload.",
-      );
-    }
+  // Union of URLs the listing might currently have : the gallery table
+  // (new world) plus the legacy `coverImageUrl` field (for listings
+  // created before Session 15). We accept any of these as "existing".
+  const existingUrls = new Set<string>(existing.images.map((i) => i.url));
+  if (existing.coverImageUrl) existingUrls.add(existing.coverImageUrl);
+
+  let finalUrls: string[] = [];
+  let urlsToDelete: string[] = [];
+  try {
+    const resolved = await resolvePhotoOrder({
+      formData,
+      userId: user.id,
+      categorySlug: data.categorySlug,
+      existingUrls,
+    });
+    finalUrls = resolved.finalUrls;
+    urlsToDelete = resolved.urlsToDelete;
+  } catch (err) {
+    redirectWithError(
+      editPath,
+      err instanceof Error ? err.message : "Échec de l'upload.",
+    );
   }
 
-  await prisma.listing.update({
-    where: { id: existing.id },
-    data: {
-      title: data.title,
-      description: data.description,
-      type: data.type as ListingType,
-      priceType,
-      price,
-      condition: (data.condition as ItemCondition | undefined) ?? null,
-      coverImageUrl,
-      neighborhood: data.neighborhood ?? null,
-      contactPhone: data.contactPhone ?? null,
-      showPhone: data.showPhone === "on",
-      allowMessages: data.allowMessages !== "off",
-      categoryId: category.id,
-      cityId: city.id,
-    },
-  });
+  try {
+    await prisma.$transaction(async (tx) => {
+      // Reset the gallery and rebuild it in the new order. Simpler and
+      // safer than diffing — photos are cheap rows, the user always
+      // submits the final order.
+      await tx.listingImage.deleteMany({ where: { listingId: existing.id } });
+      if (finalUrls.length > 0) {
+        await tx.listingImage.createMany({
+          data: finalUrls.map((url, i) => ({
+            listingId: existing.id,
+            url,
+            sortOrder: i,
+          })),
+        });
+      }
+
+      await tx.listing.update({
+        where: { id: existing.id },
+        data: {
+          title: data.title,
+          description: data.description,
+          type: data.type as ListingType,
+          priceType,
+          price,
+          condition: (data.condition as ItemCondition | undefined) ?? null,
+          coverImageUrl: finalUrls[0] ?? null,
+          neighborhood: data.neighborhood ?? null,
+          contactPhone: data.contactPhone ?? null,
+          showPhone: data.showPhone === "on",
+          allowMessages: data.allowMessages !== "off",
+          categoryId: category.id,
+          cityId: city.id,
+        },
+      });
+    });
+  } catch (err) {
+    // DB failed — roll back the new uploads we just pushed.
+    const newlyUploaded = finalUrls.filter((u) => !existingUrls.has(u));
+    await removeListingImages(newlyUploaded);
+    redirectWithError(
+      editPath,
+      err instanceof Error
+        ? err.message
+        : "Impossible de mettre à jour l'annonce.",
+    );
+  }
+
+  // Drop orphan blobs from storage. Best-effort — a failure here leaves
+  // a few unreferenced files but doesn't affect the user.
+  if (urlsToDelete.length > 0) {
+    await removeListingImages(urlsToDelete);
+  }
 
   revalidatePath("/annonces");
   revalidatePath(`/annonces/${existing.slug}`);
@@ -226,7 +399,13 @@ export async function deleteListingAction(formData: FormData): Promise<void> {
 
   const existing = await prisma.listing.findUnique({
     where: { id: listingId },
-    select: { id: true, slug: true, authorId: true, coverImageUrl: true },
+    select: {
+      id: true,
+      slug: true,
+      authorId: true,
+      coverImageUrl: true,
+      images: { select: { url: true } },
+    },
   });
   if (!existing) redirectWithError("/annonces", "Annonce introuvable.");
   if (existing.authorId !== user.id) {
@@ -234,9 +413,11 @@ export async function deleteListingAction(formData: FormData): Promise<void> {
   }
 
   await prisma.listing.delete({ where: { id: existing.id } });
-  if (existing.coverImageUrl) {
-    await removeListingImage(existing.coverImageUrl);
-  }
+
+  // Fire-and-forget cleanup of every photo in storage.
+  const urls = new Set<string>(existing.images.map((i) => i.url));
+  if (existing.coverImageUrl) urls.add(existing.coverImageUrl);
+  await removeListingImages(Array.from(urls));
 
   revalidatePath("/annonces");
   redirect("/annonces");
