@@ -27,6 +27,7 @@ export const listingCardSelect = {
   isUrgent: true,
   isFeatured: true,
   authorId: true,
+  attributes: true,
   city: { select: { name: true, slug: true } },
   category: { select: { name: true, slug: true, icon: true } },
   _count: { select: { images: true } },

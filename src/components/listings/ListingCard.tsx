@@ -9,6 +9,7 @@ import {
   formatPriceType,
   CONDITION_LABEL,
 } from "@/lib/listings/queries";
+import { summarizeAttributesForCard } from "@/lib/listings/field-registry";
 import { CategoryChip } from "@/components/deals/CategoryChip";
 import { CommuneChip } from "@/components/deals/CommuneChip";
 import { DealImagePlaceholder } from "@/components/deals/DealImagePlaceholder";
@@ -43,6 +44,10 @@ export function ListingCard({
     ? `${listing.city.name} · ${listing.neighborhood}`
     : listing.city.name;
   const photoCount = listing._count.images;
+  const attributesSummary = summarizeAttributesForCard(
+    listing.category.slug,
+    listing.attributes,
+  );
 
   return (
     <article
@@ -120,9 +125,16 @@ export function ListingCard({
             </h3>
           </div>
 
-          <p className="font-display text-base font-bold tracking-tight text-peyi-orange-700">
-            {priceLabel}
-          </p>
+          <div className="space-y-0.5">
+            <p className="font-display text-base font-bold tracking-tight text-peyi-orange-700">
+              {priceLabel}
+            </p>
+            {attributesSummary && (
+              <p className="line-clamp-1 text-[11px] text-muted-foreground">
+                {attributesSummary}
+              </p>
+            )}
+          </div>
 
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
             <CategoryChip
