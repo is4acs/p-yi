@@ -7,7 +7,7 @@ import {
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
-import type { ListingsSort, ListingTypeSlug } from "./url";
+import type { ListingsFilters, ListingsSort, ListingTypeSlug } from "./url";
 
 export const PAGE_SIZE = 20;
 
@@ -72,9 +72,26 @@ type Filters = {
   city: string | null;
   type: ListingTypeSlug | null;
   q: string | null;
+  attrs?: Partial<ListingsFilters>;
 };
 
-function buildWhere({ category, city, type, q }: Filters): Prisma.ListingWhereInput {
+/**
+ * Transforme les filtres URL en `WhereInput` Prisma. Chaque filtre tombe
+ * sur une colonne indexée (`attr*` ou `price`) pour rester sub-seconde
+ * même avec 100k+ annonces.
+ *
+ * Les filtres `rooms` et `surfaceMin` sont interprétés comme des bornes
+ * minimales (plus permissif), `kmMax` comme une borne max. Le choix
+ * reflète l'usage courant sur Leboncoin : "au moins 3 pièces", "moins
+ * de 100 000 km".
+ */
+function buildWhere({
+  category,
+  city,
+  type,
+  q,
+  attrs,
+}: Filters): Prisma.ListingWhereInput {
   const search = q
     ? ({
         OR: [
@@ -84,12 +101,37 @@ function buildWhere({ category, city, type, q }: Filters): Prisma.ListingWhereIn
       } satisfies Prisma.ListingWhereInput)
     : null;
 
+  // Range price : on combine gte/lte seulement si l'un des deux est posé.
+  const priceRange: Prisma.DecimalFilter | undefined =
+    attrs?.priceMin != null || attrs?.priceMax != null
+      ? {
+          ...(attrs.priceMin != null ? { gte: attrs.priceMin } : {}),
+          ...(attrs.priceMax != null ? { lte: attrs.priceMax } : {}),
+        }
+      : undefined;
+
   return {
     status: ListingStatus.PUBLISHED,
     expiresAt: { gt: new Date() },
     ...(category ? { category: { slug: category } } : {}),
     ...(city ? { city: { slug: city } } : {}),
     ...(type ? { type: listingTypeFromSlug(type) } : {}),
+    ...(priceRange ? { price: priceRange } : {}),
+    ...(attrs?.yearMin != null ? { attrYear: { gte: attrs.yearMin } } : {}),
+    ...(attrs?.kmMax != null ? { attrMileageKm: { lte: attrs.kmMax } } : {}),
+    ...(attrs?.surfaceMin != null
+      ? { attrSurfaceM2: { gte: attrs.surfaceMin } }
+      : {}),
+    ...(attrs?.rooms != null ? { attrRooms: { gte: attrs.rooms } } : {}),
+    ...(attrs?.fuel ? { attrFuel: attrs.fuel } : {}),
+    // `brand` est un contains insensitive — l'utilisateur tape "peugeot"
+    // et on matche "Peugeot", "PEUGEOT", etc. L'index btree (LIKE
+    // `peugeot%`) n'est pas utilisé avec contains, mais sur une annonce
+    // la cardinalité est largement tolérable à 100k.
+    ...(attrs?.brand
+      ? { attrBrand: { contains: attrs.brand, mode: "insensitive" } }
+      : {}),
+    ...(attrs?.contract ? { attrContract: attrs.contract } : {}),
     ...(search ?? {}),
   };
 }
@@ -101,6 +143,7 @@ export async function fetchListingsPage({
   city,
   type,
   q,
+  filters,
 }: {
   sort: ListingsSort;
   page: number;
@@ -108,8 +151,9 @@ export async function fetchListingsPage({
   city: string | null;
   type: ListingTypeSlug | null;
   q: string | null;
+  filters?: Partial<ListingsFilters>;
 }) {
-  const where = buildWhere({ category, city, type, q });
+  const where = buildWhere({ category, city, type, q, attrs: filters });
   const skip = (page - 1) * PAGE_SIZE;
 
   // Boosted / urgent listings always on top; then the chosen sort.
