@@ -26,6 +26,7 @@ import {
 import { CategoryChip } from "@/components/deals/CategoryChip";
 import { CommuneChip } from "@/components/deals/CommuneChip";
 import { DealImagePlaceholder } from "@/components/deals/DealImagePlaceholder";
+import { ListingAttributes } from "@/components/listings/ListingAttributes";
 import { ListingFavoriteButton } from "@/components/listings/ListingFavoriteButton";
 import { ListingGallery } from "@/components/listings/ListingGallery";
 import { ListingTypeChip } from "@/components/listings/ListingTypeChip";
@@ -44,6 +45,7 @@ const listingDetailSelect = {
   type: true,
   condition: true,
   coverImageUrl: true,
+  attributes: true,
   neighborhood: true,
   contactPhone: true,
   showPhone: true,
@@ -311,6 +313,12 @@ export default async function ListingDetailPage({
           label="Favoris"
         />
       </section>
+
+      {/* Caractéristiques spécifiques à la catégorie (ex. surface, km, DPE) */}
+      <ListingAttributes
+        categorySlug={listing.category.slug}
+        attributes={listing.attributes}
+      />
 
       {/* Description */}
       <section className="mt-6 px-4 sm:px-0">

@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/current-user";
+import { pickRegisteredAttributes } from "@/lib/listings/field-registry";
 import { ListingForm } from "@/components/poster/ListingForm";
 
 import { updateListingAction } from "@/app/poster/annonce/actions";
@@ -38,6 +39,7 @@ export default async function EditListingPage({
       showPhone: true,
       allowMessages: true,
       coverImageUrl: true,
+      attributes: true,
       authorId: true,
       category: { select: { slug: true } },
       city: { select: { slug: true } },
@@ -72,6 +74,14 @@ export default async function EditListingPage({
       ? [listing.coverImageUrl]
       : [];
 
+  // Filtre les attributs stockés pour ne remonter que ceux qui appartiennent
+  // au registry actuel de la catégorie — si un admin a re-catégorisé une
+  // annonce, on évite de reprojeter des champs orphelins dans le form.
+  const attributes = pickRegisteredAttributes(
+    listing.category.slug,
+    listing.attributes,
+  );
+
   const defaults = {
     listingId: listing.id,
     title: listing.title,
@@ -87,6 +97,7 @@ export default async function EditListingPage({
     showPhone: listing.showPhone,
     allowMessages: listing.allowMessages,
     photoUrls,
+    attributes,
   };
 
   return (
