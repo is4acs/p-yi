@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Send } from "lucide-react";
+import { BadgeCheck, Info, Send } from "lucide-react";
 import type {
   ItemCondition,
   ListingType,
@@ -42,6 +42,12 @@ type Props = {
   cities: City[];
   defaults?: ListingFormValues;
   submitLabel?: string;
+  /**
+   * Phone stored on the current user's profile. Used to build a hint under the
+   * contactPhone field (verified ✓, needs verification, or none set).
+   */
+  profilePhone?: string | null;
+  profilePhoneVerified?: boolean;
 };
 
 const TYPES: ListingType[] = ["OFFER", "DEMAND", "EXCHANGE", "DONATION"];
@@ -70,6 +76,8 @@ export function ListingForm({
   cities,
   defaults,
   submitLabel = "Publier l'annonce",
+  profilePhone,
+  profilePhoneVerified,
 }: Props) {
   const v = defaults ?? {};
   const [priceType, setPriceType] = useState<PriceType>(v.priceType ?? "FIXED");
@@ -255,6 +263,10 @@ export function ListingForm({
             defaultValue={v.contactPhone ?? ""}
             placeholder="0694 12 34 56"
           />
+          <PhoneHint
+            profilePhone={profilePhone}
+            profilePhoneVerified={profilePhoneVerified}
+          />
         </div>
 
         <label className="flex cursor-pointer items-center gap-2 text-sm">
@@ -287,5 +299,59 @@ export function ListingForm({
         {submitLabel}
       </Button>
     </form>
+  );
+}
+
+/**
+ * Little info row under the phone input that reflects the user's profile
+ * state. It encourages verification without blocking posting — an unverified
+ * number is still usable, but the badge raises trust on the listing card.
+ */
+function PhoneHint({
+  profilePhone,
+  profilePhoneVerified,
+}: {
+  profilePhone?: string | null;
+  profilePhoneVerified?: boolean;
+}) {
+  if (profilePhone && profilePhoneVerified) {
+    return (
+      <p className="flex items-center gap-1 text-xs text-peyi-green-700">
+        <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
+        Pré-rempli depuis ton profil (numéro vérifié).
+      </p>
+    );
+  }
+  if (profilePhone && !profilePhoneVerified) {
+    return (
+      <p className="flex items-start gap-1 text-xs text-muted-foreground">
+        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+        <span>
+          Ton numéro de profil n&apos;est pas encore vérifié.{" "}
+          <a
+            href={`/profil/verifier-telephone?phone=${encodeURIComponent(profilePhone)}`}
+            className="font-medium text-peyi-orange-600 hover:underline"
+          >
+            Vérifier
+          </a>{" "}
+          pour gagner la confiance des acheteurs.
+        </span>
+      </p>
+    );
+  }
+  return (
+    <p className="flex items-start gap-1 text-xs text-muted-foreground">
+      <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+      <span>
+        Ajoute un numéro à{" "}
+        <a
+          href="/profil/edit"
+          className="font-medium text-peyi-orange-600 hover:underline"
+        >
+          ton profil
+        </a>{" "}
+        pour le pré-remplir automatiquement.
+      </span>
+    </p>
   );
 }

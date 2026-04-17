@@ -67,6 +67,15 @@ export default async function PosterAnnoncePage({
           action={createListingAction}
           categories={categories}
           cities={cities}
+          defaults={{
+            // Only auto-fill when the phone is verified — an unverified number
+            // would weaken the trust signal we show on listing cards.
+            contactPhone: user.phoneVerified ? user.phone : null,
+            // Match the toggle default with whether we have something usable.
+            showPhone: Boolean(user.phoneVerified && user.phone),
+          }}
+          profilePhone={user.phone}
+          profilePhoneVerified={user.phoneVerified}
           submitLabel="Publier l'annonce"
         />
       </div>

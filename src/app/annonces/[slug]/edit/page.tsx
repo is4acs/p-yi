@@ -109,6 +109,8 @@ export default async function EditListingPage({
           categories={categories}
           cities={cities}
           defaults={defaults}
+          profilePhone={user.phone}
+          profilePhoneVerified={user.phoneVerified}
           submitLabel="Enregistrer"
         />
       </div>
