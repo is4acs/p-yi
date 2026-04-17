@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { signInSchema, signUpSchema } from "@/lib/validation/auth";
+import { ensureUserProfile } from "@/lib/auth/ensure-profile";
 
 function redirectWithError(path: string, message: string) {
   redirect(`${path}?error=${encodeURIComponent(message)}`);
@@ -33,6 +34,7 @@ export async function signInAction(formData: FormData) {
     redirectWithError("/connexion", "E-mail ou mot de passe incorrect.");
   }
 
+  await ensureUserProfile();
   redirect("/bons-plans");
 }
 
@@ -64,7 +66,7 @@ export async function signUpAction(formData: FormData) {
   const supabase = createSupabaseServerClient();
   const origin = headers().get("origin") ?? "";
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -80,6 +82,13 @@ export async function signUpAction(formData: FormData) {
         ? "Cet e-mail est déjà utilisé."
         : "Impossible de créer le compte. Réessaie plus tard.",
     );
+  }
+
+  // If Supabase is configured with "Confirm email = OFF", signUp returns a
+  // live session and the user is already logged in — go straight to the app.
+  if (data?.session) {
+    await ensureUserProfile();
+    redirect("/bons-plans");
   }
 
   redirect("/connexion?mode=signup&confirmSent=1");
