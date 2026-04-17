@@ -16,6 +16,11 @@ import { createListingSchema } from "@/lib/validation/listing";
 import { makeListingSlug } from "@/lib/listings/slug";
 import { maxPhotosForCategory } from "@/lib/listings/photo-limits";
 import {
+  type AttributeValue,
+  coerceAttribute,
+  getFieldsForCategory,
+} from "@/lib/listings/field-registry";
+import {
   removeListingImages,
   uploadListingImages,
 } from "@/lib/storage/listing-images";
@@ -51,6 +56,40 @@ function needsPrice(priceType: PriceType): boolean {
     priceType === "PER_MONTH" ||
     priceType === "PER_DAY"
   );
+}
+
+/**
+ * Extrait les attributs dynamiques (`attr.<name>`) depuis la FormData en
+ * ne gardant que les clés déclarées par le registry de la catégorie. Ça
+ * protège la DB contre l'injection de clés arbitraires depuis un client
+ * modifié, et assure que la valeur persistée respecte le type annoncé.
+ *
+ * Jette une erreur lisible quand un champ `required` est vide — l'appelant
+ * la remonte vers l'utilisateur via le flux `redirectWithError`.
+ */
+function extractAttributes(
+  formData: FormData,
+  categorySlug: string,
+): Record<string, AttributeValue> {
+  const fields = getFieldsForCategory(categorySlug);
+  if (fields.length === 0) return {};
+
+  const out: Record<string, AttributeValue> = {};
+  for (const field of fields) {
+    const raw = formData.get(`attr.${field.name}`);
+    const value = coerceAttribute(field, raw);
+    if (field.required) {
+      const isMissing =
+        value === null ||
+        value === undefined ||
+        (field.type === "boolean" && value !== true && value !== false);
+      if (isMissing || (field.type !== "boolean" && value === null)) {
+        throw new Error(`"${field.label}" est obligatoire.`);
+      }
+    }
+    if (value !== null) out[field.name] = value;
+  }
+  return out;
 }
 
 /**
@@ -177,6 +216,21 @@ export async function createListingAction(formData: FormData): Promise<void> {
   const price =
     data.price && needsPrice(priceType) ? new Prisma.Decimal(data.price) : null;
 
+  // Préserve la catégorie dans l'URL d'erreur pour que le picker ne
+  // reparte pas de zéro après une validation ratée — bien meilleur UX
+  // que de rebalancer l'utilisateur au tout début du flux.
+  const retryPath = `/poster/annonce?category=${encodeURIComponent(data.categorySlug)}`;
+
+  let attributes: Record<string, AttributeValue> = {};
+  try {
+    attributes = extractAttributes(formData, data.categorySlug);
+  } catch (err) {
+    redirectWithError(
+      retryPath,
+      err instanceof Error ? err.message : "Détails invalides.",
+    );
+  }
+
   let finalUrls: string[] = [];
   try {
     const resolved = await resolvePhotoOrder({
@@ -188,7 +242,7 @@ export async function createListingAction(formData: FormData): Promise<void> {
     finalUrls = resolved.finalUrls;
   } catch (err) {
     redirectWithError(
-      "/poster/annonce",
+      retryPath,
       err instanceof Error ? err.message : "Échec de l'upload.",
     );
   }
@@ -213,6 +267,7 @@ export async function createListingAction(formData: FormData): Promise<void> {
           // populated for backward-compat with ListingCard / OG metadata
           // which already read it.
           coverImageUrl: finalUrls[0] ?? null,
+          attributes: attributes as Prisma.InputJsonValue,
           neighborhood: data.neighborhood ?? null,
           contactPhone: data.contactPhone ?? null,
           showPhone: data.showPhone === "on",
@@ -307,6 +362,16 @@ export async function updateListingAction(formData: FormData): Promise<void> {
   const price =
     data.price && needsPrice(priceType) ? new Prisma.Decimal(data.price) : null;
 
+  let attributes: Record<string, AttributeValue> = {};
+  try {
+    attributes = extractAttributes(formData, data.categorySlug);
+  } catch (err) {
+    redirectWithError(
+      editPath,
+      err instanceof Error ? err.message : "Détails invalides.",
+    );
+  }
+
   // Union of URLs the listing might currently have : the gallery table
   // (new world) plus the legacy `coverImageUrl` field (for listings
   // created before Session 15). We accept any of these as "existing".
@@ -357,6 +422,7 @@ export async function updateListingAction(formData: FormData): Promise<void> {
           price,
           condition: (data.condition as ItemCondition | undefined) ?? null,
           coverImageUrl: finalUrls[0] ?? null,
+          attributes: attributes as Prisma.InputJsonValue,
           neighborhood: data.neighborhood ?? null,
           contactPhone: data.contactPhone ?? null,
           showPhone: data.showPhone === "on",
