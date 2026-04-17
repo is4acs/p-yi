@@ -22,6 +22,7 @@ import { ListingsSortTabs } from "@/components/listings/ListingsSortTabs";
 import { ListingsTypePills } from "@/components/listings/ListingsTypePills";
 import { ListingsFilterBar } from "@/components/listings/ListingsFilterBar";
 import { ListingsAttributeFilters } from "@/components/listings/ListingsAttributeFilters";
+import { ListingsActiveFilterChips } from "@/components/listings/ListingsActiveFilterChips";
 import { ListingsPagination } from "@/components/listings/ListingsPagination";
 import { EmptyListings } from "@/components/listings/EmptyListings";
 
@@ -188,12 +189,27 @@ export default async function AnnoncesPage({
             q={q}
             filters={filters}
           />
+          <ListingsActiveFilterChips
+            sort={sort}
+            category={category}
+            city={city}
+            type={type}
+            q={q}
+            filters={filters}
+            categoryName={
+              categories.find((c) => c.slug === category)?.name ?? null
+            }
+            cityName={cities.find((c) => c.slug === city)?.name ?? null}
+          />
         </div>
       </div>
 
       <div className="px-4 pt-4 sm:px-0">
         {listings.length === 0 ? (
-          <EmptyListings hasFilters={hasFilters} />
+          <EmptyListings
+            mode={hasFilters ? "filtered" : "no-listings"}
+            clearFiltersHref="/annonces"
+          />
         ) : (
           <ul className="flex flex-col gap-3">
             {listings.map((l) => (
