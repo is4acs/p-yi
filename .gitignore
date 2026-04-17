@@ -20,6 +20,11 @@
 .DS_Store
 *.pem
 
+# macOS / iCloud duplicate files (e.g. "package 2.json", ".env 2.example")
+* [0-9].*
+* [0-9]
+
+
 # debug
 npm-debug.log*
 yarn-debug.log*

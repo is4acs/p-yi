@@ -1,34 +1,16 @@
 import Link from "next/link";
-import type { Prisma } from "@prisma/client";
 import { MessageSquare, Clock, Store } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/format";
+import type { DealCardData } from "@/lib/deals/queries";
 import { PriceTag } from "./PriceTag";
 import { TemperatureBadge } from "./TemperatureBadge";
 import { CategoryChip } from "./CategoryChip";
 import { CommuneChip } from "./CommuneChip";
 import { DealImagePlaceholder } from "./DealImagePlaceholder";
 
-export type DealCardData = Prisma.DealGetPayload<{
-  select: {
-    id: true;
-    slug: true;
-    title: true;
-    price: true;
-    originalPrice: true;
-    discountPercent: true;
-    isFree: true;
-    temperature: true;
-    commentCount: true;
-    publishedAt: true;
-    coverImageUrl: true;
-    city: { select: { name: true; slug: true } };
-    category: { select: { name: true; slug: true; icon: true } };
-    store: { select: { name: true; slug: true } };
-    merchant: { select: { name: true; slug: true; logoUrl: true } };
-  };
-}>;
+export type { DealCardData };
 
 type Props = {
   deal: DealCardData;
