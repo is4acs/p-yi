@@ -18,6 +18,7 @@ import { maxPhotosForCategory } from "@/lib/listings/photo-limits";
 import {
   type AttributeValue,
   coerceAttribute,
+  denormalizeAttributes,
   getFieldsForCategory,
 } from "@/lib/listings/field-registry";
 import {
@@ -252,6 +253,8 @@ export async function createListingAction(formData: FormData): Promise<void> {
     Date.now() + DEFAULT_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
   );
 
+  const denorm = denormalizeAttributes(attributes);
+
   try {
     await prisma.$transaction(async (tx) => {
       const listing = await tx.listing.create({
@@ -268,6 +271,9 @@ export async function createListingAction(formData: FormData): Promise<void> {
           // which already read it.
           coverImageUrl: finalUrls[0] ?? null,
           attributes: attributes as Prisma.InputJsonValue,
+          // Colonnes indexées dérivées du JSON — re-synchronisées à chaque
+          // update pour que les filtres / tris restent cohérents.
+          ...denorm,
           neighborhood: data.neighborhood ?? null,
           contactPhone: data.contactPhone ?? null,
           showPhone: data.showPhone === "on",
@@ -423,6 +429,9 @@ export async function updateListingAction(formData: FormData): Promise<void> {
           condition: (data.condition as ItemCondition | undefined) ?? null,
           coverImageUrl: finalUrls[0] ?? null,
           attributes: attributes as Prisma.InputJsonValue,
+          // Resynchronise les colonnes indexées — si la catégorie change,
+          // certaines clés disparaissent et on écrase bien en `null`.
+          ...denormalizeAttributes(attributes),
           neighborhood: data.neighborhood ?? null,
           contactPhone: data.contactPhone ?? null,
           showPhone: data.showPhone === "on",

@@ -56,7 +56,8 @@ const DPE_OPTIONS: FieldOption[] = [
   { value: "vierge", label: "Vierge / non communiqué" },
 ];
 
-const CARBURANT_OPTIONS: FieldOption[] = [
+/** Options de carburant — exposées pour le filtre facette de la liste. */
+export const CARBURANT_OPTIONS: FieldOption[] = [
   { value: "essence", label: "Essence" },
   { value: "diesel", label: "Diesel" },
   { value: "hybride", label: "Hybride" },
@@ -95,7 +96,8 @@ const GENRE_MODE_OPTIONS: FieldOption[] = [
   { value: "bebe", label: "Bébé" },
 ];
 
-const TYPE_CONTRAT_OPTIONS: FieldOption[] = [
+/** Options de contrat emploi — exposées pour le filtre facette. */
+export const TYPE_CONTRAT_OPTIONS: FieldOption[] = [
   { value: "cdi", label: "CDI" },
   { value: "cdd", label: "CDD" },
   { value: "interim", label: "Intérim" },
@@ -865,4 +867,148 @@ export function pickRegisteredAttributes(
       out[f.name] = v;
   }
   return out;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Dénormalisation vers colonnes indexées                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Projection d'un sous-ensemble d'attributs JSON vers les colonnes natives
+ * `attr*` de `Listing`. Ces colonnes existent pour permettre des filtres
+ * et tris efficaces (btree index) sans exploser le JSON à chaque requête.
+ *
+ * Contrat :
+ *  - les valeurs ne sont PAS une source de vérité — `attributes` reste le
+ *    canonique. Les colonnes sont un cache reconstructible depuis le JSON.
+ *  - les valeurs absentes ou de mauvais type tombent à `null`, jamais
+ *    une string vide ou `0`, pour qu'un filtre `IS NOT NULL` soit fiable.
+ *  - les clés choisies sont celles filtrées le plus souvent sur
+ *    Leboncoin : année / km / surface / pièces / marque / carburant /
+ *    type de contrat. L'ajout d'une colonne nouvelle demande aussi une
+ *    migration Prisma + un re-backfill.
+ */
+export type DenormalizedAttrs = {
+  attrYear: number | null;
+  attrMileageKm: number | null;
+  attrSurfaceM2: number | null;
+  attrRooms: number | null;
+  attrBrand: string | null;
+  attrFuel: string | null;
+  attrContract: string | null;
+};
+
+/**
+ * Filtres de facette exposés dans l'UI par catégorie. Chaque flag
+ * active l'input correspondant dans `<ListingsAttributeFilters>`.
+ *
+ * La projection reste cohérente avec `denormalizeAttributes` : un filtre
+ * n'est exposé que si la colonne indexée peut être alimentée par cette
+ * catégorie (sinon on filtrerait sur `null` partout).
+ *
+ * L'option `priceRange` est proposée pour TOUTES les catégories — c'est
+ * la variable la plus universellement filtrée.
+ */
+export type AttributeFilterSlot =
+  | "priceRange"
+  | "yearMin"
+  | "kmMax"
+  | "surfaceMin"
+  | "rooms"
+  | "brand"
+  | "fuel"
+  | "contract";
+
+const VEHICULE_MOTO_SLOTS: AttributeFilterSlot[] = [
+  "priceRange",
+  "yearMin",
+  "kmMax",
+  "brand",
+];
+
+const VEHICULE_CAR_SLOTS: AttributeFilterSlot[] = [
+  "priceRange",
+  "yearMin",
+  "kmMax",
+  "brand",
+  "fuel",
+];
+
+const LOGEMENT_SLOTS: AttributeFilterSlot[] = [
+  "priceRange",
+  "surfaceMin",
+  "rooms",
+];
+
+const FILTER_SLOTS_BY_CATEGORY: Record<string, AttributeFilterSlot[]> = {
+  voitures: VEHICULE_CAR_SLOTS,
+  "utilitaires-4x4": VEHICULE_CAR_SLOTS,
+  "motos-scooters": VEHICULE_MOTO_SLOTS,
+  "quads-buggy": VEHICULE_MOTO_SLOTS,
+
+  "vente-appartement": LOGEMENT_SLOTS,
+  "location-appartement": LOGEMENT_SLOTS,
+  "vente-maison": LOGEMENT_SLOTS,
+  "location-maison": LOGEMENT_SLOTS,
+  "location-saisonniere": LOGEMENT_SLOTS,
+  colocation: ["priceRange", "surfaceMin"],
+  "bureau-local-commercial": ["priceRange", "surfaceMin"],
+  "vente-terrain": ["priceRange", "surfaceMin"],
+
+  "emploi-services": ["contract"],
+};
+
+/**
+ * Retourne la liste des filtres facettés applicables à une catégorie.
+ * Toujours au moins `priceRange` tant que la catégorie n'est pas
+ * "emploi-services" (où le prix ne fait pas sens comme critère court).
+ */
+export function getFilterSlotsForCategory(
+  categorySlug: string | null | undefined,
+): AttributeFilterSlot[] {
+  if (!categorySlug) return ["priceRange"];
+  return FILTER_SLOTS_BY_CATEGORY[categorySlug] ?? ["priceRange"];
+}
+
+export function denormalizeAttributes(
+  attributes: Record<string, AttributeValue> | null | undefined,
+): DenormalizedAttrs {
+  const attrs = attributes ?? {};
+
+  const pickInt = (key: string): number | null => {
+    const v = attrs[key];
+    if (typeof v !== "number" || !Number.isFinite(v)) return null;
+    const rounded = Math.round(v);
+    // Garde-fou SmallInt : PostgreSQL rejette hors [-32768, 32767].
+    // On préfère `null` à un crash — le JSON garde la valeur exacte.
+    if (rounded < -2147483648 || rounded > 2147483647) return null;
+    return rounded;
+  };
+
+  const pickSmallInt = (key: string): number | null => {
+    const v = pickInt(key);
+    if (v === null) return null;
+    if (v < -32768 || v > 32767) return null;
+    return v;
+  };
+
+  const pickStr = (key: string): string | null => {
+    const v = attrs[key];
+    if (typeof v !== "string") return null;
+    const trimmed = v.trim();
+    if (trimmed.length === 0) return null;
+    // Les colonnes indexées n'ont pas besoin de 200 chars — on borne à
+    // 64 pour rester compact dans l'index btree.
+    return trimmed.slice(0, 64);
+  };
+
+  return {
+    attrYear: pickSmallInt("annee"),
+    attrMileageKm: pickInt("kilometrage"),
+    attrSurfaceM2: pickSmallInt("surface"),
+    attrRooms: pickSmallInt("pieces"),
+    attrBrand: pickStr("marque"),
+    attrFuel: pickStr("carburant"),
+    attrContract: pickStr("type_contrat"),
+  };
 }
