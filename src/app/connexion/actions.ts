@@ -27,14 +27,30 @@ export async function signInAction(formData: FormData) {
 
   const { email, password } = parsed.data;
   const supabase = createSupabaseServerClient();
-
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    redirectWithError("/connexion", "E-mail ou mot de passe incorrect.");
+    // Map common Supabase error codes to friendly French messages.
+    if (error.code === "email_not_confirmed") {
+      redirectWithError(
+        "/connexion",
+        "E-mail pas encore confirmé. Clique sur le lien reçu par mail.",
+      );
+    }
+    if (error.code === "invalid_credentials") {
+      redirectWithError("/connexion", "E-mail ou mot de passe incorrect.");
+    }
+    // Unknown code — log server-side for later diagnosis, show generic message.
+    console.error("[signInAction] unexpected error:", error);
+    redirectWithError("/connexion", "Connexion impossible. Réessaie.");
   }
 
-  await ensureUserProfile();
+  const profile = await ensureUserProfile();
+  if (!profile) {
+    // User authenticated but has no Prisma profile yet (e.g. Supabase Dashboard
+    // or OAuth first-login without `username` metadata). Collect one now.
+    redirect("/auth/complete-profile");
+  }
   redirect("/bons-plans");
 }
 
@@ -86,7 +102,8 @@ export async function signUpAction(formData: FormData) {
   // If Supabase is configured with "Confirm email = OFF", signUp returns a
   // live session and the user is already logged in — go straight to the app.
   if (data?.session) {
-    await ensureUserProfile();
+    const profile = await ensureUserProfile();
+    if (!profile) redirect("/auth/complete-profile");
     redirect("/bons-plans");
   }
 
