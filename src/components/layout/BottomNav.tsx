@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Flame, Plus, MessageSquare, User } from "lucide-react";
+import { Home, Flame, Plus, Tag, User } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -30,10 +30,10 @@ const TABS: Tab[] = [
     primary: true,
   },
   {
-    href: "/messages",
-    label: "Messages",
-    icon: MessageSquare,
-    match: (p) => p.startsWith("/messages"),
+    href: "/annonces",
+    label: "Annonces",
+    icon: Tag,
+    match: (p) => p === "/annonces" || p.startsWith("/annonces/"),
   },
   {
     href: "/profil",

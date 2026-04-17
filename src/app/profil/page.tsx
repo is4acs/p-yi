@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 export default async function ProfilPage() {
   const user = await requireUser("/profil");
-  const [city, favoriteCount] = await Promise.all([
+  const [city, dealFavoriteCount, listingFavoriteCount] = await Promise.all([
     user.cityId
       ? prisma.city.findUnique({
           where: { id: user.cityId },
@@ -27,7 +27,11 @@ export default async function ProfilPage() {
     prisma.favorite.count({
       where: { userId: user.id, dealId: { not: null } },
     }),
+    prisma.favorite.count({
+      where: { userId: user.id, listingId: { not: null } },
+    }),
   ]);
+  const favoriteCount = dealFavoriteCount + listingFavoriteCount;
   const level = LEVEL_META[user.level];
 
   return (
@@ -81,10 +85,8 @@ export default async function ProfilPage() {
               </span>
               <span className="text-xs text-muted-foreground">
                 {favoriteCount === 0
-                  ? "Aucun bon plan sauvegardé"
-                  : `${favoriteCount} bon${favoriteCount > 1 ? "s" : ""} plan${
-                      favoriteCount > 1 ? "s" : ""
-                    } sauvegardé${favoriteCount > 1 ? "s" : ""}`}
+                  ? "Aucun favori"
+                  : `${dealFavoriteCount} bon${dealFavoriteCount > 1 ? "s" : ""} plan${dealFavoriteCount > 1 ? "s" : ""} · ${listingFavoriteCount} annonce${listingFavoriteCount > 1 ? "s" : ""}`}
               </span>
             </span>
           </span>

@@ -1,21 +1,35 @@
 import Link from "next/link";
-import { ArrowRight, Flame, Plus } from "lucide-react";
+import { ArrowRight, Flame, Plus, Tag } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
 import { fetchDealsPage, fetchUserFavoriteSet, fetchUserVoteMap } from "@/lib/deals/queries";
+import {
+  fetchListingsPage,
+  fetchUserFavoriteListingSet,
+} from "@/lib/listings/queries";
 import { buildDealsUrl } from "@/lib/deals/url";
 import { getCurrentUser } from "@/lib/auth/current-user";
 
 import { DealCard } from "@/components/deals/DealCard";
 import { DealsSearchBar } from "@/components/deals/DealsSearchBar";
+import { ListingCard } from "@/components/listings/ListingCard";
 
 export const dynamic = "force-dynamic";
 
 const HOME_DEALS_COUNT = 6;
+const HOME_LISTINGS_COUNT = 4;
 
 export default async function HomePage() {
-  const [{ deals }, categories, currentUser] = await Promise.all([
+  const [{ deals }, { listings }, categories, currentUser] = await Promise.all([
     fetchDealsPage({ sort: "hot", page: 1, category: null, city: null, q: null }),
+    fetchListingsPage({
+      sort: "new",
+      page: 1,
+      category: null,
+      city: null,
+      type: null,
+      q: null,
+    }),
     prisma.category.findMany({
       where: { type: "DEAL", isActive: true },
       orderBy: { sortOrder: "asc" },
@@ -26,10 +40,13 @@ export default async function HomePage() {
   ]);
 
   const topDeals = deals.slice(0, HOME_DEALS_COUNT);
+  const topListings = listings.slice(0, HOME_LISTINGS_COUNT);
   const dealIds = topDeals.map((d) => d.id);
-  const [voteMap, favoriteSet] = await Promise.all([
+  const listingIds = topListings.map((l) => l.id);
+  const [voteMap, favoriteSet, listingFavoriteSet] = await Promise.all([
     fetchUserVoteMap(currentUser?.id ?? null, dealIds),
     fetchUserFavoriteSet(currentUser?.id ?? null, dealIds),
+    fetchUserFavoriteListingSet(currentUser?.id ?? null, listingIds),
   ]);
 
   return (
@@ -118,6 +135,46 @@ export default async function HomePage() {
                   currentUserId={currentUser?.id ?? null}
                   myVote={voteMap.get(d.id) ?? null}
                   isFavorited={favoriteSet.has(d.id)}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* Petites annonces */}
+      <section className="mt-10 px-4 sm:px-0">
+        <div className="flex items-end justify-between gap-3">
+          <h2 className="flex items-center gap-2 font-display text-lg font-semibold">
+            <Tag className="h-5 w-5 text-peyi-green-600" aria-hidden />
+            Dernières annonces
+          </h2>
+          <Link
+            href="/annonces"
+            className="text-sm font-medium text-peyi-orange-600 hover:text-peyi-orange-700"
+          >
+            Tout voir
+          </Link>
+        </div>
+
+        {topListings.length === 0 ? (
+          <div className="mt-4 rounded-lg border border-dashed border-border bg-muted/40 px-4 py-8 text-center text-sm text-muted-foreground">
+            Aucune annonce pour l&apos;instant.
+            <Link
+              href="/poster/annonce"
+              className="ml-1 font-medium text-peyi-orange-600 hover:underline"
+            >
+              Publier la première.
+            </Link>
+          </div>
+        ) : (
+          <ul className="mt-4 flex flex-col gap-3">
+            {topListings.map((l) => (
+              <li key={l.id}>
+                <ListingCard
+                  listing={l}
+                  currentUserId={currentUser?.id ?? null}
+                  isFavorited={listingFavoriteSet.has(l.id)}
                 />
               </li>
             ))}

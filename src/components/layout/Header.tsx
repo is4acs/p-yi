@@ -24,6 +24,7 @@ export async function Header() {
           className="hidden gap-1 text-sm font-medium sm:flex"
         >
           <NavLink href="/bons-plans">Bons plans</NavLink>
+          <NavLink href="/annonces">Annonces</NavLink>
           <NavLink href="/poster">Poster</NavLink>
           <NavLink href="/messages">Messages</NavLink>
         </nav>
