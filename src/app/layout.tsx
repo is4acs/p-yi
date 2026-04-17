@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { cn } from "@/lib/utils";
+import { BottomNav } from "@/components/layout/BottomNav";
 import "./globals.css";
 
 const inter = Inter({
@@ -44,8 +45,9 @@ export default function RootLayout({
       className={cn(inter.variable, plusJakarta.variable)}
       suppressHydrationWarning
     >
-      <body className="min-h-screen bg-background font-sans text-foreground antialiased">
+      <body className="min-h-screen bg-background pb-20 font-sans text-foreground antialiased sm:pb-0">
         {children}
+        <BottomNav />
       </body>
     </html>
   );
