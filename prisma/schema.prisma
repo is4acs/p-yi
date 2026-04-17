@@ -321,6 +321,20 @@ model Listing {
   // ex: pour voiture : marque, modèle, km, année, carburant
   // ex: pour immo : surface, pièces, étage
   attributes      Json?         @default("{}")
+
+  // --- Dénormalisation des attrs les plus filtrés -------------------------
+  // Ces colonnes sont re-calculées à chaque create/update à partir de
+  // `attributes` (via `denormalizeAttributes` dans le registry). Elles ne
+  // sont jamais écrites manuellement — les éditer à la main ferait dériver
+  // le JSON et ces copies. Servent uniquement à l'indexation pour les
+  // filtres (year range, km max, surface, marque, carburant, contrat).
+  attrYear        Int?          @db.SmallInt
+  attrMileageKm   Int?
+  attrSurfaceM2   Int?          @db.SmallInt
+  attrRooms       Int?          @db.SmallInt
+  attrBrand       String?
+  attrFuel        String?
+  attrContract    String?
   
   // Médias
   images          ListingImage[]
@@ -366,6 +380,16 @@ model Listing {
   @@index([authorId])
   @@index([expiresAt])
   @@index([isBoosted, boostedUntil])
+  // Indexes filtrants sur les attrs dénormalisés. On indexe chacun en
+  // isolation car les combinaisons (ex. "voitures avec km < 50k") restent
+  // précédées par le filtre `categoryId` qui a déjà un index composite.
+  @@index([attrYear])
+  @@index([attrMileageKm])
+  @@index([attrSurfaceM2])
+  @@index([attrRooms])
+  @@index([attrBrand])
+  @@index([attrFuel])
+  @@index([attrContract])
   @@map("listings")
 }
 
