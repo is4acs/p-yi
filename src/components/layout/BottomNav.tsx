@@ -2,20 +2,27 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Flame, Plus, Tag, User } from "lucide-react";
+import { Flame, MessageSquare, Plus, Tag, User } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 type Tab = {
   href: string;
   label: string;
-  icon: typeof Home;
+  icon: typeof Flame;
   match: (pathname: string) => boolean;
   primary?: boolean;
+  badgeKey?: "unread";
 };
 
 const TABS: Tab[] = [
-  { href: "/", label: "Accueil", icon: Home, match: (p) => p === "/" },
+  {
+    href: "/messages",
+    label: "Messages",
+    icon: MessageSquare,
+    match: (p) => p === "/messages" || p.startsWith("/messages/"),
+    badgeKey: "unread",
+  },
   {
     href: "/bons-plans",
     label: "Deals",
@@ -43,7 +50,11 @@ const TABS: Tab[] = [
   },
 ];
 
-export function BottomNav() {
+type Props = {
+  unreadCount: number;
+};
+
+export function BottomNav({ unreadCount }: Props) {
   const pathname = usePathname() ?? "/";
 
   return (
@@ -55,13 +66,15 @@ export function BottomNav() {
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = tab.match(pathname);
+          const badge =
+            tab.badgeKey === "unread" && unreadCount > 0 ? unreadCount : null;
           return (
             <li key={tab.href} className="flex">
               <Link
                 href={tab.href}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "flex flex-1 flex-col items-center justify-end gap-0.5 px-1 pb-1 pt-2 text-[10px] font-medium transition active:scale-95",
+                  "relative flex flex-1 flex-col items-center justify-end gap-0.5 px-1 pb-1 pt-2 text-[10px] font-medium transition active:scale-95",
                   tab.primary
                     ? "text-peyi-orange-700"
                     : isActive
@@ -81,13 +94,23 @@ export function BottomNav() {
                     <Icon className="h-5 w-5" aria-hidden />
                   </span>
                 ) : (
-                  <Icon
-                    className={cn(
-                      "h-5 w-5 transition",
-                      isActive && "stroke-[2.5]",
+                  <span className="relative">
+                    <Icon
+                      className={cn(
+                        "h-5 w-5 transition",
+                        isActive && "stroke-[2.5]",
+                      )}
+                      aria-hidden
+                    />
+                    {badge !== null && (
+                      <span
+                        aria-label={`${badge} non lu${badge > 1 ? "s" : ""}`}
+                        className="absolute -right-2 -top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-peyi-orange-500 px-1 text-[10px] font-bold text-white ring-2 ring-background"
+                      >
+                        {badge > 99 ? "99+" : badge}
+                      </span>
                     )}
-                    aria-hidden
-                  />
+                  </span>
                 )}
                 <span>{tab.label}</span>
               </Link>

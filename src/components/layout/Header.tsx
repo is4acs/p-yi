@@ -1,14 +1,17 @@
 import Link from "next/link";
 import { LogIn } from "lucide-react";
+import type { User } from "@prisma/client";
 
 import { cn } from "@/lib/utils";
-import { getCurrentUser } from "@/lib/auth/current-user";
 
 import { UserAvatar } from "./UserAvatar";
 
-export async function Header() {
-  const user = await getCurrentUser();
+type Props = {
+  user: User | null;
+  unreadCount: number;
+};
 
+export function Header({ user, unreadCount }: Props) {
   return (
     <header className="sticky top-0 z-30 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 px-4 sm:h-16">
@@ -26,7 +29,9 @@ export async function Header() {
           <NavLink href="/bons-plans">Bons plans</NavLink>
           <NavLink href="/annonces">Annonces</NavLink>
           <NavLink href="/poster">Poster</NavLink>
-          <NavLink href="/messages">Messages</NavLink>
+          <NavLink href="/messages" badge={unreadCount}>
+            Messages
+          </NavLink>
         </nav>
 
         {user ? (
@@ -56,18 +61,28 @@ export async function Header() {
 function NavLink({
   href,
   children,
+  badge,
 }: {
   href: string;
   children: React.ReactNode;
+  badge?: number;
 }) {
   return (
     <Link
       href={href}
       className={cn(
-        "rounded-full px-3 py-1.5 text-muted-foreground transition active:scale-95 hover:bg-muted hover:text-foreground",
+        "relative rounded-full px-3 py-1.5 text-muted-foreground transition active:scale-95 hover:bg-muted hover:text-foreground",
       )}
     >
       {children}
+      {badge !== undefined && badge > 0 && (
+        <span
+          aria-label={`${badge} non lu${badge > 1 ? "s" : ""}`}
+          className="absolute -right-1 -top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-peyi-orange-500 px-1 text-[10px] font-bold text-white"
+        >
+          {badge > 99 ? "99+" : badge}
+        </span>
+      )}
     </Link>
   );
 }

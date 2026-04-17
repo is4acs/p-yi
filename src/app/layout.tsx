@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Header } from "@/components/layout/Header";
 import { RouteProgress } from "@/components/layout/RouteProgress";
+import { getCurrentUser } from "@/lib/auth/current-user";
+import { fetchUnreadCount } from "@/lib/messages/queries";
 import "./globals.css";
 
 const inter = Inter({
@@ -60,6 +62,9 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = await getCurrentUser();
+  const unreadCount = user ? await fetchUnreadCount(user.id) : 0;
+
   return (
     <html
       lang="fr"
@@ -70,9 +75,9 @@ export default async function RootLayout({
         <Suspense fallback={null}>
           <RouteProgress />
         </Suspense>
-        <Header />
+        <Header user={user} unreadCount={unreadCount} />
         {children}
-        <BottomNav />
+        <BottomNav unreadCount={unreadCount} />
       </body>
     </html>
   );
