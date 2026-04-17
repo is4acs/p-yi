@@ -1,8 +1,10 @@
+import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Header } from "@/components/layout/Header";
+import { RouteProgress } from "@/components/layout/RouteProgress";
 import "./globals.css";
 
 const inter = Inter({
@@ -65,6 +67,9 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-background pb-20 font-sans text-foreground antialiased sm:pb-0">
+        <Suspense fallback={null}>
+          <RouteProgress />
+        </Suspense>
         <Header />
         {children}
         <BottomNav />
