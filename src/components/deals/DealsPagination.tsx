@@ -8,16 +8,24 @@ type Props = {
   sort: DealsSort;
   category: string | null;
   city: string | null;
+  q?: string | null;
 };
 
-export function DealsPagination({ page, pageCount, sort, category, city }: Props) {
+export function DealsPagination({
+  page,
+  pageCount,
+  sort,
+  category,
+  city,
+  q,
+}: Props) {
   if (pageCount <= 1) return null;
 
   const hasPrev = page > 1;
   const hasNext = page < pageCount;
 
-  const prevUrl = buildDealsUrl({ sort, category, city, page: page - 1 });
-  const nextUrl = buildDealsUrl({ sort, category, city, page: page + 1 });
+  const prevUrl = buildDealsUrl({ sort, category, city, q, page: page - 1 });
+  const nextUrl = buildDealsUrl({ sort, category, city, q, page: page + 1 });
 
   return (
     <nav

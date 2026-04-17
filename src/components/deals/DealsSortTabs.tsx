@@ -6,6 +6,7 @@ type Props = {
   currentSort: DealsSort;
   category: string | null;
   city: string | null;
+  q?: string | null;
 };
 
 const TABS: Array<{ id: DealsSort; label: string }> = [
@@ -14,7 +15,7 @@ const TABS: Array<{ id: DealsSort; label: string }> = [
   { id: "top-week", label: "🏆 Top semaine" },
 ];
 
-export function DealsSortTabs({ currentSort, category, city }: Props) {
+export function DealsSortTabs({ currentSort, category, city, q }: Props) {
   return (
     <nav
       aria-label="Tri des bons plans"
@@ -25,7 +26,7 @@ export function DealsSortTabs({ currentSort, category, city }: Props) {
         return (
           <Link
             key={tab.id}
-            href={buildDealsUrl({ sort: tab.id, category, city })}
+            href={buildDealsUrl({ sort: tab.id, category, city, q })}
             scroll={false}
             aria-current={isActive ? "page" : undefined}
             className={cn(

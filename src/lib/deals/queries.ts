@@ -68,13 +68,24 @@ export async function fetchUserFavoriteSet(
 type Filters = {
   category: string | null;
   city: string | null;
+  q: string | null;
 };
 
-function buildWhere({ category, city }: Filters): Prisma.DealWhereInput {
+function buildWhere({ category, city, q }: Filters): Prisma.DealWhereInput {
+  const search = q
+    ? ({
+        OR: [
+          { title: { contains: q, mode: "insensitive" } },
+          { description: { contains: q, mode: "insensitive" } },
+        ],
+      } satisfies Prisma.DealWhereInput)
+    : null;
+
   return {
     status: DealStatus.PUBLISHED,
     ...(category ? { category: { slug: category } } : {}),
     ...(city ? { city: { slug: city } } : {}),
+    ...(search ?? {}),
   };
 }
 
@@ -91,13 +102,15 @@ export async function fetchDealsPage({
   page,
   category,
   city,
+  q,
 }: {
   sort: DealsSort;
   page: number;
   category: string | null;
   city: string | null;
+  q: string | null;
 }) {
-  const where = buildWhere({ category, city });
+  const where = buildWhere({ category, city, q });
   const skip = (page - 1) * PAGE_SIZE;
 
   if (sort === "new") {

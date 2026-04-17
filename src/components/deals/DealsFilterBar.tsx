@@ -9,6 +9,7 @@ type Props = {
   cities: Option[];
   selectedCategory: string | null;
   selectedCity: string | null;
+  q?: string | null;
 };
 
 export function DealsFilterBar({
@@ -17,6 +18,7 @@ export function DealsFilterBar({
   cities,
   selectedCategory,
   selectedCity,
+  q,
 }: Props) {
   const hasFilter = Boolean(selectedCategory || selectedCity);
 
@@ -27,6 +29,7 @@ export function DealsFilterBar({
       className="flex flex-wrap items-center gap-2"
     >
       {sort !== "hot" && <input type="hidden" name="sort" value={sort} />}
+      {q && <input type="hidden" name="q" value={q} />}
 
       <label className="sr-only" htmlFor="filter-category">
         Catégorie
@@ -72,7 +75,7 @@ export function DealsFilterBar({
 
       {hasFilter && (
         <Link
-          href={buildDealsUrl({ sort })}
+          href={buildDealsUrl({ sort, q })}
           className="h-9 rounded-md border border-border px-3 text-sm font-medium leading-9 text-muted-foreground hover:text-foreground"
         >
           Effacer
