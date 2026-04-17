@@ -18,6 +18,7 @@ import { DealStatus } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/format";
 import { LEVEL_META } from "@/lib/deals/user-level";
+import { getCurrentUser } from "@/lib/auth/current-user";
 
 import { Button } from "@/components/ui/button";
 import { PriceTag } from "@/components/deals/PriceTag";
@@ -25,6 +26,7 @@ import { TemperatureBadge } from "@/components/deals/TemperatureBadge";
 import { CategoryChip } from "@/components/deals/CategoryChip";
 import { CommuneChip } from "@/components/deals/CommuneChip";
 import { DealImagePlaceholder } from "@/components/deals/DealImagePlaceholder";
+import { AuthorControls } from "@/components/deals/AuthorControls";
 
 export const dynamic = "force-dynamic";
 
@@ -108,9 +110,13 @@ export default async function DealDetailPage({
 }: {
   params: { slug: string };
 }) {
-  const deal = await getDeal(params.slug);
+  const [deal, currentUser] = await Promise.all([
+    getDeal(params.slug),
+    getCurrentUser(),
+  ]);
   if (!deal) notFound();
 
+  const isAuthor = currentUser?.id === deal.author.id;
   const ctaUrl = deal.affiliateUrl ?? deal.externalUrl ?? deal.store?.website ?? null;
   const sellerName =
     deal.store?.name ?? deal.merchant?.name ?? "Vendeur non précisé";
@@ -165,6 +171,13 @@ export default async function DealDetailPage({
             <span className="text-xs">· {deal.merchant.domain}</span>
           )}
         </div>
+
+        {isAuthor && (
+          <AuthorControls
+            dealId={deal.id}
+            editHref={`/bons-plans/${deal.slug}/edit`}
+          />
+        )}
       </header>
 
       {/* Price + CTA */}

@@ -12,11 +12,16 @@ const ACCEPT = "image/jpeg,image/png,image/webp";
 type Props = {
   name?: string;
   className?: string;
+  initialUrl?: string | null;
 };
 
-export function ImagePicker({ name = "coverImage", className }: Props) {
+export function ImagePicker({
+  name = "coverImage",
+  className,
+  initialUrl = null,
+}: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(initialUrl);
   const [error, setError] = useState<string | null>(null);
 
   function handleFile(file: File | null) {

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowLeft } from "lucide-react";
 
@@ -6,19 +7,40 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/current-user";
 import { DealForm } from "@/components/poster/DealForm";
 
-import { createDealAction } from "./actions";
+import { updateDealAction } from "@/app/poster/actions";
 
 export const metadata: Metadata = {
-  title: "Poster un bon plan",
-  description: "Partage tes meilleures affaires avec la communauté Péyi.",
+  title: "Modifier le bon plan",
 };
 
-export default async function PosterPage({
+export default async function EditDealPage({
+  params,
   searchParams,
 }: {
+  params: { slug: string };
   searchParams: { error?: string };
 }) {
-  const user = await requireUser("/poster");
+  const user = await requireUser(`/bons-plans/${params.slug}/edit`);
+
+  const deal = await prisma.deal.findUnique({
+    where: { slug: params.slug },
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      description: true,
+      price: true,
+      originalPrice: true,
+      externalUrl: true,
+      coverImageUrl: true,
+      expiresAt: true,
+      authorId: true,
+      category: { select: { slug: true } },
+      city: { select: { slug: true } },
+    },
+  });
+  if (!deal) notFound();
+  if (deal.authorId !== user.id) redirect(`/bons-plans/${deal.slug}`);
 
   const [categories, cities] = await Promise.all([
     prisma.category.findMany({
@@ -32,23 +54,37 @@ export default async function PosterPage({
     }),
   ]);
 
+  const defaults = {
+    dealId: deal.id,
+    title: deal.title,
+    description: deal.description,
+    price: deal.price.toString(),
+    originalPrice: deal.originalPrice?.toString() ?? null,
+    externalUrl: deal.externalUrl,
+    categorySlug: deal.category.slug,
+    citySlug: deal.city?.slug ?? null,
+    expiresAt: deal.expiresAt
+      ? deal.expiresAt.toISOString().slice(0, 10)
+      : null,
+    coverImageUrl: deal.coverImageUrl,
+  };
+
   return (
     <main className="mx-auto max-w-md px-4 pb-16 pt-6 sm:max-w-2xl sm:pt-10">
       <Link
-        href="/bons-plans"
+        href={`/bons-plans/${deal.slug}`}
         className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden />
-        Annuler
+        Retour au bon plan
       </Link>
 
       <div className="mt-4">
         <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-          Poster un bon plan
+          Modifier le bon plan
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Partage une promo, un prix fou ou un deal caché. +5 karma pour toi,
-          @{user.username}.
+          Mets à jour les détails de ton offre.
         </p>
       </div>
 
@@ -63,10 +99,11 @@ export default async function PosterPage({
 
       <div className="mt-6">
         <DealForm
-          action={createDealAction}
+          action={updateDealAction}
           categories={categories}
           cities={cities}
-          submitLabel="Publier le bon plan"
+          defaults={defaults}
+          submitLabel="Enregistrer"
         />
       </div>
     </main>
