@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import {
   ArrowLeft,
+  ChevronRight,
   Clock,
   Eye,
   Flame,
@@ -98,18 +99,28 @@ export async function generateMetadata({
       description: true,
       slug: true,
       coverImageUrl: true,
+      price: true,
+      priceType: true,
       category: { select: { name: true } },
       city: { select: { name: true } },
     },
   });
   if (!listing) return { title: "Annonce introuvable" };
 
-  const description =
-    listing.description.replace(/\s+/g, " ").trim().slice(0, 160) ||
-    `${listing.category.name} à ${listing.city.name} — annonce sur Péyi.`;
+  // Préfixer la description par le prix améliore l'aperçu social (WhatsApp,
+  // iMessage, Slack affichent 2-3 lignes) — l'info la plus utile est
+  // toujours "combien ça coûte et où ça se trouve".
+  const priceLabel = formatPriceType(listing.priceType, listing.price);
+  const trimmed = listing.description.replace(/\s+/g, " ").trim();
+  const locationTag = `${listing.category.name} · ${listing.city.name}`;
+  const rawDescription = trimmed
+    ? `${priceLabel} · ${locationTag} — ${trimmed}`
+    : `${priceLabel} · ${locationTag} — annonce sur Péyi.`;
+  const description = rawDescription.slice(0, 160);
+
   const url = `/annonces/${listing.slug}`;
   const images = listing.coverImageUrl
-    ? [{ url: listing.coverImageUrl }]
+    ? [{ url: listing.coverImageUrl, alt: listing.title }]
     : undefined;
 
   return {
@@ -173,15 +184,33 @@ export default async function ListingDetailPage({
 
   return (
     <main className="mx-auto max-w-md pb-16 animate-in fade-in duration-300 sm:max-w-2xl">
-      <div className="px-4 pt-4 sm:px-0 sm:pt-6">
+      <nav
+        aria-label="Fil d'Ariane"
+        className="flex flex-wrap items-center gap-1 px-4 pt-4 text-sm text-muted-foreground sm:px-0 sm:pt-6"
+      >
         <Link
           href="/annonces"
-          className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition hover:text-foreground"
+          className="inline-flex items-center gap-1 font-medium transition hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Annonces
         </Link>
-      </div>
+        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" aria-hidden />
+        <Link
+          href={`/annonces?category=${encodeURIComponent(listing.category.slug)}`}
+          className="truncate font-medium transition hover:text-foreground"
+        >
+          {listing.category.icon ? `${listing.category.icon} ` : ""}
+          {listing.category.name}
+        </Link>
+        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" aria-hidden />
+        <Link
+          href={`/annonces?city=${encodeURIComponent(listing.city.slug)}`}
+          className="truncate font-medium transition hover:text-foreground"
+        >
+          {listing.city.name}
+        </Link>
+      </nav>
 
       {/* Hero : multi-photo gallery. Fall back to coverImageUrl (legacy
           listings pre-Session 15) or a category emoji placeholder. */}
