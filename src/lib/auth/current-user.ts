@@ -1,8 +1,45 @@
 import { redirect } from "next/navigation";
 import type { User } from "@prisma/client";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+/**
+ * If Supabase auth.users has a different email (because the user just
+ * confirmed an email change) or a different verified phone, silently mirror
+ * the change into our Prisma User row. Only writes when a drift is detected
+ * so the cost is zero for the common path.
+ */
+async function syncAuthDriftToPrisma(
+  prismaUser: User,
+  authUser: SupabaseUser,
+): Promise<User> {
+  const patches: Partial<Pick<User, "email" | "phone" | "phoneVerified">> = {};
+
+  if (authUser.email && authUser.email !== prismaUser.email) {
+    patches.email = authUser.email;
+  }
+
+  // `phone_confirmed_at` is set by Supabase once the OTP is verified. We use
+  // that as the source of truth for phoneVerified, and mirror auth.users.phone
+  // into Prisma.
+  const authPhone = authUser.phone ? `+${authUser.phone}` : null;
+  const authPhoneVerified = Boolean(authUser.phone_confirmed_at);
+  if (authPhone && authPhone !== prismaUser.phone) {
+    patches.phone = authPhone;
+  }
+  if (authPhoneVerified !== prismaUser.phoneVerified) {
+    patches.phoneVerified = authPhoneVerified;
+  }
+
+  if (Object.keys(patches).length === 0) return prismaUser;
+
+  return prisma.user.update({
+    where: { id: prismaUser.id },
+    data: patches,
+  });
+}
 
 /**
  * Returns the current Prisma User row, or null if not authenticated or the
@@ -16,7 +53,12 @@ export async function getCurrentUser(): Promise<User | null> {
 
   if (!authUser) return null;
 
-  return prisma.user.findUnique({ where: { id: authUser.id } });
+  const profile = await prisma.user.findUnique({
+    where: { id: authUser.id },
+  });
+  if (!profile) return null;
+
+  return syncAuthDriftToPrisma(profile, authUser);
 }
 
 /**
@@ -38,5 +80,5 @@ export async function requireUser(nextPath?: string): Promise<User> {
   const profile = await prisma.user.findUnique({ where: { id: authUser.id } });
   if (!profile) redirect("/auth/complete-profile");
 
-  return profile;
+  return syncAuthDriftToPrisma(profile, authUser);
 }
