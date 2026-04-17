@@ -38,8 +38,8 @@ export default async function ProfilEditPage({ searchParams }: Props) {
           Modifier mon profil
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Change ton pseudo, ton e-mail ou ton numéro. Un changement d'e-mail ou
-          de numéro demande une confirmation.
+          Change ton pseudo, ton e-mail ou ton numéro. Un changement d&apos;e-mail
+          ou de numéro demande une confirmation.
         </p>
       </div>
 

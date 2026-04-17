@@ -157,7 +157,9 @@ function EmptyState() {
       <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-peyi-orange-100 text-peyi-orange-600">
         <Inbox className="h-6 w-6" aria-hidden />
       </div>
-      <p className="mt-3 text-sm font-medium">Aucun message pour l'instant.</p>
+      <p className="mt-3 text-sm font-medium">
+        Aucun message pour l&apos;instant.
+      </p>
       <p className="mt-1 text-xs text-muted-foreground">
         Ouvre une annonce et contacte le vendeur pour démarrer une conversation.
       </p>
