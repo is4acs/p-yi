@@ -28,6 +28,7 @@ import { CommuneChip } from "@/components/deals/CommuneChip";
 import { DealImagePlaceholder } from "@/components/deals/DealImagePlaceholder";
 import { AuthorControls } from "@/components/deals/AuthorControls";
 import { VoteButtons } from "@/components/deals/VoteButtons";
+import { CommentList } from "@/components/comments/CommentList";
 
 export const dynamic = "force-dynamic";
 
@@ -328,13 +329,17 @@ export default async function DealDetailPage({
         </div>
       </section>
 
-      {/* Comments — read-only placeholder until Session 3 */}
+      {/* Comments */}
       <section className="mt-6 px-4 sm:px-0">
         <h2 className="font-display text-lg font-semibold">
           Avis de la communauté ({deal.commentCount})
         </h2>
-        <div className="mt-2 rounded-lg border border-dashed border-border bg-muted/40 px-4 py-6 text-center text-sm text-muted-foreground">
-          Les commentaires arrivent bientôt.
+        <div className="mt-3">
+          <CommentList
+            dealId={deal.id}
+            dealSlug={deal.slug}
+            currentUserId={currentUser?.id ?? null}
+          />
         </div>
       </section>
     </main>
