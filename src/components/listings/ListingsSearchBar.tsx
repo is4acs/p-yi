@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   buildListingsUrl,
+  type ListingsFilters,
   type ListingsSort,
   type ListingTypeSlug,
 } from "@/lib/listings/url";
@@ -17,6 +18,7 @@ type Props = {
   category?: string | null;
   city?: string | null;
   type?: ListingTypeSlug | null;
+  filters?: ListingsFilters;
   autoFocus?: boolean;
   placeholder?: string;
   className?: string;
@@ -28,6 +30,7 @@ export function ListingsSearchBar({
   category = null,
   city = null,
   type = null,
+  filters,
   autoFocus = false,
   placeholder = "Rechercher une annonce…",
   className,
@@ -44,6 +47,7 @@ export function ListingsSearchBar({
         category,
         city,
         type,
+        filters,
         q: q.length >= 2 ? q : null,
       }),
     );
@@ -51,7 +55,9 @@ export function ListingsSearchBar({
 
   function clear() {
     setValue("");
-    router.push(buildListingsUrl({ sort, category, city, type, q: null }));
+    router.push(
+      buildListingsUrl({ sort, category, city, type, filters, q: null }),
+    );
   }
 
   return (

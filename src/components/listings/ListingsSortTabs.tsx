@@ -2,6 +2,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
   buildListingsUrl,
+  type ListingsFilters,
   type ListingsSort,
   type ListingTypeSlug,
 } from "@/lib/listings/url";
@@ -12,6 +13,7 @@ type Props = {
   city: string | null;
   type: ListingTypeSlug | null;
   q?: string | null;
+  filters?: ListingsFilters;
 };
 
 const TABS: Array<{ id: ListingsSort; label: string }> = [
@@ -26,6 +28,7 @@ export function ListingsSortTabs({
   city,
   type,
   q,
+  filters,
 }: Props) {
   return (
     <nav
@@ -37,7 +40,14 @@ export function ListingsSortTabs({
         return (
           <Link
             key={tab.id}
-            href={buildListingsUrl({ sort: tab.id, category, city, type, q })}
+            href={buildListingsUrl({
+              sort: tab.id,
+              category,
+              city,
+              type,
+              q,
+              filters,
+            })}
             scroll={false}
             aria-current={isActive ? "page" : undefined}
             className={cn(

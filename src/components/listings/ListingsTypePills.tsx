@@ -3,6 +3,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
   buildListingsUrl,
+  type ListingsFilters,
   type ListingsSort,
   type ListingTypeSlug,
 } from "@/lib/listings/url";
@@ -13,6 +14,7 @@ type Props = {
   city: string | null;
   currentType: ListingTypeSlug | null;
   q?: string | null;
+  filters?: ListingsFilters;
 };
 
 const PILLS: Array<{ id: ListingTypeSlug | null; label: string }> = [
@@ -29,6 +31,7 @@ export function ListingsTypePills({
   city,
   currentType,
   q,
+  filters,
 }: Props) {
   return (
     <nav
@@ -46,6 +49,7 @@ export function ListingsTypePills({
               city,
               type: pill.id,
               q,
+              filters,
             })}
             scroll={false}
             aria-current={isActive ? "page" : undefined}

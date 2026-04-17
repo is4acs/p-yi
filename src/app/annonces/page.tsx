@@ -8,6 +8,8 @@ import {
   PAGE_SIZE,
 } from "@/lib/listings/queries";
 import {
+  hasActiveFilters,
+  parseFilters,
   parsePage,
   parseQuery,
   parseSort,
@@ -19,6 +21,7 @@ import { ListingsSearchBar } from "@/components/listings/ListingsSearchBar";
 import { ListingsSortTabs } from "@/components/listings/ListingsSortTabs";
 import { ListingsTypePills } from "@/components/listings/ListingsTypePills";
 import { ListingsFilterBar } from "@/components/listings/ListingsFilterBar";
+import { ListingsAttributeFilters } from "@/components/listings/ListingsAttributeFilters";
 import { ListingsPagination } from "@/components/listings/ListingsPagination";
 import { EmptyListings } from "@/components/listings/EmptyListings";
 
@@ -31,6 +34,15 @@ type SearchParams = {
   type?: string;
   page?: string;
   q?: string;
+  prixMin?: string;
+  prixMax?: string;
+  anneeMin?: string;
+  kmMax?: string;
+  surfaceMin?: string;
+  pieces?: string;
+  carburant?: string;
+  marque?: string;
+  contrat?: string;
 };
 
 export async function generateMetadata({
@@ -76,10 +88,11 @@ export default async function AnnoncesPage({
   const category = searchParams.category?.trim() || null;
   const city = searchParams.city?.trim() || null;
   const q = parseQuery(searchParams.q);
+  const filters = parseFilters(searchParams);
 
   const [{ listings, total }, categories, cities, currentUser] =
     await Promise.all([
-      fetchListingsPage({ sort, page, category, city, type, q }),
+      fetchListingsPage({ sort, page, category, city, type, q, filters }),
       prisma.category.findMany({
         where: { type: { in: ["LISTING", "BOTH"] }, isActive: true },
         orderBy: { sortOrder: "asc" },
@@ -99,7 +112,8 @@ export default async function AnnoncesPage({
   );
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const hasFilters = Boolean(category || city || type || q);
+  const hasFilters =
+    Boolean(category || city || type || q) || hasActiveFilters(filters);
 
   return (
     <main className="mx-auto max-w-md pb-12 animate-in fade-in duration-300 sm:max-w-2xl">
@@ -138,6 +152,7 @@ export default async function AnnoncesPage({
             category={category}
             city={city}
             type={type}
+            filters={filters}
           />
           <ListingsTypePills
             sort={sort}
@@ -145,6 +160,7 @@ export default async function AnnoncesPage({
             city={city}
             currentType={type}
             q={q}
+            filters={filters}
           />
           <ListingsSortTabs
             currentSort={sort}
@@ -152,6 +168,7 @@ export default async function AnnoncesPage({
             city={city}
             type={type}
             q={q}
+            filters={filters}
           />
           <ListingsFilterBar
             sort={sort}
@@ -161,6 +178,15 @@ export default async function AnnoncesPage({
             selectedCity={city}
             type={type}
             q={q}
+            filters={filters}
+          />
+          <ListingsAttributeFilters
+            sort={sort}
+            category={category}
+            city={city}
+            type={type}
+            q={q}
+            filters={filters}
           />
         </div>
       </div>
@@ -190,6 +216,7 @@ export default async function AnnoncesPage({
           city={city}
           type={type}
           q={q}
+          filters={filters}
         />
       </div>
     </main>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
   buildListingsUrl,
+  type ListingsFilters,
   type ListingsSort,
   type ListingTypeSlug,
 } from "@/lib/listings/url";
@@ -14,6 +15,7 @@ type Props = {
   city: string | null;
   type: ListingTypeSlug | null;
   q?: string | null;
+  filters?: ListingsFilters;
 };
 
 export function ListingsPagination({
@@ -24,6 +26,7 @@ export function ListingsPagination({
   city,
   type,
   q,
+  filters,
 }: Props) {
   if (pageCount <= 1) return null;
 
@@ -36,6 +39,7 @@ export function ListingsPagination({
     city,
     type,
     q,
+    filters,
     page: page - 1,
   });
   const nextUrl = buildListingsUrl({
@@ -44,6 +48,7 @@ export function ListingsPagination({
     city,
     type,
     q,
+    filters,
     page: page + 1,
   });
 

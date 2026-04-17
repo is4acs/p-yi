@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   buildListingsUrl,
+  type ListingsFilters,
   type ListingsSort,
   type ListingTypeSlug,
 } from "@/lib/listings/url";
@@ -15,7 +16,25 @@ type Props = {
   selectedCity: string | null;
   type: ListingTypeSlug | null;
   q?: string | null;
+  filters?: ListingsFilters;
 };
+
+/**
+ * Map des clés `ListingsFilters` vers leur nom URL. Utilisé pour émettre
+ * les hidden inputs qui préservent les filtres pendant une soumission
+ * catégorie / ville — sinon ils seraient perdus au premier submit.
+ */
+const FILTER_URL_KEYS: Array<[keyof ListingsFilters, string]> = [
+  ["priceMin", "prixMin"],
+  ["priceMax", "prixMax"],
+  ["yearMin", "anneeMin"],
+  ["kmMax", "kmMax"],
+  ["surfaceMin", "surfaceMin"],
+  ["rooms", "pieces"],
+  ["fuel", "carburant"],
+  ["brand", "marque"],
+  ["contract", "contrat"],
+];
 
 export function ListingsFilterBar({
   sort,
@@ -25,6 +44,7 @@ export function ListingsFilterBar({
   selectedCity,
   type,
   q,
+  filters,
 }: Props) {
   const hasFilter = Boolean(selectedCategory || selectedCity);
 
@@ -37,6 +57,19 @@ export function ListingsFilterBar({
       {sort !== "new" && <input type="hidden" name="sort" value={sort} />}
       {type && <input type="hidden" name="type" value={type} />}
       {q && <input type="hidden" name="q" value={q} />}
+      {filters &&
+        FILTER_URL_KEYS.map(([k, urlKey]) => {
+          const value = filters[k];
+          if (value == null || value === "") return null;
+          return (
+            <input
+              key={urlKey}
+              type="hidden"
+              name={urlKey}
+              value={String(value)}
+            />
+          );
+        })}
 
       <label className="sr-only" htmlFor="filter-lcategory">
         Catégorie
@@ -82,7 +115,7 @@ export function ListingsFilterBar({
 
       {hasFilter && (
         <Link
-          href={buildListingsUrl({ sort, type, q })}
+          href={buildListingsUrl({ sort, type, q, filters })}
           className="h-9 rounded-md border border-border px-3 text-sm font-medium leading-9 text-muted-foreground hover:text-foreground"
         >
           Effacer
