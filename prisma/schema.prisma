@@ -1,0 +1,858 @@
+// =============================================================================
+// PÉYI - Schéma de base de données
+// =============================================================================
+// Plateforme communautaire de bons plans et petites annonces en Guyane
+// Stack : Next.js 14 + Supabase (PostgreSQL) + Prisma
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL") // Pour les migrations Supabase
+}
+
+// =============================================================================
+// USERS & AUTHENTIFICATION
+// =============================================================================
+
+model User {
+  id               String    @id @default(uuid())
+  // Identité
+  email            String    @unique
+  phone            String?   @unique
+  phoneVerified    Boolean   @default(false)
+  username         String    @unique // pseudo public @marie973
+  fullName         String?   // nom complet (privé)
+  avatarUrl        String?
+  bio              String?   @db.Text
+  
+  // Localisation
+  cityId           String?
+  city             City?     @relation(fields: [cityId], references: [id])
+  
+  // Gamification
+  karma            Int       @default(0)
+  level            UserLevel @default(BEGINNER)
+  badges           Badge[]
+  
+  // Rôles
+  role             UserRole  @default(USER)
+  isProAccount     Boolean   @default(false)
+  proPlanId        String?
+  proPlan          ProPlan?  @relation(fields: [proPlanId], references: [id])
+  proPlanExpiresAt DateTime?
+  
+  // Modération
+  isBanned         Boolean   @default(false)
+  bannedUntil      DateTime?
+  banReason        String?
+  shadowBanned     Boolean   @default(false) // bannissement silencieux
+  reportCount      Int       @default(0)
+  
+  // Préférences
+  notificationSettings Json  @default("{\"push\":true,\"email\":true,\"newDeals\":true,\"alertsMatch\":true}")
+  preferredLanguage    String @default("fr")
+  
+  // Relations
+  deals            Deal[]
+  listings         Listing[]
+  comments         Comment[]
+  votes            Vote[]
+  favorites        Favorite[]
+  alerts           Alert[]
+  messagesSent     Message[] @relation("MessagesSent")
+  messagesReceived Message[] @relation("MessagesReceived")
+  reports          Report[]  @relation("ReporterReports")
+  reportsAgainst   Report[]  @relation("ReportedUserReports")
+  notifications    Notification[]
+  sessions         Session[]
+  karmaHistory     KarmaHistory[]
+  
+  // Timestamps
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  lastActiveAt     DateTime  @default(now())
+  
+  @@index([username])
+  @@index([email])
+  @@index([karma(sort: Desc)])
+  @@index([cityId])
+  @@map("users")
+}
+
+enum UserRole {
+  USER          // utilisateur standard
+  PRO           // compte pro (concessionnaire, agence, etc.)
+  AMBASSADOR    // ambassadeur (niveau 6 karma)
+  MODERATOR     // modérateur
+  ADMIN         // admin
+}
+
+enum UserLevel {
+  BEGINNER      // 🌱 Débutant - 0 karma
+  CURIOUS       // 🦎 Curieux - 50 karma
+  HUNTER        // 🔥 Chasseur - 200 karma
+  EXPERT        // ⚡ Expert - 500 karma
+  LEGEND        // 👑 Légende - 2000 karma
+  AMBASSADOR    // 🏆 Ambassadeur - 5000 karma
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  device    String?  // iPhone, Android, Desktop
+  ipAddress String?
+  userAgent String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  @@index([userId])
+  @@index([token])
+  @@map("sessions")
+}
+
+// =============================================================================
+// LOCALISATION (Communes de Guyane)
+// =============================================================================
+
+model City {
+  id        String   @id @default(uuid())
+  name      String   @unique // Cayenne, Matoury, Kourou, Rémire-Montjoly, etc.
+  slug      String   @unique // cayenne, matoury, kourou
+  postcode  String?  // 97300, 97355, etc.
+  latitude  Float?
+  longitude Float?
+  
+  users     User[]
+  listings  Listing[]
+  deals     Deal[]
+  stores    Store[]
+  
+  @@map("cities")
+}
+
+// =============================================================================
+// CATÉGORIES (communes aux deals et listings)
+// =============================================================================
+
+model Category {
+  id          String     @id @default(uuid())
+  name        String     // "Tech & Multimédia", "Véhicules", etc.
+  slug        String     @unique
+  icon        String?    // emoji ou nom d'icône lucide
+  color       String?    // couleur hex pour l'UI
+  type        CategoryType
+  parentId    String?
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  sortOrder   Int        @default(0)
+  isActive    Boolean    @default(true)
+  
+  deals       Deal[]
+  listings    Listing[]
+  alerts      Alert[]
+  
+  createdAt   DateTime   @default(now())
+  
+  @@index([type, isActive])
+  @@index([parentId])
+  @@map("categories")
+}
+
+enum CategoryType {
+  DEAL      // pour les bons plans (Tech, Alim, Vols, etc.)
+  LISTING   // pour les petites annonces (Véhicules, Immo, Emploi, etc.)
+  BOTH      // commun aux deux
+}
+
+// =============================================================================
+// BONS PLANS (Deals)
+// =============================================================================
+
+model Deal {
+  id              String     @id @default(uuid())
+  
+  // Auteur
+  authorId        String
+  author          User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  // Contenu
+  title           String
+  slug            String     @unique
+  description     String?    @db.Text
+  
+  // Prix
+  price           Decimal    @db.Decimal(10, 2)
+  originalPrice   Decimal?   @db.Decimal(10, 2)
+  discountPercent Int?       // calculé automatiquement
+  currency        String     @default("EUR")
+  isFree          Boolean    @default(false)
+  
+  // Localisation
+  cityId          String?
+  city            City?      @relation(fields: [cityId], references: [id])
+  storeId         String?
+  store           Store?     @relation(fields: [storeId], references: [id])
+  
+  // Catégorisation
+  categoryId      String
+  category        Category   @relation(fields: [categoryId], references: [id])
+  tags            Tag[]      @relation("DealTags")
+  
+  // Lien externe
+  externalUrl     String?    // lien vers l'offre (Amazon, Carrefour, etc.)
+  affiliateUrl    String?    // URL avec tag d'affiliation
+  merchantId      String?
+  merchant        Merchant?  @relation(fields: [merchantId], references: [id])
+  
+  // Médias
+  images          DealImage[]
+  coverImageUrl   String?    // image principale
+  
+  // Dates
+  startsAt        DateTime?
+  expiresAt       DateTime?
+  
+  // Engagement (dénormalisé pour la perf)
+  temperature     Int        @default(0)    // score chaud/froid
+  upvotes         Int        @default(0)
+  downvotes       Int        @default(0)
+  commentCount    Int        @default(0)
+  viewCount       Int        @default(0)
+  clickCount      Int        @default(0)    // clics sur "voir l'offre"
+  shareCount      Int        @default(0)
+  
+  // Statut
+  status          DealStatus @default(PUBLISHED)
+  isSponsored     Boolean    @default(false)
+  sponsoredUntil  DateTime?
+  isFeatured      Boolean    @default(false)
+  featuredUntil   DateTime?
+  isPinned        Boolean    @default(false)
+  
+  // Relations
+  comments        Comment[]
+  votes           Vote[]
+  favorites       Favorite[]
+  reports         Report[]
+  clicks          Click[]
+  
+  // Timestamps
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  publishedAt     DateTime   @default(now())
+  
+  @@index([status, publishedAt(sort: Desc)])
+  @@index([categoryId, status])
+  @@index([cityId])
+  @@index([temperature(sort: Desc)])
+  @@index([expiresAt])
+  @@index([authorId])
+  @@index([isSponsored, sponsoredUntil])
+  @@map("deals")
+}
+
+enum DealStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  EXPIRED
+  REJECTED
+  REMOVED
+}
+
+model DealImage {
+  id        String   @id @default(uuid())
+  dealId    String
+  deal      Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  url       String
+  altText   String?
+  sortOrder Int      @default(0)
+  width     Int?
+  height    Int?
+  createdAt DateTime @default(now())
+  
+  @@index([dealId])
+  @@map("deal_images")
+}
+
+// =============================================================================
+// PETITES ANNONCES (Listings)
+// =============================================================================
+
+model Listing {
+  id              String        @id @default(uuid())
+  
+  // Auteur
+  authorId        String
+  author          User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  // Contenu
+  title           String
+  slug            String        @unique
+  description     String        @db.Text
+  
+  // Prix
+  price           Decimal?      @db.Decimal(10, 2)
+  priceType       PriceType     @default(FIXED)
+  currency        String        @default("EUR")
+  
+  // Type d'annonce
+  type            ListingType   @default(OFFER)
+  condition       ItemCondition?
+  
+  // Localisation
+  cityId          String
+  city            City          @relation(fields: [cityId], references: [id])
+  neighborhood    String?       // quartier précis (optionnel)
+  
+  // Catégorisation
+  categoryId      String
+  category        Category      @relation(fields: [categoryId], references: [id])
+  tags            Tag[]         @relation("ListingTags")
+  
+  // Attributs dynamiques (selon catégorie)
+  // ex: pour voiture : marque, modèle, km, année, carburant
+  // ex: pour immo : surface, pièces, étage
+  attributes      Json?         @default("{}")
+  
+  // Médias
+  images          ListingImage[]
+  coverImageUrl   String?
+  
+  // Contact
+  contactPhone    String?       // caché par défaut
+  showPhone       Boolean       @default(false)
+  allowMessages   Boolean       @default(true)
+  
+  // Boost payant
+  isBoosted       Boolean       @default(false)
+  boostedUntil    DateTime?
+  isFeatured      Boolean       @default(false)
+  featuredUntil   DateTime?
+  isUrgent        Boolean       @default(false)
+  urgentUntil     DateTime?
+  
+  // Engagement
+  viewCount       Int           @default(0)
+  contactCount    Int           @default(0)
+  favoriteCount   Int           @default(0)
+  
+  // Statut
+  status          ListingStatus @default(PUBLISHED)
+  expiresAt       DateTime      // 30 jours par défaut
+  
+  // Relations
+  comments        Comment[]
+  favorites       Favorite[]
+  reports         Report[]
+  messages        Message[]
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  publishedAt     DateTime      @default(now())
+  bumpedAt        DateTime?     // dernière fois remontée
+  
+  @@index([status, publishedAt(sort: Desc)])
+  @@index([categoryId, status])
+  @@index([cityId, status])
+  @@index([authorId])
+  @@index([expiresAt])
+  @@index([isBoosted, boostedUntil])
+  @@map("listings")
+}
+
+enum ListingType {
+  OFFER         // propose (je vends, je loue, j'embauche)
+  DEMAND        // recherche (je cherche, je veux acheter)
+  EXCHANGE      // échange / troc
+  DONATION      // don gratuit
+}
+
+enum ListingStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  SOLD          // vendu / loué / pourvu
+  EXPIRED
+  REJECTED
+  REMOVED
+  ARCHIVED
+}
+
+enum PriceType {
+  FIXED         // prix ferme
+  NEGOTIABLE    // à débattre
+  PER_MONTH     // loyer mensuel
+  PER_DAY       // location journalière
+  FREE          // gratuit / don
+  ON_REQUEST    // nous consulter
+}
+
+enum ItemCondition {
+  NEW           // neuf sous blister
+  LIKE_NEW      // comme neuf
+  VERY_GOOD     // très bon état
+  GOOD          // bon état
+  ACCEPTABLE    // état correct
+  FOR_PARTS     // pour pièces
+}
+
+model ListingImage {
+  id        String   @id @default(uuid())
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  url       String
+  altText   String?
+  sortOrder Int      @default(0)
+  width     Int?
+  height    Int?
+  createdAt DateTime @default(now())
+  
+  @@index([listingId])
+  @@map("listing_images")
+}
+
+// =============================================================================
+// MAGASINS & MARCHANDS
+// =============================================================================
+
+model Store {
+  id          String   @id @default(uuid())
+  name        String   // "Carrefour Matoury", "Géant Matoury"
+  slug        String   @unique
+  logoUrl     String?
+  cityId      String
+  city        City     @relation(fields: [cityId], references: [id])
+  address     String?
+  latitude    Float?
+  longitude   Float?
+  phone       String?
+  website     String?
+  openingHours Json?   // { monday: "8h-20h", ... }
+  isVerified  Boolean  @default(false)
+  
+  deals       Deal[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([cityId])
+  @@map("stores")
+}
+
+model Merchant {
+  id                String   @id @default(uuid())
+  name              String   // Amazon, Cdiscount, Fnac, Boulanger
+  slug              String   @unique
+  domain            String   @unique // amazon.fr
+  logoUrl           String?
+  
+  // Programme d'affiliation
+  affiliateProgram  String?  // "amazon_partners", "awin", "rakuten"
+  affiliateTag      String?  // tag à injecter dans l'URL
+  commissionRate    Float?   // taux moyen en %
+  
+  deals             Deal[]
+  
+  createdAt         DateTime @default(now())
+  
+  @@map("merchants")
+}
+
+// =============================================================================
+// ENGAGEMENT (Votes, Commentaires, Favoris)
+// =============================================================================
+
+model Vote {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dealId    String
+  deal      Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  value     VoteType // HOT ou COLD
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, dealId])
+  @@index([dealId])
+  @@map("votes")
+}
+
+enum VoteType {
+  HOT           // 🔥 +10° pour le deal
+  COLD          // ❄️ -5° pour le deal
+}
+
+model Comment {
+  id           String   @id @default(uuid())
+  
+  authorId     String
+  author       User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  // Relation polymorphe : soit sur un deal, soit sur un listing
+  dealId       String?
+  deal         Deal?    @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  listingId    String?
+  listing      Listing? @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  
+  // Threading
+  parentId     String?
+  parent       Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies      Comment[] @relation("CommentReplies")
+  
+  content      String   @db.Text
+  
+  // Engagement
+  upvotes      Int      @default(0)
+  isEdited     Boolean  @default(false)
+  isDeleted    Boolean  @default(false)
+  
+  reports      Report[]
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@index([dealId])
+  @@index([listingId])
+  @@index([authorId])
+  @@index([parentId])
+  @@map("comments")
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  dealId    String?
+  deal      Deal?    @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  listingId String?
+  listing   Listing? @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, dealId])
+  @@unique([userId, listingId])
+  @@index([userId])
+  @@map("favorites")
+}
+
+// =============================================================================
+// MESSAGERIE (contact entre vendeurs et acheteurs)
+// =============================================================================
+
+model Message {
+  id          String   @id @default(uuid())
+  
+  senderId    String
+  sender      User     @relation("MessagesSent", fields: [senderId], references: [id])
+  recipientId String
+  recipient   User     @relation("MessagesReceived", fields: [recipientId], references: [id])
+  
+  // Contexte : message relatif à une annonce
+  listingId   String?
+  listing     Listing? @relation(fields: [listingId], references: [id])
+  
+  content     String   @db.Text
+  isRead      Boolean  @default(false)
+  readAt      DateTime?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([senderId, recipientId])
+  @@index([recipientId, isRead])
+  @@index([listingId])
+  @@map("messages")
+}
+
+// =============================================================================
+// ALERTES PERSONNALISÉES (notifications de nouveaux deals/annonces)
+// =============================================================================
+
+model Alert {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name         String    // "Alerte iPhone"
+  keywords     String[]  // mots-clés à matcher
+  categoryId   String?
+  category     Category? @relation(fields: [categoryId], references: [id])
+  
+  // Filtres
+  maxPrice     Decimal?  @db.Decimal(10, 2)
+  minPrice     Decimal?  @db.Decimal(10, 2)
+  cityId       String?
+  type         AlertType
+  
+  // Canaux de notification
+  notifyEmail  Boolean   @default(true)
+  notifyPush   Boolean   @default(true)
+  notifySms    Boolean   @default(false)
+  
+  isActive     Boolean   @default(true)
+  lastMatchAt  DateTime?
+  matchCount   Int       @default(0)
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  
+  @@index([userId, isActive])
+  @@map("alerts")
+}
+
+enum AlertType {
+  DEAL          // alertes bons plans
+  LISTING       // alertes petites annonces
+  BOTH          // les deux
+}
+
+// =============================================================================
+// GAMIFICATION
+// =============================================================================
+
+model Badge {
+  id          String   @id @default(uuid())
+  name        String   @unique // "Premier deal", "Chasseur en or"
+  slug        String   @unique
+  description String
+  iconUrl     String?
+  emoji       String?  // 🔥
+  requirement Json     // { "type": "post_count", "threshold": 10 }
+  
+  users       User[]
+  
+  createdAt   DateTime @default(now())
+  
+  @@map("badges")
+}
+
+model KarmaHistory {
+  id          String         @id @default(uuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  action      KarmaAction
+  points      Int            // peut être négatif
+  description String?
+  
+  // Référence optionnelle à l'objet qui a déclenché
+  dealId      String?
+  listingId   String?
+  commentId   String?
+  
+  createdAt   DateTime       @default(now())
+  
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("karma_history")
+}
+
+enum KarmaAction {
+  DEAL_POSTED
+  DEAL_HOT_100
+  DEAL_HOT_500
+  COMMENT_USEFUL
+  REPORT_VALID
+  REFERRAL
+  PROFILE_COMPLETE
+  DAILY_LOGIN
+  ANNIVERSARY
+  ADMIN_ADJUSTMENT
+  DEAL_REMOVED       // malus
+  SPAM_PENALTY       // malus
+}
+
+// =============================================================================
+// TAGS (recherche & découverte)
+// =============================================================================
+
+model Tag {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  slug      String    @unique
+  usageCount Int      @default(0)
+  
+  deals     Deal[]    @relation("DealTags")
+  listings  Listing[] @relation("ListingTags")
+  
+  createdAt DateTime  @default(now())
+  
+  @@index([usageCount(sort: Desc)])
+  @@map("tags")
+}
+
+// =============================================================================
+// MODÉRATION & SIGNALEMENTS
+// =============================================================================
+
+model Report {
+  id             String       @id @default(uuid())
+  
+  reporterId     String
+  reporter       User         @relation("ReporterReports", fields: [reporterId], references: [id])
+  
+  // Ce qui est signalé (polymorphe)
+  reportedUserId String?
+  reportedUser   User?        @relation("ReportedUserReports", fields: [reportedUserId], references: [id])
+  dealId         String?
+  deal           Deal?        @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  listingId      String?
+  listing        Listing?     @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  commentId      String?
+  comment        Comment?     @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  
+  reason         ReportReason
+  description    String?      @db.Text
+  
+  status         ReportStatus @default(PENDING)
+  reviewedAt     DateTime?
+  reviewedBy     String?
+  action         String?      // "banned", "warning", "deleted", "dismissed"
+  
+  createdAt      DateTime     @default(now())
+  
+  @@index([status, createdAt])
+  @@index([dealId])
+  @@index([listingId])
+  @@map("reports")
+}
+
+enum ReportReason {
+  SCAM              // arnaque
+  DUPLICATE         // doublon
+  OFFENSIVE         // contenu offensant
+  FAKE_PRICE        // prix faux / fake
+  EXPIRED           // offre expirée
+  WRONG_CATEGORY    // mauvaise catégorie
+  SPAM              // spam
+  ILLEGAL           // contenu illégal
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWING
+  RESOLVED
+  DISMISSED
+}
+
+// =============================================================================
+// ABONNEMENTS PRO (pour concessionnaires, agences immo, etc.)
+// =============================================================================
+
+model ProPlan {
+  id             String   @id @default(uuid())
+  name           String   // "Pro S", "Pro M", "Pro L", "Découverte", "Visibilité", "Star"
+  slug           String   @unique
+  type           ProPlanType
+  
+  priceMonthly   Decimal  @db.Decimal(10, 2)
+  priceYearly    Decimal? @db.Decimal(10, 2)
+  
+  // Limites et features
+  maxListings    Int?     // null = illimité
+  maxDeals       Int?
+  hasAnalytics   Boolean  @default(false)
+  hasFeaturedPosts Int    @default(0)  // nb posts mis en avant /mois
+  hasPushNotifications Boolean @default(false)
+  hasDedicatedManager Boolean @default(false)
+  hasLogo        Boolean  @default(false)
+  hasBadge       Boolean  @default(false)
+  
+  isActive       Boolean  @default(true)
+  
+  users          User[]
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@map("pro_plans")
+}
+
+enum ProPlanType {
+  LISTING_PRO      // pour les petites annonces (concessionnaires, agences)
+  DEAL_SPONSOR     // pour les commerçants qui sponsorisent des deals
+}
+
+// =============================================================================
+// TRACKING & AFFILIATION
+// =============================================================================
+
+model Click {
+  id           String   @id @default(uuid())
+  dealId       String
+  deal         Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  
+  userId       String?  // null si anonyme
+  sessionId    String?  // pour tracker les anonymes
+  
+  destinationUrl String
+  affiliateUrl   String?
+  merchantId     String?
+  
+  // Analytics
+  referrer     String?
+  userAgent    String?
+  ipAddress    String?
+  cityId       String?
+  
+  createdAt    DateTime @default(now())
+  
+  @@index([dealId, createdAt])
+  @@index([userId])
+  @@index([merchantId])
+  @@map("clicks")
+}
+
+// =============================================================================
+// NOTIFICATIONS
+// =============================================================================
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type      NotificationType
+  title     String
+  message   String           @db.Text
+  imageUrl  String?
+  actionUrl String?          // lien à ouvrir au clic
+  
+  // Référence optionnelle
+  dealId      String?
+  listingId   String?
+  commentId   String?
+  fromUserId  String?
+  
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  
+  createdAt DateTime         @default(now())
+  
+  @@index([userId, isRead, createdAt(sort: Desc)])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  NEW_COMMENT              // quelqu'un a commenté ton post
+  COMMENT_REPLY            // quelqu'un a répondu à ton commentaire
+  DEAL_HOT                 // ton deal atteint un seuil de température
+  ALERT_MATCH              // match d'alerte perso
+  NEW_MESSAGE              // message privé reçu
+  BADGE_EARNED             // nouveau badge débloqué
+  LEVEL_UP                 // montée de niveau
+  KARMA_MILESTONE          // palier de karma atteint
+  LISTING_EXPIRING         // ton annonce expire bientôt
+  LISTING_FAVORITED        // quelqu'un a liké ton annonce
+  REPORT_RESOLVED          // ton signalement a été traité
+  SYSTEM                   // message système
+  PROMOTIONAL              // promo Péyi
+}
