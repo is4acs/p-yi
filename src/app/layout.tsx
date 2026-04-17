@@ -46,8 +46,22 @@ export const metadata: Metadata = {
     description:
       "Partage, vote et profite des meilleurs bons plans de Guyane.",
   },
-  icons: {
-    icon: "/favicon.ico",
+  // Icons are generated dynamically by src/app/icon.tsx and apple-icon.tsx.
+  // Next auto-wires them into <head>, no need to list them here.
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Péyi",
+    // "default" = white status bar with dark icons, matches our light theme.
+    // "black-translucent" would let content flow behind the status bar —
+    // we'd need extra safe-area padding everywhere, not worth it right now.
+    statusBarStyle: "default",
+  },
+  formatDetection: {
+    // Disable iOS's auto-linking of phone numbers in our marketing copy —
+    // we want the explicit `tel:` links we build ourselves to be the only
+    // clickable phone numbers. Emails stay auto-detected.
+    telephone: false,
   },
 };
 
