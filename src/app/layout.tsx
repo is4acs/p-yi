@@ -7,6 +7,7 @@ import { Header } from "@/components/layout/Header";
 import { RouteProgress } from "@/components/layout/RouteProgress";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { fetchUnreadCount } from "@/lib/messages/queries";
+import { fetchUnreadNotificationsCount } from "@/lib/notifications/queries";
 import "./globals.css";
 
 const inter = Inter({
@@ -63,7 +64,14 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const user = await getCurrentUser();
-  const unreadCount = user ? await fetchUnreadCount(user.id) : 0;
+  // Fetch both counters in parallel for the nav — kept small because they hit
+  // every request. Both are indexed in Prisma so they stay cheap.
+  const [unreadCount, unreadNotifications] = user
+    ? await Promise.all([
+        fetchUnreadCount(user.id),
+        fetchUnreadNotificationsCount(user.id),
+      ])
+    : [0, 0];
 
   return (
     <html
@@ -75,7 +83,11 @@ export default async function RootLayout({
         <Suspense fallback={null}>
           <RouteProgress />
         </Suspense>
-        <Header user={user} unreadCount={unreadCount} />
+        <Header
+          user={user}
+          unreadCount={unreadCount}
+          unreadNotifications={unreadNotifications}
+        />
         {children}
         <BottomNav unreadCount={unreadCount} />
       </body>

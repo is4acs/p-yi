@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import {
   BadgeCheck,
+  Bell,
   Bookmark,
   ChevronRight,
   LogOut,
@@ -16,6 +17,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/current-user";
 import { LEVEL_META } from "@/lib/deals/user-level";
 import { fetchUnreadCount } from "@/lib/messages/queries";
+import { fetchUnreadNotificationsCount } from "@/lib/notifications/queries";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/layout/UserAvatar";
 
@@ -32,22 +34,28 @@ type Props = {
 
 export default async function ProfilPage({ searchParams }: Props) {
   const user = await requireUser("/profil");
-  const [city, dealFavoriteCount, listingFavoriteCount, unreadCount] =
-    await Promise.all([
-      user.cityId
-        ? prisma.city.findUnique({
-            where: { id: user.cityId },
-            select: { name: true },
-          })
-        : Promise.resolve(null),
-      prisma.favorite.count({
-        where: { userId: user.id, dealId: { not: null } },
-      }),
-      prisma.favorite.count({
-        where: { userId: user.id, listingId: { not: null } },
-      }),
-      fetchUnreadCount(user.id),
-    ]);
+  const [
+    city,
+    dealFavoriteCount,
+    listingFavoriteCount,
+    unreadCount,
+    unreadNotifications,
+  ] = await Promise.all([
+    user.cityId
+      ? prisma.city.findUnique({
+          where: { id: user.cityId },
+          select: { name: true },
+        })
+      : Promise.resolve(null),
+    prisma.favorite.count({
+      where: { userId: user.id, dealId: { not: null } },
+    }),
+    prisma.favorite.count({
+      where: { userId: user.id, listingId: { not: null } },
+    }),
+    fetchUnreadCount(user.id),
+    fetchUnreadNotificationsCount(user.id),
+  ]);
   const favoriteCount = dealFavoriteCount + listingFavoriteCount;
   const level = LEVEL_META[user.level];
 
@@ -164,6 +172,41 @@ export default async function ProfilPage({ searchParams }: Props) {
                 className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-peyi-orange-500 px-1.5 text-[11px] font-bold text-white"
               >
                 {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+            <ChevronRight
+              className="h-4 w-4 text-muted-foreground"
+              aria-hidden
+            />
+          </span>
+        </Link>
+
+        <Link
+          href="/notifications"
+          className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 text-sm transition hover:border-peyi-orange-300 hover:bg-peyi-orange-50/40"
+        >
+          <span className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-peyi-orange-100 text-peyi-orange-600">
+              <Bell className="h-4 w-4" aria-hidden />
+            </span>
+            <span className="min-w-0">
+              <span className="block font-semibold text-foreground">
+                Notifications
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {unreadNotifications === 0
+                  ? "Tout est lu"
+                  : `${unreadNotifications} non lue${unreadNotifications > 1 ? "s" : ""}`}
+              </span>
+            </span>
+          </span>
+          <span className="flex items-center gap-2">
+            {unreadNotifications > 0 && (
+              <span
+                aria-hidden
+                className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-peyi-orange-500 px-1.5 text-[11px] font-bold text-white"
+              >
+                {unreadNotifications > 99 ? "99+" : unreadNotifications}
               </span>
             )}
             <ChevronRight
