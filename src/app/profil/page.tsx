@@ -1,12 +1,15 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import {
+  BadgeCheck,
   Bookmark,
   ChevronRight,
   LogOut,
   Mail,
   MapPin,
   MessageSquare,
+  Pencil,
+  Phone,
 } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
@@ -23,7 +26,11 @@ export const metadata: Metadata = {
   description: "Ton profil Péyi : karma, badges et historique.",
 };
 
-export default async function ProfilPage() {
+type Props = {
+  searchParams: { success?: string; error?: string };
+};
+
+export default async function ProfilPage({ searchParams }: Props) {
   const user = await requireUser("/profil");
   const [city, dealFavoriteCount, listingFavoriteCount, unreadCount] =
     await Promise.all([
@@ -67,6 +74,23 @@ export default async function ProfilPage() {
         </p>
       </section>
 
+      {searchParams.success && (
+        <div
+          role="status"
+          className="mt-5 rounded-lg border border-peyi-green-200 bg-peyi-green-50 p-3 text-sm text-peyi-green-800"
+        >
+          {searchParams.success}
+        </div>
+      )}
+      {searchParams.error && (
+        <div
+          role="alert"
+          className="mt-5 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+        >
+          {searchParams.error}
+        </div>
+      )}
+
       <section className="mt-6 space-y-2 rounded-lg border border-border bg-card p-4 text-sm">
         <Row
           icon={<Mail className="h-4 w-4" />}
@@ -74,11 +98,44 @@ export default async function ProfilPage() {
           value={user.email}
         />
         <Row
+          icon={<Phone className="h-4 w-4" />}
+          label="Téléphone"
+          value={
+            user.phone ? (
+              <span className="flex items-center gap-1.5">
+                <span className="truncate">{user.phone}</span>
+                {user.phoneVerified ? (
+                  <span className="inline-flex items-center gap-0.5 rounded-full bg-peyi-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-peyi-green-700">
+                    <BadgeCheck className="h-3 w-3" aria-hidden />
+                    Vérifié
+                  </span>
+                ) : (
+                  <Link
+                    href={`/profil/verifier-telephone?phone=${encodeURIComponent(user.phone)}`}
+                    className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 hover:bg-amber-200"
+                  >
+                    Vérifier
+                  </Link>
+                )}
+              </span>
+            ) : (
+              "Non renseigné"
+            )
+          }
+        />
+        <Row
           icon={<MapPin className="h-4 w-4" />}
           label="Commune"
           value={city?.name ?? "Non renseignée"}
         />
       </section>
+
+      <Button asChild variant="outline" size="sm" className="mt-3 w-full">
+        <Link href="/profil/edit">
+          <Pencil className="h-3.5 w-3.5" aria-hidden />
+          Modifier mon profil
+        </Link>
+      </Button>
 
       <nav className="mt-6 flex flex-col gap-2">
         <Link
@@ -161,7 +218,7 @@ function Row({
 }: {
   icon: React.ReactNode;
   label: string;
-  value: string;
+  value: React.ReactNode;
 }) {
   return (
     <div className="flex items-start gap-2.5">
@@ -172,7 +229,11 @@ function Row({
         <p className="text-xs uppercase tracking-wide text-muted-foreground">
           {label}
         </p>
-        <p className="truncate">{value}</p>
+        {typeof value === "string" ? (
+          <p className="truncate">{value}</p>
+        ) : (
+          <div className="truncate">{value}</div>
+        )}
       </div>
     </div>
   );
