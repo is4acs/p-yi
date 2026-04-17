@@ -5,10 +5,15 @@ import { ImageResponse } from "next/og";
  * inside the inner 80% "safe zone" so any mask (circle, squircle, rounded
  * square) the OS applies never clips it. The full 512×512 is filled with a
  * solid brand color so cropping never exposes transparent pixels.
+ *
+ * NB : ce fichier est un *route handler* (`route.tsx`), pas un fichier
+ * metadata `icon.tsx`. Les conventions Next `size` / `contentType` ne sont
+ * donc PAS des exports valides ici — elles déclenchent un échec du build
+ * ("size is not a valid Route export field"). Les dimensions sont passées
+ * directement à `ImageResponse` qui produit un `Content-Type: image/png`
+ * par défaut.
  */
 export const runtime = "edge";
-export const size = { width: 512, height: 512 };
-export const contentType = "image/png";
 
 export async function GET() {
   return new ImageResponse(
@@ -45,6 +50,6 @@ export async function GET() {
         </div>
       </div>
     ),
-    { ...size },
+    { width: 512, height: 512 },
   );
 }
