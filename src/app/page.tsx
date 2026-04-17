@@ -1,8 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { prisma } from "@/lib/prisma";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const communes = await prisma.city.findMany({
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, slug: true },
+  });
+
   return (
     <main className="mx-auto max-w-md px-4 py-8 sm:max-w-2xl sm:py-12">
       <header className="mb-8">
@@ -24,7 +32,7 @@ export default function Home() {
         <Badge className="bg-peyi-green-500 text-peyi-green-900 hover:bg-peyi-green-600">
           Petites annonces
         </Badge>
-        <Badge variant="outline">22 communes</Badge>
+        <Badge variant="outline">{communes.length} communes</Badge>
       </section>
 
       <Card className="mb-8">
@@ -46,6 +54,38 @@ export default function Home() {
             <div className="h-10 w-10 rounded-lg bg-hot" aria-label="Hot" />
             <div className="h-10 w-10 rounded-lg bg-cold" aria-label="Cold" />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="font-display">
+            Connexion Supabase ✅
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-3 text-sm text-muted-foreground">
+            {communes.length} communes récupérées depuis la base via Prisma.
+          </p>
+          <ul className="flex flex-wrap gap-2">
+            {communes.map((c) => {
+              const isDefault = c.slug === "cayenne";
+              return (
+                <li key={c.id}>
+                  <Badge
+                    variant={isDefault ? "default" : "outline"}
+                    className={
+                      isDefault
+                        ? "bg-peyi-orange-500 text-white hover:bg-peyi-orange-600"
+                        : ""
+                    }
+                  >
+                    {c.name}
+                  </Badge>
+                </li>
+              );
+            })}
+          </ul>
         </CardContent>
       </Card>
 
