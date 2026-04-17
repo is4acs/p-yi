@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { BadgeCheck, Info, Send } from "lucide-react";
 import type {
   ItemCondition,
@@ -13,8 +13,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { CONDITION_LABEL, TYPE_LABEL } from "@/lib/listings/queries";
+import { maxPhotosForCategory } from "@/lib/listings/photo-limits";
 
-import { ImagePicker } from "./ImagePicker";
+import { PhotosUploader } from "./PhotosUploader";
 
 type Category = { slug: string; name: string; icon: string | null };
 type City = { slug: string; name: string };
@@ -33,7 +34,8 @@ export type ListingFormValues = {
   contactPhone?: string | null;
   showPhone?: boolean;
   allowMessages?: boolean;
-  coverImageUrl?: string | null;
+  /** Existing photo URLs in display order (cover first). Edit mode. */
+  photoUrls?: string[];
 };
 
 type Props = {
@@ -81,8 +83,18 @@ export function ListingForm({
 }: Props) {
   const v = defaults ?? {};
   const [priceType, setPriceType] = useState<PriceType>(v.priceType ?? "FIXED");
+  const [categorySlug, setCategorySlug] = useState<string>(
+    v.categorySlug ?? "",
+  );
   const priceRequired = ["FIXED", "NEGOTIABLE", "PER_MONTH", "PER_DAY"].includes(
     priceType,
+  );
+  // Photo cap follows the selected category — voiture/immo get 20 shots,
+  // everything else caps at 10. The uploader gracefully keeps photos
+  // over the new limit (user picked them) but blocks adding more.
+  const maxPhotos = useMemo(
+    () => maxPhotosForCategory(categorySlug || null),
+    [categorySlug],
   );
 
   return (
@@ -105,7 +117,7 @@ export function ListingForm({
         />
       </div>
 
-      <ImagePicker initialUrl={v.coverImageUrl ?? null} />
+      <PhotosUploader initialUrls={v.photoUrls ?? []} max={maxPhotos} />
 
       <div className="space-y-1.5">
         <Label htmlFor="type">Type d&apos;annonce *</Label>
@@ -187,7 +199,8 @@ export function ListingForm({
           name="categorySlug"
           required
           className="flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-peyi-orange-300"
-          defaultValue={v.categorySlug ?? ""}
+          value={categorySlug}
+          onChange={(e) => setCategorySlug(e.target.value)}
         >
           <option value="" disabled>
             Choisis une catégorie
