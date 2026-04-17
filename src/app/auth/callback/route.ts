@@ -12,7 +12,11 @@ export async function GET(request: NextRequest) {
     const supabase = createSupabaseServerClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      await ensureUserProfile();
+      const profile = await ensureUserProfile();
+      if (!profile) {
+        // OAuth first login without a chosen username — collect one now.
+        return NextResponse.redirect(`${origin}/auth/complete-profile`);
+      }
       return NextResponse.redirect(`${origin}${next}`);
     }
   }

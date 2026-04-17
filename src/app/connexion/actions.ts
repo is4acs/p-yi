@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { signInSchema, signUpSchema } from "@/lib/validation/auth";
 import { ensureUserProfile } from "@/lib/auth/ensure-profile";
 
-function redirectWithError(path: string, message: string) {
+function redirectWithError(path: string, message: string): never {
   redirect(`${path}?error=${encodeURIComponent(message)}`);
 }
 
@@ -25,7 +25,7 @@ export async function signInAction(formData: FormData) {
     );
   }
 
-  const { email, password } = parsed.data!;
+  const { email, password } = parsed.data;
   const supabase = createSupabaseServerClient();
 
   const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -52,7 +52,7 @@ export async function signUpAction(formData: FormData) {
     );
   }
 
-  const { email, username, password } = parsed.data!;
+  const { email, username, password } = parsed.data;
 
   // Check username availability against Prisma (auth.users table has no username).
   const existing = await prisma.user.findFirst({
@@ -98,4 +98,25 @@ export async function signOutAction() {
   const supabase = createSupabaseServerClient();
   await supabase.auth.signOut();
   redirect("/");
+}
+
+export async function signInWithGoogleAction() {
+  const supabase = createSupabaseServerClient();
+  const origin = headers().get("origin") ?? "";
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${origin}/auth/callback`,
+    },
+  });
+
+  if (error || !data?.url) {
+    redirectWithError(
+      "/connexion",
+      "Connexion Google indisponible pour le moment.",
+    );
+  }
+
+  redirect(data.url);
 }
