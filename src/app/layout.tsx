@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Header } from "@/components/layout/Header";
 import { RouteProgress } from "@/components/layout/RouteProgress";
+import { InstallBanner } from "@/components/pwa/InstallBanner";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { fetchUnreadCount } from "@/lib/messages/queries";
@@ -106,6 +107,7 @@ export default async function RootLayout({
         />
         {children}
         <BottomNav unreadCount={unreadCount} />
+        <InstallBanner />
       </body>
     </html>
   );
