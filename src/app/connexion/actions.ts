@@ -1,0 +1,92 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
+import { signInSchema, signUpSchema } from "@/lib/validation/auth";
+
+function redirectWithError(path: string, message: string) {
+  redirect(`${path}?error=${encodeURIComponent(message)}`);
+}
+
+export async function signInAction(formData: FormData) {
+  const parsed = signInSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
+
+  if (!parsed.success) {
+    redirectWithError(
+      "/connexion",
+      parsed.error.issues[0]?.message ?? "Formulaire invalide.",
+    );
+  }
+
+  const { email, password } = parsed.data!;
+  const supabase = createSupabaseServerClient();
+
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    redirectWithError("/connexion", "E-mail ou mot de passe incorrect.");
+  }
+
+  redirect("/bons-plans");
+}
+
+export async function signUpAction(formData: FormData) {
+  const parsed = signUpSchema.safeParse({
+    email: formData.get("email"),
+    username: formData.get("username"),
+    password: formData.get("password"),
+  });
+
+  if (!parsed.success) {
+    redirectWithError(
+      "/connexion?mode=signup",
+      parsed.error.issues[0]?.message ?? "Formulaire invalide.",
+    );
+  }
+
+  const { email, username, password } = parsed.data!;
+
+  // Check username availability against Prisma (auth.users table has no username).
+  const existing = await prisma.user.findFirst({
+    where: { username: { equals: username, mode: "insensitive" } },
+    select: { id: true },
+  });
+  if (existing) {
+    redirectWithError("/connexion?mode=signup", "Ce pseudo est déjà pris.");
+  }
+
+  const supabase = createSupabaseServerClient();
+  const origin = headers().get("origin") ?? "";
+
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: `${origin}/auth/callback`,
+      data: { username },
+    },
+  });
+
+  if (error) {
+    redirectWithError(
+      "/connexion?mode=signup",
+      error.message === "User already registered"
+        ? "Cet e-mail est déjà utilisé."
+        : "Impossible de créer le compte. Réessaie plus tard.",
+    );
+  }
+
+  redirect("/connexion?mode=signup&confirmSent=1");
+}
+
+export async function signOutAction() {
+  const supabase = createSupabaseServerClient();
+  await supabase.auth.signOut();
+  redirect("/");
+}
