@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
-import { DealStatus } from "@prisma/client";
+import { DealStatus, type VoteType } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/format";
 import { LEVEL_META } from "@/lib/deals/user-level";
@@ -27,6 +27,7 @@ import { CategoryChip } from "@/components/deals/CategoryChip";
 import { CommuneChip } from "@/components/deals/CommuneChip";
 import { DealImagePlaceholder } from "@/components/deals/DealImagePlaceholder";
 import { AuthorControls } from "@/components/deals/AuthorControls";
+import { VoteButtons } from "@/components/deals/VoteButtons";
 
 export const dynamic = "force-dynamic";
 
@@ -117,6 +118,21 @@ export default async function DealDetailPage({
   if (!deal) notFound();
 
   const isAuthor = currentUser?.id === deal.author.id;
+  let myVote: VoteType | null = null;
+  if (currentUser && !isAuthor) {
+    const vote = await prisma.vote.findUnique({
+      where: { userId_dealId: { userId: currentUser.id, dealId: deal.id } },
+      select: { value: true },
+    });
+    myVote = vote?.value ?? null;
+  }
+  const canVote = Boolean(currentUser) && !isAuthor;
+  const voteDisabledHint = !currentUser
+    ? "Connecte-toi pour voter."
+    : isAuthor
+    ? "Tu ne peux pas voter sur ton propre bon plan."
+    : undefined;
+
   const ctaUrl = deal.affiliateUrl ?? deal.externalUrl ?? deal.store?.website ?? null;
   const sellerName =
     deal.store?.name ?? deal.merchant?.name ?? "Vendeur non précisé";
@@ -179,6 +195,30 @@ export default async function DealDetailPage({
           />
         )}
       </header>
+
+      {/* Vote */}
+      <section className="mt-5 px-4 sm:px-0">
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-3">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Ce bon plan est-il bien ?
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Vote chaud pour soutenir, froid si le prix n&apos;est pas bon.
+            </p>
+          </div>
+          <VoteButtons
+            dealId={deal.id}
+            temperature={deal.temperature}
+            upvotes={deal.upvotes}
+            downvotes={deal.downvotes}
+            myVote={myVote}
+            canVote={canVote}
+            disabledHint={voteDisabledHint}
+            variant="wide"
+          />
+        </div>
+      </section>
 
       {/* Price + CTA */}
       <section className="mt-5 space-y-4 px-4 sm:px-0">

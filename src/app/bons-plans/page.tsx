@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import { fetchDealsPage, PAGE_SIZE } from "@/lib/deals/queries";
+import { fetchDealsPage, fetchUserVoteMap, PAGE_SIZE } from "@/lib/deals/queries";
 import { parsePage, parseSort } from "@/lib/deals/url";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { DealCard } from "@/components/deals/DealCard";
 import { DealsSortTabs } from "@/components/deals/DealsSortTabs";
 import { DealsFilterBar } from "@/components/deals/DealsFilterBar";
@@ -31,7 +32,7 @@ export default async function BonsPlansPage({
   const category = searchParams.category?.trim() || null;
   const city = searchParams.city?.trim() || null;
 
-  const [{ deals, total }, categories, cities] = await Promise.all([
+  const [{ deals, total }, categories, cities, currentUser] = await Promise.all([
     fetchDealsPage({ sort, page, category, city }),
     prisma.category.findMany({
       where: { type: "DEAL", isActive: true },
@@ -42,7 +43,13 @@ export default async function BonsPlansPage({
       orderBy: { name: "asc" },
       select: { slug: true, name: true },
     }),
+    getCurrentUser(),
   ]);
+
+  const voteMap = await fetchUserVoteMap(
+    currentUser?.id ?? null,
+    deals.map((d) => d.id),
+  );
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const hasFilters = Boolean(category || city);
@@ -77,7 +84,11 @@ export default async function BonsPlansPage({
           <ul className="flex flex-col gap-3">
             {deals.map((d) => (
               <li key={d.id}>
-                <DealCard deal={d} />
+                <DealCard
+                  deal={d}
+                  currentUserId={currentUser?.id ?? null}
+                  myVote={voteMap.get(d.id) ?? null}
+                />
               </li>
             ))}
           </ul>

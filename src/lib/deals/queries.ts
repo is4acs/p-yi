@@ -1,4 +1,4 @@
-import { Prisma, DealStatus } from "@prisma/client";
+import { Prisma, DealStatus, type VoteType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { DealsSort } from "@/lib/deals/url";
 
@@ -19,9 +19,12 @@ export const dealCardSelect = {
   discountPercent: true,
   isFree: true,
   temperature: true,
+  upvotes: true,
+  downvotes: true,
   commentCount: true,
   publishedAt: true,
   coverImageUrl: true,
+  authorId: true,
   city: { select: { name: true, slug: true } },
   category: { select: { name: true, slug: true, icon: true } },
   store: { select: { name: true, slug: true } },
@@ -29,6 +32,22 @@ export const dealCardSelect = {
 } satisfies Prisma.DealSelect;
 
 export type DealCardData = Prisma.DealGetPayload<{ select: typeof dealCardSelect }>;
+
+/**
+ * Fetch a map of dealId -> current user's vote for the given deals.
+ * Returns an empty map if userId is null or dealIds is empty.
+ */
+export async function fetchUserVoteMap(
+  userId: string | null,
+  dealIds: string[],
+): Promise<Map<string, VoteType>> {
+  if (!userId || dealIds.length === 0) return new Map();
+  const votes = await prisma.vote.findMany({
+    where: { userId, dealId: { in: dealIds } },
+    select: { dealId: true, value: true },
+  });
+  return new Map(votes.map((v) => [v.dealId, v.value]));
+}
 
 type Filters = {
   category: string | null;
