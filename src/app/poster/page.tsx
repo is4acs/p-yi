@@ -2,12 +2,16 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Plus, ArrowLeft } from "lucide-react";
 
+import { requireUser } from "@/lib/auth/current-user";
+
 export const metadata: Metadata = {
   title: "Poster un bon plan",
   description: "Partage tes meilleures affaires avec la communauté Péyi.",
 };
 
-export default function PosterPage() {
+export default async function PosterPage() {
+  const user = await requireUser("/poster");
+
   return (
     <main className="mx-auto flex min-h-[70vh] max-w-md flex-col items-center justify-center px-6 pb-16 pt-10 text-center sm:max-w-2xl">
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-peyi-orange-100 text-peyi-orange-600">
@@ -17,8 +21,8 @@ export default function PosterPage() {
         Poster un bon plan
       </h1>
       <p className="mt-3 text-sm text-muted-foreground">
-        Bientôt disponible. Il faudra créer un compte pour partager tes trouvailles
-        avec la communauté Péyi.
+        Bienvenue @{user.username} ! Le formulaire pour partager tes trouvailles
+        arrive dans la prochaine session.
       </p>
       <Link
         href="/bons-plans"

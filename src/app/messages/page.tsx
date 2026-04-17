@@ -2,12 +2,16 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { MessageSquare, ArrowLeft } from "lucide-react";
 
+import { requireUser } from "@/lib/auth/current-user";
+
 export const metadata: Metadata = {
   title: "Messages",
   description: "Discute avec les vendeurs et les membres de la communauté Péyi.",
 };
 
-export default function MessagesPage() {
+export default async function MessagesPage() {
+  await requireUser("/messages");
+
   return (
     <main className="mx-auto flex min-h-[70vh] max-w-md flex-col items-center justify-center px-6 pb-16 pt-10 text-center sm:max-w-2xl">
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-peyi-orange-100 text-peyi-orange-600">
@@ -17,7 +21,7 @@ export default function MessagesPage() {
         Messagerie
       </h1>
       <p className="mt-3 text-sm text-muted-foreground">
-        Bientôt disponible. La messagerie privée arrive avec les comptes utilisateurs.
+        Bientôt disponible. La messagerie privée arrive avec les annonces.
       </p>
       <Link
         href="/bons-plans"
