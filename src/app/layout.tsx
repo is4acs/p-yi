@@ -26,6 +26,24 @@ export const metadata: Metadata = {
     "Péyi est la plateforme des bons plans et petites annonces 100% Guyane. Trouve les meilleures promos et vends près de chez toi.",
   applicationName: "Péyi",
   metadataBase: new URL("https://peyi.com"),
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    siteName: "Péyi",
+    title: "Péyi — Bons plans et petites annonces de Guyane",
+    description:
+      "La plateforme des bons plans et petites annonces 100% Guyane. Partage, vote, et profite des meilleures promos près de chez toi.",
+    url: "https://peyi.com",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Péyi — Bons plans de Guyane",
+    description:
+      "Partage, vote et profite des meilleurs bons plans de Guyane.",
+  },
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export const viewport: Viewport = {

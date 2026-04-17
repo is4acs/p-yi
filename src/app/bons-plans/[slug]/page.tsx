@@ -95,14 +95,40 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const deal = await prisma.deal.findFirst({
     where: { slug: params.slug, status: DealStatus.PUBLISHED },
-    select: { title: true, description: true },
+    select: {
+      title: true,
+      description: true,
+      slug: true,
+      coverImageUrl: true,
+      category: { select: { name: true } },
+      city: { select: { name: true } },
+    },
   });
   if (!deal) return { title: "Bon plan introuvable" };
+
+  const description =
+    deal.description?.replace(/\s+/g, " ").trim().slice(0, 160) ||
+    `${deal.category.name}${deal.city ? ` à ${deal.city.name}` : ""} — bon plan partagé sur Péyi.`;
+  const url = `/bons-plans/${deal.slug}`;
+  const images = deal.coverImageUrl ? [{ url: deal.coverImageUrl }] : undefined;
+
   return {
     title: deal.title,
-    description:
-      deal.description?.slice(0, 160) ??
-      "Bon plan partagé par la communauté Péyi en Guyane.",
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article",
+      title: deal.title,
+      description,
+      url,
+      images,
+    },
+    twitter: {
+      card: images ? "summary_large_image" : "summary",
+      title: deal.title,
+      description,
+      images: deal.coverImageUrl ? [deal.coverImageUrl] : undefined,
+    },
   };
 }
 
