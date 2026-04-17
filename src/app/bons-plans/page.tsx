@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { fetchDealsPage, fetchUserVoteMap, PAGE_SIZE } from "@/lib/deals/queries";
+import {
+  fetchDealsPage,
+  fetchUserFavoriteSet,
+  fetchUserVoteMap,
+  PAGE_SIZE,
+} from "@/lib/deals/queries";
 import { parsePage, parseSort } from "@/lib/deals/url";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { DealCard } from "@/components/deals/DealCard";
@@ -46,10 +51,11 @@ export default async function BonsPlansPage({
     getCurrentUser(),
   ]);
 
-  const voteMap = await fetchUserVoteMap(
-    currentUser?.id ?? null,
-    deals.map((d) => d.id),
-  );
+  const dealIds = deals.map((d) => d.id);
+  const [voteMap, favoriteSet] = await Promise.all([
+    fetchUserVoteMap(currentUser?.id ?? null, dealIds),
+    fetchUserFavoriteSet(currentUser?.id ?? null, dealIds),
+  ]);
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const hasFilters = Boolean(category || city);
@@ -88,6 +94,7 @@ export default async function BonsPlansPage({
                   deal={d}
                   currentUserId={currentUser?.id ?? null}
                   myVote={voteMap.get(d.id) ?? null}
+                  isFavorited={favoriteSet.has(d.id)}
                 />
               </li>
             ))}

@@ -1,5 +1,6 @@
+import Link from "next/link";
 import type { Metadata } from "next";
-import { LogOut, MapPin, Mail } from "lucide-react";
+import { Bookmark, ChevronRight, LogOut, MapPin, Mail } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/current-user";
@@ -16,12 +17,17 @@ export const metadata: Metadata = {
 
 export default async function ProfilPage() {
   const user = await requireUser("/profil");
-  const city = user.cityId
-    ? await prisma.city.findUnique({
-        where: { id: user.cityId },
-        select: { name: true },
-      })
-    : null;
+  const [city, favoriteCount] = await Promise.all([
+    user.cityId
+      ? prisma.city.findUnique({
+          where: { id: user.cityId },
+          select: { name: true },
+        })
+      : Promise.resolve(null),
+    prisma.favorite.count({
+      where: { userId: user.id, dealId: { not: null } },
+    }),
+  ]);
   const level = LEVEL_META[user.level];
 
   return (
@@ -60,9 +66,31 @@ export default async function ProfilPage() {
         />
       </section>
 
-      <section className="mt-6 rounded-lg border border-dashed border-border bg-muted/40 p-4 text-center text-sm text-muted-foreground">
-        Tes bons plans, annonces et badges apparaîtront ici bientôt.
-      </section>
+      <nav className="mt-6 flex flex-col gap-2">
+        <Link
+          href="/profil/favoris"
+          className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 text-sm transition hover:border-peyi-orange-300 hover:bg-peyi-orange-50/40"
+        >
+          <span className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-peyi-orange-100 text-peyi-orange-600">
+              <Bookmark className="h-4 w-4" aria-hidden />
+            </span>
+            <span className="min-w-0">
+              <span className="block font-semibold text-foreground">
+                Mes favoris
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {favoriteCount === 0
+                  ? "Aucun bon plan sauvegardé"
+                  : `${favoriteCount} bon${favoriteCount > 1 ? "s" : ""} plan${
+                      favoriteCount > 1 ? "s" : ""
+                    } sauvegardé${favoriteCount > 1 ? "s" : ""}`}
+              </span>
+            </span>
+          </span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden />
+        </Link>
+      </nav>
 
       <form action={signOutAction} className="mt-8">
         <Button

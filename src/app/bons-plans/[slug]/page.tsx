@@ -28,6 +28,7 @@ import { CommuneChip } from "@/components/deals/CommuneChip";
 import { DealImagePlaceholder } from "@/components/deals/DealImagePlaceholder";
 import { AuthorControls } from "@/components/deals/AuthorControls";
 import { VoteButtons } from "@/components/deals/VoteButtons";
+import { FavoriteButton } from "@/components/deals/FavoriteButton";
 import { CommentList } from "@/components/comments/CommentList";
 
 export const dynamic = "force-dynamic";
@@ -120,18 +121,32 @@ export default async function DealDetailPage({
 
   const isAuthor = currentUser?.id === deal.author.id;
   let myVote: VoteType | null = null;
-  if (currentUser && !isAuthor) {
-    const vote = await prisma.vote.findUnique({
-      where: { userId_dealId: { userId: currentUser.id, dealId: deal.id } },
-      select: { value: true },
-    });
+  let isFavorited = false;
+  if (currentUser) {
+    const [vote, favorite] = await Promise.all([
+      isAuthor
+        ? Promise.resolve(null)
+        : prisma.vote.findUnique({
+            where: { userId_dealId: { userId: currentUser.id, dealId: deal.id } },
+            select: { value: true },
+          }),
+      prisma.favorite.findUnique({
+        where: { userId_dealId: { userId: currentUser.id, dealId: deal.id } },
+        select: { id: true },
+      }),
+    ]);
     myVote = vote?.value ?? null;
+    isFavorited = Boolean(favorite);
   }
   const canVote = Boolean(currentUser) && !isAuthor;
   const voteDisabledHint = !currentUser
     ? "Connecte-toi pour voter."
     : isAuthor
     ? "Tu ne peux pas voter sur ton propre bon plan."
+    : undefined;
+  const canFavorite = Boolean(currentUser);
+  const favoriteDisabledHint = !currentUser
+    ? "Connecte-toi pour sauvegarder."
     : undefined;
 
   const ctaUrl = deal.affiliateUrl ?? deal.externalUrl ?? deal.store?.website ?? null;
@@ -189,12 +204,21 @@ export default async function DealDetailPage({
           )}
         </div>
 
-        {isAuthor && (
-          <AuthorControls
+        <div className="flex flex-wrap items-center gap-2">
+          {isAuthor && (
+            <AuthorControls
+              dealId={deal.id}
+              editHref={`/bons-plans/${deal.slug}/edit`}
+            />
+          )}
+          <FavoriteButton
             dealId={deal.id}
-            editHref={`/bons-plans/${deal.slug}/edit`}
+            initialFavorited={isFavorited}
+            canFavorite={canFavorite}
+            disabledHint={favoriteDisabledHint}
+            size="md"
           />
-        )}
+        </div>
       </header>
 
       {/* Vote */}

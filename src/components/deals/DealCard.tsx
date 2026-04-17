@@ -10,6 +10,7 @@ import { CategoryChip } from "./CategoryChip";
 import { CommuneChip } from "./CommuneChip";
 import { DealImagePlaceholder } from "./DealImagePlaceholder";
 import { VoteButtons } from "./VoteButtons";
+import { FavoriteButton } from "./FavoriteButton";
 
 export type { DealCardData };
 
@@ -17,10 +18,17 @@ type Props = {
   deal: DealCardData;
   currentUserId?: string | null;
   myVote?: VoteType | null;
+  isFavorited?: boolean;
   className?: string;
 };
 
-export function DealCard({ deal, currentUserId, myVote = null, className }: Props) {
+export function DealCard({
+  deal,
+  currentUserId,
+  myVote = null,
+  isFavorited = false,
+  className,
+}: Props) {
   const sellerName =
     deal.store?.name ?? deal.merchant?.name ?? "Vendeur non précisé";
   const placeholderEmoji = deal.category.icon ?? null;
@@ -29,10 +37,14 @@ export function DealCard({ deal, currentUserId, myVote = null, className }: Prop
   const isAuthor = currentUserId === deal.authorId;
   const isAuthenticated = Boolean(currentUserId);
   const canVote = isAuthenticated && !isAuthor;
-  const disabledHint = !isAuthenticated
+  const voteHint = !isAuthenticated
     ? "Connecte-toi pour voter."
     : isAuthor
     ? "Tu ne peux pas voter sur ton propre bon plan."
+    : undefined;
+  const canFavorite = isAuthenticated;
+  const favoriteHint = !isAuthenticated
+    ? "Connecte-toi pour sauvegarder."
     : undefined;
 
   return (
@@ -42,18 +54,32 @@ export function DealCard({ deal, currentUserId, myVote = null, className }: Prop
         className,
       )}
     >
-      <Link
-        href={`/bons-plans/${deal.slug}`}
-        className="flex min-w-0 flex-1 gap-3 transition active:scale-[0.99]"
-      >
-        {/* Image */}
-        <div className="relative h-24 w-24 shrink-0 sm:h-28 sm:w-28">
+      <div className="relative h-24 w-24 shrink-0 sm:h-28 sm:w-28">
+        <Link
+          href={`/bons-plans/${deal.slug}`}
+          className="block h-full w-full active:scale-[0.99]"
+        >
           <DealImagePlaceholder
             emoji={placeholderEmoji}
             label={placeholderLabel}
             className="h-full w-full"
           />
+        </Link>
+        <div className="absolute right-1 top-1">
+          <FavoriteButton
+            dealId={deal.id}
+            initialFavorited={isFavorited}
+            canFavorite={canFavorite}
+            disabledHint={favoriteHint}
+            size="sm"
+          />
         </div>
+      </div>
+
+      <Link
+        href={`/bons-plans/${deal.slug}`}
+        className="flex min-w-0 flex-1 transition active:scale-[0.99]"
+      >
 
         {/* Content */}
         <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
@@ -98,7 +124,7 @@ export function DealCard({ deal, currentUserId, myVote = null, className }: Prop
           downvotes={deal.downvotes}
           myVote={myVote}
           canVote={canVote}
-          disabledHint={disabledHint}
+          disabledHint={voteHint}
           variant="compact"
         />
       </div>

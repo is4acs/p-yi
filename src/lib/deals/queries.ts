@@ -49,6 +49,22 @@ export async function fetchUserVoteMap(
   return new Map(votes.map((v) => [v.dealId, v.value]));
 }
 
+/**
+ * Fetch the set of dealIds the current user has favorited among those
+ * provided. Returns an empty Set if userId is null or dealIds is empty.
+ */
+export async function fetchUserFavoriteSet(
+  userId: string | null,
+  dealIds: string[],
+): Promise<Set<string>> {
+  if (!userId || dealIds.length === 0) return new Set();
+  const favs = await prisma.favorite.findMany({
+    where: { userId, dealId: { in: dealIds } },
+    select: { dealId: true },
+  });
+  return new Set(favs.map((f) => f.dealId).filter((id): id is string => !!id));
+}
+
 type Filters = {
   category: string | null;
   city: string | null;
