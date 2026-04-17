@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Clock, Flame, Sparkles } from "lucide-react";
+import { Clock, Flame, Images, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/format";
@@ -42,6 +42,7 @@ export function ListingCard({
   const locationLabel = listing.neighborhood
     ? `${listing.city.name} · ${listing.neighborhood}`
     : listing.city.name;
+  const photoCount = listing._count.images;
 
   return (
     <article
@@ -86,6 +87,15 @@ export function ListingCard({
           <span className="absolute left-1 top-1 inline-flex items-center gap-0.5 rounded-full bg-hot/90 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white shadow">
             <Flame className="h-2.5 w-2.5" aria-hidden />
             Urgent
+          </span>
+        )}
+        {photoCount > 1 && (
+          <span
+            className="pointer-events-none absolute bottom-1 left-1 inline-flex items-center gap-0.5 rounded-full bg-black/65 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow backdrop-blur tabular-nums"
+            aria-label={`${photoCount} photos`}
+          >
+            <Images className="h-3 w-3" aria-hidden />
+            {photoCount}
           </span>
         )}
       </div>

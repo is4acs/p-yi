@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import {
@@ -28,6 +27,7 @@ import { CategoryChip } from "@/components/deals/CategoryChip";
 import { CommuneChip } from "@/components/deals/CommuneChip";
 import { DealImagePlaceholder } from "@/components/deals/DealImagePlaceholder";
 import { ListingFavoriteButton } from "@/components/listings/ListingFavoriteButton";
+import { ListingGallery } from "@/components/listings/ListingGallery";
 import { ListingTypeChip } from "@/components/listings/ListingTypeChip";
 import { ListingAuthorControls } from "@/components/listings/ListingAuthorControls";
 import { ContactSellerForm } from "@/components/messages/ContactSellerForm";
@@ -71,6 +71,10 @@ const listingDetailSelect = {
   },
   city: { select: { name: true, slug: true } },
   category: { select: { name: true, slug: true, icon: true } },
+  images: {
+    orderBy: { sortOrder: "asc" },
+    select: { url: true },
+  },
 } as const;
 
 async function getListing(slug: string) {
@@ -177,27 +181,25 @@ export default async function ListingDetailPage({
         </Link>
       </div>
 
-      {/* Hero */}
+      {/* Hero : multi-photo gallery. Fall back to coverImageUrl (legacy
+          listings pre-Session 15) or a category emoji placeholder. */}
       <div className="relative mt-3 px-4 sm:px-0">
-        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl sm:aspect-[16/10]">
-          {listing.coverImageUrl ? (
-            <Image
-              src={listing.coverImageUrl}
-              alt={listing.title}
-              fill
-              sizes="(max-width: 640px) 100vw, 640px"
-              className="object-cover"
-              unoptimized
-              priority
-            />
-          ) : (
+        {listing.images.length > 0 ? (
+          <ListingGallery photos={listing.images} title={listing.title} />
+        ) : listing.coverImageUrl ? (
+          <ListingGallery
+            photos={[{ url: listing.coverImageUrl }]}
+            title={listing.title}
+          />
+        ) : (
+          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl sm:aspect-[16/10]">
             <DealImagePlaceholder
               emoji={listing.category.icon ?? null}
               label={listing.title}
               className="h-full w-full"
             />
-          )}
-        </div>
+          </div>
+        )}
         {listing.isUrgent && (
           <span className="absolute left-5 top-2 inline-flex items-center gap-0.5 rounded-full bg-hot/90 px-2 py-0.5 text-[11px] font-bold uppercase text-white shadow sm:left-1">
             <Flame className="h-3 w-3" aria-hidden />

@@ -41,6 +41,10 @@ export default async function EditListingPage({
       authorId: true,
       category: { select: { slug: true } },
       city: { select: { slug: true } },
+      images: {
+        orderBy: { sortOrder: "asc" },
+        select: { url: true },
+      },
     },
   });
   if (!listing) notFound();
@@ -58,6 +62,16 @@ export default async function EditListingPage({
     }),
   ]);
 
+  // Gallery backward-compat : listings created before Session 15 only have
+  // `coverImageUrl` without any ListingImage rows — surface that single
+  // photo so the user can reorder/complete their gallery.
+  const photoUrls =
+    listing.images.length > 0
+      ? listing.images.map((i) => i.url)
+      : listing.coverImageUrl
+      ? [listing.coverImageUrl]
+      : [];
+
   const defaults = {
     listingId: listing.id,
     title: listing.title,
@@ -72,7 +86,7 @@ export default async function EditListingPage({
     contactPhone: listing.contactPhone,
     showPhone: listing.showPhone,
     allowMessages: listing.allowMessages,
-    coverImageUrl: listing.coverImageUrl,
+    photoUrls,
   };
 
   return (

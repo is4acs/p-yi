@@ -29,6 +29,7 @@ export const listingCardSelect = {
   authorId: true,
   city: { select: { name: true, slug: true } },
   category: { select: { name: true, slug: true, icon: true } },
+  _count: { select: { images: true } },
 } satisfies Prisma.ListingSelect;
 
 export type ListingCardData = Prisma.ListingGetPayload<{

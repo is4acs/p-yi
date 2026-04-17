@@ -85,3 +85,15 @@
     @apply font-sans;
   }
 }
+
+@layer utilities {
+  /* Hide the horizontal scrollbar on scroll-snap galleries while keeping
+     the content scrollable via swipe / pointer drag. */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
