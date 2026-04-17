@@ -14,8 +14,13 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { CONDITION_LABEL, TYPE_LABEL } from "@/lib/listings/queries";
 import { maxPhotosForCategory } from "@/lib/listings/photo-limits";
+import {
+  type AttributeValue,
+  getFieldsForCategory,
+} from "@/lib/listings/field-registry";
 
 import { PhotosUploader } from "./PhotosUploader";
+import { ListingAttributesFields } from "./ListingAttributesFields";
 
 type Category = { slug: string; name: string; icon: string | null };
 type City = { slug: string; name: string };
@@ -36,6 +41,8 @@ export type ListingFormValues = {
   allowMessages?: boolean;
   /** Existing photo URLs in display order (cover first). Edit mode. */
   photoUrls?: string[];
+  /** Attributs dynamiques déjà renseignés (mode édition). */
+  attributes?: Record<string, AttributeValue>;
 };
 
 type Props = {
@@ -94,6 +101,12 @@ export function ListingForm({
   // over the new limit (user picked them) but blocks adding more.
   const maxPhotos = useMemo(
     () => maxPhotosForCategory(categorySlug || null),
+    [categorySlug],
+  );
+  // Registry-driven specific fields — empty array pour les catégories
+  // sans formulaire dédié (ex. covoiturage, perdu-trouvé).
+  const attributeFields = useMemo(
+    () => getFieldsForCategory(categorySlug),
     [categorySlug],
   );
 
@@ -213,6 +226,11 @@ export function ListingForm({
           ))}
         </select>
       </div>
+
+      <ListingAttributesFields
+        fields={attributeFields}
+        defaults={v.attributes}
+      />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
