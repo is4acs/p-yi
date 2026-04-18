@@ -13,8 +13,8 @@ Partage, vote, profite — tout ça près de chez toi.
 | Couche       | Techno                                              |
 | ------------ | --------------------------------------------------- |
 | Frontend     | Next.js 14 (App Router, RSC), React 18, TypeScript  |
-| Styling      | Tailwind CSS + design tokens Péyi (orange / vert)   |
-| UI           | Radix UI (dialogs, labels), Lucide icons, Sonner    |
+| Styling      | Tailwind CSS + [design system Péyi v1.0](./docs/design-system.md) (tokens orange/vert + Nunito) |
+| UI           | Radix UI (dialogs, labels), icônes Péyi + Lucide, Sonner |
 | Backend      | Next.js server actions + API routes                 |
 | Base de données | PostgreSQL (Supabase) + Prisma 5                 |
 | Auth         | Supabase Auth (email + OTP phone + Google OAuth)    |
@@ -160,6 +160,9 @@ scripts/
 └── delete-user.ts          # Suppression RGPD (miroir de l'action UI)
 
 docs/
+├── design-system.md        # Référence design system (palettes, composants, do/don't)
+├── architecture.md         # Architecture technique
+├── deployment.md           # Runbook déploiement (Vercel, Supabase, Upstash)
 └── rgpd.md                 # Runbook RGPD (droits, procédures, DPO)
 ```
 
@@ -239,6 +242,10 @@ opposition, etc.), voir [`docs/rgpd.md`](./docs/rgpd.md).
   de variables restent en anglais par convention.
 - **Commits atomiques** avec messages descriptifs en français
   (`feat(x):`, `fix(x):`, `docs(x):`…).
+- **Design system** : tout ce qui touche au style (couleurs, typo,
+  composants UI, icônes) suit [`docs/design-system.md`](./docs/design-system.md).
+  Nouvelle variante ou nouveau token ⇒ mettre la doc à jour dans le
+  même commit.
 
 ---
 
