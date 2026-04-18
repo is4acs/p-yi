@@ -10,6 +10,7 @@ import {
   PAGE_SIZE,
 } from "@/lib/listings/queries";
 import {
+  countActiveFilters,
   hasActiveFilters,
   parseFilters,
   parsePage,
@@ -27,6 +28,7 @@ import { ListingsTypePills } from "@/components/listings/ListingsTypePills";
 import { ListingsFilterBar } from "@/components/listings/ListingsFilterBar";
 import { ListingsAttributeFilters } from "@/components/listings/ListingsAttributeFilters";
 import { ListingsActiveFilterChips } from "@/components/listings/ListingsActiveFilterChips";
+import { ListingsFilterDrawer } from "@/components/listings/ListingsFilterDrawer";
 import { ListingsPagination } from "@/components/listings/ListingsPagination";
 import { EmptyListings } from "@/components/listings/EmptyListings";
 
@@ -173,6 +175,7 @@ export default async function AnnoncesPage({
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const hasFilters =
     Boolean(category || city || type || q) || hasActiveFilters(filters);
+  const activeFilterCount = countActiveFilters({ category, city, type, filters });
 
   return (
     <main className="mx-auto max-w-md pb-12 animate-in fade-in duration-300 sm:max-w-2xl">
@@ -204,29 +207,31 @@ export default async function AnnoncesPage({
           </Link>
         </div>
 
-        <div className="mt-3 space-y-2">
-          <ListingsSearchBar
-            defaultValue={q ?? ""}
-            sort={sort}
-            category={category}
-            city={city}
-            type={type}
-            filters={filters}
-          />
-          {/* Le chrome de raffinage (type / sort / filtres) ne sert que
-              quand l'utilisateur a déjà fait un choix — en mode découverte
-              (pas de filtre actif), on le masque pour laisser respirer
-              la page et guider vers les catégories / communes ci-dessous. */}
-          {hasFilters && (
-            <>
-              <ListingsTypePills
-                sort={sort}
-                category={category}
-                city={city}
-                currentType={type}
-                q={q}
-                filters={filters}
-              />
+        {/* Header simplifié S27 : une seule ligne SearchBar + bouton
+            Filtrer. Tout le chrome de raffinage (type / sort / catégorie
+            / commune / attributs) vit maintenant dans un drawer latéral.
+            Gain de densité : ~240px de chrome en moins avant la 1re
+            annonce sur mobile 375px. */}
+        <div className="mt-3 flex items-center gap-2">
+          <div className="min-w-0 flex-1">
+            <ListingsSearchBar
+              defaultValue={q ?? ""}
+              sort={sort}
+              category={category}
+              city={city}
+              type={type}
+              filters={filters}
+            />
+          </div>
+          <ListingsFilterDrawer activeCount={activeFilterCount} totalResults={total}>
+            {/* Slot du drawer : rendu côté serveur (les composants sont
+                des server components avec des <Link> qui naviguent).
+                L'état `open` du drawer est préservé à travers les
+                re-renders RSC, l'utilisateur peut enchaîner les filtres. */}
+            <section aria-labelledby="drawer-sort">
+              <h3 id="drawer-sort" className="mb-2 font-display text-sm font-semibold text-ink-900">
+                Trier
+              </h3>
               <ListingsSortTabs
                 currentSort={sort}
                 category={category}
@@ -235,6 +240,24 @@ export default async function AnnoncesPage({
                 q={q}
                 filters={filters}
               />
+            </section>
+            <section aria-labelledby="drawer-type">
+              <h3 id="drawer-type" className="mb-2 font-display text-sm font-semibold text-ink-900">
+                Type d&apos;annonce
+              </h3>
+              <ListingsTypePills
+                sort={sort}
+                category={category}
+                city={city}
+                currentType={type}
+                q={q}
+                filters={filters}
+              />
+            </section>
+            <section aria-labelledby="drawer-where">
+              <h3 id="drawer-where" className="mb-2 font-display text-sm font-semibold text-ink-900">
+                Catégorie &amp; commune
+              </h3>
               <ListingsFilterBar
                 sort={sort}
                 categories={categories}
@@ -245,29 +268,37 @@ export default async function AnnoncesPage({
                 q={q}
                 filters={filters}
               />
-              <ListingsAttributeFilters
-                sort={sort}
-                category={category}
-                city={city}
-                type={type}
-                q={q}
-                filters={filters}
-              />
-              <ListingsActiveFilterChips
-                sort={sort}
-                category={category}
-                city={city}
-                type={type}
-                q={q}
-                filters={filters}
-                categoryName={
-                  categories.find((c) => c.slug === category)?.name ?? null
-                }
-                cityName={cities.find((c) => c.slug === city)?.name ?? null}
-              />
-            </>
-          )}
+            </section>
+            <ListingsAttributeFilters
+              sort={sort}
+              category={category}
+              city={city}
+              type={type}
+              q={q}
+              filters={filters}
+            />
+          </ListingsFilterDrawer>
         </div>
+
+        {/* Chips des filtres actifs : on les garde EN DEHORS du drawer
+            car ils servent de résumé "glanceable" — on peut retirer un
+            filtre précis sans ouvrir le drawer. */}
+        {hasFilters && (
+          <div className="mt-3">
+            <ListingsActiveFilterChips
+              sort={sort}
+              category={category}
+              city={city}
+              type={type}
+              q={q}
+              filters={filters}
+              categoryName={
+                categories.find((c) => c.slug === category)?.name ?? null
+              }
+              cityName={cities.find((c) => c.slug === city)?.name ?? null}
+            />
+          </div>
+        )}
       </div>
 
       {/* Mode découverte : pas de filtre → on affiche les blocs

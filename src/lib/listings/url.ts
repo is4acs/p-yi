@@ -175,6 +175,36 @@ export function hasActiveFilters(f: ListingsFilters): boolean {
   );
 }
 
+/**
+ * Nombre total de filtres actifs (catégorie + ville + type + chaque
+ * attribut). Utilisé pour afficher le badge "Filtrer (3)" dans le
+ * drawer. Ne compte pas `q` : la recherche textuelle est visible
+ * séparément dans la search bar. Ne compte pas `sort` : un tri n'est
+ * pas un filtre qui réduit les résultats.
+ */
+export function countActiveFilters(params: {
+  category: string | null;
+  city: string | null;
+  type: ListingTypeSlug | null;
+  filters: ListingsFilters;
+}): number {
+  const { category, city, type, filters: f } = params;
+  let n = 0;
+  if (category) n++;
+  if (city) n++;
+  if (type) n++;
+  if (f.priceMin !== null) n++;
+  if (f.priceMax !== null) n++;
+  if (f.yearMin !== null) n++;
+  if (f.kmMax !== null) n++;
+  if (f.surfaceMin !== null) n++;
+  if (f.rooms !== null) n++;
+  if (f.fuel !== null) n++;
+  if (f.brand !== null) n++;
+  if (f.contract !== null) n++;
+  return n;
+}
+
 type Params = Partial<{
   sort: ListingsSort;
   category: string | null;
