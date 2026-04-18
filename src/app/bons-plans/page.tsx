@@ -159,16 +159,18 @@ export default async function BonsPlansPage({
 
   return (
     <main className="mx-auto max-w-md pb-12 animate-in fade-in duration-300 sm:max-w-2xl">
-      {/* Mode découverte (aucun filtre) : hero éditorial guyanais +
-          strip catégories. Sous filtre ces blocs disparaissent — on
-          laisse la vedette aux résultats. Pattern hérité de `/annonces`
-          (cf. `HomeCategoriesGrid` sous `!hasFilters`). */}
-      {!hasFilters && (
-        <>
-          <BonsPlansHero />
-          <DealCategoryStrip />
-        </>
-      )}
+      {/* Hero éditorial : mode découverte uniquement (sous filtre, on
+          laisse la vedette aux résultats). */}
+      {!hasFilters && <BonsPlansHero />}
+
+      {/* Strip catégories : TOUJOURS visible (refonte S34). Avant, elle
+          était masquée sous filtre comme le hero, ce qui donnait une
+          impression de "redirect" sèche quand l'utilisateur cliquait
+          une catégorie (perte du rail de navigation). Maintenant la
+          pill active est mise en avant en orange brand, et l'utilisateur
+          peut sauter d'une catégorie à l'autre sans passer par le
+          select dropdown. */}
+      <DealCategoryStrip selectedCategory={category} />
 
       {/* Sticky ancré SOUS le Header global (`sticky top-0 z-30 h-14
           sm:h-16`) et non à `top-0` comme avant S33 — sinon les deux
