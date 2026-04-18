@@ -68,6 +68,7 @@ model User {
   messagesReceived Message[] @relation("MessagesReceived")
   reports          Report[]  @relation("ReporterReports")
   reportsAgainst   Report[]  @relation("ReportedUserReports")
+  adminActions     AdminActionLog[] @relation("AdminActions")
   notifications    Notification[]
   sessions         Session[]
   karmaHistory     KarmaHistory[]
@@ -88,8 +89,9 @@ enum UserRole {
   USER          // utilisateur standard
   PRO           // compte pro (concessionnaire, agence, etc.)
   AMBASSADOR    // ambassadeur (niveau 6 karma)
-  MODERATOR     // modérateur
-  ADMIN         // admin
+  MODERATOR     // modérateur (peut supprimer des contenus signalés)
+  ADMIN         // admin (peut tout supprimer + bannir des users)
+  SUPER_ADMIN   // super admin (peut promouvoir d'autres admins + voir les logs)
 }
 
 enum UserLevel {
@@ -765,6 +767,61 @@ enum ReportStatus {
   REVIEWING
   RESOLVED
   DISMISSED
+}
+
+// Audit trail des actions d'administration. Chaque action admin (delete
+// listing, ban user, set role, etc.) crée une ligne ici. Permet au
+// super-admin de :
+//  - auditer qui a fait quoi et quand
+//  - détecter un admin qui abuse
+//  - annuler manuellement une action après coup si besoin
+//
+// `targetType` + `targetId` = référence polymorphe (plus souple qu'une
+// relation Prisma pour un modèle qui touche 5 tables différentes).
+// `metadata` stocke des infos contextuelles (ex: l'ancien rôle avant un
+// SET_ROLE, le slug d'une annonce supprimée pour retrouver trace).
+model AdminActionLog {
+  id          String            @id @default(uuid())
+
+  adminId     String
+  admin       User              @relation("AdminActions", fields: [adminId], references: [id])
+
+  action      AdminActionType
+  targetType  AdminTargetType
+  targetId    String            // id polymorphe (listing/deal/comment/message/user)
+
+  reason      String?           @db.Text
+  metadata    Json?             // contexte libre (ancien rôle, slug, etc.)
+
+  createdAt   DateTime          @default(now())
+
+  @@index([adminId, createdAt(sort: Desc)])
+  @@index([action, createdAt(sort: Desc)])
+  @@index([targetType, targetId])
+  @@map("admin_action_logs")
+}
+
+enum AdminActionType {
+  DELETE_LISTING
+  DELETE_DEAL
+  DELETE_COMMENT
+  DELETE_MESSAGE
+  BAN_USER
+  UNBAN_USER
+  SHADOW_BAN_USER
+  UNSHADOW_BAN_USER
+  SET_ROLE
+  RESOLVE_REPORT
+  DISMISS_REPORT
+}
+
+enum AdminTargetType {
+  LISTING
+  DEAL
+  COMMENT
+  MESSAGE
+  USER
+  REPORT
 }
 
 // =============================================================================

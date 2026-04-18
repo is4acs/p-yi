@@ -91,13 +91,9 @@ export async function requireUser(nextPath?: string): Promise<User> {
 // rôles de rang inférieur. Ça nous évite d'avoir à énumérer explicitement
 // chaque combinaison ("admin OU super_admin OU modérateur…") à chaque check.
 //
-// NB : `SUPER_ADMIN` sera ajouté à l'enum `UserRole` en S21, quand on créera
-// le modèle `AdminActionLog` et les vraies pages /admin. On le liste déjà
-// ici dans le tableau ci-dessous pour que la structure soit prête — tant
-// que la valeur n'est pas dans l'enum Prisma, elle n'est juste pas
-// atteignable. `PRO` et `AMBASSADOR` ne sont pas dans cette hiérarchie de
-// privilèges : ils sont orthogonaux (USER pro-isé ou pas), donc on les
-// traite comme équivalents à USER côté permissions.
+// `PRO` et `AMBASSADOR` ne sont pas dans cette hiérarchie de privilèges :
+// ils sont orthogonaux (USER pro-isé ou pas), donc on les traite comme
+// équivalents à USER côté permissions.
 
 const ROLE_RANK: Record<UserRole, number> = {
   USER: 0,
@@ -105,6 +101,7 @@ const ROLE_RANK: Record<UserRole, number> = {
   AMBASSADOR: 0,
   MODERATOR: 10,
   ADMIN: 20,
+  SUPER_ADMIN: 30,
 };
 
 /**
