@@ -8,7 +8,7 @@
  *     "name": "Carrefour Guyane — Promos",
  *     "pageUrl": "https://www.carrefour-guyane.com/bons-plans",
  *     "defaultCitySlug": "matoury",       // ville à attribuer par défaut
- *     "defaultStoreSlug": "carrefour-family-matoury",  // store Péyi
+ *     "defaultStoreSlug": "carrefour-matoury",  // store Péyi
  *     "itemRegex": "<article class=\"product\">([\\s\\S]*?)</article>",
  *     "titleRegex": "<h2>([^<]+)</h2>",
  *     "priceRegex": "(\\d+[.,]\\d{2})\\s*€",

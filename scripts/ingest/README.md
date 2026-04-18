@@ -96,7 +96,7 @@ Format d'une entrée :
   "name": "Carrefour Guyane — Promos",
   "pageUrl": "https://www.carrefour-guyane.com/bons-plans",
   "defaultCitySlug": "matoury",
-  "defaultStoreSlug": "carrefour-family-matoury",
+  "defaultStoreSlug": "carrefour-matoury",
   "itemRegex": "<article class=\"product\">([\\s\\S]*?)</article>",
   "titleRegex": "<h2[^>]*>([^<]+)</h2>",
   "priceRegex": "(\\d+[.,]\\d{2})\\s*€",
