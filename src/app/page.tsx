@@ -19,7 +19,11 @@ export const dynamic = "force-dynamic";
 const HOME_DEALS_COUNT = 6;
 const HOME_LISTINGS_COUNT = 4;
 
-export default async function HomePage() {
+type Props = {
+  searchParams?: { deleted?: string };
+};
+
+export default async function HomePage({ searchParams }: Props) {
   const [{ deals }, { listings }, categories, currentUser] = await Promise.all([
     fetchDealsPage({ sort: "hot", page: 1, category: null, city: null, q: null }),
     fetchListingsPage({
@@ -51,6 +55,16 @@ export default async function HomePage() {
 
   return (
     <main className="mx-auto max-w-md pb-12 animate-in fade-in duration-300 sm:max-w-2xl">
+      {searchParams?.deleted === "1" && (
+        <div
+          role="status"
+          className="mx-4 mt-4 rounded-lg border border-peyi-green-200 bg-peyi-green-50 p-3 text-sm text-peyi-green-900 sm:mx-0"
+        >
+          Ton compte a bien été supprimé. Merci d&apos;avoir fait partie de
+          l&apos;aventure Péyi.
+        </div>
+      )}
+
       {/* Hero */}
       <section className="px-4 pt-6 sm:px-0 sm:pt-10">
         <p className="text-xs font-semibold uppercase tracking-wide text-peyi-orange-600">

@@ -69,3 +69,22 @@ export async function removeDealImage(publicUrl: string): Promise<void> {
   const supabase = createSupabaseServerClient();
   await supabase.storage.from(DEAL_BUCKET).remove([path]);
 }
+
+/**
+ * Vide intégralement le dossier `deals/<userId>/` du bucket Supabase.
+ * Utilisé lors de la suppression d'un compte (RGPD — droit à l'oubli).
+ * Best-effort, ne throw jamais — voir la jumelle dans listing-images.
+ */
+export async function removeAllDealImagesForUser(userId: string): Promise<void> {
+  const supabase = createSupabaseServerClient();
+  try {
+    const { data, error } = await supabase.storage
+      .from(DEAL_BUCKET)
+      .list(userId, { limit: 1000 });
+    if (error || !data || data.length === 0) return;
+    const paths = data.map((f) => `${userId}/${f.name}`);
+    await supabase.storage.from(DEAL_BUCKET).remove(paths);
+  } catch {
+    // Silence.
+  }
+}

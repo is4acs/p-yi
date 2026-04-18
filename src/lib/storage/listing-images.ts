@@ -119,3 +119,28 @@ export async function removeListingImages(publicUrls: string[]): Promise<void> {
   if (publicUrls.length === 0) return;
   await Promise.allSettled(publicUrls.map((u) => removeListingImage(u)));
 }
+
+/**
+ * Vide intégralement le dossier `listings/<userId>/` du bucket Supabase.
+ * Utilisé lors de la suppression d'un compte (RGPD — droit à l'oubli).
+ * Best-effort : n'étend jamais d'exception, car un orphelin storage ne
+ * doit pas empêcher la suppression DB qui est la priorité légale.
+ *
+ * Stratégie : on liste d'abord (max 1000 fichiers, ce qui est largement
+ * au-dessus du cap de photos par user), puis on supprime en batch. Si
+ * l'user avait plus de 1000 images on boucle — en pratique c'est
+ * improbable (cap produit: ~50 photos par annonce × quelques annonces).
+ */
+export async function removeAllListingImagesForUser(userId: string): Promise<void> {
+  const supabase = createSupabaseServerClient();
+  try {
+    const { data, error } = await supabase.storage
+      .from(LISTING_BUCKET)
+      .list(userId, { limit: 1000 });
+    if (error || !data || data.length === 0) return;
+    const paths = data.map((f) => `${userId}/${f.name}`);
+    await supabase.storage.from(LISTING_BUCKET).remove(paths);
+  } catch {
+    // Silence : le cleanup storage n'est jamais bloquant.
+  }
+}
