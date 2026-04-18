@@ -1,5 +1,8 @@
 /**
- * Dev-only seed: fake users + ~18 bons plans to feed the UI.
+ * Dev-only seed: fake users + 10 bons plans to feed the UI.
+ *
+ * Only "vraies bonnes affaires" (temperature >= 100) are kept —
+ * lukewarm or cold deals have been pruned.
  *
  * Run with:  npm run db:seed-dev
  *
@@ -149,23 +152,6 @@ const DEALS: DealTemplate[] = [
     ageHours: 3,
   },
   {
-    title: "Huile végétale Lesieur 5L à 9,99€",
-    description:
-      "Prix canon pour le bidon de 5L, parfait pour les gros foyers. Rayon épicerie, promo jusqu'à samedi.",
-    price: 9.99,
-    originalPrice: 14.99,
-    categoryS: "supermarche-alimentation",
-    authorIdx: 4,
-    citeS: "matoury",
-    storeS: "leader-price-matoury",
-    temperature: 95,
-    upvotes: 19,
-    downvotes: 2,
-    comments: 5,
-    views: 410,
-    ageHours: 30,
-  },
-  {
     title: "Vol Cayenne-Paris Air France à 590€ aller-retour",
     description:
       "Tarif continental appliqué, dates flexibles mai-juin. Réservé hier via le site AF, ça passe bien en classe économique avec bagage 23kg.",
@@ -234,22 +220,6 @@ const DEALS: DealTemplate[] = [
     ageHours: 8,
   },
   {
-    title: "Lot 3 t-shirts Nike Dri-FIT à 29,99€",
-    description:
-      "Les 3 pour 30 balles, parfait pour le sport en saison des pluies. Tailles S à XL dispo à Intersport Kourou.",
-    price: 29.99,
-    originalPrice: 45,
-    categoryS: "sport-loisirs",
-    authorIdx: 1,
-    citeS: "kourou",
-    temperature: 62,
-    upvotes: 14,
-    downvotes: 2,
-    comments: 3,
-    views: 290,
-    ageHours: 44,
-  },
-  {
     title: "Machine Nespresso Vertuo Pop à 89€ + 80 capsules offertes",
     description:
       "Bundle Amazon avec 80 capsules offertes (valeur 35€). Le modèle Pop est compact, parfait pour un studio.",
@@ -267,70 +237,6 @@ const DEALS: DealTemplate[] = [
     ageHours: 20,
   },
   {
-    title: "Stage surf 2h à Kourou — 45€ au lieu de 70€",
-    description:
-      "École de surf à Kourou, stage découverte de 2h matériel inclus. Promo weekend, code PEYI25 à la réservation.",
-    price: 45,
-    originalPrice: 70,
-    categoryS: "restos-sorties",
-    authorIdx: 1,
-    citeS: "kourou",
-    temperature: 41,
-    upvotes: 9,
-    downvotes: 1,
-    comments: 2,
-    views: 180,
-    ageHours: 52,
-  },
-  {
-    title: "Chaussures running Asics Gel-Nimbus 26 à 79€",
-    description:
-      "Taille 42/43 en stock. Idéales pour la course sur route, bon amorti pour le bitume brûlant de Cayenne.",
-    price: 79,
-    originalPrice: 140,
-    categoryS: "sport-loisirs",
-    authorIdx: 3,
-    citeS: "cayenne",
-    temperature: 88,
-    upvotes: 17,
-    downvotes: 3,
-    comments: 4,
-    views: 380,
-    ageHours: 26,
-  },
-  {
-    title: "Abonnement Fitness Park Matoury à 19,99€/mois (sans engagement)",
-    description:
-      "Offre jusqu'à fin du mois, normalement c'est 29,99€. Accès salle + cours collectifs illimités.",
-    price: 19.99,
-    originalPrice: 29.99,
-    categoryS: "sport-loisirs",
-    authorIdx: 2,
-    citeS: "matoury",
-    temperature: 27,
-    upvotes: 6,
-    downvotes: 1,
-    comments: 1,
-    views: 150,
-    ageHours: 60,
-  },
-  {
-    title: "Échantillons gratuits crème solaire Bioderma (envoi gratuit)",
-    description:
-      "Formulaire sur le site officiel, ils envoient gratuitement 3 échantillons en Guyane. Testé, reçu en 10j.",
-    price: 0,
-    categoryS: "gratuit-echantillons",
-    authorIdx: 4,
-    isFree: true,
-    externalUrl: "https://www.bioderma.fr/echantillons",
-    temperature: 72,
-    upvotes: 15,
-    downvotes: 2,
-    comments: 6,
-    views: 520,
-    ageHours: 40,
-  },
-  {
     title: "Arrivage conteneur bois — Kourou ce samedi",
     description:
       "Planches, poutres et panneaux OSB à prix métropole, -30%. Quantité limitée, arrivée confirmée par le dépôt. Se pointer tôt.",
@@ -344,39 +250,6 @@ const DEALS: DealTemplate[] = [
     comments: 11,
     views: 890,
     ageHours: 16,
-  },
-  {
-    title: "Voiture occasion Clio 4 essence — 7 500€ (bon plan concessionnaire)",
-    description:
-      "Reprise concession à Rémire, révisée, 85 000 km. Prix publié 8 990€, négociable à 7 500€ selon le vendeur.",
-    price: 7500,
-    originalPrice: 8990,
-    categoryS: "auto-moto-deals",
-    authorIdx: 0,
-    citeS: "remire-montjoly",
-    temperature: -12,
-    upvotes: 3,
-    downvotes: 5,
-    comments: 7,
-    views: 310,
-    ageHours: 48,
-  },
-  {
-    title: "Ventilateur Rowenta Turbo Silence à 49€",
-    description:
-      "Bon plan pour la saison sèche. 4 vitesses, silencieux, oscillation. Prix fou chez Cdiscount.",
-    price: 49,
-    originalPrice: 89,
-    categoryS: "maison-electromenager",
-    authorIdx: 5,
-    merchantS: "cdiscount",
-    externalUrl: "https://www.cdiscount.com/rowenta-turbo",
-    temperature: 8,
-    upvotes: 2,
-    downvotes: 1,
-    comments: 0,
-    views: 45,
-    ageHours: 1,
   },
 ];
 
