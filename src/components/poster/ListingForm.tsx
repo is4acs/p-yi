@@ -111,7 +111,7 @@ export function ListingForm({
   );
 
   return (
-    <form action={action} encType="multipart/form-data" className="space-y-5">
+    <form action={action} className="space-y-5">
       {v.listingId && (
         <input type="hidden" name="listingId" value={v.listingId} />
       )}

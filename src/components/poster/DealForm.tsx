@@ -56,7 +56,7 @@ export function DealForm({
   }, [stores, citySlug]);
 
   return (
-    <form action={action} encType="multipart/form-data" className="space-y-5">
+    <form action={action} className="space-y-5">
       {v.dealId && <input type="hidden" name="dealId" value={v.dealId} />}
 
       <div className="space-y-1.5">

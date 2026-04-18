@@ -79,6 +79,23 @@ export default function ErrorPage({
           <RotateCcw className="h-4 w-4" aria-hidden />
           Réessayer
         </button>
+        {/*
+          `reset()` re-render le segment cassé, ce qui relance potentiellement
+          le même bug et reboucle sur cette page. Un hard reload casse la
+          boucle : nouveau RSC côté serveur, cache Next purgé, state client
+          remis à zéro. On le garde derrière le bouton principal pour ne pas
+          détourner du cas nominal mais il sauve l'utilisateur si le reset
+          échoue deux fois.
+        */}
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof window !== "undefined") window.location.reload();
+          }}
+          className="inline-flex h-10 items-center gap-1.5 rounded-full border border-border bg-background px-4 text-sm font-semibold text-foreground transition hover:border-peyi-orange-300"
+        >
+          Recharger la page
+        </button>
         <Link
           href="/"
           className="inline-flex h-10 items-center gap-1.5 rounded-full border border-border bg-background px-4 text-sm font-semibold text-foreground transition hover:border-peyi-orange-300"

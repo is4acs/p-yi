@@ -2,61 +2,58 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ImagePlus, Star, Trash2 } from "lucide-react";
+import { AlertCircle, ImagePlus, Loader2, Star, Trash2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { uploadFilesDirect } from "@/lib/client/upload";
 
-const MAX_BYTES = 5 * 1024 * 1024; // 5 MB — matches server-side MAX_IMAGE_BYTES
+const MAX_BYTES_INPUT = 15 * 1024 * 1024; // 15 MB avant compression.
 const ACCEPT = "image/jpeg,image/png,image/webp";
+const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
 
 /**
- * Client-side representation of one slot in the gallery. Either :
- *  - an existing photo already stored on Supabase (we just need to keep
- *    track of its URL + order);
- *  - a brand-new File the user picked locally, previewed via
- *    URL.createObjectURL so they see it before submit.
+ * Représentation locale d'une photo :
+ *   - `existing` : déjà stockée sur Supabase (mode édition).
+ *   - `new`      : fichier local, en cours ou fin d'upload direct.
+ * On stocke `previewUrl` dans les deux cas pour la grille, `url` n'est
+ * présent que pour les photos accessibles publiquement (upload OK).
  */
 type PhotoItem =
   | { kind: "existing"; url: string }
-  | { kind: "new"; file: File; previewUrl: string };
-
-/**
- * Shape sent to the server so it can reassemble the final gallery order.
- * Strings for tags, because encoding an array of variants in FormData is a
- * pain (and JSON.parse on the server is cheap).
- *
- * - existing:<url>  → keep the photo at this URL
- * - new:<N>         → take the Nth File from `formData.getAll("newPhotos")`
- */
-export type PhotoOrderToken = `existing:${string}` | `new:${number}`;
+  | {
+      kind: "new";
+      id: string;
+      previewUrl: string;
+      status: "uploading" | "uploaded" | "error";
+      url?: string;
+      error?: string;
+    };
 
 type Props = {
-  /** URLs of photos already on the listing (edit mode). Pre-ordered. */
+  /** URLs déjà présentes (mode édition), dans l'ordre d'affichage. */
   initialUrls?: string[];
-  /** Max number of photos allowed (depends on category). */
+  /** Nombre maximum de photos autorisées (dépend de la catégorie). */
   max: number;
   className?: string;
 };
 
+function newId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 /**
- * Multi-photo uploader for listings. Presents a grid of tiles the user can
- * :
- *  - add (up to `max`)
- *  - remove individually
- *  - promote to "couverture" (= move to position 0)
- *
- * The **first** photo is always the cover — we surface that in the UI so
- * the user knows which shot buyers will see first on listing cards.
- *
- * Form integration : we write two hidden inputs next to the render
- * (`newPhotos` file input + `photoOrder` JSON) that the submit picks up.
- * The server walks `photoOrder` to rebuild the final URL list.
+ * Galerie multi-photos. Diff vs. la version précédente :
+ *   - upload direct navigateur → Supabase (aucun byte ne passe par Vercel)
+ *   - compression canvas 1920 px + re-encode JPEG/WebP → ~10× plus léger
+ *   - uploads en parallèle → 10 photos passent en temps du plus lent, pas
+ *     en somme cumulée (avant : boucle séquentielle serveur)
+ *   - le form ne transporte plus que `photoUrls` (JSON d'URLs publiques)
  */
 export function PhotosUploader({ initialUrls = [], max, className }: Props) {
   const initial: PhotoItem[] = useMemo(
-    () => initialUrls.map((url) => ({ kind: "existing", url })),
-    // Intentionally stringify so we don't re-init on every render if the
-    // caller passes a new array literal with the same contents.
+    () => initialUrls.map((url) => ({ kind: "existing" as const, url })),
+    // Stringify pour ne pas réinitialiser à chaque render si le tableau
+    // passé en props a les mêmes éléments mais une ref différente.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [initialUrls.join("|")],
   );
@@ -64,11 +61,10 @@ export function PhotosUploader({ initialUrls = [], max, className }: Props) {
   const [photos, setPhotos] = useState<PhotoItem[]>(initial);
   const [error, setError] = useState<string | null>(null);
   const pickerRef = useRef<HTMLInputElement>(null);
-  const hiddenFilesRef = useRef<HTMLInputElement>(null);
+  const hiddenRef = useRef<HTMLInputElement>(null);
 
   /* ------------------------------------------------------------------ *
-   * Preview URL lifecycle : revoke object URLs when they're removed to
-   * avoid leaking memory if the user adds/removes lots of photos.
+   * Nettoyage des blob: URLs au unmount pour éviter les fuites mémoire.
    * ------------------------------------------------------------------ */
   useEffect(() => {
     return () => {
@@ -80,39 +76,44 @@ export function PhotosUploader({ initialUrls = [], max, className }: Props) {
   }, []);
 
   /* ------------------------------------------------------------------ *
-   * Hidden file input sync. Instead of submitting a raw FileList we build
-   * one that matches the order of our local state via the DataTransfer
-   * API — required because React can't set `.files` on a file input
-   * through normal props (security model).
+   * URLs finales pour le submit : on garde l'ordre de la grille, on
+   * n'émet que les photos effectivement résolues (existing OU
+   * uploaded). Les "uploading/error" sont omises — si le user submit
+   * pendant un upload, la photo est simplement absente (et un listener
+   * ci-dessous bloque le submit de toute façon).
    * ------------------------------------------------------------------ */
-  useEffect(() => {
-    const input = hiddenFilesRef.current;
-    if (!input) return;
-    const dt = new DataTransfer();
-    for (const p of photos) {
-      if (p.kind === "new") dt.items.add(p.file);
-    }
-    input.files = dt.files;
-  }, [photos]);
+  const finalUrls: string[] = useMemo(
+    () =>
+      photos.flatMap((p) => {
+        if (p.kind === "existing") return [p.url];
+        if (p.kind === "new" && p.status === "uploaded" && p.url) return [p.url];
+        return [];
+      }),
+    [photos],
+  );
 
-  /* ------------------------------------------------------------------ *
-   * Build photoOrder tokens. Walk the ordered state; every "new" photo
-   * gets a numeric index matching its position in the FileList above.
-   * ------------------------------------------------------------------ */
-  const photoOrder: PhotoOrderToken[] = useMemo(() => {
-    const tokens: PhotoOrderToken[] = [];
-    let newIdx = 0;
-    for (const p of photos) {
-      if (p.kind === "existing") tokens.push(`existing:${p.url}`);
-      else tokens.push(`new:${newIdx++}`);
-    }
-    return tokens;
-  }, [photos]);
+  const anyUploading = photos.some(
+    (p) => p.kind === "new" && p.status === "uploading",
+  );
+
+  // Bloque le submit du formulaire tant qu'un upload est en cours.
+  useEffect(() => {
+    const form = hiddenRef.current?.form;
+    if (!form) return;
+    const handler = (e: SubmitEvent) => {
+      if (anyUploading) {
+        e.preventDefault();
+        setError("Upload en cours — patiente quelques secondes.");
+      }
+    };
+    form.addEventListener("submit", handler);
+    return () => form.removeEventListener("submit", handler);
+  }, [anyUploading]);
 
   /* ------------------------------------------------------------------ *
    * Handlers
    * ------------------------------------------------------------------ */
-  function handleFiles(fileList: FileList | null) {
+  async function handleFiles(fileList: FileList | null) {
     setError(null);
     if (!fileList || fileList.length === 0) return;
 
@@ -123,32 +124,71 @@ export function PhotosUploader({ initialUrls = [], max, className }: Props) {
     }
 
     const incoming = Array.from(fileList).slice(0, remaining);
-    const accepted: PhotoItem[] = [];
+    const accepted: { file: File; id: string; previewUrl: string }[] = [];
     for (const file of incoming) {
-      if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      if (!ACCEPTED.includes(file.type)) {
         setError("Format non supporté (JPG, PNG, WebP uniquement).");
         continue;
       }
-      if (file.size > MAX_BYTES) {
-        setError("Une image dépasse 5 Mo — réduis-la avant d'uploader.");
+      if (file.size > MAX_BYTES_INPUT) {
+        setError("Une image dépasse 15 Mo — réduis-la avant d'ajouter.");
         continue;
       }
       accepted.push({
-        kind: "new",
         file,
+        id: newId(),
         previewUrl: URL.createObjectURL(file),
       });
     }
     if (accepted.length === 0) return;
 
     if (fileList.length > remaining) {
-      setError(`Seulement ${remaining} photo${remaining > 1 ? "s" : ""} ajoutée${remaining > 1 ? "s" : ""} (maximum ${max}).`);
+      setError(
+        `Seulement ${remaining} photo${remaining > 1 ? "s" : ""} ajoutée${
+          remaining > 1 ? "s" : ""
+        } (maximum ${max}).`,
+      );
     }
 
-    setPhotos((prev) => [...prev, ...accepted]);
+    // Pousse les placeholders en "uploading" immédiatement pour un feedback
+    // instantané, même si la compression + upload prennent 1-2 s par image.
+    const placeholders: PhotoItem[] = accepted.map((a) => ({
+      kind: "new" as const,
+      id: a.id,
+      previewUrl: a.previewUrl,
+      status: "uploading" as const,
+    }));
+    setPhotos((prev) => [...prev, ...placeholders]);
 
-    // Reset the picker so picking the same file twice in a row still fires.
+    // Reset le picker pour qu'on puisse re-sélectionner le même fichier.
     if (pickerRef.current) pickerRef.current.value = "";
+
+    try {
+      const urls = await uploadFilesDirect(
+        "listing",
+        accepted.map((a) => a.file),
+      );
+      // Marque chaque placeholder comme uploadé avec son URL publique.
+      setPhotos((prev) =>
+        prev.map((p) => {
+          if (p.kind !== "new") return p;
+          const idx = accepted.findIndex((a) => a.id === p.id);
+          if (idx === -1) return p;
+          return { ...p, status: "uploaded" as const, url: urls[idx] };
+        }),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Échec de l'upload.";
+      setPhotos((prev) =>
+        prev.map((p) => {
+          if (p.kind !== "new") return p;
+          const isMine = accepted.some((a) => a.id === p.id);
+          if (!isMine || p.status !== "uploading") return p;
+          return { ...p, status: "error" as const, error: message };
+        }),
+      );
+      setError(message);
+    }
   }
 
   function removeAt(index: number) {
@@ -184,7 +224,7 @@ export function PhotosUploader({ initialUrls = [], max, className }: Props) {
           </span>
         </span>
         <span className="text-[11px] text-muted-foreground">
-          JPG · PNG · WebP · 5 Mo max
+          JPG · PNG · WebP · optimisées automatiquement
         </span>
       </div>
 
@@ -192,18 +232,18 @@ export function PhotosUploader({ initialUrls = [], max, className }: Props) {
         {photos.map((photo, i) => {
           const url = photo.kind === "existing" ? photo.url : photo.previewUrl;
           const isCover = i === 0;
+          const isUploading = photo.kind === "new" && photo.status === "uploading";
+          const isError = photo.kind === "new" && photo.status === "error";
           return (
             <div
-              key={
-                photo.kind === "existing"
-                  ? `e-${photo.url}`
-                  : `n-${photo.previewUrl}`
-              }
+              key={photo.kind === "existing" ? `e-${photo.url}` : `n-${photo.id}`}
               className={cn(
                 "group relative aspect-square overflow-hidden rounded-lg border bg-muted",
-                isCover
-                  ? "border-peyi-orange-400 ring-1 ring-peyi-orange-300"
-                  : "border-border",
+                isError
+                  ? "border-destructive ring-1 ring-destructive/40"
+                  : isCover
+                    ? "border-peyi-orange-400 ring-1 ring-peyi-orange-300"
+                    : "border-border",
               )}
             >
               <Image
@@ -215,24 +255,38 @@ export function PhotosUploader({ initialUrls = [], max, className }: Props) {
                 unoptimized
               />
 
-              {isCover && (
+              {isCover && !isError && (
                 <span className="absolute left-1 top-1 inline-flex items-center gap-0.5 rounded-full bg-peyi-orange-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow">
                   <Star className="h-2.5 w-2.5" aria-hidden />
                   Couverture
                 </span>
               )}
 
+              {isUploading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white">
+                  <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+                </div>
+              )}
+
+              {isError && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-destructive/70 p-1 text-center text-white">
+                  <AlertCircle className="h-5 w-5" aria-hidden />
+                  <span className="text-[9px] font-semibold leading-tight">
+                    Échec
+                  </span>
+                </div>
+              )}
+
               <button
                 type="button"
                 onClick={() => removeAt(i)}
                 aria-label={`Supprimer la photo ${i + 1}`}
-                className="absolute right-1 top-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100 sm:opacity-0"
-                style={{ opacity: 1 }}
+                className="absolute right-1 top-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black/80"
               >
                 <Trash2 className="h-3 w-3" aria-hidden />
               </button>
 
-              {!isCover && (
+              {!isCover && !isUploading && !isError && (
                 <button
                   type="button"
                   onClick={() => makeCoverAt(i)}
@@ -278,26 +332,16 @@ export function PhotosUploader({ initialUrls = [], max, className }: Props) {
       )}
 
       {/*
-        Hidden inputs picked up by the server action :
-          - `newPhotos`  : File[] in the order they appear in `photos` (via
-                           a DataTransfer sync inside the effect above)
-          - `photoOrder` : JSON array of tokens telling the server how to
-                           reassemble the gallery
+        Champ hidden consommé par le server action : JSON array ordonné
+        des URLs publiques finales (cover en tête). Une photo encore en
+        cours d'upload n'y figure pas ; le submit est bloqué dans ce cas
+        par le listener ci-dessus.
       */}
       <input
-        ref={hiddenFilesRef}
-        type="file"
-        name="newPhotos"
-        accept={ACCEPT}
-        multiple
-        className="sr-only"
-        tabIndex={-1}
-        aria-hidden
-      />
-      <input
+        ref={hiddenRef}
         type="hidden"
-        name="photoOrder"
-        value={JSON.stringify(photoOrder)}
+        name="photoUrls"
+        value={JSON.stringify(finalUrls)}
       />
     </div>
   );
