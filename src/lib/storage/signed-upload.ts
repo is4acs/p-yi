@@ -20,6 +20,53 @@ export function isAllowedMime(mime: string): mime is AllowedMime {
   return (ALLOWED_MIME as readonly string[]).includes(mime);
 }
 
+const BUCKET_FILE_SIZE_LIMIT: Record<string, number> = {
+  [DEAL_BUCKET]: 5 * 1024 * 1024,
+  [LISTING_BUCKET]: 5 * 1024 * 1024,
+  [AVATAR_BUCKET]: 2 * 1024 * 1024,
+};
+
+// Une fois qu'un bucket a été confirmé sur une instance warm, on évite le
+// round-trip `getBucket` suivant. Simple Set en module scope : ne survit pas
+// au cold start, ce qui est OK — on veut juste éviter un ping par upload.
+const confirmedBuckets = new Set<string>();
+
+/**
+ * Garantit qu'un bucket existe côté Supabase avant de signer une URL.
+ *
+ * Historiquement, les buckets étaient créés manuellement via
+ * `supabase/storage-setup.sql`. En pratique le bucket `listings` restait
+ * souvent non provisionné, et `createSignedUploadUrl` remontait alors
+ * "The related resource does not exist" directement dans l'UI.
+ *
+ * On utilise la service role key (déjà requise pour signer) pour provisionner
+ * le bucket à la première demande : `public: true`, même plafond de taille
+ * qu'avant, et whitelist MIME identique. Idempotent — si une race entre deux
+ * workers crée le bucket en parallèle, on swallow l'erreur "already exists".
+ */
+async function ensureBucketExists(bucket: string): Promise<void> {
+  if (confirmedBuckets.has(bucket)) return;
+
+  const supabase = createSupabaseAdminClient();
+  const existing = await supabase.storage.getBucket(bucket);
+  if (existing.data && !existing.error) {
+    confirmedBuckets.add(bucket);
+    return;
+  }
+
+  const { error } = await supabase.storage.createBucket(bucket, {
+    public: true,
+    fileSizeLimit: BUCKET_FILE_SIZE_LIMIT[bucket] ?? 5 * 1024 * 1024,
+    allowedMimeTypes: [...ALLOWED_MIME],
+  });
+  if (error && !/already exists/i.test(error.message)) {
+    throw new Error(
+      `Impossible de créer le bucket ${bucket} : ${error.message}`,
+    );
+  }
+  confirmedBuckets.add(bucket);
+}
+
 function extFor(mime: AllowedMime): string {
   switch (mime) {
     case "image/jpeg":
@@ -64,6 +111,8 @@ async function signOne(
   userId: string,
   mime: AllowedMime,
 ): Promise<SignedUpload> {
+  await ensureBucketExists(bucket);
+
   const supabase = createSupabaseAdminClient();
   const path = objectPath(userId, mime);
 
