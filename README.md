@@ -102,7 +102,9 @@ npm run build            # Build de production
 npm run start            # Start du build (après build)
 npm run lint             # ESLint + règles Next
 npm run type-check       # tsc --noEmit (pas de build, juste la vérif)
-npm run preflight        # type-check + lint + build (check avant push)
+npm run audit:ci         # npm audit (fail si CVE critical)
+npm run preflight        # type-check + lint + build + audit (check avant push)
+npm run favicon:generate # Regénère src/app/favicon.ico depuis SVG inline
 
 npm run db:push          # Push du schéma Prisma vers la DB (dev)
 npm run db:migrate       # Nouvelle migration (dev)
@@ -163,6 +165,7 @@ docs/
 ├── design-system.md        # Référence design system (palettes, composants, do/don't)
 ├── architecture.md         # Architecture technique
 ├── deployment.md           # Runbook déploiement (Vercel, Supabase, Upstash)
+├── security.md             # Politique audit deps + CVE acceptées + plan upgrade
 └── rgpd.md                 # Runbook RGPD (droits, procédures, DPO)
 ```
 
