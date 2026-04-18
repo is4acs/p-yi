@@ -8,6 +8,7 @@ import {
   type ListingCardData,
   formatPriceType,
 } from "@/lib/listings/queries";
+import { Badge } from "@/components/ui/badge";
 import { DealImagePlaceholder } from "@/components/deals/DealImagePlaceholder";
 import { ListingFavoriteButton } from "./ListingFavoriteButton";
 import { ListingTypeChip } from "./ListingTypeChip";
@@ -16,15 +17,26 @@ import { ListingTypeChip } from "./ListingTypeChip";
  * ListingCardTile — variante **photo-first** pour la grille `/annonces`.
  *
  * Différences avec `ListingCard` (horizontal, info-dense) :
- *  - Image 4:3 en haut (pas 96×96 à gauche) — donne ~140px de hauteur
- *    photo sur un viewport 375px/2 cols, suffisant pour reconnaître
- *    l'objet d'un coup d'œil.
+ *  - Conteneur blanc avec border `ink-100` (spec handoff AdCard) —
+ *    donne une "carte" visible même quand l'image est petite.
+ *  - Image **5:3** en haut (spec handoff, avant S28 on était en 4:3).
+ *    Ratio plus large = moins de hauteur par tile, gain de densité sur
+ *    mobile (on voit ~4 tiles avant scroll au lieu de 3).
  *  - Moins d'infos en dessous : prix + titre + ville/date. Exit les
  *    résumés d'attributs, la condition, les badges "à la une" (qui
  *    restent visibles sur la page détail).
+ *  - Système de **badges unifié** (S28) : NOUVEAU (vert) pour les
+ *    annonces <72h, URGENT (rouge+flamme) pour `isUrgent`. Un seul
+ *    badge à la fois en haut-gauche — URGENT gagne quand les deux
+ *    s'appliquent (signal plus fort).
  *  - Le type d'annonce n'apparaît que pour les **cas non-défaut**
  *    (Recherche, Échange, Don). "Propose" est la norme (~80% du
  *    catalogue) — l'afficher partout = bruit visuel.
+ *
+ * Typo alignée au handoff (`components.md §AdCard`) :
+ *  - Title : `--f-display` 700, 13px
+ *  - Price : `--f-display` 800, 15px, couleur action (orange-700)
+ *  - Body padding : 9px 11px 10px
  *
  * Pourquoi pas remplacer `ListingCard` partout ? Les favoris
  * (`/profil/favoris`) et la home `/` gardent le layout horizontal
@@ -39,6 +51,21 @@ type Props = {
   isFavorited?: boolean;
   className?: string;
 };
+
+// Une annonce est "nouvelle" si publiée il y a moins de 72h. Seuil
+// calé sur le temps moyen avant qu'un item se fasse remarquer par
+// les premiers curieux — au-delà, le badge n'apporte plus de signal
+// et devient du bruit visuel ("tout est nouveau = rien ne l'est").
+const NEW_BADGE_WINDOW_MS = 72 * 60 * 60 * 1000;
+
+function isRecentlyPublished(publishedAt: Date | string | null): boolean {
+  if (!publishedAt) return false;
+  const ts =
+    typeof publishedAt === "string"
+      ? new Date(publishedAt).getTime()
+      : publishedAt.getTime();
+  return Date.now() - ts < NEW_BADGE_WINDOW_MS;
+}
 
 export function ListingCardTile({
   listing,
@@ -63,11 +90,18 @@ export function ListingCardTile({
   // le bruit visuel. Les 3 autres types sont distinctifs et méritent
   // d'apparaître directement sur la tuile.
   const showTypeChip = listing.type !== "OFFER";
+  // URGENT bat NOUVEAU : même si c'est <72h, le signal d'urgence
+  // prime. Un seul badge en haut-gauche pour garder la tile lisible.
+  const showNewBadge = !listing.isUrgent && isRecentlyPublished(listing.publishedAt);
 
   return (
     <article
       className={cn(
-        "group relative flex flex-col",
+        // Carte handoff : fond blanc, border ink-100, radius-md (14px
+        // en spec ≈ `rounded-xl` 12px en Tailwind, différence invisible).
+        // `overflow-hidden` pour clipper l'image aux coins arrondis.
+        "group relative flex flex-col overflow-hidden rounded-xl border border-ink-100 bg-background transition-shadow hover:shadow-sm",
+        listing.isBoosted && "border-peyi-orange-300 ring-1 ring-peyi-orange-200",
         className,
       )}
     >
@@ -75,12 +109,7 @@ export function ListingCardTile({
         href={`/annonces/${listing.slug}`}
         className="flex flex-col active:scale-[0.99]"
       >
-        <div
-          className={cn(
-            "relative aspect-[4/3] overflow-hidden rounded-xl border border-border bg-muted/40",
-            listing.isBoosted && "border-peyi-orange-300 ring-1 ring-peyi-orange-200",
-          )}
-        >
+        <div className="relative aspect-[5/3] overflow-hidden bg-muted/40">
           {listing.coverImageUrl ? (
             <Image
               src={listing.coverImageUrl}
@@ -98,12 +127,19 @@ export function ListingCardTile({
             />
           )}
 
-          {listing.isUrgent && (
-            <span className="absolute left-2 top-2 inline-flex items-center gap-0.5 rounded-full bg-hot/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow">
+          {/* Slot top-left : un seul badge à la fois. URGENT (Flame)
+              prime sur NOUVEAU (vert). Pas d'empilement — l'œil doit
+              attraper UN signal, pas déchiffrer une pile. */}
+          {listing.isUrgent ? (
+            <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-hot/90 px-2 py-[3px] font-display text-[10px] font-extrabold uppercase tracking-[0.08em] text-white shadow">
               <Flame className="h-3 w-3" aria-hidden />
               Urgent
             </span>
-          )}
+          ) : showNewBadge ? (
+            <Badge variant="new" className="absolute left-2 top-2 shadow">
+              Nouveau
+            </Badge>
+          ) : null}
 
           {showTypeChip && (
             <span className="absolute bottom-2 left-2">
@@ -122,14 +158,17 @@ export function ListingCardTile({
           )}
         </div>
 
-        <div className="mt-2 min-w-0 space-y-0.5 px-0.5">
-          <p className="truncate font-display text-base font-extrabold tracking-tight text-peyi-orange-700">
+        {/* Padding body : 9/11/10px = cadence handoff. Pas de space-y :
+            on laisse les `leading-*` et margin individuels faire le
+            rythme vertical (plus fin qu'un gap uniforme). */}
+        <div className="min-w-0 px-[11px] pb-[10px] pt-[9px]">
+          <p className="truncate font-display text-[15px] font-extrabold leading-tight tracking-tight text-peyi-orange-700">
             {priceLabel}
           </p>
-          <h3 className="line-clamp-2 text-sm font-medium leading-snug text-ink-900 group-hover:text-peyi-orange-800">
+          <h3 className="mt-0.5 line-clamp-2 font-display text-[13px] font-bold leading-snug text-ink-900 group-hover:text-peyi-orange-800">
             {listing.title}
           </h3>
-          <p className="flex items-center gap-1 truncate text-[11px] text-ink-500">
+          <p className="mt-1 flex items-center gap-1 truncate text-[11px] text-ink-500">
             <span className="truncate">{locationLabel}</span>
             <span aria-hidden>·</span>
             <Clock className="h-3 w-3 shrink-0" aria-hidden />
