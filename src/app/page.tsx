@@ -10,6 +10,7 @@ import {
 import { getCurrentUser } from "@/lib/auth/current-user";
 
 import { Button } from "@/components/ui/button";
+import { HighlightJaune } from "@/components/ui/highlight-jaune";
 import { DealCard } from "@/components/deals/DealCard";
 import { HomeCategoriesGrid } from "@/components/home/HomeCategoriesGrid";
 import { HomeCommunesSection } from "@/components/home/HomeCommunesSection";
@@ -76,9 +77,12 @@ export default async function HomePage({ searchParams }: Props) {
         </div>
       )}
 
-      {/* Hero — refonte S27 : titre "valeur" + SearchBar hero + 1 CTA primary.
-          Fond dégradé orange très subtil pour démarquer la zone hero sans
-          voler la vedette aux catégories qui suivent. */}
+      {/* Hero — refonte S27 + polish S28 : titre "valeur" + SearchBar
+          + 1 CTA primary. Fond dégradé orange subtil pour démarquer
+          la zone sans voler la vedette aux catégories qui suivent.
+          Signature Péyi (S28) : `<HighlightJaune>` sur "Guyane" — le
+          marker-jaune du handoff typography.css (`.hl-jaune`). Un seul
+          highlight sur la page pour que le mot signe sans se diluer. */}
       <section className="-mx-4 bg-gradient-to-b from-peyi-orange-50/70 to-transparent px-4 pb-8 pt-10 sm:mx-0 sm:px-0 sm:pb-12 sm:pt-14">
         <p className="font-mono text-eyebrow uppercase text-peyi-orange-700">
           Marketplace 100% Guyane
@@ -86,7 +90,7 @@ export default async function HomePage({ searchParams }: Props) {
         <h1 className="mt-2 font-display text-title-md font-extrabold tracking-tight text-ink-900 sm:text-title-lg">
           Le marché local
           <br />
-          de la <span className="text-peyi-orange-600">Guyane</span>
+          de la <HighlightJaune>Guyane</HighlightJaune>
         </h1>
         <p className="mt-3 max-w-md text-base text-ink-500 sm:text-lede">
           Achat · Vente · Bons plans — entre Guyanais, près de chez toi.
@@ -96,7 +100,7 @@ export default async function HomePage({ searchParams }: Props) {
           <HomeSearchBar />
         </div>
 
-        <div className="mt-5 flex items-center gap-3">
+        <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2">
           <Button asChild variant="peyi" size="peyi">
             <Link href="/poster">
               <Plus aria-hidden />
