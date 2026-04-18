@@ -18,6 +18,8 @@ import {
   parseType,
 } from "@/lib/listings/url";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { HomeCategoriesGrid } from "@/components/home/HomeCategoriesGrid";
+import { HomeCommunesSection } from "@/components/home/HomeCommunesSection";
 import { ListingCard } from "@/components/listings/ListingCard";
 import { ListingsSearchBar } from "@/components/listings/ListingsSearchBar";
 import { ListingsSortTabs } from "@/components/listings/ListingsSortTabs";
@@ -211,56 +213,83 @@ export default async function AnnoncesPage({
             type={type}
             filters={filters}
           />
-          <ListingsTypePills
-            sort={sort}
-            category={category}
-            city={city}
-            currentType={type}
-            q={q}
-            filters={filters}
-          />
-          <ListingsSortTabs
-            currentSort={sort}
-            category={category}
-            city={city}
-            type={type}
-            q={q}
-            filters={filters}
-          />
-          <ListingsFilterBar
-            sort={sort}
-            categories={categories}
-            cities={cities}
-            selectedCategory={category}
-            selectedCity={city}
-            type={type}
-            q={q}
-            filters={filters}
-          />
-          <ListingsAttributeFilters
-            sort={sort}
-            category={category}
-            city={city}
-            type={type}
-            q={q}
-            filters={filters}
-          />
-          <ListingsActiveFilterChips
-            sort={sort}
-            category={category}
-            city={city}
-            type={type}
-            q={q}
-            filters={filters}
-            categoryName={
-              categories.find((c) => c.slug === category)?.name ?? null
-            }
-            cityName={cities.find((c) => c.slug === city)?.name ?? null}
-          />
+          {/* Le chrome de raffinage (type / sort / filtres) ne sert que
+              quand l'utilisateur a déjà fait un choix — en mode découverte
+              (pas de filtre actif), on le masque pour laisser respirer
+              la page et guider vers les catégories / communes ci-dessous. */}
+          {hasFilters && (
+            <>
+              <ListingsTypePills
+                sort={sort}
+                category={category}
+                city={city}
+                currentType={type}
+                q={q}
+                filters={filters}
+              />
+              <ListingsSortTabs
+                currentSort={sort}
+                category={category}
+                city={city}
+                type={type}
+                q={q}
+                filters={filters}
+              />
+              <ListingsFilterBar
+                sort={sort}
+                categories={categories}
+                cities={cities}
+                selectedCategory={category}
+                selectedCity={city}
+                type={type}
+                q={q}
+                filters={filters}
+              />
+              <ListingsAttributeFilters
+                sort={sort}
+                category={category}
+                city={city}
+                type={type}
+                q={q}
+                filters={filters}
+              />
+              <ListingsActiveFilterChips
+                sort={sort}
+                category={category}
+                city={city}
+                type={type}
+                q={q}
+                filters={filters}
+                categoryName={
+                  categories.find((c) => c.slug === category)?.name ?? null
+                }
+                cityName={cities.find((c) => c.slug === city)?.name ?? null}
+              />
+            </>
+          )}
         </div>
       </div>
 
-      <div className="px-4 pt-4 sm:px-0">
+      {/* Mode découverte : pas de filtre → on affiche les blocs
+          d'exploration (catégories + communes) AVANT la liste. Donne à
+          l'utilisateur des points d'entrée clairs au lieu d'un mur
+          d'annonces mixtes. Quand des filtres sont actifs, on saute
+          directement aux résultats (pas de bruit entre requête et
+          résultat — pattern Google search). */}
+      {!hasFilters && (
+        <>
+          <HomeCategoriesGrid />
+          <HomeCommunesSection />
+        </>
+      )}
+
+      <div className="mt-6 px-4 pt-4 sm:px-0">
+        {!hasFilters && listings.length > 0 && (
+          <h2 className="mb-3 font-display text-lg font-semibold text-ink-900">
+            Dernières annonces
+          </h2>
+        )}
+
         {listings.length === 0 ? (
           <EmptyListings
             mode={hasFilters ? "filtered" : "no-listings"}
