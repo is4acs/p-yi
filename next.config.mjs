@@ -131,6 +131,16 @@ const nextConfig = {
       },
     ],
   },
+  experimental: {
+    // Les Server Actions limitent le body à 1 Mo par défaut, ce qui kill
+    // le flux "poster une annonce" dès qu'un user attache une photo :
+    // voitures/immo autorisent 20 × 5 Mo = 100 Mo. On bump à 110 Mo pour
+    // couvrir le cap théorique ; les limites fines (5 Mo/photo, MIME
+    // whitelist) restent enforcées côté serveur dans listing-images.ts.
+    serverActions: {
+      bodySizeLimit: "110mb",
+    },
+  },
   async headers() {
     return [
       {

@@ -14,6 +14,10 @@ export const metadata: Metadata = {
   title: "Modifier l'annonce",
 };
 
+// Même contrainte que /poster/annonce : updateListingAction peut uploader
+// jusqu'à 20 photos en séquentiel, bien au-delà du default Vercel 10 s.
+export const maxDuration = 60;
+
 export default async function EditListingPage({
   params,
   searchParams,

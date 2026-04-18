@@ -18,6 +18,12 @@ export const metadata: Metadata = {
     "Vends, échange ou donne près de chez toi. Publie ton annonce sur Péyi.",
 };
 
+// Upload séquentiel vers Supabase Storage : jusqu'à 20 photos × 5 Mo pour
+// une annonce voiture, soit ~50 s sur 4G typique. Le default Vercel (10 s)
+// coupe la fonction avant que la transaction Prisma ne tourne et l'user
+// voit un 504 / page d'erreur. On passe au max autorisé sur le plan.
+export const maxDuration = 60;
+
 type SearchParams = {
   category?: string;
   parent?: string;
