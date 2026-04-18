@@ -96,4 +96,26 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Highlight éditorial derrière un mot-clé — signature Peyi.
+     Utilise le jaune du drapeau guyanais. Usage :
+       <span class="hl-jaune">100% Guyane</span>
+     Le fond jaune se pose derrière le texte (z-index: -1) pour rester
+     lisible. `display: inline-block` est nécessaire sinon le pseudo
+     se positionne par rapport au parent block, pas au mot. */
+  .hl-jaune {
+    position: relative;
+    display: inline-block;
+  }
+  .hl-jaune::before {
+    content: "";
+    position: absolute;
+    left: -2px;
+    right: -2px;
+    bottom: 2px;
+    height: 0.35em;
+    background: #ffd93d;
+    z-index: -1;
+    border-radius: 4px;
+  }
 }

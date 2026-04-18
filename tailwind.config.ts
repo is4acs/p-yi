@@ -119,8 +119,54 @@ const config: Config = {
         },
       },
       fontFamily: {
+        // Body — Inter (UI, paragraphes, formulaires)
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
-        display: ["var(--font-plus-jakarta)", "system-ui", "sans-serif"],
+        // Display — Nunito (titres, marque, gros chiffres, boutons)
+        display: [
+          "var(--font-nunito)",
+          "ui-rounded",
+          "system-ui",
+          "sans-serif",
+        ],
+        // Mono — JetBrains Mono (labels techniques, eyebrows, prix)
+        mono: [
+          "var(--font-jetbrains-mono)",
+          "ui-monospace",
+          "SFMono-Regular",
+          "Menlo",
+          "monospace",
+        ],
+      },
+      fontSize: {
+        // Échelle sémantique Peyi (handoff avril 2026). Usage :
+        //   <h1 className="font-display text-display-lg">…</h1>
+        //   <span className="font-mono text-eyebrow uppercase">…</span>
+        "display-xl": [
+          "120px",
+          { lineHeight: "0.95", letterSpacing: "-0.02em", fontWeight: "900" },
+        ],
+        "display-lg": [
+          "96px",
+          { lineHeight: "0.95", letterSpacing: "-0.02em", fontWeight: "900" },
+        ],
+        "display-md": [
+          "64px",
+          { lineHeight: "1", letterSpacing: "-0.015em", fontWeight: "800" },
+        ],
+        "title-lg": [
+          "48px",
+          { lineHeight: "1.05", letterSpacing: "-0.015em", fontWeight: "800" },
+        ],
+        "title-md": [
+          "32px",
+          { lineHeight: "1.1", letterSpacing: "-0.01em", fontWeight: "700" },
+        ],
+        "title-sm": ["24px", { lineHeight: "1.2", fontWeight: "700" }],
+        lede: ["18px", { lineHeight: "1.5", fontWeight: "400" }],
+        eyebrow: [
+          "12px",
+          { lineHeight: "1.4", letterSpacing: "0.12em", fontWeight: "500" },
+        ],
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { Inter, JetBrains_Mono, Nunito } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { WebVitals } from "@/components/analytics/WebVitals";
 import { BannedBanner } from "@/components/layout/BannedBanner";
@@ -21,15 +21,31 @@ import {
 } from "@/lib/seo/json-ld";
 import "./globals.css";
 
+// Peyi design system v1.0 : Inter (body) + Nunito (display) + JetBrains
+// Mono (labels techniques, eyebrows, prix). Les trois sont chargées via
+// next/font/google : Next self-hoste les fichiers au build, donc pas de
+// requête runtime vers fonts.googleapis.com (meilleur CLS et FCP).
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
 });
 
-const plusJakarta = Plus_Jakarta_Sans({
+const nunito = Nunito({
   subsets: ["latin"],
-  variable: "--font-plus-jakarta",
+  // On charge tous les poids utiles au design : 400 pour le body de
+  // secours, 700 pour les titres md, 800 pour les titres lg, 900 pour
+  // les display géants. Les variantes non utilisées sont purgées au
+  // build par next/font, donc pas de coût réseau inutile.
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-nunito",
+  display: "swap",
+});
+
+const jetBrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-jetbrains-mono",
   display: "swap",
 });
 
@@ -109,7 +125,7 @@ export default async function RootLayout({
   return (
     <html
       lang="fr"
-      className={cn(inter.variable, plusJakarta.variable)}
+      className={cn(inter.variable, nunito.variable, jetBrainsMono.variable)}
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-background pb-20 font-sans text-foreground antialiased sm:pb-0">
