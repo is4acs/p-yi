@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Flame, Plus, Tag } from "lucide-react";
+import { Flame, Plus, Tag } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
 import { fetchDealsPage, fetchUserFavoriteSet, fetchUserVoteMap } from "@/lib/deals/queries";
@@ -11,8 +11,9 @@ import {
 import { buildDealsUrl } from "@/lib/deals/url";
 import { getCurrentUser } from "@/lib/auth/current-user";
 
+import { Button } from "@/components/ui/button";
 import { DealCard } from "@/components/deals/DealCard";
-import { DealsSearchBar } from "@/components/deals/DealsSearchBar";
+import { HomeSearchBar } from "@/components/home/HomeSearchBar";
 import { ListingCard } from "@/components/listings/ListingCard";
 
 export const dynamic = "force-dynamic";
@@ -81,37 +82,36 @@ export default async function HomePage({ searchParams }: Props) {
         </div>
       )}
 
-      {/* Hero */}
-      <section className="px-4 pt-6 sm:px-0 sm:pt-10">
-        <p className="text-xs font-semibold uppercase tracking-wide text-peyi-orange-600">
-          Bienvenue sur
+      {/* Hero — refonte S27 : titre "valeur" + SearchBar hero + 1 CTA primary.
+          Fond dégradé orange très subtil pour démarquer la zone hero sans
+          voler la vedette aux catégories qui suivent. */}
+      <section className="-mx-4 bg-gradient-to-b from-peyi-orange-50/70 to-transparent px-4 pb-8 pt-10 sm:mx-0 sm:px-0 sm:pb-12 sm:pt-14">
+        <p className="font-mono text-eyebrow uppercase text-peyi-orange-700">
+          Marketplace 100% Guyane
         </p>
-        <h1 className="mt-1 font-display text-4xl font-bold tracking-tight sm:text-5xl">
-          Péyi
+        <h1 className="mt-2 font-display text-title-md font-extrabold tracking-tight text-ink-900 sm:text-title-lg">
+          Le marché local
+          <br />
+          de la <span className="text-peyi-orange-600">Guyane</span>
         </h1>
-        <p className="mt-2 text-base text-muted-foreground sm:text-lg">
-          Les bons plans et petites annonces, 100% Guyane.
+        <p className="mt-3 max-w-md text-base text-ink-500 sm:text-lede">
+          Achat · Vente · Bons plans — entre Guyanais, près de chez toi.
         </p>
 
-        <div className="mt-5">
-          <DealsSearchBar placeholder="Rechercher un bon plan…" />
+        <div className="mt-6">
+          <HomeSearchBar />
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Link
-            href="/bons-plans"
-            className="inline-flex h-10 items-center gap-1.5 rounded-full bg-peyi-orange-500 px-4 text-sm font-semibold text-white transition hover:bg-peyi-orange-600"
-          >
-            Voir tous les bons plans
-            <ArrowRight className="h-4 w-4" aria-hidden />
-          </Link>
-          <Link
-            href="/poster"
-            className="inline-flex h-10 items-center gap-1.5 rounded-full border border-border bg-background px-4 text-sm font-semibold text-foreground transition hover:border-peyi-orange-300"
-          >
-            <Plus className="h-4 w-4" aria-hidden />
-            Poster un bon plan
-          </Link>
+        <div className="mt-5 flex items-center gap-3">
+          <Button asChild variant="peyi" size="peyi">
+            <Link href="/poster">
+              <Plus aria-hidden />
+              Poster une annonce
+            </Link>
+          </Button>
+          <span className="text-sm text-ink-500">
+            Gratuit, en 2 minutes
+          </span>
         </div>
       </section>
 
