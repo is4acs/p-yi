@@ -219,7 +219,13 @@ export function DealCard({
   return (
     <article
       className={cn(
-        "group relative flex items-stretch gap-3 rounded-xl border border-border bg-card p-3 shadow-sm transition hover:border-peyi-orange-300 hover:shadow-md sm:gap-4 sm:p-4",
+        // S33 : padding et gap réduits mobile (`p-2.5 gap-2.5` au lieu
+        // de `p-3 gap-3`) pour compenser les "trous" visuels qui
+        // apparaissaient quand le vote-rail (~80px hauteur) dépassait
+        // la hauteur du body sur des deals au titre court — bug
+        // signalé via screenshot iPhone user. `items-stretch` maintient
+        // la symétrie verticale des deux colonnes.
+        "group relative flex items-stretch gap-2.5 rounded-xl border border-border bg-card p-2.5 shadow-sm transition hover:border-peyi-orange-300 hover:shadow-md sm:gap-4 sm:p-4",
         className,
       )}
     >
@@ -258,13 +264,18 @@ export function DealCard({
 
         {/* Ligne titre + image mobile. Sur sm:+ on passe en block pour
             que le titre prenne toute la largeur du body (l'image est
-            déjà rendue plus haut en colonne séparée). */}
-        <div className="flex items-start gap-3 sm:block">
+            déjà rendue plus haut en colonne séparée).
+
+            S33 : image mobile 72×72 (vs 80×80 avant) + gap-2.5 (vs
+            gap-3) — gagne 14px de largeur pour titre/prix, ce qui
+            évite les troncatures (ex. `449,00 €` qui se coupait au
+            bord du viewport sur les screenshots iPhone). */}
+        <div className="flex items-start gap-2.5 sm:block sm:gap-0">
           <div aria-hidden className="shrink-0 sm:hidden">
             <DealImagePlaceholder
               emoji={placeholderEmoji}
               label={placeholderLabel}
-              className="h-20 w-20"
+              className="h-[72px] w-[72px]"
             />
           </div>
           <div className="min-w-0 flex-1 space-y-1">

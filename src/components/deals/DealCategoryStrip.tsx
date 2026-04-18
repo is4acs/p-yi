@@ -88,16 +88,22 @@ export async function DealCategoryStrip() {
     >
       <ul className="scrollbar-hide flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:snap-none sm:overflow-visible sm:pb-0">
         {/* "Tous" pill — state actif par défaut sur une page non
-            filtrée. Dark (ink-900) pour se démarquer du reste. */}
+            filtrée. Dark (ink-900) pour se démarquer du reste.
+
+            S33 : largeur figée `w-[96px]` (au lieu de `min-w-[88px]`)
+            + label `line-clamp-2` pour que "Maison & Électroménager"
+            wrappe sur 2 lignes au lieu de déborder ou tronquer avec
+            ellipsis (bug signalé via screenshot iPhone user). `px-3`
+            (vs `px-4`) compense les 8px supplémentaires. */}
         <li className="snap-start">
           <Link
             href="/bons-plans"
-            className="flex min-w-[88px] flex-shrink-0 flex-col items-center gap-1.5 rounded-md border border-ink-900 bg-ink-900 px-4 py-3 text-white transition-transform duration-base hover:-translate-y-0.5"
+            className="flex w-[96px] flex-shrink-0 flex-col items-center gap-1.5 rounded-md border border-ink-900 bg-ink-900 px-3 py-3 text-white transition-transform duration-base hover:-translate-y-0.5"
           >
             <span aria-hidden className="text-[22px] leading-none">
               🔥
             </span>
-            <span className="font-display text-[12.5px] font-bold leading-tight">
+            <span className="line-clamp-2 text-center font-display text-[12.5px] font-bold leading-tight">
               Tous
             </span>
             <span className="font-mono text-[9.5px] leading-none text-white/60">
@@ -112,12 +118,12 @@ export async function DealCategoryStrip() {
             <li key={cat.id} className="snap-start">
               <Link
                 href={buildDealsUrl({ category: cat.slug })}
-                className="flex min-w-[88px] flex-shrink-0 flex-col items-center gap-1.5 rounded-md border border-ink-100 bg-background px-4 py-3 text-ink-900 transition-[transform,border-color] duration-base hover:-translate-y-0.5 hover:border-peyi-orange-500"
+                className="flex w-[96px] flex-shrink-0 flex-col items-center gap-1.5 rounded-md border border-ink-100 bg-background px-3 py-3 text-ink-900 transition-[transform,border-color] duration-base hover:-translate-y-0.5 hover:border-peyi-orange-500"
               >
                 <span aria-hidden className="text-[22px] leading-none">
                   {cat.icon ?? "📦"}
                 </span>
-                <span className="font-display text-[12.5px] font-bold leading-tight">
+                <span className="line-clamp-2 text-center font-display text-[12.5px] font-bold leading-tight">
                   {cat.name}
                 </span>
                 <span className="font-mono text-[9.5px] leading-none text-ink-500">
