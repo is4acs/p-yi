@@ -10,7 +10,9 @@ import {
 import { parsePage, parseQuery, parseSort } from "@/lib/deals/url";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { buildCanonicalPath } from "@/lib/seo/canonical";
+import { BonsPlansHero } from "@/components/deals/BonsPlansHero";
 import { DealCard } from "@/components/deals/DealCard";
+import { DealCategoryStrip } from "@/components/deals/DealCategoryStrip";
 import { DealsSortTabs } from "@/components/deals/DealsSortTabs";
 import { DealsFilterBar } from "@/components/deals/DealsFilterBar";
 import { DealsPagination } from "@/components/deals/DealsPagination";
@@ -157,22 +159,42 @@ export default async function BonsPlansPage({
 
   return (
     <main className="mx-auto max-w-md pb-12 animate-in fade-in duration-300 sm:max-w-2xl">
-      <div className="sticky top-0 z-10 -mx-0 border-b border-border bg-background/95 px-4 pb-3 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-0 sm:pt-6">
-        <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-          Bons plans
-        </h1>
-        <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
-          {total} bon{total > 1 ? "s" : ""} plan{total > 1 ? "s" : ""}
-          {q ? (
-            <>
-              {" "}pour <span className="font-medium text-foreground">“{q}”</span>
-            </>
-          ) : hasFilters ? (
-            " (filtré)"
-          ) : null}
-        </p>
+      {/* Mode découverte (aucun filtre) : hero éditorial guyanais +
+          strip catégories. Sous filtre ces blocs disparaissent — on
+          laisse la vedette aux résultats. Pattern hérité de `/annonces`
+          (cf. `HomeCategoriesGrid` sous `!hasFilters`). */}
+      {!hasFilters && (
+        <>
+          <BonsPlansHero />
+          <DealCategoryStrip />
+        </>
+      )}
 
-        <div className="mt-3 space-y-2">
+      <div className="sticky top-0 z-10 -mx-0 border-b border-border bg-background/95 px-4 pb-3 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-0 sm:pt-6">
+        {/* H1 + count : on les conserve UNIQUEMENT en mode filtré.
+            Quand le hero est affiché il porte déjà le H1 — doubler le
+            titre casserait la hiérarchie a11y (deux H1 = pas d'ancrage
+            d'outline clair pour les lecteurs d'écran). En mode filtré
+            le hero disparaît, donc le titre reprend sa place ici. */}
+        {hasFilters && (
+          <>
+            <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+              Bons plans
+            </h1>
+            <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
+              {total} bon{total > 1 ? "s" : ""} plan{total > 1 ? "s" : ""}
+              {q ? (
+                <>
+                  {" "}pour <span className="font-medium text-foreground">“{q}”</span>
+                </>
+              ) : (
+                " (filtré)"
+              )}
+            </p>
+          </>
+        )}
+
+        <div className={hasFilters ? "mt-3 space-y-2" : "space-y-2"}>
           <DealsSearchBar
             defaultValue={q ?? ""}
             sort={sort}
