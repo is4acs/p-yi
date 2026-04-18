@@ -11,6 +11,7 @@ import {
   MessageSquare,
   Pencil,
   Phone,
+  ShieldCheck,
 } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
@@ -232,6 +233,26 @@ export default async function ProfilPage({ searchParams }: Props) {
                 {favoriteCount === 0
                   ? "Aucun favori"
                   : `${dealFavoriteCount} bon${dealFavoriteCount > 1 ? "s" : ""} plan${dealFavoriteCount > 1 ? "s" : ""} · ${listingFavoriteCount} annonce${listingFavoriteCount > 1 ? "s" : ""}`}
+              </span>
+            </span>
+          </span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden />
+        </Link>
+
+        <Link
+          href="/profil/confidentialite"
+          className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 text-sm transition hover:border-peyi-orange-300 hover:bg-peyi-orange-50/40"
+        >
+          <span className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-peyi-orange-100 text-peyi-orange-600">
+              <ShieldCheck className="h-4 w-4" aria-hidden />
+            </span>
+            <span className="min-w-0">
+              <span className="block font-semibold text-foreground">
+                Confidentialité & données
+              </span>
+              <span className="text-xs text-muted-foreground">
+                Télécharger mes données, supprimer mon compte
               </span>
             </span>
           </span>
