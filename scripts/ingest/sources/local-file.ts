@@ -4,7 +4,8 @@
  * Utile pour :
  *   - seed initial de deals vérifiés à la main,
  *   - copier-coller depuis des catalogues PDF ou Facebook des enseignes
- *     Guyane (Carrefour, Géant, Super U, Darty, Boulanger...),
+ *     Guyane (Carrefour Matoury, Hyper U Cayenne, Géant Cayenne, Darty, Fnac,
+ *     Leader Price, Weldom...),
  *   - deals exclusifs que le scraping RSS ne capture pas.
  *
  * Format : tableau d'objets. Seuls `title`, `price`, `categorySlug`

@@ -452,7 +452,7 @@ model ListingImage {
 
 model Store {
   id          String   @id @default(uuid())
-  name        String   // "Carrefour Matoury", "Géant Matoury"
+  name        String   // "Carrefour Matoury", "Hyper U Cayenne"
   slug        String   @unique
   logoUrl     String?
   cityId      String
@@ -476,7 +476,7 @@ model Store {
 
 model Merchant {
   id                String   @id @default(uuid())
-  name              String   // Amazon, Cdiscount, Fnac, Boulanger
+  name              String   // Amazon, Cdiscount, Fnac, Darty
   slug              String   @unique
   domain            String   @unique // amazon.fr
   logoUrl           String?

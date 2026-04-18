@@ -1,49 +1,49 @@
 [
   {
     "title": "Huile Lesieur 5L à 9,99€ au lieu de 14,99€",
-    "description": "Rayon épicerie, promo catalogue hebdo Super U Matoury. Bidon 5L classique, pratique pour les gros foyers.",
+    "description": "Rayon épicerie, promo catalogue hebdo Carrefour Matoury. Bidon 5L classique, pratique pour les gros foyers.",
     "price": 9.99,
     "originalPrice": 14.99,
     "categorySlug": "supermarche-alimentation",
     "citySlug": "matoury",
-    "storeSlug": "super-u-matoury"
+    "storeSlug": "carrefour-matoury"
   },
   {
     "title": "Pack 4 lessives Ariel à 19,90€ au lieu de 31,60€",
-    "description": "Lot de 4 bidons 2L. Opération rayon droguerie Géant Matoury jusqu'à dimanche.",
+    "description": "Lot de 4 bidons 2L. Opération rayon droguerie Carrefour Matoury jusqu'à dimanche.",
     "price": 19.9,
     "originalPrice": 31.6,
     "categorySlug": "supermarche-alimentation",
     "citySlug": "matoury",
-    "storeSlug": "geant-matoury"
+    "storeSlug": "carrefour-matoury"
   },
   {
-    "title": "Couches Pampers Baby-Dry x192 — 39€ chez Carrefour Family Matoury",
+    "title": "Couches Pampers Baby-Dry x192 — 39€ chez Carrefour Matoury",
     "description": "Taille 4, paquet économique. Promo affichée en rayon bébé jusqu'à épuisement des stocks.",
     "price": 39,
     "originalPrice": 59,
     "categorySlug": "enfants-bebe",
     "citySlug": "matoury",
-    "storeSlug": "carrefour-family-matoury"
+    "storeSlug": "carrefour-matoury"
   },
   {
-    "title": "TV Samsung 55\" QLED à 499€ — Boulanger Matoury",
-    "description": "Modèle 4K Q60C 2024. Stock limité, promo vitrine catalogue.",
+    "title": "TV Samsung 55\" QLED à 499€ — Darty Matoury",
+    "description": "Modèle 4K Q60C 2024. Stock limité, promo vitrine catalogue Family Plaza.",
     "price": 499,
     "originalPrice": 799,
     "categorySlug": "tech-multimedia",
     "citySlug": "matoury",
-    "storeSlug": "boulanger-matoury",
-    "merchantSlug": "boulanger"
+    "storeSlug": "darty-matoury",
+    "merchantSlug": "darty"
   },
   {
-    "title": "Barbecue gaz Weber Q1200 à 249€ — Géant Matoury",
+    "title": "Barbecue gaz Weber Q1200 à 249€ — Carrefour Matoury",
     "description": "Modèle portable, parfait pour les grillades plage. Catalogue jardin du mois.",
     "price": 249,
     "originalPrice": 349,
     "categorySlug": "bricolage-jardin",
     "citySlug": "matoury",
-    "storeSlug": "geant-matoury"
+    "storeSlug": "carrefour-matoury"
   },
   {
     "title": "Ventilateur Rowenta Turbo Silence à 49€ — Darty Matoury",
@@ -56,12 +56,12 @@
     "merchantSlug": "darty"
   },
   {
-    "title": "Arrivage conteneur bois OSB — Mr Bricolage Matoury samedi",
+    "title": "Arrivage conteneur bois OSB — Weldom Matoury samedi",
     "description": "Panneaux OSB 18mm, poutres et planches à prix métropole -20%. Arrivée confirmée, se pointer tôt.",
     "price": 18,
     "categorySlug": "arrivages-conteneurs",
     "citySlug": "matoury",
-    "storeSlug": "mr-bricolage-matoury"
+    "storeSlug": "weldom-matoury"
   },
   {
     "title": "Stage découverte surf à Kourou — 45€ au lieu de 70€",
@@ -89,13 +89,13 @@
     "merchantSlug": "air-france"
   },
   {
-    "title": "Pack 6 yaourts Danone Activia à 2,89€ — Cora Family Cayenne",
+    "title": "Pack 6 yaourts Danone Activia à 2,89€ — Géant Cayenne",
     "description": "Rayon frais, promo catalogue cette semaine. Tous parfums.",
     "price": 2.89,
     "originalPrice": 4.29,
     "categorySlug": "supermarche-alimentation",
     "citySlug": "cayenne",
-    "storeSlug": "cora-family-cayenne"
+    "storeSlug": "geant-cayenne"
   },
   {
     "title": "Aspirateur balai Dyson V8 Absolute à 349€ — Fnac Cayenne",

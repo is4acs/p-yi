@@ -144,26 +144,33 @@ const CITY_KEYWORDS: Array<{ slug: string; keywords: RegExp[] }> = [
 ];
 
 const STORE_KEYWORDS: Array<{ slug: string; keywords: RegExp[] }> = [
-  { slug: "geant-matoury", keywords: [/g[eé]ant\s+matoury/i] },
-  {
-    slug: "carrefour-family-matoury",
-    keywords: [/carrefour\s+(family\s+)?matoury/i],
-  },
-  { slug: "super-u-matoury", keywords: [/super\s*u\s+matoury/i] },
+  // Matoury — l'anchor Family Plaza est Carrefour (pas Géant, qui n'existe qu'à Cayenne)
+  { slug: "carrefour-matoury", keywords: [/carrefour\s+matoury/i] },
   { slug: "leader-price-matoury", keywords: [/leader\s*price\s+matoury/i] },
-  { slug: "carrefour-city-cayenne", keywords: [/carrefour\s+city\s+cayenne/i] },
-  { slug: "super-u-cayenne", keywords: [/super\s*u\s+cayenne/i] },
-  { slug: "cora-family-cayenne", keywords: [/cora\s+(family\s+)?cayenne/i] },
+  // Cayenne — Hyper U (Collery) + Géant (ex-Cora rebrandé 2025)
+  { slug: "hyper-u-cayenne", keywords: [/(hyper|super)\s*u\s+cayenne/i] },
+  { slug: "geant-cayenne", keywords: [/(g[eé]ant|cora)\s+(family\s+)?cayenne/i] },
+  { slug: "leader-price-cayenne", keywords: [/leader\s*price\s+cayenne/i] },
+  // Rémire-Montjoly
   { slug: "super-u-remire", keywords: [/super\s*u\s+r[eé]mire/i] },
+  {
+    slug: "carrefour-market-remire-montjoly",
+    keywords: [/carrefour\s+(market|contact)\s+r[eé]mire/i],
+  },
+  // Kourou
   { slug: "super-u-kourou", keywords: [/super\s*u\s+kourou/i] },
-  { slug: "geant-kourou", keywords: [/g[eé]ant\s+kourou/i] },
+  { slug: "leader-price-kourou", keywords: [/leader\s*price\s+kourou/i] },
+  // Saint-Laurent
   { slug: "super-u-saint-laurent", keywords: [/super\s*u\s+saint[\s-]laurent/i] },
+  // Tech & Multimédia
   { slug: "fnac-cayenne", keywords: [/fnac\s+cayenne/i] },
   { slug: "darty-matoury", keywords: [/darty\s+matoury/i] },
-  { slug: "boulanger-matoury", keywords: [/boulanger\s+matoury/i] },
-  { slug: "mr-bricolage-matoury", keywords: [/mr\s*bricolage\s+matoury/i] },
+  // Bricolage
+  { slug: "mr-bricolage-cayenne", keywords: [/mr\s*bricolage\s+cayenne/i] },
   { slug: "bricorama-cayenne", keywords: [/bricorama\s+cayenne/i] },
   { slug: "weldom-matoury", keywords: [/weldom\s+matoury/i] },
+  { slug: "weldom-cayenne", keywords: [/weldom\s+cayenne/i] },
+  // Discount
   { slug: "destock-guyane", keywords: [/destock\s+guyane/i] },
   { slug: "guyane-discount", keywords: [/guyane\s+discount/i] },
 ];
@@ -173,7 +180,6 @@ const MERCHANT_KEYWORDS: Array<{ slug: string; keywords: RegExp[] }> = [
   { slug: "cdiscount", keywords: [/cdiscount/i] },
   { slug: "fnac", keywords: [/\bfnac\b/i] },
   { slug: "darty", keywords: [/\bdarty\b/i] },
-  { slug: "boulanger", keywords: [/\bboulanger\b/i] },
   { slug: "la-redoute", keywords: [/la\s*redoute/i] },
   { slug: "zalando", keywords: [/zalando/i] },
   { slug: "aliexpress", keywords: [/aliexpress/i] },
