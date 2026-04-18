@@ -199,6 +199,7 @@ async function main() {
 
     // Ameublement & Maison
     { name: 'BUT Cayenne', slug: 'but-cayenne', cityId: cayenne?.id, isVerified: true },
+    { name: 'Conforama Cayenne', slug: 'conforama-cayenne', cityId: cayenne?.id, isVerified: true },
 
     // Discount & Arrivages
     { name: 'Destock Guyane', slug: 'destock-guyane', cityId: matoury?.id, isVerified: true },
