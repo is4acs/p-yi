@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/current-user";
 import { DealForm } from "@/components/poster/DealForm";
+import { DealPosterLayout } from "@/components/poster/DealPosterLayout";
 
 import { updateDealAction } from "@/app/poster/actions";
 
@@ -70,7 +71,9 @@ export default async function EditDealPage({
   };
 
   return (
-    <main className="mx-auto max-w-md px-4 pb-16 pt-6 sm:max-w-2xl sm:pt-10">
+    // lg:max-w-5xl : même empreinte que `/poster` — l'édition utilise
+    // la même preview live pour montrer l'état final après save.
+    <main className="mx-auto max-w-md px-4 pb-16 pt-6 sm:max-w-2xl sm:pt-10 lg:max-w-5xl">
       <Link
         href={`/bons-plans/${deal.slug}`}
         className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition hover:text-foreground"
@@ -98,13 +101,25 @@ export default async function EditDealPage({
       )}
 
       <div className="mt-6">
-        <DealForm
-          action={updateDealAction}
+        <DealPosterLayout
           categories={categories}
           cities={cities}
-          defaults={defaults}
-          submitLabel="Enregistrer"
-        />
+          defaults={{
+            title: defaults.title,
+            price: defaults.price,
+            originalPrice: defaults.originalPrice,
+            categorySlug: defaults.categorySlug,
+            citySlug: defaults.citySlug,
+          }}
+        >
+          <DealForm
+            action={updateDealAction}
+            categories={categories}
+            cities={cities}
+            defaults={defaults}
+            submitLabel="Enregistrer"
+          />
+        </DealPosterLayout>
       </div>
     </main>
   );

@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/current-user";
 import { DealForm } from "@/components/poster/DealForm";
+import { DealPosterLayout } from "@/components/poster/DealPosterLayout";
 
 import { createDealAction } from "./actions";
 
@@ -33,7 +34,10 @@ export default async function PosterPage({
   ]);
 
   return (
-    <main className="mx-auto max-w-md px-4 pb-16 pt-6 animate-in fade-in duration-300 sm:max-w-2xl sm:pt-10">
+    // lg:max-w-5xl pour accueillir l'aside sticky (preview + tips).
+    // En dessous de lg on garde max-w-2xl — le formulaire reste lisible
+    // sans se diluer dans l'espace blanc.
+    <main className="mx-auto max-w-md px-4 pb-16 pt-6 animate-in fade-in duration-300 sm:max-w-2xl sm:pt-10 lg:max-w-5xl">
       <Link
         href="/bons-plans"
         className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition hover:text-foreground"
@@ -62,12 +66,14 @@ export default async function PosterPage({
       )}
 
       <div className="mt-6">
-        <DealForm
-          action={createDealAction}
-          categories={categories}
-          cities={cities}
-          submitLabel="Publier le bon plan"
-        />
+        <DealPosterLayout categories={categories} cities={cities}>
+          <DealForm
+            action={createDealAction}
+            categories={categories}
+            cities={cities}
+            submitLabel="Publier le bon plan"
+          />
+        </DealPosterLayout>
       </div>
     </main>
   );
