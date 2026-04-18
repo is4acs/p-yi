@@ -12,6 +12,7 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { Button } from "@/components/ui/button";
 import { DealCard } from "@/components/deals/DealCard";
 import { HomeCategoriesGrid } from "@/components/home/HomeCategoriesGrid";
+import { HomeCommunesSection } from "@/components/home/HomeCommunesSection";
 import { HomeSearchBar } from "@/components/home/HomeSearchBar";
 import { ListingCard } from "@/components/listings/ListingCard";
 
@@ -131,9 +132,19 @@ export default async function HomePage({ searchParams }: Props) {
             Aucun bon plan pour l&apos;instant. Sois le premier à en poster !
           </div>
         ) : (
-          <ul className="mt-4 flex flex-col gap-3">
+          // Rail horizontal à snap — casse le rythme vertical et donne
+          // un feeling "marketplace" (cf. Vinted, FB Marketplace).
+          // 85vw mobile = on voit ~1.15 carte, ce qui signale visuellement
+          // qu'il faut swiper pour voir la suite.
+          <ul
+            className="-mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            aria-label="Bons plans tendance"
+          >
             {topDeals.map((d) => (
-              <li key={d.id}>
+              <li
+                key={d.id}
+                className="w-[85vw] max-w-[340px] shrink-0 snap-start sm:w-[340px]"
+              >
                 <DealCard
                   deal={d}
                   currentUserId={currentUser?.id ?? null}
@@ -185,6 +196,11 @@ export default async function HomePage({ searchParams }: Props) {
           </ul>
         )}
       </section>
+
+      {/* Explorer par commune — entrée hyperlocale, pattern secondaire
+          (après catégories + trending) pour relancer la navigation
+          en bas de home avant le footer. */}
+      <HomeCommunesSection />
     </main>
   );
 }
