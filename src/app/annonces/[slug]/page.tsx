@@ -23,6 +23,11 @@ import {
   formatPriceType,
   TYPE_LABEL,
 } from "@/lib/listings/queries";
+import {
+  buildBreadcrumbJsonLd,
+  buildListingJsonLd,
+  serializeJsonLd,
+} from "@/lib/seo/json-ld";
 
 import { CategoryChip } from "@/components/deals/CategoryChip";
 import { CommuneChip } from "@/components/deals/CommuneChip";
@@ -44,6 +49,7 @@ const listingDetailSelect = {
   description: true,
   price: true,
   priceType: true,
+  currency: true,
   type: true,
   condition: true,
   coverImageUrl: true,
@@ -183,8 +189,44 @@ export default async function ListingDetailPage({
     ? `${listing.city.name} · ${listing.neighborhood}`
     : listing.city.name;
 
+  // JSON-LD : Product + Offer + BreadcrumbList. On injecte au début du
+  // `<main>` pour que le crawler le trouve vite, et on le sérialise via
+  // `serializeJsonLd` qui échappe les éventuels `</script>` dans la
+  // description utilisateur (sinon un utilisateur malin pourrait casser
+  // le parsing HTML depuis le champ description).
+  const jsonLd = serializeJsonLd([
+    buildListingJsonLd({
+      slug: listing.slug,
+      title: listing.title,
+      description: listing.description,
+      price: listing.price,
+      currency: listing.currency,
+      priceType: listing.priceType,
+      condition: listing.condition,
+      coverImageUrl: listing.coverImageUrl,
+      images: listing.images,
+      category: { name: listing.category.name },
+      city: { name: listing.city.name },
+      author: { username: listing.author.username },
+      publishedAt: listing.publishedAt,
+    }),
+    buildBreadcrumbJsonLd([
+      { name: "Accueil", url: "/" },
+      { name: "Annonces", url: "/annonces" },
+      {
+        name: listing.category.name,
+        url: `/annonces?category=${listing.category.slug}`,
+      },
+      { name: listing.title, url: `/annonces/${listing.slug}` },
+    ]),
+  ]);
+
   return (
     <main className="mx-auto max-w-md pb-16 animate-in fade-in duration-300 sm:max-w-2xl">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLd }}
+      />
       <nav
         aria-label="Fil d'Ariane"
         className="flex flex-wrap items-center gap-1 px-4 pt-4 text-sm text-muted-foreground sm:px-0 sm:pt-6"

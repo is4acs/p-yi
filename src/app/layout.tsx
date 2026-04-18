@@ -12,6 +12,11 @@ import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { fetchUnreadCount } from "@/lib/messages/queries";
 import { fetchUnreadNotificationsCount } from "@/lib/notifications/queries";
+import {
+  buildOrganizationJsonLd,
+  buildWebSiteJsonLd,
+  serializeJsonLd,
+} from "@/lib/seo/json-ld";
 import "./globals.css";
 
 const inter = Inter({
@@ -91,6 +96,14 @@ export default async function RootLayout({
       ])
     : [0, 0];
 
+  // JSON-LD Organization + WebSite — injectés au root pour que chaque
+  // page publique hérite du signal d'identité éditoriale. Google pose
+  // la knowledge panel et la sitelinks search box à partir de ça.
+  const rootJsonLd = serializeJsonLd([
+    buildOrganizationJsonLd(),
+    buildWebSiteJsonLd(),
+  ]);
+
   return (
     <html
       lang="fr"
@@ -98,6 +111,10 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-background pb-20 font-sans text-foreground antialiased sm:pb-0">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: rootJsonLd }}
+        />
         <ServiceWorkerRegister />
         <Suspense fallback={null}>
           <RouteProgress />

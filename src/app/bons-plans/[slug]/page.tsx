@@ -19,6 +19,11 @@ import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/format";
 import { LEVEL_META } from "@/lib/deals/user-level";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import {
+  buildBreadcrumbJsonLd,
+  buildDealJsonLd,
+  serializeJsonLd,
+} from "@/lib/seo/json-ld";
 
 import { Button } from "@/components/ui/button";
 import { PriceTag } from "@/components/deals/PriceTag";
@@ -44,6 +49,7 @@ const dealDetailSelect = {
   price: true,
   originalPrice: true,
   discountPercent: true,
+  currency: true,
   isFree: true,
   externalUrl: true,
   affiliateUrl: true,
@@ -183,8 +189,40 @@ export default async function DealDetailPage({
   const placeholderEmoji = deal.category.icon ?? null;
   const placeholderLabel = deal.store?.name ?? deal.merchant?.name ?? deal.title;
 
+  // JSON-LD — Product + Offer pour la rich card produit, et
+  // BreadcrumbList pour le fil d'ariane dans les SERPs. Tout est
+  // sérialisé en une seule balise <script> pour simplifier.
+  const jsonLd = serializeJsonLd([
+    buildDealJsonLd({
+      slug: deal.slug,
+      title: deal.title,
+      description: deal.description,
+      price: deal.price,
+      currency: deal.currency,
+      isFree: deal.isFree,
+      expiresAt: deal.expiresAt,
+      publishedAt: deal.publishedAt,
+      coverImageUrl: deal.coverImageUrl,
+      category: deal.category,
+      city: deal.city,
+      store: deal.store ? { name: deal.store.name } : null,
+      merchant: deal.merchant ? { name: deal.merchant.name } : null,
+      author: { username: deal.author.username },
+    }),
+    buildBreadcrumbJsonLd([
+      { name: "Accueil", url: "/" },
+      { name: "Bons plans", url: "/bons-plans" },
+      { name: deal.category.name, url: `/bons-plans?category=${deal.category.slug}` },
+      { name: deal.title, url: `/bons-plans/${deal.slug}` },
+    ]),
+  ]);
+
   return (
     <main className="mx-auto max-w-md pb-16 animate-in fade-in duration-300 sm:max-w-2xl">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLd }}
+      />
       {/* Back link */}
       <div className="px-4 pt-4 sm:px-0 sm:pt-6">
         <Link
