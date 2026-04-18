@@ -95,7 +95,7 @@ export async function requireUser(nextPath?: string): Promise<User> {
 // ils sont orthogonaux (USER pro-isé ou pas), donc on les traite comme
 // équivalents à USER côté permissions.
 
-const ROLE_RANK: Record<UserRole, number> = {
+export const ROLE_RANK: Record<UserRole, number> = {
   USER: 0,
   PRO: 0,
   AMBASSADOR: 0,
