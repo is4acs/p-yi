@@ -1,13 +1,18 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowLeft, BadgeCheck, Save } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Save, Trash2, Upload } from "lucide-react";
 
 import { requireUser } from "@/lib/auth/current-user";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { UserAvatar } from "@/components/layout/UserAvatar";
 
-import { updateProfileAction } from "./actions";
+import {
+  removeAvatarAction,
+  updateAvatarAction,
+  updateProfileAction,
+} from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +56,64 @@ export default async function ProfilEditPage({ searchParams }: Props) {
           {searchParams.error}
         </div>
       )}
+
+      <section
+        aria-labelledby="avatar-heading"
+        className="mt-6 rounded-lg border border-border bg-card p-4"
+      >
+        <h2 id="avatar-heading" className="text-sm font-semibold">
+          Photo de profil
+        </h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          JPG, PNG ou WebP. 2 Mo maximum. Visible sur tes posts et commentaires.
+        </p>
+
+        <div className="mt-4 flex flex-col items-center gap-4 sm:flex-row sm:items-center">
+          <UserAvatar
+            username={user.username}
+            avatarUrl={user.avatarUrl}
+            size="lg"
+          />
+
+          <div className="flex w-full flex-col gap-2 sm:flex-1">
+            <form
+              action={updateAvatarAction}
+              encType="multipart/form-data"
+              className="flex flex-col gap-2 sm:flex-row sm:items-center"
+            >
+              <Label htmlFor="avatar" className="sr-only">
+                Nouvelle photo de profil
+              </Label>
+              <Input
+                id="avatar"
+                name="avatar"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                required
+                className="flex-1"
+              />
+              <Button type="submit" size="sm">
+                <Upload className="h-3.5 w-3.5" aria-hidden />
+                Envoyer
+              </Button>
+            </form>
+
+            {user.avatarUrl && (
+              <form action={removeAvatarAction}>
+                <Button
+                  type="submit"
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive sm:w-auto"
+                >
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                  Retirer la photo
+                </Button>
+              </form>
+            )}
+          </div>
+        </div>
+      </section>
 
       <form action={updateProfileAction} className="mt-6 space-y-5">
         <div className="space-y-1.5">
