@@ -30,9 +30,10 @@ import { HomeSearchBar } from "@/components/home/HomeSearchBar";
  *   • CTA primary "Poster" (+5 karma, friction minimale)
  *   • Fond gradient orange subtil (-mx-4 pour bleed full-width mobile)
  *
- * Ajouté en S31 :
- *   • Eyebrow éditorial au lieu du descriptif ("Marketplace 100%
- *     Guyane" → "La communauté des malins du peyi")
+ * Ajouté en S31, retouché en S33 :
+ *   • Eyebrow éditorial "Le marché local de la Guyane" (auparavant
+ *     "La communauté des malins du peyi" — remplacé pour aligner le
+ *     ton marketplace du domaine péyi.com).
  *   • Lede concret avec refs guyanaises (PS5 Cdiscount, vol Cayenne,
  *     BBQ Matoury) au lieu de la formule générique
  *   • KPIs inline sous le CTA — proof-of-life de la communauté
@@ -94,7 +95,7 @@ export async function HomeHero() {
 
       <div className="relative">
         <p className="font-mono text-eyebrow uppercase text-peyi-orange-700">
-          La communauté des malins du peyi
+          Le marché local de la Guyane
         </p>
         <h1
           id="home-hero-title"
