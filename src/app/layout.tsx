@@ -4,6 +4,7 @@ import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { BannedBanner } from "@/components/layout/BannedBanner";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { RouteProgress } from "@/components/layout/RouteProgress";
 import { InstallBanner } from "@/components/pwa/InstallBanner";
@@ -111,6 +112,7 @@ export default async function RootLayout({
             <BannedBanner bannedUntil={user.bannedUntil} />
           )}
         {children}
+        <Footer />
         <BottomNav unreadCount={unreadCount} />
         <InstallBanner />
       </body>
