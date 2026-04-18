@@ -175,5 +175,50 @@
     "citySlug": "cayenne",
     "storeSlug": "hyper-u-cayenne",
     "expiresAt": "2026-04-19T23:59:00Z"
+  },
+  {
+    "title": "Smart TV Sony 50\" 4K Ultra HD à 669,99€ au lieu de 799,99€ — BUT Cayenne",
+    "description": "Opération 'Par ici les p'tits prix'. Modèle KD50X75WL, Dolby Vision/Atmos, 126cm. Remise de 130€ sur le prix catalogue. En rayon TV, retrait magasin.",
+    "price": 669.99,
+    "originalPrice": 799.99,
+    "categorySlug": "tech-multimedia",
+    "citySlug": "cayenne",
+    "storeSlug": "but-cayenne"
+  },
+  {
+    "title": "Pack matelas + sommier Ysmée Angélique 140x190 à 299,99€ — BUT Cayenne",
+    "description": "Opération 'Par ici les p'tits prix'. Matelas ressorts (638 ressorts, 19cm) + sommier tapissier Eclipse 20cm. -25% sur le pack (399,98€ → 299,99€). En rayon literie.",
+    "price": 299.99,
+    "originalPrice": 399.98,
+    "categorySlug": "maison-electromenager",
+    "citySlug": "cayenne",
+    "storeSlug": "but-cayenne"
+  },
+  {
+    "title": "Matelas ressorts Epeda Bomba Top 140x190 à 399,99€ au lieu de 499,99€ — BUT Cayenne",
+    "description": "Opération 'Par ici les p'tits prix'. 580 ressorts ensachés, 22cm d'épaisseur, fabrication française, carénage renforcé zéro biocide. -20% sur le prix catalogue. En rayon literie.",
+    "price": 399.99,
+    "originalPrice": 499.99,
+    "categorySlug": "maison-electromenager",
+    "citySlug": "cayenne",
+    "storeSlug": "but-cayenne"
+  },
+  {
+    "title": "Parure 4 pièces Butterfly 2 personnes à 19,99€ au lieu de 29,99€ — BUT Cayenne",
+    "description": "Opération 'Par ici les p'tits prix'. 1 drap plat 240x300cm + 2 taies 63x63cm + 1 drap housse 140x190cm. -33% sur le prix catalogue. En rayon linge de maison.",
+    "price": 19.99,
+    "originalPrice": 29.99,
+    "categorySlug": "maison-electromenager",
+    "citySlug": "cayenne",
+    "storeSlug": "but-cayenne"
+  },
+  {
+    "title": "Chaise de séjour LELA à 39,99€ au lieu de 79,99€ — BUT Cayenne",
+    "description": "Opération 'Par ici les p'tits prix'. Revêtement velours polyester gris, garnissage mousse, piétement teinté noir. -50% sur le prix catalogue. En rayon salon/séjour.",
+    "price": 39.99,
+    "originalPrice": 79.99,
+    "categorySlug": "maison-electromenager",
+    "citySlug": "cayenne",
+    "storeSlug": "but-cayenne"
   }
 ]

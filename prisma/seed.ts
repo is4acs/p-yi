@@ -197,6 +197,9 @@ async function main() {
     { name: 'Darty Matoury', slug: 'darty-matoury', cityId: matoury?.id, isVerified: true },
     { name: 'Fnac Cayenne', slug: 'fnac-cayenne', cityId: cayenne?.id, isVerified: true },
 
+    // Ameublement & Maison
+    { name: 'BUT Cayenne', slug: 'but-cayenne', cityId: cayenne?.id, isVerified: true },
+
     // Discount & Arrivages
     { name: 'Destock Guyane', slug: 'destock-guyane', cityId: matoury?.id, isVerified: true },
     { name: 'Guyane Discount', slug: 'guyane-discount', cityId: cayenne?.id, isVerified: true },
