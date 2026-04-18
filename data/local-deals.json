@@ -130,5 +130,235 @@
     "categorySlug": "bricolage-jardin",
     "citySlug": "matoury",
     "storeSlug": "weldom-matoury"
+  },
+  {
+    "title": "Pavés de saumon frais Norvège à 22,99€/kg — Hyper U Cayenne",
+    "description": "Offre anniversaire Hyper U / Super U, rayon poissonnerie. Origine Norvège, en magasin les 18 et 19 avril 2026 uniquement.",
+    "price": 22.99,
+    "categorySlug": "supermarche-alimentation",
+    "citySlug": "cayenne",
+    "storeSlug": "hyper-u-cayenne",
+    "expiresAt": "2026-04-19T23:59:00Z"
+  },
+  {
+    "title": "Lentilles blondes Hibiscus 500g à 1,49€ — Hyper U Cayenne",
+    "description": "Offre anniversaire Hyper U / Super U, rayon épicerie. Sachet 500g (2,98€/kg). En magasin les 18 et 19 avril 2026.",
+    "price": 1.49,
+    "categorySlug": "supermarche-alimentation",
+    "citySlug": "cayenne",
+    "storeSlug": "hyper-u-cayenne",
+    "expiresAt": "2026-04-19T23:59:00Z"
+  },
+  {
+    "title": "Jus de pomme Frutail 1L à 1,19€ — Hyper U Cayenne",
+    "description": "Offre anniversaire Hyper U / Super U, rayon boissons. Brique 1L, 100% jus de pomme. En magasin les 18 et 19 avril 2026.",
+    "price": 1.19,
+    "categorySlug": "supermarche-alimentation",
+    "citySlug": "cayenne",
+    "storeSlug": "hyper-u-cayenne",
+    "expiresAt": "2026-04-19T23:59:00Z"
+  },
+  {
+    "title": "Maïs pour popcorn Hibiscus 500g à 1,29€ — Hyper U Cayenne",
+    "description": "Offre anniversaire Hyper U / Super U, rayon épicerie. Sachet 500g (2,58€/kg). En magasin les 18 et 19 avril 2026.",
+    "price": 1.29,
+    "categorySlug": "supermarche-alimentation",
+    "citySlug": "cayenne",
+    "storeSlug": "hyper-u-cayenne",
+    "expiresAt": "2026-04-19T23:59:00Z"
+  },
+  {
+    "title": "Génoises Trancetto Balconi 280g à 1,65€ — Hyper U Cayenne",
+    "description": "Offre anniversaire Hyper U / Super U, rayon goûter. Paquet de 10 snacks (cacao, fraise ou abricot), 5,89€/kg. En magasin les 18 et 19 avril 2026.",
+    "price": 1.65,
+    "categorySlug": "supermarche-alimentation",
+    "citySlug": "cayenne",
+    "storeSlug": "hyper-u-cayenne",
+    "expiresAt": "2026-04-19T23:59:00Z"
+  },
+  {
+    "title": "Smart TV Sony 50\" 4K Ultra HD à 669,99€ au lieu de 799,99€ — BUT Cayenne",
+    "description": "Opération 'Par ici les p'tits prix'. Modèle KD50X75WL, Dolby Vision/Atmos, 126cm. Remise de 130€ sur le prix catalogue. En rayon TV, retrait magasin.",
+    "price": 669.99,
+    "originalPrice": 799.99,
+    "categorySlug": "tech-multimedia",
+    "citySlug": "cayenne",
+    "storeSlug": "but-cayenne"
+  },
+  {
+    "title": "Pack matelas + sommier Ysmée Angélique 140x190 à 299,99€ — BUT Cayenne",
+    "description": "Opération 'Par ici les p'tits prix'. Matelas ressorts (638 ressorts, 19cm) + sommier tapissier Eclipse 20cm. -25% sur le pack (399,98€ → 299,99€). En rayon literie.",
+    "price": 299.99,
+    "originalPrice": 399.98,
+    "categorySlug": "maison-electromenager",
+    "citySlug": "cayenne",
+    "storeSlug": "but-cayenne"
+  },
+  {
+    "title": "Matelas ressorts Epeda Bomba Top 140x190 à 399,99€ au lieu de 499,99€ — BUT Cayenne",
+    "description": "Opération 'Par ici les p'tits prix'. 580 ressorts ensachés, 22cm d'épaisseur, fabrication française, carénage renforcé zéro biocide. -20% sur le prix catalogue. En rayon literie.",
+    "price": 399.99,
+    "originalPrice": 499.99,
+    "categorySlug": "maison-electromenager",
+    "citySlug": "cayenne",
+    "storeSlug": "but-cayenne"
+  },
+  {
+    "title": "Parure 4 pièces Butterfly 2 personnes à 19,99€ au lieu de 29,99€ — BUT Cayenne",
+    "description": "Opération 'Par ici les p'tits prix'. 1 drap plat 240x300cm + 2 taies 63x63cm + 1 drap housse 140x190cm. -33% sur le prix catalogue. En rayon linge de maison.",
+    "price": 19.99,
+    "originalPrice": 29.99,
+    "categorySlug": "maison-electromenager",
+    "citySlug": "cayenne",
+    "storeSlug": "but-cayenne"
+  },
+  {
+    "title": "Chaise de séjour LELA à 39,99€ au lieu de 79,99€ — BUT Cayenne",
+    "description": "Opération 'Par ici les p'tits prix'. Revêtement velours polyester gris, garnissage mousse, piétement teinté noir. -50% sur le prix catalogue. En rayon salon/séjour.",
+    "price": 39.99,
+    "originalPrice": 79.99,
+    "categorySlug": "maison-electromenager",
+    "citySlug": "cayenne",
+    "storeSlug": "but-cayenne"
+  },
+  {
+    "title": "Canapé-lit 3 places côtelé 699€ au lieu de 990€ — Conforama Cayenne",
+    "description": "Opération 'La Grande Braderie'. Canapé-lit rapido, revêtement tissu côtelé bleu-gris, matelas 12cm inclus, couchage 140x190, L182 P96 H82. -29% sur le prix catalogue. En rayon canapés, retrait magasin.",
+    "price": 699,
+    "originalPrice": 990,
+    "categorySlug": "maison-electromenager",
+    "citySlug": "cayenne",
+    "storeSlug": "conforama-cayenne"
+  },
+  {
+    "title": "TV Panasonic 55\" 4K UHD TB55W61AEZ à 399€ au lieu de 599€ — Conforama Cayenne",
+    "description": "Opération 'La Grande Braderie'. 139 cm, LED, Dolby Vision/Atmos, TiVo, YouTube/Netflix/Prime Video/Disney+. Éco-participation 13,75€ incluse. -200€ sur le prix catalogue. En rayon TV.",
+    "price": 399,
+    "originalPrice": 599,
+    "categorySlug": "tech-multimedia",
+    "citySlug": "cayenne",
+    "storeSlug": "conforama-cayenne"
+  },
+  {
+    "title": "Plaque gaz encastrable Icestream P64XFI401M à 99€ au lieu de 169€ — Conforama Cayenne",
+    "description": "Opération 'La Grande Braderie'. 4 feux gaz, finition inox, grille fonte. -70€ sur le prix catalogue (-41%). Éco-participation 4,23€ incluse. En rayon électroménager encastrable.",
+    "price": 99,
+    "originalPrice": 169,
+    "categorySlug": "maison-electromenager",
+    "citySlug": "cayenne",
+    "storeSlug": "conforama-cayenne"
+  },
+  {
+    "title": "Hotte encastrable Faber HOTTETB0250 à 99€ au lieu de 150€ — Conforama Cayenne",
+    "description": "Opération 'La Grande Braderie'. Éclairage LED, 1 moteur 3 vitesses, débit 460 m³/h, 63 dB, filtre à graisse aluminium. -51€ sur le prix catalogue. Éco-participation 4,23€ incluse.",
+    "price": 99,
+    "originalPrice": 150,
+    "categorySlug": "maison-electromenager",
+    "citySlug": "cayenne",
+    "storeSlug": "conforama-cayenne"
+  },
+  {
+    "title": "Congélateur coffre Samet CPS550S3 340L à 499€ au lieu de 599€ — Conforama Cayenne",
+    "description": "Opération 'La Grande Braderie'. Capacité totale 340L, classe énergétique E. -100€ sur le prix catalogue. Éco-participation 21,92€ incluse. En rayon gros électroménager.",
+    "price": 499,
+    "originalPrice": 599,
+    "categorySlug": "maison-electromenager",
+    "citySlug": "cayenne",
+    "storeSlug": "conforama-cayenne"
+  },
+  {
+    "title": "Hauts de cuisses de poulet 1kg à 2,65€ au lieu de 3,69€ — Pli Bel Price Collery",
+    "description": "Catalogue 'Le moins cher !' du 8 au 19 avril 2026. Origine UE, rayon volaille frais. -28% sur le prix habituel. En rayon au Pli Bel Price ZI Collery N°4 Cayenne.",
+    "price": 2.65,
+    "originalPrice": 3.69,
+    "categorySlug": "supermarche-alimentation",
+    "citySlug": "cayenne",
+    "storeSlug": "pli-bel-price-collery",
+    "expiresAt": "2026-04-19T23:59:00Z"
+  },
+  {
+    "title": "Queues de crevettes avec carapace 320g à 3,99€ au lieu de 5,99€ — Pli Bel Price Rémire",
+    "description": "Catalogue 'Le moins cher !' du 8 au 19 avril 2026. Calibre 31/40, sachet 320g (soit 12,47€/kg). Rayon surgelés. -33% sur le prix habituel. En magasin Route de Montjoly RD1.",
+    "price": 3.99,
+    "originalPrice": 5.99,
+    "categorySlug": "supermarche-alimentation",
+    "citySlug": "remire-montjoly",
+    "storeSlug": "pli-bel-price-remire",
+    "expiresAt": "2026-04-19T23:59:00Z"
+  },
+  {
+    "title": "Caresse Mixé Guyane (produit local) 16x125g à 7,35€ au lieu de 9,25€ — Pli Bel Price Balata",
+    "description": "Catalogue 'Le moins cher !' du 8 au 19 avril 2026. Yaourt Caresse parfums pêche-passion, mangue et ananas-coco. Produit local Guyane, 16 pots x 125g. -20% sur le prix habituel. En rayon frais au CC Balata Matoury.",
+    "price": 7.35,
+    "originalPrice": 9.25,
+    "categorySlug": "supermarche-alimentation",
+    "citySlug": "matoury",
+    "storeSlug": "pli-bel-price-balata",
+    "expiresAt": "2026-04-19T23:59:00Z"
+  },
+  {
+    "title": "Pack 6 bières Heineken 25cl à 6,09€ au lieu de 7,69€ — Pli Bel Price Kourou",
+    "description": "Catalogue 'Le moins cher !' du 8 au 19 avril 2026. Pack de 6 bouteilles 25cl (soit 4,06€/L). Rayon boissons. -21% sur le prix habituel. En magasin 6 av. Henri de France.",
+    "price": 6.09,
+    "originalPrice": 7.69,
+    "categorySlug": "supermarche-alimentation",
+    "citySlug": "kourou",
+    "storeSlug": "pli-bel-price-kourou",
+    "expiresAt": "2026-04-19T23:59:00Z"
+  },
+  {
+    "title": "Lessive liquide Ariel Simply 30 doses 1,35L à 5,59€ au lieu de 8,10€ — Pli Bel Price Liberté",
+    "description": "Catalogue 'Le moins cher !' du 8 au 19 avril 2026. 30 doses, parfum Intense ou Lavande (soit 4,14€/L). Rayon hygiène. -31% sur le prix habituel. En magasin 9 av. de la Liberté Cayenne.",
+    "price": 5.59,
+    "originalPrice": 8.10,
+    "categorySlug": "supermarche-alimentation",
+    "citySlug": "cayenne",
+    "storeSlug": "pli-bel-price-liberte",
+    "expiresAt": "2026-04-19T23:59:00Z"
+  },
+  {
+    "title": "Ensemble table + 4 chaises à 249,95€ — Mobilia Cayenne",
+    "description": "Catalogue 'Le meuble, c'est notre métier' avril 2026. Table ronde Ø100cm H76,5cm + 4 chaises assise tissu gris. Paiement en 4 fois avec CB (achat 150€-3000€, max 90j). Éco-participation 1,99€ incluse.",
+    "price": 249.95,
+    "categorySlug": "maison-electromenager",
+    "citySlug": "cayenne",
+    "storeSlug": "mobilia-cayenne",
+    "expiresAt": "2026-04-30T23:59:00Z"
+  },
+  {
+    "title": "Salon d'angle LIVIA convertible (coffre rangement) à 899,95€ — Mobilia Cayenne",
+    "description": "Catalogue avril 2026. Canapé d'angle convertible, têtières ajustables, coffre de rangement inclus. L253 H82,5/99 P102/169,5, couchage L253xP169, coloris beige. Paiement 4 fois CB possible. Éco-part 27,12€.",
+    "price": 899.95,
+    "categorySlug": "maison-electromenager",
+    "citySlug": "cayenne",
+    "storeSlug": "mobilia-cayenne",
+    "expiresAt": "2026-04-30T23:59:00Z"
+  },
+  {
+    "title": "Banquette convertible 504580 (bois eucalyptus) à 399,95€ — Mobilia Cayenne",
+    "description": "Catalogue avril 2026. Banquette 2 places convertible, structure bois eucalyptus, mousse 30kg/m³, polyester bleu. L155 H98 P87 (fermée). Paiement 4 fois CB possible. Éco-part 12,90€.",
+    "price": 399.95,
+    "categorySlug": "maison-electromenager",
+    "citySlug": "cayenne",
+    "storeSlug": "mobilia-cayenne",
+    "expiresAt": "2026-04-30T23:59:00Z"
+  },
+  {
+    "title": "Chambre TIFFANY — lit 160 à 349,95€ — Mobilia Cayenne",
+    "description": "Catalogue avril 2026. Lit 160x200 laqué blanc brillant, décors fausse pierre grise, piétement ABS chrome. Armoire 4 portes assortie à 599,95€, commode 3 portes à 199,95€. Paiement 4 fois CB. Éco-part 3,80€.",
+    "price": 349.95,
+    "categorySlug": "maison-electromenager",
+    "citySlug": "cayenne",
+    "storeSlug": "mobilia-cayenne",
+    "expiresAt": "2026-04-30T23:59:00Z"
+  },
+  {
+    "title": "Fer à repasser Draco 2200W à 19,95€ — Mobilia Cayenne",
+    "description": "Catalogue avril 2026. 2200W, semelle céramique, capacité 300ml, arrêt automatique, coloris gris (ref. DRHGSI7001G). En rayon électroménager. Éco-part 0,90€.",
+    "price": 19.95,
+    "categorySlug": "maison-electromenager",
+    "citySlug": "cayenne",
+    "storeSlug": "mobilia-cayenne",
+    "expiresAt": "2026-04-30T23:59:00Z"
   }
 ]

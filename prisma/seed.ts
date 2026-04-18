@@ -183,9 +183,16 @@ async function main() {
     // Kourou
     { name: 'Super U Kourou', slug: 'super-u-kourou', cityId: kourou?.id, isVerified: true },
     { name: 'Leader Price Kourou', slug: 'leader-price-kourou', cityId: kourou?.id, isVerified: true },
+    { name: 'Pli Bel Price Kourou', slug: 'pli-bel-price-kourou', cityId: kourou?.id, isVerified: true },
 
     // Saint-Laurent
     { name: 'Super U Saint-Laurent', slug: 'super-u-saint-laurent', cityId: saintLaurent?.id, isVerified: true },
+
+    // Pli Bel Price (chaîne Intermarché Guyane, 5 magasins)
+    { name: 'Pli Bel Price Collery', slug: 'pli-bel-price-collery', cityId: cayenne?.id, isVerified: true },
+    { name: 'Pli Bel Price Liberté', slug: 'pli-bel-price-liberte', cityId: cayenne?.id, isVerified: true },
+    { name: 'Pli Bel Price Rémire', slug: 'pli-bel-price-remire', cityId: remire?.id, isVerified: true },
+    { name: 'Pli Bel Price Balata', slug: 'pli-bel-price-balata', cityId: matoury?.id, isVerified: true },
 
     // Bricolage & équipement
     { name: 'Mr Bricolage Cayenne', slug: 'mr-bricolage-cayenne', cityId: cayenne?.id, isVerified: true },
@@ -196,6 +203,11 @@ async function main() {
     // Tech & Multimédia — Fnac Cayenne + Darty Matoury (Family Plaza)
     { name: 'Darty Matoury', slug: 'darty-matoury', cityId: matoury?.id, isVerified: true },
     { name: 'Fnac Cayenne', slug: 'fnac-cayenne', cityId: cayenne?.id, isVerified: true },
+
+    // Ameublement & Maison
+    { name: 'BUT Cayenne', slug: 'but-cayenne', cityId: cayenne?.id, isVerified: true },
+    { name: 'Conforama Cayenne', slug: 'conforama-cayenne', cityId: cayenne?.id, isVerified: true },
+    { name: 'Mobilia Cayenne', slug: 'mobilia-cayenne', cityId: cayenne?.id, isVerified: true },
 
     // Discount & Arrivages
     { name: 'Destock Guyane', slug: 'destock-guyane', cityId: matoury?.id, isVerified: true },
