@@ -1,0 +1,141 @@
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+import { headers } from "next/headers";
+
+/**
+ * Rate limiting via Upstash Redis (REST API, compatible edge + Node).
+ *
+ * Design :
+ *  - 3 buckets exposés : `authLimiter`, `writeLimiter`, `reportLimiter`.
+ *    Chacun est un `Ratelimit` pré-configuré avec sa fenêtre et sa clé.
+ *  - Algorithme sliding window : plus fluide que fixed window, évite le
+ *    pic de trafic à chaque changement de minute.
+ *  - Dégrade proprement : si `UPSTASH_REDIS_REST_URL` ou
+ *    `UPSTASH_REDIS_REST_TOKEN` manque (typique en dev local sans Redis),
+ *    tous les limiters sont remplacés par un no-op qui autorise tout.
+ *    Un warning est loggé une seule fois.
+ *  - L'`analytics: true` du Ratelimit expose des métriques dans le
+ *    dashboard Upstash — pratique pour monitorer les abus en prod.
+ *
+ * Usage typique dans une server action :
+ * ```ts
+ * const { success } = await authLimiter.limit(getClientIp());
+ * if (!success) redirectWithError("/connexion", "Trop de tentatives…");
+ * ```
+ */
+
+const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
+const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+let warnedMissing = false;
+function warnMissingOnce() {
+  if (warnedMissing) return;
+  warnedMissing = true;
+  // eslint-disable-next-line no-console
+  console.warn(
+    "[rate-limit] UPSTASH_REDIS_REST_URL/TOKEN manquant — rate limiting désactivé " +
+      "(mode dev ou preview). Configure les deux variables en prod pour activer.",
+  );
+}
+
+/**
+ * Limiter no-op pour les environnements sans Redis. Conserve la même
+ * shape que `Ratelimit.limit()` pour que les call sites n'aient rien à
+ * changer entre dev et prod.
+ */
+const noopLimiter = {
+  limit: async (identifier: string) => {
+    // `identifier` ne sert à rien ici mais on garde la signature identique
+    // à celle de `Ratelimit.limit` pour que le code appelant ne change pas.
+    void identifier;
+    return {
+      success: true as const,
+      limit: Infinity,
+      remaining: Infinity,
+      reset: Date.now() + 60_000,
+      pending: Promise.resolve(),
+    };
+  },
+};
+
+type LimiterLike = typeof noopLimiter | Ratelimit;
+
+function makeLimiter(
+  prefix: string,
+  tokens: number,
+  window: Parameters<typeof Ratelimit.slidingWindow>[1],
+): LimiterLike {
+  if (!REDIS_URL || !REDIS_TOKEN) {
+    warnMissingOnce();
+    return noopLimiter;
+  }
+  const redis = new Redis({ url: REDIS_URL, token: REDIS_TOKEN });
+  return new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(tokens, window),
+    analytics: true,
+    prefix: `peyi:${prefix}`,
+  });
+}
+
+/**
+ * Actions d'authentification (signIn, signUp, OAuth, OTP). Clé = IP.
+ * 5 tentatives toutes les 10 minutes : laisse de la marge pour les
+ * fautes de frappe mais bloque une attaque par brute force.
+ */
+export const authLimiter = makeLimiter("auth", 5, "10 m");
+
+/**
+ * Actions d'écriture coûteuses (création d'annonce, de bon plan, de
+ * commentaire). Clé = userId. 10 actions par minute : largement
+ * suffisant pour un usage humain, bloque un bot spammeur.
+ */
+export const writeLimiter = makeLimiter("write", 10, "1 m");
+
+/**
+ * Signalements (S21). Clé = userId. 5 reports par heure : évite qu'un
+ * utilisateur malveillant flood la modération.
+ */
+export const reportLimiter = makeLimiter("report", 5, "1 h");
+
+/**
+ * Extrait l'IP cliente depuis les en-têtes de la request courante.
+ *
+ * Ordre de préférence :
+ *  1. `x-forwarded-for` (premier IP de la liste = client réel, le reste
+ *     c'est la chaîne de proxies). Vercel, Cloudflare et la plupart des
+ *     PaaS remplissent correctement.
+ *  2. `x-real-ip` (Nginx, quelques autres).
+ *  3. `cf-connecting-ip` (Cloudflare direct si pas derrière un autre
+ *     proxy).
+ *  4. `"unknown"` en dernier recours — provoquera un partage de bucket
+ *     entre tous les clients non identifiés, ce qui est acceptable en
+ *     tant que mesure de protection extrême (ils se couperont les uns
+ *     les autres mais c'est mieux que rien).
+ *
+ * ⚠️ Cette fonction ne peut être appelée que dans un contexte où
+ * `headers()` est disponible (server action, RSC, route handler).
+ */
+export function getClientIp(): string {
+  const h = headers();
+  const xff = h.get("x-forwarded-for");
+  if (xff) {
+    // xff peut contenir plusieurs IP séparées par des virgules — la première
+    // est le client d'origine, les suivantes la chaîne de proxies.
+    const first = xff.split(",")[0]?.trim();
+    if (first) return first;
+  }
+  const xri = h.get("x-real-ip");
+  if (xri) return xri.trim();
+  const cfi = h.get("cf-connecting-ip");
+  if (cfi) return cfi.trim();
+  return "unknown";
+}
+
+/**
+ * `true` si Upstash est configuré. Utile pour skipper les tests en dev
+ * ou afficher un badge de débogage.
+ */
+export function isRateLimitingAvailable(): boolean {
+  return Boolean(REDIS_URL && REDIS_TOKEN);
+}

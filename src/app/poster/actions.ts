@@ -9,11 +9,20 @@ import { requireUser } from "@/lib/auth/current-user";
 import { createDealSchema } from "@/lib/validation/deal";
 import { makeDealSlug } from "@/lib/deals/slug";
 import { removeDealImage, uploadDealImage } from "@/lib/storage/deal-images";
+import { writeLimiter } from "@/lib/rate-limit";
 
 const KARMA_POST_DEAL = 5;
 
 function redirectWithError(path: string, message: string): never {
   redirect(`${path}?error=${encodeURIComponent(message)}`);
+}
+
+function formatRateLimitMessage(reset: number): string {
+  const secondsLeft = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
+  if (secondsLeft >= 60) {
+    return `Trop de publications en peu de temps. Réessaye dans ${Math.ceil(secondsLeft / 60)} min.`;
+  }
+  return `Trop de publications en peu de temps. Réessaye dans ${secondsLeft}s.`;
 }
 
 function parseDealForm(formData: FormData) {
@@ -41,6 +50,13 @@ function computeDiscount(
 
 export async function createDealAction(formData: FormData): Promise<void> {
   const user = await requireUser("/poster");
+
+  // Rate limit par userId — 10 créations/min = largement suffisant pour un
+  // humain, bloque un bot qui tenterait de spammer.
+  const { success, reset } = await writeLimiter.limit(`deal:create:${user.id}`);
+  if (!success) {
+    redirectWithError("/poster", formatRateLimitMessage(reset));
+  }
 
   const parsed = parseDealForm(formData);
   if (!parsed.success) {

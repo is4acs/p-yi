@@ -25,12 +25,21 @@ import {
   removeListingImages,
   uploadListingImages,
 } from "@/lib/storage/listing-images";
+import { writeLimiter } from "@/lib/rate-limit";
 
 const KARMA_POST_LISTING = 3;
 const DEFAULT_EXPIRY_DAYS = 30;
 
 function redirectWithError(path: string, message: string): never {
   redirect(`${path}?error=${encodeURIComponent(message)}`);
+}
+
+function formatRateLimitMessage(reset: number): string {
+  const secondsLeft = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
+  if (secondsLeft >= 60) {
+    return `Trop de publications en peu de temps. Réessaye dans ${Math.ceil(secondsLeft / 60)} min.`;
+  }
+  return `Trop de publications en peu de temps. Réessaye dans ${secondsLeft}s.`;
 }
 
 function parseListingForm(formData: FormData) {
@@ -190,6 +199,13 @@ async function resolvePhotoOrder({
 
 export async function createListingAction(formData: FormData): Promise<void> {
   const user = await requireUser("/poster/annonce");
+
+  const { success, reset } = await writeLimiter.limit(
+    `listing:create:${user.id}`,
+  );
+  if (!success) {
+    redirectWithError("/poster/annonce", formatRateLimitMessage(reset));
+  }
 
   const parsed = parseListingForm(formData);
   if (!parsed.success) {

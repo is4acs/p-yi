@@ -7,9 +7,18 @@ import { NotificationType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/current-user";
 import { createMessageSchema } from "@/lib/validation/message";
+import { writeLimiter } from "@/lib/rate-limit";
 
 function redirectWithError(path: string, message: string): never {
   redirect(`${path}?error=${encodeURIComponent(message)}`);
+}
+
+function formatRateLimitMessage(reset: number): string {
+  const secondsLeft = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
+  if (secondsLeft >= 60) {
+    return `Trop de messages envoyés. Réessaye dans ${Math.ceil(secondsLeft / 60)} min.`;
+  }
+  return `Trop de messages envoyés. Réessaye dans ${secondsLeft}s.`;
 }
 
 /**
@@ -30,6 +39,24 @@ function redirectWithError(path: string, message: string): never {
  */
 export async function sendMessageAction(formData: FormData): Promise<void> {
   const user = await requireUser("/messages");
+
+  // Rate limit par expéditeur — principal vecteur de spam DM.
+  const { success, reset } = await writeLimiter.limit(
+    `message:send:${user.id}`,
+  );
+  if (!success) {
+    const rawRecipient = formData.get("recipientUsername");
+    const rawListing = formData.get("listingSlug");
+    const fallback =
+      typeof rawRecipient === "string" && rawRecipient
+        ? `/messages/${encodeURIComponent(rawRecipient)}${
+            typeof rawListing === "string" && rawListing
+              ? `?listing=${encodeURIComponent(rawListing)}`
+              : ""
+          }`
+        : "/messages";
+    redirectWithError(fallback, formatRateLimitMessage(reset));
+  }
 
   const parsed = createMessageSchema.safeParse({
     recipientUsername: formData.get("recipientUsername"),

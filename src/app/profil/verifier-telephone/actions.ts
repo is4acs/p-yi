@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/current-user";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { resendOtpSchema, verifyOtpSchema } from "@/lib/validation/profile";
+import { authLimiter } from "@/lib/rate-limit";
 
 function redirectWithError(phone: string, message: string): never {
   redirect(
@@ -24,6 +25,14 @@ function redirectWithInfo(phone: string, message: string): never {
   );
 }
 
+function formatRateLimitMessage(reset: number): string {
+  const secondsLeft = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
+  if (secondsLeft >= 60) {
+    return `Trop de tentatives. Réessaye dans ${Math.ceil(secondsLeft / 60)} min.`;
+  }
+  return `Trop de tentatives. Réessaye dans ${secondsLeft}s.`;
+}
+
 /**
  * Verify the 6-digit OTP the user just received by SMS.
  *
@@ -38,6 +47,13 @@ function redirectWithInfo(phone: string, message: string): never {
  */
 export async function verifyPhoneAction(formData: FormData): Promise<void> {
   const user = await requireUser("/profil");
+
+  // Rate limit par userId — évite le brute force du code à 6 chiffres.
+  const { success, reset } = await authLimiter.limit(`otp:verify:${user.id}`);
+  if (!success) {
+    const phone = String(formData.get("phone") ?? "");
+    redirectWithError(phone, formatRateLimitMessage(reset));
+  }
 
   const parsed = verifyOtpSchema.safeParse({
     phone: formData.get("phone"),
@@ -94,7 +110,15 @@ export async function verifyPhoneAction(formData: FormData): Promise<void> {
  * is idempotent on their side — the same MSISDN just triggers a fresh token.
  */
 export async function resendOtpAction(formData: FormData): Promise<void> {
-  await requireUser("/profil");
+  const user = await requireUser("/profil");
+
+  // Rate limit renvoi OTP par userId — cap les frais SMS Supabase en cas
+  // d'abus.
+  const { success, reset } = await authLimiter.limit(`otp:resend:${user.id}`);
+  if (!success) {
+    const phone = String(formData.get("phone") ?? "");
+    redirectWithError(phone, formatRateLimitMessage(reset));
+  }
 
   const parsed = resendOtpSchema.safeParse({
     phone: formData.get("phone"),

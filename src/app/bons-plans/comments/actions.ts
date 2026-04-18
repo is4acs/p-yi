@@ -5,8 +5,17 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/current-user";
 import { createCommentSchema } from "@/lib/validation/comment";
+import { writeLimiter } from "@/lib/rate-limit";
 
 const KARMA_COMMENT = 2;
+
+function formatRateLimitMessage(reset: number): string {
+  const secondsLeft = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
+  if (secondsLeft >= 60) {
+    return `Trop de commentaires en peu de temps. Réessaye dans ${Math.ceil(secondsLeft / 60)} min.`;
+  }
+  return `Trop de commentaires en peu de temps. Réessaye dans ${secondsLeft}s.`;
+}
 
 export type CommentActionResult = {
   ok: boolean;
@@ -17,6 +26,13 @@ export async function createCommentAction(
   formData: FormData,
 ): Promise<CommentActionResult> {
   const user = await requireUser();
+
+  const { success, reset } = await writeLimiter.limit(
+    `comment:create:${user.id}`,
+  );
+  if (!success) {
+    return { ok: false, error: formatRateLimitMessage(reset) };
+  }
 
   const parsed = createCommentSchema.safeParse({
     dealId: formData.get("dealId"),

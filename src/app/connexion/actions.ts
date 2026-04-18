@@ -7,12 +7,27 @@ import { prisma } from "@/lib/prisma";
 import { signInSchema, signUpSchema } from "@/lib/validation/auth";
 import { ensureUserProfile } from "@/lib/auth/ensure-profile";
 import { getSiteUrl } from "@/lib/site-url";
+import { authLimiter, getClientIp } from "@/lib/rate-limit";
 
 function redirectWithError(path: string, message: string): never {
   redirect(`${path}?error=${encodeURIComponent(message)}`);
 }
 
+function formatRateLimitMessage(reset: number): string {
+  const secondsLeft = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
+  if (secondsLeft >= 60) {
+    return `Trop de tentatives. Réessaye dans ${Math.ceil(secondsLeft / 60)} min.`;
+  }
+  return `Trop de tentatives. Réessaye dans ${secondsLeft}s.`;
+}
+
 export async function signInAction(formData: FormData) {
+  // Rate limit par IP — protège contre le brute force.
+  const { success, reset } = await authLimiter.limit(getClientIp());
+  if (!success) {
+    redirectWithError("/connexion", formatRateLimitMessage(reset));
+  }
+
   const parsed = signInSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -55,6 +70,11 @@ export async function signInAction(formData: FormData) {
 }
 
 export async function signUpAction(formData: FormData) {
+  const { success, reset } = await authLimiter.limit(getClientIp());
+  if (!success) {
+    redirectWithError("/connexion?mode=signup", formatRateLimitMessage(reset));
+  }
+
   const parsed = signUpSchema.safeParse({
     email: formData.get("email"),
     username: formData.get("username"),
@@ -117,6 +137,11 @@ export async function signOutAction() {
 }
 
 export async function signInWithGoogleAction() {
+  const { success, reset } = await authLimiter.limit(getClientIp());
+  if (!success) {
+    redirectWithError("/connexion", formatRateLimitMessage(reset));
+  }
+
   const supabase = createSupabaseServerClient();
 
   const { data, error } = await supabase.auth.signInWithOAuth({
