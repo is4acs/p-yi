@@ -36,7 +36,6 @@ export default async function EditDealPage({
       coverImageUrl: true,
       expiresAt: true,
       authorId: true,
-      storeName: true,
       category: { select: { slug: true } },
       city: { select: { slug: true } },
       store: { select: { name: true } },
@@ -76,7 +75,7 @@ export default async function EditDealPage({
     externalUrl: deal.externalUrl,
     categorySlug: deal.category.slug,
     citySlug: deal.city?.slug ?? null,
-    storeName: deal.storeName ?? deal.store?.name ?? null,
+    storeName: deal.store?.name ?? null,
     expiresAt: deal.expiresAt
       ? deal.expiresAt.toISOString().slice(0, 10)
       : null,

@@ -39,39 +39,25 @@ function parseDealForm(formData: FormData) {
   });
 }
 
-// Résolution du magasin saisi en texte libre. On essaie d'abord un match
-// exact (case-insensitive) sur les Store seedés — si l'utilisateur tape
-// "Carrefour Matoury" on relie au Store en base pour garder les joins
-// propres (filtres, stats). Sinon on stocke juste le texte libre dans
-// storeName. Dans les deux cas, le storeName texte est persisté pour
-// permettre l'affichage sans join et pour que l'édition re-rende la
-// valeur initiale dans l'input.
+// Résolution du magasin saisi en texte libre. On match en
+// case-insensitive sur les Store seedés : si l'utilisateur tape
+// "Carrefour Matoury" on relie au Store en base. Sinon, on ne persiste
+// rien côté magasin (la colonne Deal.storeName texte libre n'existe
+// pas encore en DB — migration à prévoir si on veut conserver les
+// enseignes non-référencées).
 async function resolveStore(
   storeName: string | undefined,
   citySlugFallbackId: string | null,
-): Promise<{
-  storeId: string | null;
-  storeName: string | null;
-  cityId: string | null;
-}> {
-  if (!storeName) {
-    return { storeId: null, storeName: null, cityId: citySlugFallbackId };
-  }
+): Promise<{ storeId: string | null; cityId: string | null }> {
+  if (!storeName) return { storeId: null, cityId: citySlugFallbackId };
   const match = await prisma.store.findFirst({
     where: { name: { equals: storeName, mode: "insensitive" } },
-    select: { id: true, name: true, cityId: true },
+    select: { id: true, cityId: true },
   });
-  if (match) {
-    return {
-      storeId: match.id,
-      storeName: match.name,
-      cityId: citySlugFallbackId ?? match.cityId,
-    };
-  }
+  if (!match) return { storeId: null, cityId: citySlugFallbackId };
   return {
-    storeId: null,
-    storeName,
-    cityId: citySlugFallbackId,
+    storeId: match.id,
+    cityId: citySlugFallbackId ?? match.cityId,
   };
 }
 
@@ -117,7 +103,7 @@ export async function createDealAction(formData: FormData): Promise<void> {
       })
     : null;
 
-  const { storeId, storeName, cityId } = await resolveStore(
+  const { storeId, cityId } = await resolveStore(
     data.storeName,
     city?.id ?? null,
   );
@@ -162,7 +148,6 @@ export async function createDealAction(formData: FormData): Promise<void> {
       categoryId: category.id,
       cityId,
       storeId,
-      storeName,
       temperature: 0,
     },
     select: { id: true },
@@ -224,7 +209,7 @@ export async function updateDealAction(formData: FormData): Promise<void> {
       })
     : null;
 
-  const { storeId, storeName, cityId } = await resolveStore(
+  const { storeId, cityId } = await resolveStore(
     data.storeName,
     city?.id ?? null,
   );
@@ -269,7 +254,6 @@ export async function updateDealAction(formData: FormData): Promise<void> {
       categoryId: category.id,
       cityId,
       storeId,
-      storeName,
     },
   });
 

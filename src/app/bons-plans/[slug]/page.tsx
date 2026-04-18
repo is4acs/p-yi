@@ -83,7 +83,6 @@ const dealDetailSelect = {
       city: { select: { name: true } },
     },
   },
-  storeName: true,
   merchant: { select: { name: true, slug: true, domain: true, logoUrl: true } },
 } as const;
 
@@ -185,11 +184,10 @@ export default async function DealDetailPage({
 
   const ctaUrl = deal.affiliateUrl ?? deal.externalUrl ?? deal.store?.website ?? null;
   const sellerName =
-    deal.store?.name ?? deal.storeName ?? deal.merchant?.name ?? "Vendeur non précisé";
+    deal.store?.name ?? deal.merchant?.name ?? "Vendeur non précisé";
   const level = LEVEL_META[deal.author.level];
   const placeholderEmoji = deal.category.icon ?? null;
-  const placeholderLabel =
-    deal.store?.name ?? deal.storeName ?? deal.merchant?.name ?? deal.title;
+  const placeholderLabel = deal.store?.name ?? deal.merchant?.name ?? deal.title;
 
   // JSON-LD — Product + Offer pour la rich card produit, et
   // BreadcrumbList pour le fil d'ariane dans les SERPs. Tout est
@@ -207,11 +205,7 @@ export default async function DealDetailPage({
       coverImageUrl: deal.coverImageUrl,
       category: deal.category,
       city: deal.city,
-      store: deal.store
-        ? { name: deal.store.name }
-        : deal.storeName
-          ? { name: deal.storeName }
-          : null,
+      store: deal.store ? { name: deal.store.name } : null,
       merchant: deal.merchant ? { name: deal.merchant.name } : null,
       author: { username: deal.author.username },
     }),
@@ -395,26 +389,18 @@ export default async function DealDetailPage({
         </section>
       )}
 
-      {/* Store details — on affiche le Store lié (avec adresse) quand il
-          existe en base, sinon le texte libre storeName avec la commune
-          du deal en fallback. */}
-      {(deal.store || deal.storeName) && (
+      {/* Store details */}
+      {deal.store && (
         <section className="mt-6 px-4 sm:px-0">
           <h2 className="font-display text-lg font-semibold">Où le trouver</h2>
           <div className="mt-2 flex items-start gap-2 rounded-lg border border-border bg-card p-3 text-sm">
             <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-peyi-orange-500" aria-hidden />
             <div className="min-w-0">
-              <p className="font-semibold">
-                {deal.store?.name ?? deal.storeName}
-              </p>
-              {deal.store?.address && (
+              <p className="font-semibold">{deal.store.name}</p>
+              {deal.store.address && (
                 <p className="text-muted-foreground">{deal.store.address}</p>
               )}
-              {(deal.store?.city.name ?? deal.city?.name) && (
-                <p className="text-muted-foreground">
-                  {deal.store?.city.name ?? deal.city?.name}
-                </p>
-              )}
+              <p className="text-muted-foreground">{deal.store.city.name}</p>
             </div>
           </div>
         </section>
