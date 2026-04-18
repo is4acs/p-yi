@@ -83,6 +83,41 @@ export async function requireUser(nextPath?: string): Promise<User> {
   return syncAuthDriftToPrisma(profile, authUser);
 }
 
+/**
+ * Comme `requireUser`, mais ajoute le contrôle de ban :
+ *  - redirige vers `/banni` si l'utilisateur est banni de façon active
+ *    (isBanned=true ET bannedUntil null OU dans le futur)
+ *  - si le ban temporaire est expiré, on reset les flags côté DB pour
+ *    auto-débannir, puis on laisse passer. Ça évite à un admin d'avoir
+ *    à faire une passe manuelle pour les bans avec échéance.
+ *
+ * À utiliser dans toutes les server actions d'écriture (create/update/
+ * delete/vote/favorite/message/report/etc.). Les lectures passent par
+ * `requireUser` — un banni peut consulter, il ne peut juste plus
+ * produire de contenu.
+ */
+export async function requireActiveUser(nextPath?: string): Promise<User> {
+  const user = await requireUser(nextPath);
+
+  if (user.isBanned) {
+    if (user.bannedUntil && user.bannedUntil <= new Date()) {
+      // Ban temporaire expiré : on auto-débannit.
+      const refreshed = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          isBanned: false,
+          bannedUntil: null,
+          banReason: null,
+        },
+      });
+      return refreshed;
+    }
+    redirect("/banni");
+  }
+
+  return user;
+}
+
 // -----------------------------------------------------------------------------
 // Hiérarchie de rôles — préparation pour la S21 (interface admin)
 // -----------------------------------------------------------------------------

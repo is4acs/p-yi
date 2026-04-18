@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { VoteType } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth/current-user";
+import { requireActiveUser } from "@/lib/auth/current-user";
 
 const KARMA_HOT_VOTE_AUTHOR = 1;
 
@@ -34,7 +34,7 @@ export async function voteDealAction(
     return { ok: false, error: "Vote invalide." };
   }
 
-  const user = await requireUser();
+  const user = await requireActiveUser();
 
   const deal = await prisma.deal.findUnique({
     where: { id: dealId },

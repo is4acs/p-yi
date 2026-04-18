@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { NotificationType } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth/current-user";
+import { requireActiveUser } from "@/lib/auth/current-user";
 import { createMessageSchema } from "@/lib/validation/message";
 import { writeLimiter } from "@/lib/rate-limit";
 
@@ -38,7 +38,7 @@ function formatRateLimitMessage(reset: number): string {
  *  - The sender is redirected to the thread page.
  */
 export async function sendMessageAction(formData: FormData): Promise<void> {
-  const user = await requireUser("/messages");
+  const user = await requireActiveUser("/messages");
 
   // Rate limit par expéditeur — principal vecteur de spam DM.
   const { success, reset } = await writeLimiter.limit(

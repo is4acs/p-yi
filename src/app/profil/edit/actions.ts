@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth/current-user";
+import { requireActiveUser } from "@/lib/auth/current-user";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { normalizePhone } from "@/lib/auth/phone";
 import { updateProfileSchema } from "@/lib/validation/profile";
@@ -35,7 +35,7 @@ function redirectWithSuccess(path: string, message: string): never {
  *   3. Trivial only        → /profil with "Profil mis à jour"
  */
 export async function updateProfileAction(formData: FormData): Promise<void> {
-  const user = await requireUser("/profil/edit");
+  const user = await requireActiveUser("/profil/edit");
 
   // Normalize the phone input before zod validates it.
   const rawPhone = formData.get("phone");

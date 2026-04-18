@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth/current-user";
+import { requireActiveUser } from "@/lib/auth/current-user";
 import { createCommentSchema } from "@/lib/validation/comment";
 import { writeLimiter } from "@/lib/rate-limit";
 
@@ -25,7 +25,7 @@ export type CommentActionResult = {
 export async function createCommentAction(
   formData: FormData,
 ): Promise<CommentActionResult> {
-  const user = await requireUser();
+  const user = await requireActiveUser();
 
   const { success, reset } = await writeLimiter.limit(
     `comment:create:${user.id}`,
@@ -110,7 +110,7 @@ export async function createCommentAction(
 export async function deleteCommentAction(
   formData: FormData,
 ): Promise<CommentActionResult> {
-  const user = await requireUser();
+  const user = await requireActiveUser();
 
   const commentId = formData.get("commentId");
   if (typeof commentId !== "string" || !commentId) {

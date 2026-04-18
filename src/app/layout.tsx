@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { cn } from "@/lib/utils";
+import { BannedBanner } from "@/components/layout/BannedBanner";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Header } from "@/components/layout/Header";
 import { RouteProgress } from "@/components/layout/RouteProgress";
@@ -105,6 +106,10 @@ export default async function RootLayout({
           unreadCount={unreadCount}
           unreadNotifications={unreadNotifications}
         />
+        {user?.isBanned &&
+          (!user.bannedUntil || user.bannedUntil > new Date()) && (
+            <BannedBanner bannedUntil={user.bannedUntil} />
+          )}
         {children}
         <BottomNav unreadCount={unreadCount} />
         <InstallBanner />

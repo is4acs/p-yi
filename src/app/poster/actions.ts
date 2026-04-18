@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { Prisma, DealStatus } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth/current-user";
+import { requireActiveUser } from "@/lib/auth/current-user";
 import { createDealSchema } from "@/lib/validation/deal";
 import { makeDealSlug } from "@/lib/deals/slug";
 import { removeDealImage, uploadDealImage } from "@/lib/storage/deal-images";
@@ -49,7 +49,7 @@ function computeDiscount(
 }
 
 export async function createDealAction(formData: FormData): Promise<void> {
-  const user = await requireUser("/poster");
+  const user = await requireActiveUser("/poster");
 
   // Rate limit par userId — 10 créations/min = largement suffisant pour un
   // humain, bloque un bot qui tenterait de spammer.
@@ -133,7 +133,7 @@ export async function createDealAction(formData: FormData): Promise<void> {
 }
 
 export async function updateDealAction(formData: FormData): Promise<void> {
-  const user = await requireUser();
+  const user = await requireActiveUser();
 
   const dealId = formData.get("dealId");
   if (typeof dealId !== "string" || !dealId) {
@@ -225,7 +225,7 @@ export async function updateDealAction(formData: FormData): Promise<void> {
 }
 
 export async function deleteDealAction(formData: FormData): Promise<void> {
-  const user = await requireUser();
+  const user = await requireActiveUser();
 
   const dealId = formData.get("dealId");
   if (typeof dealId !== "string" || !dealId) {

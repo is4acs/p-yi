@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth/current-user";
+import { requireActiveUser } from "@/lib/auth/current-user";
 
 export type FavoriteResult = {
   ok: boolean;
@@ -22,7 +22,7 @@ export async function toggleFavoriteAction(
     return { ok: false, error: "Bon plan invalide." };
   }
 
-  const user = await requireUser();
+  const user = await requireActiveUser();
 
   const deal = await prisma.deal.findUnique({
     where: { id: dealId },

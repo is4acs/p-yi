@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { ReportReason } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth/current-user";
+import { requireActiveUser } from "@/lib/auth/current-user";
 import { reportLimiter } from "@/lib/rate-limit";
 
 const ALLOWED_REASONS = new Set<ReportReason>([
@@ -41,7 +41,7 @@ export type CreateReportResult =
  * déjà agi, le report reste utile comme trace historique.
  */
 export async function createReportAction(formData: FormData): Promise<CreateReportResult> {
-  const user = await requireUser();
+  const user = await requireActiveUser();
 
   const { success } = await reportLimiter.limit(`report:${user.id}`);
   if (!success) {

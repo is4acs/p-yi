@@ -11,7 +11,7 @@ import {
 } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth/current-user";
+import { requireActiveUser } from "@/lib/auth/current-user";
 import { createListingSchema } from "@/lib/validation/listing";
 import { makeListingSlug } from "@/lib/listings/slug";
 import { maxPhotosForCategory } from "@/lib/listings/photo-limits";
@@ -198,7 +198,7 @@ async function resolvePhotoOrder({
 }
 
 export async function createListingAction(formData: FormData): Promise<void> {
-  const user = await requireUser("/poster/annonce");
+  const user = await requireActiveUser("/poster/annonce");
 
   const { success, reset } = await writeLimiter.limit(
     `listing:create:${user.id}`,
@@ -332,7 +332,7 @@ export async function createListingAction(formData: FormData): Promise<void> {
 }
 
 export async function updateListingAction(formData: FormData): Promise<void> {
-  const user = await requireUser();
+  const user = await requireActiveUser();
 
   const listingId = formData.get("listingId");
   if (typeof listingId !== "string" || !listingId) {
@@ -481,7 +481,7 @@ export async function updateListingAction(formData: FormData): Promise<void> {
 }
 
 export async function deleteListingAction(formData: FormData): Promise<void> {
-  const user = await requireUser();
+  const user = await requireActiveUser();
 
   const listingId = formData.get("listingId");
   if (typeof listingId !== "string" || !listingId) {
@@ -515,7 +515,7 @@ export async function deleteListingAction(formData: FormData): Promise<void> {
 }
 
 export async function bumpListingAction(formData: FormData): Promise<void> {
-  const user = await requireUser();
+  const user = await requireActiveUser();
 
   const listingId = formData.get("listingId");
   if (typeof listingId !== "string" || !listingId) {
