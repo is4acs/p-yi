@@ -90,6 +90,13 @@ export const metadata: Metadata = {
     // clickable phone numbers. Emails stay auto-detected.
     telephone: false,
   },
+  // Chrome déprécie le préfixe `apple-` et exige le meta non-préfixé pour
+  // reconnaître l'app comme installable en PWA standalone. Next n'expose
+  // pas encore de champ dédié dans `appleWebApp`, donc on l'injecte via
+  // `other` — les deux meta coexistent (Safari lit l'un, Chrome l'autre).
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export const viewport: Viewport = {
