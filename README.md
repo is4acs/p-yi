@@ -102,6 +102,7 @@ npm run build            # Build de production
 npm run start            # Start du build (après build)
 npm run lint             # ESLint + règles Next
 npm run type-check       # tsc --noEmit (pas de build, juste la vérif)
+npm run preflight        # type-check + lint + build (check avant push)
 
 npm run db:push          # Push du schéma Prisma vers la DB (dev)
 npm run db:migrate       # Nouvelle migration (dev)

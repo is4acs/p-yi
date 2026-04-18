@@ -8,6 +8,7 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { RouteProgress } from "@/components/layout/RouteProgress";
+import { SkipLink } from "@/components/layout/SkipLink";
 import { InstallBanner } from "@/components/pwa/InstallBanner";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { getCurrentUser } from "@/lib/auth/current-user";
@@ -116,6 +117,7 @@ export default async function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: rootJsonLd }}
         />
+        <SkipLink />
         <ServiceWorkerRegister />
         <WebVitals />
         <Suspense fallback={null}>
@@ -130,7 +132,18 @@ export default async function RootLayout({
           (!user.bannedUntil || user.bannedUntil > new Date()) && (
             <BannedBanner bannedUntil={user.bannedUntil} />
           )}
-        {children}
+        {/*
+          Wrapper invisible qui sert de cible au SkipLink. On ne met pas
+          `<main>` ici parce que chaque page définit son propre `<main>`
+          (utile pour les landmarks ARIA et le SEO). Le wrapper reçoit
+          tabIndex={-1} pour être focusable programmatiquement — quand
+          le lien "Aller au contenu" est activé, le focus saute ici puis
+          retombe naturellement sur le premier élément interactif de la
+          page au Tab suivant.
+        */}
+        <div id="main-content" tabIndex={-1} className="focus:outline-none">
+          {children}
+        </div>
         <Footer />
         <BottomNav unreadCount={unreadCount} />
         <InstallBanner />
