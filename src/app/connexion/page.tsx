@@ -16,6 +16,10 @@ import {
 export const metadata: Metadata = {
   title: "Connexion",
   description: "Connecte-toi à Péyi pour poster tes bons plans et tes annonces.",
+  alternates: { canonical: "/connexion" },
+  // Page d'action (formulaire de connexion) : pas de valeur SEO,
+  // on évite que Google l'indexe au détriment de contenus plus utiles.
+  robots: { index: false, follow: true },
 };
 
 type SearchParams = {

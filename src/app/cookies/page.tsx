@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Politique cookies",
   description:
     "Liste des cookies utilisés par Péyi — strictement nécessaires au fonctionnement.",
+  alternates: { canonical: "/cookies" },
 };
 
 export default function CookiesPage() {

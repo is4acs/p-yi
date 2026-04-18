@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Mentions légales",
   description:
     "Mentions légales du service Péyi — éditeur, hébergeur, propriété intellectuelle.",
+  alternates: { canonical: "/mentions-legales" },
 };
 
 // Page légale statique. Isaac : remplace tous les [À COMPLÉTER] par les

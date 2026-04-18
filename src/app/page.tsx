@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Flame, Plus, Tag } from "lucide-react";
 
@@ -15,6 +16,21 @@ import { DealsSearchBar } from "@/components/deals/DealsSearchBar";
 import { ListingCard } from "@/components/listings/ListingCard";
 
 export const dynamic = "force-dynamic";
+
+// Le titre du root layout (`Péyi — Bons plans et petites annonces de
+// Guyane`) convient déjà à la home ; on surcharge juste pour forcer
+// le titre "par défaut" (sans suffixe de template) et poser la
+// canonical explicite. Sans ça, la template `%s | Péyi` s'appliquerait
+// si on définissait un titre ici.
+export const metadata: Metadata = {
+  title: {
+    absolute: "Péyi — Bons plans et petites annonces de Guyane",
+  },
+  alternates: { canonical: "/" },
+  openGraph: {
+    url: "/",
+  },
+};
 
 const HOME_DEALS_COUNT = 6;
 const HOME_LISTINGS_COUNT = 4;

@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { prisma } from "@/lib/prisma";
 import {
   fetchDealsPage,
@@ -7,6 +9,7 @@ import {
 } from "@/lib/deals/queries";
 import { parsePage, parseQuery, parseSort } from "@/lib/deals/url";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { buildCanonicalPath } from "@/lib/seo/canonical";
 import { DealCard } from "@/components/deals/DealCard";
 import { DealsSortTabs } from "@/components/deals/DealsSortTabs";
 import { DealsFilterBar } from "@/components/deals/DealsFilterBar";
@@ -24,34 +27,97 @@ type SearchParams = {
   q?: string;
 };
 
+/**
+ * Resout les slugs `category` / `city` en noms humains pour enrichir
+ * le titre et la description. On fait UNE seule requête (les deux
+ * slugs sont uniques). Si un slug n'existe pas en DB, on retombe
+ * sur le slug tel quel (évite de perdre la requête SEO si la DB et
+ * l'URL divergent temporairement).
+ */
+async function resolveFacets(
+  categorySlug: string | null,
+  citySlug: string | null,
+) {
+  const [category, city] = await Promise.all([
+    categorySlug
+      ? prisma.category.findUnique({
+          where: { slug: categorySlug },
+          select: { name: true },
+        })
+      : null,
+    citySlug
+      ? prisma.city.findUnique({
+          where: { slug: citySlug },
+          select: { name: true },
+        })
+      : null,
+  ]);
+  return {
+    categoryName: category?.name ?? categorySlug ?? null,
+    cityName: city?.name ?? citySlug ?? null,
+  };
+}
+
 export async function generateMetadata({
   searchParams,
 }: {
   searchParams: SearchParams;
-}) {
+}): Promise<Metadata> {
   const q = parseQuery(searchParams.q);
-  const category = searchParams.category?.trim() || null;
-  const city = searchParams.city?.trim() || null;
+  const categorySlug = searchParams.category?.trim() || null;
+  const citySlug = searchParams.city?.trim() || null;
+
+  // Canonical : on garde les facettes permanentes (category + city)
+  // mais on ignore sort, page, q — ces querystrings sont des "vues"
+  // qui canonicalisent toutes vers la même URL de base. Les
+  // recherches (q) ne sont pas indexées : noindex ci-dessous.
+  const canonical = buildCanonicalPath("/bons-plans", {
+    category: categorySlug,
+    city: citySlug,
+  });
 
   if (q) {
     return {
       title: `Recherche « ${q} »`,
       description: `Bons plans en Guyane correspondant à « ${q} ».`,
+      alternates: { canonical: "/bons-plans" },
+      // Les pages de recherche interne gaspillent le crawl budget
+      // et ne convertissent pas en organique — on les exclut.
+      robots: { index: false, follow: true },
     };
   }
+
+  const { categoryName, cityName } = await resolveFacets(
+    categorySlug,
+    citySlug,
+  );
+
   const parts: string[] = [];
-  if (category) parts.push(category);
-  if (city) parts.push(city);
+  if (categoryName) parts.push(categoryName);
+  if (cityName) parts.push(cityName);
+
   if (parts.length > 0) {
     const label = parts.join(" · ");
+    const title = `Bons plans ${label}`;
+    const description = `Les bons plans ${label.toLowerCase()} partagés par la communauté en Guyane sur Péyi.`;
     return {
-      title: `Bons plans · ${label}`,
-      description: `Les bons plans ${label} partagés par la communauté en Guyane.`,
+      title,
+      description,
+      alternates: { canonical },
+      openGraph: { title, description, url: canonical },
+      twitter: { title, description, card: "summary_large_image" },
     };
   }
+
+  const title = "Bons plans de Guyane";
+  const description =
+    "Les bons plans partagés par la communauté en Guyane. Partage, vote et profite des meilleures promos.";
   return {
-    title: "Bons plans",
-    description: "Les bons plans partagés par la communauté en Guyane.",
+    title,
+    description,
+    alternates: { canonical: "/bons-plans" },
+    openGraph: { title, description, url: "/bons-plans" },
+    twitter: { title, description, card: "summary_large_image" },
   };
 }
 

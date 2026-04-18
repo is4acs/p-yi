@@ -1,7 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
+import { buildCanonicalPath } from "@/lib/seo/canonical";
 import {
   fetchListingsPage,
   fetchUserFavoriteListingSet,
@@ -46,35 +48,89 @@ type SearchParams = {
   contrat?: string;
 };
 
+/**
+ * Même logique que `/bons-plans` : on résout les slugs en noms
+ * humains pour un titre SEO de qualité. Cf.
+ * `src/app/bons-plans/page.tsx::resolveFacets` pour la justification.
+ */
+async function resolveFacets(
+  categorySlug: string | null,
+  citySlug: string | null,
+) {
+  const [category, city] = await Promise.all([
+    categorySlug
+      ? prisma.category.findUnique({
+          where: { slug: categorySlug },
+          select: { name: true },
+        })
+      : null,
+    citySlug
+      ? prisma.city.findUnique({
+          where: { slug: citySlug },
+          select: { name: true },
+        })
+      : null,
+  ]);
+  return {
+    categoryName: category?.name ?? categorySlug ?? null,
+    cityName: city?.name ?? citySlug ?? null,
+  };
+}
+
 export async function generateMetadata({
   searchParams,
 }: {
   searchParams: SearchParams;
-}) {
+}): Promise<Metadata> {
   const q = parseQuery(searchParams.q);
-  const category = searchParams.category?.trim() || null;
-  const city = searchParams.city?.trim() || null;
+  const categorySlug = searchParams.category?.trim() || null;
+  const citySlug = searchParams.city?.trim() || null;
+
+  const canonical = buildCanonicalPath("/annonces", {
+    category: categorySlug,
+    city: citySlug,
+  });
 
   if (q) {
     return {
       title: `Recherche « ${q} » · Annonces`,
       description: `Petites annonces en Guyane correspondant à « ${q} ».`,
+      alternates: { canonical: "/annonces" },
+      robots: { index: false, follow: true },
     };
   }
+
+  const { categoryName, cityName } = await resolveFacets(
+    categorySlug,
+    citySlug,
+  );
+
   const parts: string[] = [];
-  if (category) parts.push(category);
-  if (city) parts.push(city);
+  if (categoryName) parts.push(categoryName);
+  if (cityName) parts.push(cityName);
+
   if (parts.length > 0) {
     const label = parts.join(" · ");
+    const title = `Annonces ${label}`;
+    const description = `Les petites annonces ${label.toLowerCase()} en Guyane sur Péyi. Achète, vends, échange entre Guyanais.`;
     return {
-      title: `Annonces · ${label}`,
-      description: `Les petites annonces ${label} en Guyane.`,
+      title,
+      description,
+      alternates: { canonical },
+      openGraph: { title, description, url: canonical },
+      twitter: { title, description, card: "summary_large_image" },
     };
   }
+
+  const title = "Petites annonces de Guyane";
+  const description =
+    "Achète, vends, échange et donne entre Guyanais. Petites annonces locales sur Péyi.";
   return {
-    title: "Petites annonces",
-    description:
-      "Achète, vends, échange et donne entre Guyanais. Petites annonces locales.",
+    title,
+    description,
+    alternates: { canonical: "/annonces" },
+    openGraph: { title, description, url: "/annonces" },
+    twitter: { title, description, card: "summary_large_image" },
   };
 }
 

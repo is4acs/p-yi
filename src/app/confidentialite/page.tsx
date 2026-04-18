@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Politique de confidentialité",
   description:
     "Politique de confidentialité Péyi — données collectées, finalités, droits RGPD et exercice.",
+  alternates: { canonical: "/confidentialite" },
 };
 
 // Politique de confidentialité RGPD-compliant. Les durées de conservation

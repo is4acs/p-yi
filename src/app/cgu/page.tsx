@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Conditions générales d'utilisation",
   description:
     "Conditions générales d'utilisation du service Péyi — règles, engagements, sanctions.",
+  alternates: { canonical: "/cgu" },
 };
 
 export default function CguPage() {
