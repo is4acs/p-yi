@@ -46,6 +46,7 @@ export const dealCardSelect = {
   city: { select: { name: true, slug: true } },
   category: { select: { name: true, slug: true, icon: true } },
   store: { select: { name: true, slug: true } },
+  storeName: true,
   merchant: { select: { name: true, slug: true, logoUrl: true } },
 } satisfies Prisma.DealSelect;
 

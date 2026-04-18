@@ -22,7 +22,7 @@ export type DealFormValues = {
   externalUrl?: string | null;
   categorySlug?: string;
   citySlug?: string | null;
-  storeSlug?: string | null;
+  storeName?: string | null;
   expiresAt?: string | null; // yyyy-mm-dd
   coverImageUrl?: string | null;
 };
@@ -46,28 +46,14 @@ export function DealForm({
 }: Props) {
   const v = defaults ?? {};
   const [citySlug, setCitySlug] = useState<string>(v.citySlug ?? "");
-  const [storeSlug, setStoreSlug] = useState<string>(v.storeSlug ?? "");
 
-  // Si une ville est choisie, on ne propose que ses magasins. Sinon,
-  // on expose toute la liste (l'user peut choisir d'abord le magasin,
-  // la ville restera vide — le store reste attaché à sa propre ville
-  // en base via la relation Store.cityId).
-  const visibleStores = useMemo(() => {
+  // Les suggestions du datalist sont filtrées par commune quand une
+  // ville est choisie — réduit le bruit mais n'empêche jamais la saisie
+  // libre (un datalist HTML n'est pas une contrainte, juste un hint).
+  const suggestedStores = useMemo(() => {
     if (!citySlug) return stores;
     return stores.filter((s) => s.citySlug === citySlug);
   }, [stores, citySlug]);
-
-  function handleCityChange(next: string) {
-    setCitySlug(next);
-    // Reset du magasin si l'utilisateur change de commune et que le
-    // magasin sélectionné n'existe pas dans la nouvelle commune.
-    if (next && storeSlug) {
-      const stillValid = stores.some(
-        (s) => s.slug === storeSlug && s.citySlug === next,
-      );
-      if (!stillValid) setStoreSlug("");
-    }
-  }
 
   return (
     <form action={action} encType="multipart/form-data" className="space-y-5">
@@ -145,7 +131,7 @@ export function DealForm({
             id="citySlug"
             name="citySlug"
             value={citySlug}
-            onChange={(e) => handleCityChange(e.target.value)}
+            onChange={(e) => setCitySlug(e.target.value)}
             className="flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-peyi-orange-300"
           >
             <option value="">Toute la Guyane</option>
@@ -158,29 +144,25 @@ export function DealForm({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="storeSlug">Magasin</Label>
-          <select
-            id="storeSlug"
-            name="storeSlug"
-            value={storeSlug}
-            onChange={(e) => setStoreSlug(e.target.value)}
-            disabled={visibleStores.length === 0}
-            className="flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-peyi-orange-300 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <option value="">
-              {visibleStores.length === 0
-                ? "Aucun magasin pour cette commune"
-                : "Aucun magasin précis"}
-            </option>
-            {visibleStores.map((s) => (
-              <option key={s.slug} value={s.slug}>
-                {s.name}
-              </option>
+          <Label htmlFor="storeName">Magasin</Label>
+          <Input
+            id="storeName"
+            name="storeName"
+            type="text"
+            maxLength={100}
+            list="store-suggestions"
+            defaultValue={v.storeName ?? ""}
+            placeholder="Ex: Carrefour Matoury, Super U Kourou…"
+            autoComplete="off"
+          />
+          <datalist id="store-suggestions">
+            {suggestedStores.map((s) => (
+              <option key={s.slug} value={s.name} />
             ))}
-          </select>
+          </datalist>
           <p className="text-xs text-muted-foreground">
-            Pour un deal en boutique (Carrefour, Super U…). Laisse vide pour
-            un deal en ligne.
+            Saisis librement le nom du magasin. On te propose les enseignes
+            déjà connues — laisse vide pour un deal en ligne.
           </p>
         </div>
       </div>

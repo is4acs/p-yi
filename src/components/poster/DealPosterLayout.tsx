@@ -28,7 +28,6 @@ import { PosterTips } from "./PosterTips";
 
 type Category = { slug: string; name: string; icon: string | null };
 type City = { slug: string; name: string };
-type Store = { slug: string; name: string; citySlug: string };
 
 type Defaults = {
   title?: string;
@@ -36,14 +35,13 @@ type Defaults = {
   originalPrice?: string | null;
   categorySlug?: string;
   citySlug?: string | null;
-  storeSlug?: string | null;
+  storeName?: string | null;
 };
 
 type Props = {
   children: ReactNode;
   categories: Category[];
   cities: City[];
-  stores: Store[];
   defaults?: Defaults;
 };
 
@@ -56,7 +54,7 @@ const PREVIEW_FIELDS = new Set([
   "originalPrice",
   "categorySlug",
   "citySlug",
-  "storeSlug",
+  "storeName",
 ]);
 
 type PreviewState = {
@@ -65,14 +63,13 @@ type PreviewState = {
   originalPrice: string;
   categorySlug: string;
   citySlug: string;
-  storeSlug: string;
+  storeName: string;
 };
 
 export function DealPosterLayout({
   children,
   categories,
   cities,
-  stores,
   defaults,
 }: Props) {
   const [values, setValues] = useState<PreviewState>({
@@ -81,7 +78,7 @@ export function DealPosterLayout({
     originalPrice: defaults?.originalPrice ?? "",
     categorySlug: defaults?.categorySlug ?? "",
     citySlug: defaults?.citySlug ?? "",
-    storeSlug: defaults?.storeSlug ?? "",
+    storeName: defaults?.storeName ?? "",
   });
 
   function handleInput(e: FormEvent<HTMLDivElement>) {
@@ -109,10 +106,9 @@ export function DealPosterLayout({
               originalPrice={values.originalPrice}
               categorySlug={values.categorySlug}
               citySlug={values.citySlug}
-              storeSlug={values.storeSlug}
+              storeName={values.storeName}
               categories={categories}
               cities={cities}
-              stores={stores}
             />
           </div>
           <PosterTips />

@@ -201,6 +201,10 @@ model Deal {
   city            City?      @relation(fields: [cityId], references: [id])
   storeId         String?
   store           Store?     @relation(fields: [storeId], references: [id])
+  // Saisie libre quand le magasin n'est pas (encore) référencé. On stocke
+  // aussi le nom quand storeId est résolu, pour simplifier les fallbacks
+  // d'affichage sans join systématique côté lecture.
+  storeName       String?
   
   // Catégorisation
   categoryId      String

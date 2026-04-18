@@ -98,8 +98,9 @@ export function DealCard({
   variant = "full",
   className,
 }: Props) {
-  const sellerName = deal.store?.name ?? deal.merchant?.name ?? null;
-  const isLocalStore = Boolean(deal.store);
+  const sellerName =
+    deal.store?.name ?? deal.storeName ?? deal.merchant?.name ?? null;
+  const isLocalStore = Boolean(deal.store || deal.storeName);
   const placeholderEmoji = deal.category.icon ?? null;
   const placeholderLabel = sellerName ?? deal.title;
 
