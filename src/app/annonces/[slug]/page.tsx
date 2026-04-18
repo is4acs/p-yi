@@ -126,10 +126,9 @@ export async function generateMetadata({
   const description = rawDescription.slice(0, 160);
 
   const url = `/annonces/${listing.slug}`;
-  const images = listing.coverImageUrl
-    ? [{ url: listing.coverImageUrl, alt: listing.title }]
-    : undefined;
 
+  // Pas d'`images` explicite : Next injecte l'OG dynamique généré
+  // par `opengraph-image.tsx` (cover + prix + branding Péyi).
   return {
     title: listing.title,
     description,
@@ -139,13 +138,11 @@ export async function generateMetadata({
       title: listing.title,
       description,
       url,
-      images,
     },
     twitter: {
-      card: images ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title: listing.title,
       description,
-      images: listing.coverImageUrl ? [listing.coverImageUrl] : undefined,
     },
   };
 }

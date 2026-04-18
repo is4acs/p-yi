@@ -117,8 +117,10 @@ export async function generateMetadata({
     deal.description?.replace(/\s+/g, " ").trim().slice(0, 160) ||
     `${deal.category.name}${deal.city ? ` à ${deal.city.name}` : ""} — bon plan partagé sur Péyi.`;
   const url = `/bons-plans/${deal.slug}`;
-  const images = deal.coverImageUrl ? [{ url: deal.coverImageUrl }] : undefined;
 
+  // Pas d'`images` explicite : Next injecte automatiquement l'OG
+  // dynamique de `opengraph-image.tsx` (cover + branding + prix).
+  // Voir `src/app/bons-plans/[slug]/opengraph-image.tsx`.
   return {
     title: deal.title,
     description,
@@ -128,13 +130,11 @@ export async function generateMetadata({
       title: deal.title,
       description,
       url,
-      images,
     },
     twitter: {
-      card: images ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title: deal.title,
       description,
-      images: deal.coverImageUrl ? [deal.coverImageUrl] : undefined,
     },
   };
 }
