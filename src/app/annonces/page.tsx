@@ -21,6 +21,8 @@ import {
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { HomeCategoriesGrid } from "@/components/home/HomeCategoriesGrid";
 import { HomeCommunesSection } from "@/components/home/HomeCommunesSection";
+import { AnnoncesHero } from "@/components/listings/AnnoncesHero";
+import { PopularSearchChips } from "@/components/listings/PopularSearchChips";
 import { ListingCardTile } from "@/components/listings/ListingCardTile";
 import { ListingsSearchBar } from "@/components/listings/ListingsSearchBar";
 import { ListingsSortTabs } from "@/components/listings/ListingsSortTabs";
@@ -182,28 +184,45 @@ export default async function AnnoncesPage({
     // au desktop (avant S27 : max-w-2xl, trop étroit pour une grille
     // photo-first).
     <main className="mx-auto max-w-md pb-12 animate-in fade-in duration-300 sm:max-w-2xl lg:max-w-6xl">
+      {/* Mode découverte (aucun filtre) : hero éditorial + chips de
+          recherches populaires. Sous filtre ces blocs disparaissent —
+          pattern hérité de `/bons-plans` (cf. `<BonsPlansHero>` et
+          `<DealCategoryStrip>`). */}
+      {!hasFilters && (
+        <>
+          <AnnoncesHero total={total} />
+          <PopularSearchChips />
+        </>
+      )}
+
       <div className="sticky top-0 z-10 -mx-0 border-b border-border bg-background/95 px-4 pb-3 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-0 sm:pt-6">
+        {/* H1 + count : conservés uniquement en mode filtré. En
+            découverte c'est le hero qui porte le titre ; doubler un H1
+            casserait la hiérarchie a11y. Le bouton "Poster" reste
+            toujours visible — c'est l'action primaire de la page. */}
         <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-              Annonces
-            </h1>
-            <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
-              {total} annonce{total > 1 ? "s" : ""}
-              {q ? (
-                <>
-                  {" "}
-                  pour{" "}
-                  <span className="font-medium text-foreground">“{q}”</span>
-                </>
-              ) : hasFilters ? (
-                " (filtré)"
-              ) : null}
-            </p>
-          </div>
+          {hasFilters && (
+            <div className="min-w-0">
+              <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+                Annonces
+              </h1>
+              <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
+                {total} annonce{total > 1 ? "s" : ""}
+                {q ? (
+                  <>
+                    {" "}
+                    pour{" "}
+                    <span className="font-medium text-foreground">“{q}”</span>
+                  </>
+                ) : (
+                  " (filtré)"
+                )}
+              </p>
+            </div>
+          )}
           <Link
             href="/poster/annonce"
-            className="inline-flex h-10 shrink-0 items-center gap-1 rounded-full bg-peyi-orange-500 px-4 text-sm font-semibold text-white shadow-brand transition hover:bg-peyi-orange-600"
+            className="ml-auto inline-flex h-10 shrink-0 items-center gap-1 rounded-full bg-peyi-orange-500 px-4 text-sm font-semibold text-white shadow-brand transition hover:bg-peyi-orange-600"
           >
             <Plus className="h-4 w-4" aria-hidden />
             Poster
