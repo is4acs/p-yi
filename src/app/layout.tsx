@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { cn } from "@/lib/utils";
+import { WebVitals } from "@/components/analytics/WebVitals";
 import { BannedBanner } from "@/components/layout/BannedBanner";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Footer } from "@/components/layout/Footer";
@@ -116,6 +117,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: rootJsonLd }}
         />
         <ServiceWorkerRegister />
+        <WebVitals />
         <Suspense fallback={null}>
           <RouteProgress />
         </Suspense>
