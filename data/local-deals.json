@@ -1,7 +1,7 @@
 [
   {
-    "title": "Huile Lesieur 5L à 9,99€ au lieu de 14,99€",
-    "description": "Rayon épicerie, promo catalogue hebdo Carrefour Matoury. Bidon 5L classique, pratique pour les gros foyers.",
+    "title": "Huile Lesieur 5L à 9,99€ au lieu de 14,99€ — Carrefour Matoury",
+    "description": "Rayon épicerie, promo catalogue hebdo. En magasin uniquement jusqu'à dimanche.",
     "price": 9.99,
     "originalPrice": 14.99,
     "categorySlug": "supermarche-alimentation",
@@ -9,8 +9,8 @@
     "storeSlug": "carrefour-matoury"
   },
   {
-    "title": "Pack 4 lessives Ariel à 19,90€ au lieu de 31,60€",
-    "description": "Lot de 4 bidons 2L. Opération rayon droguerie Carrefour Matoury jusqu'à dimanche.",
+    "title": "Pack 4 lessives Ariel à 19,90€ au lieu de 31,60€ — Carrefour Matoury",
+    "description": "Lot de 4 bidons 2L. Rayon droguerie jusqu'à dimanche, promo catalogue affichée en rayon.",
     "price": 19.9,
     "originalPrice": 31.6,
     "categorySlug": "supermarche-alimentation",
@@ -19,7 +19,7 @@
   },
   {
     "title": "Couches Pampers Baby-Dry x192 — 39€ chez Carrefour Matoury",
-    "description": "Taille 4, paquet économique. Promo affichée en rayon bébé jusqu'à épuisement des stocks.",
+    "description": "Taille 4, paquet économique. Promo affichée en rayon bébé, paiement en caisse, jusqu'à épuisement des stocks.",
     "price": 39,
     "originalPrice": 59,
     "categorySlug": "enfants-bebe",
@@ -28,17 +28,16 @@
   },
   {
     "title": "TV Samsung 55\" QLED à 499€ — Darty Matoury",
-    "description": "Modèle 4K Q60C 2024. Stock limité, promo vitrine catalogue Family Plaza.",
+    "description": "Modèle 4K Q60C 2024. Stock limité, promo vitrine catalogue Family Plaza. Retrait magasin uniquement.",
     "price": 499,
     "originalPrice": 799,
     "categorySlug": "tech-multimedia",
     "citySlug": "matoury",
-    "storeSlug": "darty-matoury",
-    "merchantSlug": "darty"
+    "storeSlug": "darty-matoury"
   },
   {
     "title": "Barbecue gaz Weber Q1200 à 249€ — Carrefour Matoury",
-    "description": "Modèle portable, parfait pour les grillades plage. Catalogue jardin du mois.",
+    "description": "Modèle portable. Rayon jardin, catalogue du mois. À retirer en magasin, stock limité.",
     "price": 249,
     "originalPrice": 349,
     "categorySlug": "bricolage-jardin",
@@ -47,50 +46,24 @@
   },
   {
     "title": "Ventilateur Rowenta Turbo Silence à 49€ — Darty Matoury",
-    "description": "4 vitesses, silencieux, oscillation. Parfait pour la saison sèche.",
+    "description": "4 vitesses, silencieux, oscillation. Parfait pour la saison sèche. En magasin, promo affichée en rayon électro.",
     "price": 49,
     "originalPrice": 89,
     "categorySlug": "maison-electromenager",
     "citySlug": "matoury",
-    "storeSlug": "darty-matoury",
-    "merchantSlug": "darty"
+    "storeSlug": "darty-matoury"
   },
   {
     "title": "Arrivage conteneur bois OSB — Weldom Matoury samedi",
-    "description": "Panneaux OSB 18mm, poutres et planches à prix métropole -20%. Arrivée confirmée, se pointer tôt.",
+    "description": "Panneaux OSB 18mm, poutres et planches à prix métropole -20%. Arrivée confirmée, se pointer tôt, paiement sur place.",
     "price": 18,
     "categorySlug": "arrivages-conteneurs",
     "citySlug": "matoury",
     "storeSlug": "weldom-matoury"
   },
   {
-    "title": "Stage découverte surf à Kourou — 45€ au lieu de 70€",
-    "description": "2h de cours matériel inclus, école de la plage. Code PEYI25 à la réservation.",
-    "price": 45,
-    "originalPrice": 70,
-    "categorySlug": "restos-sorties",
-    "citySlug": "kourou"
-  },
-  {
-    "title": "Abonnement Fitness Park Matoury à 19,99€/mois",
-    "description": "Sans engagement, offre jusqu'à fin du mois. Accès salle + cours collectifs illimités.",
-    "price": 19.99,
-    "originalPrice": 29.99,
-    "categorySlug": "sport-loisirs",
-    "citySlug": "matoury"
-  },
-  {
-    "title": "Vol Cayenne → Paris Air France à 590€ aller-retour",
-    "description": "Tarif continental mai-juin, classe économique avec bagage 23kg. Réservé via le site AF.",
-    "price": 590,
-    "originalPrice": 890,
-    "categorySlug": "voyages-vols",
-    "citySlug": "cayenne",
-    "merchantSlug": "air-france"
-  },
-  {
     "title": "Pack 6 yaourts Danone Activia à 2,89€ — Géant Cayenne",
-    "description": "Rayon frais, promo catalogue cette semaine. Tous parfums.",
+    "description": "Rayon frais, promo catalogue cette semaine. Tous parfums, en magasin uniquement.",
     "price": 2.89,
     "originalPrice": 4.29,
     "categorySlug": "supermarche-alimentation",
@@ -99,25 +72,16 @@
   },
   {
     "title": "Aspirateur balai Dyson V8 Absolute à 349€ — Fnac Cayenne",
-    "description": "Modèle reconditionné grade A avec garantie 2 ans. Super rapport qualité/prix.",
+    "description": "Modèle reconditionné grade A avec garantie 2 ans. En rayon petit électro, retrait en magasin.",
     "price": 349,
     "originalPrice": 499,
     "categorySlug": "maison-electromenager",
     "citySlug": "cayenne",
-    "storeSlug": "fnac-cayenne",
-    "merchantSlug": "fnac"
-  },
-  {
-    "title": "Échantillons gratuits crème solaire Bioderma — envoi Guyane",
-    "description": "Formulaire sur le site officiel, reçu en 10j. 3 échantillons par demande.",
-    "price": 0,
-    "isFree": true,
-    "categorySlug": "gratuit-echantillons",
-    "merchantSlug": "bioderma"
+    "storeSlug": "fnac-cayenne"
   },
   {
     "title": "Lot 2 t-shirts Nike Dri-FIT à 29,99€ — Intersport Kourou",
-    "description": "Tailles S à XL, idéal sport sous les tropiques. Opération solde d'été.",
+    "description": "Tailles S à XL, idéal sport sous les tropiques. Rayon sport en magasin, opération solde d'été.",
     "price": 29.99,
     "originalPrice": 45,
     "categorySlug": "sport-loisirs",
@@ -130,7 +94,41 @@
     "originalPrice": 969,
     "categorySlug": "tech-multimedia",
     "citySlug": "cayenne",
-    "storeSlug": "fnac-cayenne",
-    "merchantSlug": "fnac"
+    "storeSlug": "fnac-cayenne"
+  },
+  {
+    "title": "Riz Taureau Ailé 5kg à 12,50€ — Super U Kourou",
+    "description": "Rayon épicerie, sac de 5kg long grain. En magasin jusqu'à dimanche, limite 2 par client.",
+    "price": 12.5,
+    "originalPrice": 17.9,
+    "categorySlug": "supermarche-alimentation",
+    "citySlug": "kourou",
+    "storeSlug": "super-u-kourou"
+  },
+  {
+    "title": "Lot 6 packs d'eau Cristaline à 4,99€ — Hyper U Cayenne",
+    "description": "6×1,5L. Rayon boissons, promo vitrine. Retrait en magasin, stock limité.",
+    "price": 4.99,
+    "originalPrice": 8.5,
+    "categorySlug": "supermarche-alimentation",
+    "citySlug": "cayenne",
+    "storeSlug": "hyper-u-cayenne"
+  },
+  {
+    "title": "Pneus 4 saisons Michelin à -20% — concession Cayenne",
+    "description": "Promo montage inclus sur pneus Michelin CrossClimate. À prendre sur place, concession centre-ville.",
+    "price": 89,
+    "originalPrice": 115,
+    "categorySlug": "auto-moto-deals",
+    "citySlug": "cayenne"
+  },
+  {
+    "title": "Perceuse visseuse Bosch PSR 1440 à 59€ — Weldom Matoury",
+    "description": "Modèle 14,4V avec chargeur et 2 batteries. En rayon outillage, stock limité.",
+    "price": 59,
+    "originalPrice": 99,
+    "categorySlug": "bricolage-jardin",
+    "citySlug": "matoury",
+    "storeSlug": "weldom-matoury"
   }
 ]

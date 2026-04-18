@@ -16,6 +16,8 @@ import type { Source, DealCandidate, IngestOptions } from "./types";
 import { BladaRssSource } from "./sources/blada-rss";
 import { FranceGuyaneRssSource } from "./sources/franceguyane-rss";
 import { LocalFileSource } from "./sources/local-file";
+import { FacebookGraphSource } from "./sources/fb-graph";
+import { RetailerHtmlSource } from "./sources/retailer-html";
 import { dedupeBatch } from "./lib/dedupe";
 import { attachEngagement, spreadPublishedAt } from "./lib/engagement";
 import { buildContext, writeCandidates } from "./lib/write";
@@ -49,6 +51,8 @@ function allSources(): Source[] {
     new LocalFileSource(),
     new BladaRssSource(),
     new FranceGuyaneRssSource(),
+    new RetailerHtmlSource(),
+    new FacebookGraphSource(),
   ];
 }
 

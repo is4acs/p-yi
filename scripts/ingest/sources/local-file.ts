@@ -20,6 +20,7 @@ import {
   classifyCity,
   classifyMerchant,
   classifyStore,
+  isLocalInStore,
 } from "../lib/classify";
 
 type LocalDealRaw = {
@@ -71,6 +72,18 @@ export class LocalFileSource implements Source {
       const storeSlug = d.storeSlug ?? classifyStore(haystack);
       const merchantSlug =
         d.merchantSlug ?? classifyMerchant(haystack, d.externalUrl);
+
+      if (
+        !isLocalInStore({
+          citySlug,
+          storeSlug,
+          externalUrl: d.externalUrl,
+          text: haystack,
+        })
+      ) {
+        console.warn(`  ⚠️  local-file skip "${title.slice(0, 60)}" — pas en magasin Guyane`);
+        continue;
+      }
 
       candidates.push({
         fingerprint: computeFingerprint(title, d.externalUrl, d.price),
