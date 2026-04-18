@@ -79,7 +79,7 @@ export async function HomeHero() {
   return (
     <section
       aria-labelledby="home-hero-title"
-      className="relative -mx-4 overflow-hidden bg-gradient-to-b from-peyi-orange-50/70 to-transparent px-4 pb-8 pt-10 sm:mx-0 sm:px-0 sm:pb-12 sm:pt-14"
+      className="relative -mx-4 overflow-hidden bg-gradient-to-b from-peyi-orange-50/70 to-transparent px-4 pb-7 pt-6 sm:mx-0 sm:px-0 sm:pb-12 sm:pt-14"
     >
       {/* Décorations subtiles (pastilles orange + verte) — cohérence
           avec BonsPlansHero/AnnoncesHero. Opacité basse, aria-hidden. */}
@@ -98,23 +98,34 @@ export async function HomeHero() {
         </p>
         <h1
           id="home-hero-title"
-          className="mt-2 font-display text-title-md font-extrabold leading-[1.05] tracking-tight text-ink-900 sm:text-title-lg"
+          className="mt-2 font-display text-[28px] font-extrabold leading-[1.1] tracking-tight text-ink-900 sm:text-title-lg sm:leading-[1.05]"
         >
           Les <HighlightJaune>bons plans</HighlightJaune> et{" "}
           <HighlightJaune>annonces</HighlightJaune>
           <br className="hidden sm:inline" /> de&nbsp;Guyane, entre nous.
         </h1>
-        <p className="mt-3 max-w-xl text-base text-ink-700 sm:text-lede">
-          PS5 Cdiscount, vol Cayenne–Paris, BBQ Weber du Géant Matoury. Partage,
-          vote et profite — entre Guyanais, près de chez toi.
+        {/* Lede : deux versions — courte mobile pour gagner en densité
+            (le H1 porte déjà le message principal), version riche avec
+            refs locales sur sm:+ où l'espace est confortable. */}
+        <p className="mt-3 max-w-xl text-[15px] leading-[1.5] text-ink-700 sm:text-lede">
+          <span className="sm:hidden">
+            Partage, vote et profite — entre Guyanais, près de chez toi.
+          </span>
+          <span className="hidden sm:inline">
+            PS5 Cdiscount, vol Cayenne–Paris, BBQ Weber du Géant Matoury.
+            Partage, vote et profite — entre Guyanais, près de chez toi.
+          </span>
         </p>
 
-        <div className="mt-6">
+        <div className="mt-5 sm:mt-6">
           <HomeSearchBar />
         </div>
 
-        <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
-          <Button asChild variant="peyi" size="peyi">
+        {/* CTAs — sur mobile, primary en pleine largeur pour occuper le
+            viewport proprement + link secondaire sous. Sur sm:+ retour
+            en inline row (espace large). */}
+        <div className="mt-4 flex flex-col gap-3 sm:mt-5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-2">
+          <Button asChild variant="peyi" size="peyi" className="w-full sm:w-auto">
             <Link href="/poster">
               <Plus aria-hidden />
               Poster un bon plan
@@ -122,7 +133,7 @@ export async function HomeHero() {
           </Button>
           <Link
             href="/bons-plans"
-            className="inline-flex items-center gap-1 text-sm font-medium text-peyi-orange-700 hover:text-peyi-orange-800"
+            className="inline-flex items-center gap-1 self-start text-sm font-medium text-peyi-orange-700 hover:text-peyi-orange-800"
           >
             Voir les bons plans
             <ArrowRight className="h-4 w-4" aria-hidden />
@@ -130,9 +141,10 @@ export async function HomeHero() {
         </div>
 
         {/* KPIs — même pattern que BonsPlansHero : gros chiffre display
-            peyi-orange-700 + label mono ink-500. Baseline aligned pour
-            rythme horizontal propre malgré les tailles mixtes. */}
-        <ul className="mt-7 flex flex-wrap items-baseline gap-x-5 gap-y-2">
+            peyi-orange-700 + label mono ink-500. Masqués sur mobile où
+            le viewport vertical est précieux (le user veut du contenu,
+            pas du brand), réaffichés sm:+ où l'espace le permet. */}
+        <ul className="mt-5 hidden flex-wrap items-baseline gap-x-5 gap-y-2 sm:mt-7 sm:flex">
           {kpis.map(({ value, label }) => (
             <li
               key={label}

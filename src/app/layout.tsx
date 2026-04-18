@@ -156,8 +156,23 @@ export default async function RootLayout({
           le lien "Aller au contenu" est activé, le focus saute ici puis
           retombe naturellement sur le premier élément interactif de la
           page au Tab suivant.
+
+          `overflow-x-clip` : garde-fou mobile critique. Les heroes et
+          strips utilisent le pattern `-mx-4 px-4` pour faire bleeder
+          leur fond jusqu'aux bords du viewport. Mais les `<main>` des
+          pages listing (`/`, `/bons-plans`, `/annonces`) n'ont pas de
+          `px-4` eux-mêmes — donc `-mx-4` fait déborder le layout de
+          32px au total, ce qui crée un scroll horizontal parasite sur
+          iPhone (« texte coupé à droite », scroll-bounce latéral).
+          `clip` (vs `hidden`) ne crée pas de scroll container : la
+          position:sticky des filter-bars reste ancrée sur window, pas
+          sur ce wrapper. Supporté partout depuis Safari 16 / Chrome 90.
         */}
-        <div id="main-content" tabIndex={-1} className="focus:outline-none">
+        <div
+          id="main-content"
+          tabIndex={-1}
+          className="overflow-x-clip focus:outline-none"
+        >
           {children}
         </div>
         <Footer />

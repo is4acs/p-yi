@@ -67,7 +67,7 @@ export async function BonsPlansHero() {
   return (
     <section
       aria-labelledby="bons-plans-hero-title"
-      className="relative -mx-4 overflow-hidden bg-gradient-to-b from-peyi-orange-50/70 to-transparent px-4 pb-8 pt-10 sm:mx-0 sm:px-0 sm:pb-10 sm:pt-12"
+      className="relative -mx-4 overflow-hidden bg-gradient-to-b from-peyi-orange-50/70 to-transparent px-4 pb-6 pt-6 sm:mx-0 sm:px-0 sm:pb-10 sm:pt-12"
     >
       {/* Décorations — deux pastilles colorées, subtiles, pour casser
           le vide sur desktop. Opacité faible, masquées au focus (les
@@ -88,23 +88,26 @@ export async function BonsPlansHero() {
         </p>
         <h1
           id="bons-plans-hero-title"
-          className="mt-2 font-display text-title-md font-extrabold leading-[1.05] tracking-tight text-ink-900 sm:text-title-lg"
+          className="mt-2 font-display text-[28px] font-extrabold leading-[1.1] tracking-tight text-ink-900 sm:text-title-lg sm:leading-[1.05]"
         >
           Les meilleurs <HighlightJaune>bons plans</HighlightJaune> de Guyane,
           <br className="hidden sm:inline" /> validés par la communauté.
         </h1>
-        <p className="mt-3 max-w-xl text-base text-ink-700 sm:text-lede">
-          Des promos PS5 au vol Cayenne–Paris en passant par les BBQ Weber du
-          Géant Matoury : tous les deals sont ici. Votés chauds ou froids par
-          de vrais gens du peyi.
+        <p className="mt-3 max-w-xl text-[15px] leading-[1.5] text-ink-700 sm:text-lede">
+          <span className="sm:hidden">
+            Tous les deals du peyi. Votés chauds ou froids par de vrais gens.
+          </span>
+          <span className="hidden sm:inline">
+            Des promos PS5 au vol Cayenne–Paris en passant par les BBQ Weber du
+            Géant Matoury : tous les deals sont ici. Votés chauds ou froids par
+            de vrais gens du peyi.
+          </span>
         </p>
 
-        {/* KPIs — baseline aligned : les gros chiffres display s'alignent
-            sur le texte mono pour que le rythme reste horizontal malgré
-            les tailles de police différentes. `gap-x-5` assez large pour
-            que chaque stat respire, `gap-y-2` pour passer en 2 lignes
-            sur mobile étroit sans casser. */}
-        <ul className="mt-6 flex flex-wrap items-baseline gap-x-5 gap-y-2">
+        {/* KPIs — masqués sur mobile (le viewport vertical est précieux,
+            on laisse la vedette au strip catégories + liste de deals qui
+            suivent). Réaffichés sm:+ où l'espace le permet. */}
+        <ul className="mt-6 hidden flex-wrap items-baseline gap-x-5 gap-y-2 sm:flex">
           {kpis.map(({ value, label }) => (
             <li
               key={label}

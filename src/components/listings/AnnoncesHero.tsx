@@ -58,7 +58,7 @@ export async function AnnoncesHero({ total }: Props) {
   return (
     <section
       aria-labelledby="annonces-hero-title"
-      className="relative -mx-4 overflow-hidden bg-gradient-to-b from-peyi-green-50/70 to-transparent px-4 pb-8 pt-10 sm:mx-0 sm:px-0 sm:pb-10 sm:pt-12"
+      className="relative -mx-4 overflow-hidden bg-gradient-to-b from-peyi-green-50/70 to-transparent px-4 pb-6 pt-6 sm:mx-0 sm:px-0 sm:pb-10 sm:pt-12"
     >
       {/* Décorations — pastilles vert/orange en miroir du hero deals
           (orange/vert). Même intensité d'opacité pour conserver la
@@ -78,18 +78,23 @@ export async function AnnoncesHero({ total }: Props) {
         </p>
         <h1
           id="annonces-hero-title"
-          className="mt-2 font-display text-title-md font-extrabold leading-[1.05] tracking-tight text-ink-900 sm:text-title-lg"
+          className="mt-2 font-display text-[28px] font-extrabold leading-[1.1] tracking-tight text-ink-900 sm:text-title-lg sm:leading-[1.05]"
         >
           Toutes les <HighlightJaune>annonces</HighlightJaune> de Guyane,
           <br className="hidden sm:inline" /> entre voisins.
         </h1>
-        <p className="mt-3 max-w-xl text-base text-ink-700 sm:text-lede">
-          Voitures, logements, tech, emploi, matériel pro, vide-dressing :
-          achète, vends, échange et donne entre Guyanais. Un marché alimenté
-          par la communauté, près de chez toi.
+        <p className="mt-3 max-w-xl text-[15px] leading-[1.5] text-ink-700 sm:text-lede">
+          <span className="sm:hidden">
+            Achète, vends, échange et donne entre Guyanais, près de chez toi.
+          </span>
+          <span className="hidden sm:inline">
+            Voitures, logements, tech, emploi, matériel pro, vide-dressing :
+            achète, vends, échange et donne entre Guyanais. Un marché alimenté
+            par la communauté, près de chez toi.
+          </span>
         </p>
 
-        <ul className="mt-6 flex flex-wrap items-baseline gap-x-5 gap-y-2">
+        <ul className="mt-6 hidden flex-wrap items-baseline gap-x-5 gap-y-2 sm:flex">
           {kpis.map(({ value, label }) => (
             <li
               key={label}
