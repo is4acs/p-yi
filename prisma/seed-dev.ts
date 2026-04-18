@@ -1,8 +1,12 @@
 /**
- * Dev-only seed: fake users + 10 bons plans to feed the UI.
+ * Dev-only seed: fake users + 5 bons plans Guyane "en magasin".
  *
- * Only "vraies bonnes affaires" (temperature >= 100) are kept —
- * lukewarm or cold deals have been pruned.
+ * Règles appliquées :
+ *   - uniquement des offres vérifiables **en magasin Guyane**
+ *     (pas de merchant online type Amazon/Cdiscount/Air France) ;
+ *   - uniquement des "vraies bonnes affaires" (temperature >= 100) ;
+ *   - les slugs de stores collent au panel retail réel Guyane
+ *     (cf. `prisma/seed.ts`).
  *
  * Run with:  npm run db:seed-dev
  *
@@ -101,7 +105,7 @@ const DEALS: DealTemplate[] = [
   {
     title: "Barbecue Weber Q1200 à 249€ au lieu de 349€",
     description:
-      "Parfait pour les grillades du week-end, on en a pris 2 avec mon frère. Modèle gaz portable, super pour la plage.",
+      "En rayon jardin au Carrefour Matoury. Modèle gaz portable, super pour les grillades du week-end à la plage. Stock limité.",
     price: 249,
     originalPrice: 349,
     categoryS: "bricolage-jardin",
@@ -116,59 +120,9 @@ const DEALS: DealTemplate[] = [
     ageHours: 14,
   },
   {
-    title: "Casque Sony WH-1000XM5 à 279€ (livraison offerte)",
-    description:
-      "Prix cassé sur Amazon, livraison rapide en Guyane. Le meilleur casque à réduction de bruit du marché, top pour les vols long-courriers.",
-    price: 279,
-    originalPrice: 399,
-    categoryS: "tech-multimedia",
-    authorIdx: 3,
-    merchantS: "amazon",
-    externalUrl: "https://www.amazon.fr/sony-wh-1000xm5",
-    temperature: 254,
-    upvotes: 41,
-    downvotes: 3,
-    comments: 18,
-    views: 1320,
-    ageHours: 22,
-  },
-  {
-    title: "PS5 Slim édition Fortnite à 449€ au lieu de 549€",
-    description:
-      "Pack PS5 Slim avec code Fortnite. Dispo sur Cdiscount, rupture probable rapidement. Expédié depuis métropole (compter 5-7j).",
-    price: 449,
-    originalPrice: 549,
-    categoryS: "tech-multimedia",
-    authorIdx: 2,
-    merchantS: "cdiscount",
-    externalUrl: "https://www.cdiscount.com/ps5-slim",
-    temperature: 428,
-    upvotes: 67,
-    downvotes: 8,
-    comments: 42,
-    views: 3100,
-    ageHours: 3,
-  },
-  {
-    title: "Vol Cayenne-Paris Air France à 590€ aller-retour",
-    description:
-      "Tarif continental appliqué, dates flexibles mai-juin. Réservé hier via le site AF, ça passe bien en classe économique avec bagage 23kg.",
-    price: 590,
-    originalPrice: 890,
-    categoryS: "voyages-vols",
-    authorIdx: 0,
-    externalUrl: "https://www.airfrance.fr",
-    temperature: 510,
-    upvotes: 82,
-    downvotes: 5,
-    comments: 61,
-    views: 4250,
-    ageHours: 10,
-  },
-  {
     title: "Pack couches Pampers Baby-Dry x192 à 39€",
     description:
-      "Promo chez Carrefour Matoury. 192 couches taille 4, bon plan pour stocker avant l'arrivée du container en retard.",
+      "Promo chez Carrefour Matoury. 192 couches taille 4, bon plan pour stocker. En rayon bébé jusqu'à épuisement.",
     price: 39,
     originalPrice: 59,
     categoryS: "enfants-bebe",
@@ -185,14 +139,13 @@ const DEALS: DealTemplate[] = [
   {
     title: "Smart TV Samsung 55\" QLED à 499€ au lieu de 799€",
     description:
-      "Modèle 2024 avec Tizen OS. Excellent piqué d'image, son correct. Dispo en magasin Family Plaza et sur darty.com.",
+      "Modèle 2024 avec Tizen OS. Excellent piqué d'image, son correct. En rayon chez Darty Matoury (Family Plaza), promo affichée en vitrine.",
     price: 499,
     originalPrice: 799,
     categoryS: "tech-multimedia",
     authorIdx: 3,
     citeS: "matoury",
     storeS: "darty-matoury",
-    merchantS: "darty",
     temperature: 201,
     upvotes: 33,
     downvotes: 4,
@@ -201,47 +154,14 @@ const DEALS: DealTemplate[] = [
     ageHours: 18,
   },
   {
-    title: "Aspirateur Dyson V11 Absolute à 399€",
+    title: "Arrivage conteneur bois — Weldom Matoury ce samedi",
     description:
-      "Meilleur prix vu depuis 6 mois. Référence indétrônable. J'ai pris le mien la semaine dernière, autonomie 60min en mode éco.",
-    price: 399,
-    originalPrice: 649,
-    categoryS: "maison-electromenager",
-    authorIdx: 4,
-    merchantS: "amazon",
-    externalUrl: "https://www.amazon.fr/dyson-v11",
-    temperature: 278,
-    upvotes: 44,
-    downvotes: 5,
-    comments: 17,
-    views: 1580,
-    ageHours: 8,
-  },
-  {
-    title: "Machine Nespresso Vertuo Pop à 89€ + 80 capsules offertes",
-    description:
-      "Bundle Amazon avec 80 capsules offertes (valeur 35€). Le modèle Pop est compact, parfait pour un studio.",
-    price: 89,
-    originalPrice: 149,
-    categoryS: "maison-electromenager",
-    authorIdx: 2,
-    merchantS: "amazon",
-    externalUrl: "https://www.amazon.fr/nespresso-vertuo-pop",
-    temperature: 156,
-    upvotes: 28,
-    downvotes: 3,
-    comments: 8,
-    views: 740,
-    ageHours: 20,
-  },
-  {
-    title: "Arrivage conteneur bois — Kourou ce samedi",
-    description:
-      "Planches, poutres et panneaux OSB à prix métropole, -30%. Quantité limitée, arrivée confirmée par le dépôt. Se pointer tôt.",
+      "Planches, poutres et panneaux OSB à prix métropole, -30%. Arrivée confirmée dépôt Matoury. Se pointer tôt, quantité limitée, paiement sur place.",
     price: 1,
     categoryS: "arrivages-conteneurs",
     authorIdx: 3,
-    citeS: "kourou",
+    citeS: "matoury",
+    storeS: "weldom-matoury",
     temperature: 165,
     upvotes: 29,
     downvotes: 2,

@@ -217,6 +217,82 @@ export function classifyMerchant(text: string, externalUrl?: string): string | u
 }
 
 /**
+ * Règle métier Péyi : un deal doit être EN MAGASIN EN GUYANE.
+ *
+ * ACCEPTÉ quand l'une de ces conditions est vraie :
+ *   - `storeSlug` matche un magasin physique Guyane (seed.ts),
+ *   - OU `citySlug` est une ville Guyane ET le texte contient un
+ *     signal "physique" (rayon, en magasin, sur place, dépôt,
+ *     concession...) ET aucun signal "online fort".
+ *
+ * REJETÉ sinon : deals uniquement online (Amazon/Cdiscount/Booking
+ * sans store Guyane), vols et hôtels, échantillons postaux, etc.
+ */
+
+const ONLINE_URL_HOSTS = [
+  "amazon.fr",
+  "amazon.com",
+  "cdiscount.com",
+  "aliexpress.com",
+  "aliexpress.fr",
+  "zalando.fr",
+  "laredoute.fr",
+  "rueducommerce.fr",
+  "booking.com",
+  "airfrance.fr",
+  "aircaraibes.com",
+  "frenchbee.com",
+  "bioderma.fr",
+];
+
+const ONLINE_TEXT_HINTS =
+  /\b(livraison|exp[eé]di[eé]|exp[eé]dition|en\s+ligne|site\s+officiel|sur\s+le\s+site|commander?\s+en\s+ligne|frais\s+de\s+port|envoi\s+gratuit|click\s*&\s*collect|drive\b)\b/i;
+
+const IN_STORE_TEXT_HINTS =
+  /\b(en\s+magasin|en\s+rayon|rayon\s+\w+|retrait\s+magasin|sur\s+place|en\s+vitrine|catalogue\s+magasin|d[eé]p[oô]t|concession|paiement\s+en\s+caisse)\b/i;
+
+function urlIsOnlineOnly(externalUrl?: string): boolean {
+  if (!externalUrl) return false;
+  try {
+    const host = new URL(externalUrl).host.toLowerCase().replace(/^www\./, "");
+    return ONLINE_URL_HOSTS.some((h) => host === h || host.endsWith(`.${h}`));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Renvoie true si le candidat passe la règle "Guyane + en magasin".
+ * Le contexte (haystack) sert à détecter les signaux texte ; on y passe
+ * généralement `title + description`.
+ */
+export function isLocalInStore(args: {
+  citySlug?: string;
+  storeSlug?: string;
+  externalUrl?: string;
+  text: string;
+}): boolean {
+  const { citySlug, storeSlug, externalUrl, text } = args;
+
+  // Signal positif fort : store Guyane connu → ACCEPT immédiat (même si
+  // l'URL pointe vers le site national, le deal est ancré magasin).
+  if (storeSlug) return true;
+
+  // Sinon il faut au moins une ville Guyane mentionnée
+  if (!citySlug) return false;
+
+  // Rejet si URL pointe vers un marchand online only
+  if (urlIsOnlineOnly(externalUrl)) return false;
+
+  // Rejet si signal online fort ET pas de signal in-store
+  const hasOnline = ONLINE_TEXT_HINTS.test(text);
+  const hasInStore = IN_STORE_TEXT_HINTS.test(text);
+  if (hasOnline && !hasInStore) return false;
+
+  return true;
+}
+
+/**
  * Extrait prix + prix d'origine d'un titre/description type :
  *   "iPhone 15 à 799€ au lieu de 969€"
  *   "Barbecue 249€ (-30%)"

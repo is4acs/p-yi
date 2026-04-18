@@ -1,0 +1,21 @@
+[
+  {
+    "name": "Carrefour Guyane — Promos",
+    "pageUrl": "https://www.carrefour-guyane.com/bons-plans",
+    "defaultCitySlug": "matoury",
+    "defaultStoreSlug": "carrefour-family-matoury",
+    "itemRegex": "<div[^>]*class=\"[^\"]*product[^\"]*\"[^>]*>([\\s\\S]*?)</div>\\s*</div>",
+    "titleRegex": "<h[23][^>]*>\\s*([^<]+)</h",
+    "priceRegex": "(\\d+[.,]\\d{2})\\s*€",
+    "originalPriceRegex": "<del[^>]*>\\s*(\\d+[.,]\\d{2})\\s*€"
+  },
+  {
+    "name": "Super U Matoury — Catalogue",
+    "pageUrl": "https://www.magasins-u.com/nos-magasins/super-u-matoury/promotions",
+    "defaultCitySlug": "matoury",
+    "defaultStoreSlug": "super-u-matoury",
+    "itemRegex": "<article[^>]*class=\"[^\"]*promo[^\"]*\"[^>]*>([\\s\\S]*?)</article>",
+    "titleRegex": "<h[23][^>]*>\\s*([^<]+)</h",
+    "priceRegex": "(\\d+[.,]\\d{2})\\s*€"
+  }
+]
