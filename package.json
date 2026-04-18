@@ -15,6 +15,7 @@
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset",
     "promote-super-admin": "tsx scripts/promote-super-admin.ts",
+    "delete-user": "tsx scripts/delete-user.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {
