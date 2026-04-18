@@ -182,8 +182,19 @@ const config: Config = {
         full: "9999px",
       },
       boxShadow: {
+        // Échelle d'ombres handoff Peyi v1.0 — tintée `ink-900` (#1C1712)
+        // plutôt que noir pur. Raison : les ombres noires génériques
+        // "cassent" visuellement le paper (#FFFBF5) en introduisant une
+        // couleur hors palette ; l'ink-900 se fond dans l'univers warm.
+        // Les valeurs (opacités 0.04→0.12, rayons 1→32px) reproduisent
+        // exactement `handoff/tokens.css`.
+        sm: "0 1px 2px rgba(28,23,18,0.06), 0 1px 1px rgba(28,23,18,0.04)",
+        DEFAULT:
+          "0 4px 12px rgba(28,23,18,0.08), 0 2px 4px rgba(28,23,18,0.04)",
+        md: "0 4px 12px rgba(28,23,18,0.08), 0 2px 4px rgba(28,23,18,0.04)",
+        lg: "0 12px 32px rgba(28,23,18,0.12), 0 4px 8px rgba(28,23,18,0.06)",
         // Ombre de marque — tint orange du logo. Utilisée sur les CTA
-        // primaires (Button variant="primary") pour renforcer l'affordance.
+        // primaires (Button variant="peyi") pour renforcer l'affordance.
         brand: "0 10px 24px rgba(255,145,76,0.28)",
       },
       transitionDuration: {
