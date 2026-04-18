@@ -149,11 +149,18 @@ export default async function HomePage({ searchParams }: Props) {
                 key={d.id}
                 className="w-[85vw] max-w-[340px] shrink-0 snap-start sm:w-[340px]"
               >
+                {/* variant="compact" : le rail horizontal 340px est
+                    trop étroit pour la mise en page 3-col Dealabs
+                    (vote | image 140 | body). On conserve l'ancienne
+                    vue dense (image 96 + body + vote compact) pour la
+                    home — la nouvelle vue est réservée à la liste
+                    `/bons-plans` qui a la largeur `max-w-2xl`. */}
                 <DealCard
                   deal={d}
                   currentUserId={currentUser?.id ?? null}
                   myVote={voteMap.get(d.id) ?? null}
                   isFavorited={favoriteSet.has(d.id)}
+                  variant="compact"
                 />
               </li>
             ))}

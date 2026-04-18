@@ -1,7 +1,7 @@
 "use client";
 
 import { useOptimistic, useState, useTransition } from "react";
-import { Flame, Snowflake } from "lucide-react";
+import { ChevronDown, ChevronUp, Flame, Snowflake } from "lucide-react";
 import type { VoteType } from "@prisma/client";
 
 import { cn } from "@/lib/utils";
@@ -26,7 +26,10 @@ type Props = {
   myVote: VoteType | null;
   canVote: boolean;
   disabledHint?: string;
-  variant?: "compact" | "wide";
+  // `compact`  — pilule horizontale 🔥 / °/ ❄ (listes compactes home)
+  // `wide`     — row grand format (page détail)
+  // `rail`     — colonne Dealabs : ▲ / ±N° / ▼ (refonte S30 `/bons-plans`)
+  variant?: "compact" | "wide" | "rail";
   className?: string;
 };
 
@@ -124,6 +127,85 @@ export function VoteButtons({
     : "text-muted-foreground";
 
   const isCompact = variant === "compact";
+  const isRail = variant === "rail";
+
+  // Rail variant — colonne Dealabs (▲ / ±N° / ▼), 56px de large. La
+  // valeur par défaut (neutre) est peyi-orange-600 : dans la mockup ce
+  // n'est pas "muted" mais déjà coloré marque, ce qui signale que voter
+  // chaud est l'interaction encouragée. Les seuils hot/cold restent
+  // identiques à compact/wide pour que la "couleur" du deal soit
+  // cohérente partout (une carte à +428° est rouge dans la liste ET
+  // sur la page détail).
+  if (isRail) {
+    const railPalette = isCold
+      ? "text-cold"
+      : isHot
+      ? "text-hot"
+      : "text-peyi-orange-600";
+    const hotActive = optimistic.myVote === "HOT";
+    const coldActive = optimistic.myVote === "COLD";
+
+    return (
+      <div
+        className={cn("inline-flex flex-col items-stretch gap-1", className)}
+      >
+        <div
+          className="flex w-14 flex-col items-center gap-0.5 rounded-md border border-border bg-muted/50 p-1"
+          role="group"
+          aria-label="Voter pour ce bon plan"
+        >
+          <button
+            type="button"
+            onClick={() => onClick("HOT")}
+            disabled={!canVote || pending}
+            aria-pressed={hotActive}
+            aria-label={`Chaud (${optimistic.upvotes})`}
+            title={disabledHint}
+            className={cn(
+              "flex h-7 w-7 items-center justify-center rounded-full transition",
+              "disabled:cursor-not-allowed disabled:opacity-50",
+              hotActive
+                ? "bg-peyi-orange-100 text-peyi-orange-700"
+                : "text-muted-foreground enabled:hover:bg-peyi-orange-50 enabled:hover:text-peyi-orange-700",
+            )}
+          >
+            <ChevronUp className="h-4 w-4" aria-hidden />
+          </button>
+          <span
+            className={cn(
+              "font-display text-[15px] font-black leading-none tracking-tight",
+              railPalette,
+            )}
+            aria-live="polite"
+          >
+            {tempLabel}
+          </span>
+          <button
+            type="button"
+            onClick={() => onClick("COLD")}
+            disabled={!canVote || pending}
+            aria-pressed={coldActive}
+            aria-label={`Froid (${optimistic.downvotes})`}
+            title={disabledHint}
+            className={cn(
+              "flex h-7 w-7 items-center justify-center rounded-full transition",
+              "disabled:cursor-not-allowed disabled:opacity-50",
+              coldActive
+                ? "bg-cold/15 text-cold"
+                : "text-muted-foreground enabled:hover:bg-muted enabled:hover:text-foreground",
+            )}
+          >
+            <ChevronDown className="h-4 w-4" aria-hidden />
+          </button>
+        </div>
+        {error && (
+          <p role="alert" className="text-[10px] text-destructive">
+            {error}
+          </p>
+        )}
+      </div>
+    );
+  }
 
   const group = isCompact
     ? "flex-col w-11 divide-y"

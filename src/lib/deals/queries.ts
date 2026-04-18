@@ -14,6 +14,9 @@ export const dealCardSelect = {
   id: true,
   slug: true,
   title: true,
+  // `description` pour l'aperçu en mode `full` (desktop). Sur la liste
+  // on tronque à 2 lignes via `line-clamp-2` — payload raisonnable.
+  description: true,
   price: true,
   originalPrice: true,
   discountPercent: true,
@@ -22,9 +25,24 @@ export const dealCardSelect = {
   upvotes: true,
   downvotes: true,
   commentCount: true,
+  // `viewCount` pour le compteur d'œil (meta row desktop). Alimenté par
+  // le trigger de détail (non inclus dans ce commit).
+  viewCount: true,
   publishedAt: true,
+  // `expiresAt` pour l'alerte "Expire dans X j" en bas de carte. On
+  // n'affiche l'alerte que dans la fenêtre ≤ 3 jours — cf. DealCard.
+  expiresAt: true,
   coverImageUrl: true,
   authorId: true,
+  // `author` pour le "posted-by" dans le pied de carte desktop (avatar
+  // gradient + pseudo + ville). `city` optionnel — certains comptes
+  // n'ont pas rempli leur ville, on masque le `·` dans ce cas.
+  author: {
+    select: {
+      username: true,
+      city: { select: { name: true } },
+    },
+  },
   city: { select: { name: true, slug: true } },
   category: { select: { name: true, slug: true, icon: true } },
   store: { select: { name: true, slug: true } },
