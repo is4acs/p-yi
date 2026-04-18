@@ -1,36 +1,255 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Péyi
 
-## Getting Started
+> Bons plans et petites annonces 100% Guyane.
 
-First, run the development server:
+Péyi est une PWA communautaire qui rassemble les meilleures promos,
+les petites annonces locales et les commerces de Guyane française.
+Partage, vote, profite — tout ça près de chez toi.
+
+---
+
+## Stack
+
+| Couche       | Techno                                              |
+| ------------ | --------------------------------------------------- |
+| Frontend     | Next.js 14 (App Router, RSC), React 18, TypeScript  |
+| Styling      | Tailwind CSS + design tokens Péyi (orange / vert)   |
+| UI           | Radix UI (dialogs, labels), Lucide icons, Sonner    |
+| Backend      | Next.js server actions + API routes                 |
+| Base de données | PostgreSQL (Supabase) + Prisma 5                 |
+| Auth         | Supabase Auth (email + OTP phone + Google OAuth)    |
+| Storage      | Supabase Storage (images listings + deals)          |
+| Rate limit   | Upstash Redis (sliding window)                      |
+| Validation   | Zod (env + inputs server actions)                   |
+| Observability | Logger JSON stdout + Core Web Vitals reporter      |
+| SEO          | Sitemap + robots.txt + JSON-LD + OG images dynamiques |
+| PWA          | Service Worker natif + manifest.webmanifest         |
+
+---
+
+## Prérequis
+
+- **Node.js 20+** (le `postinstall` script a besoin de Prisma)
+- **npm** (les scripts supposent npm — si tu préfères pnpm/yarn/bun,
+  adapte les commandes)
+- Un projet **Supabase** (gratuit — fournit Postgres + Auth + Storage)
+- (Optionnel en dev, requis en prod) Un compte **Upstash Redis**
+  pour le rate limiting
+
+---
+
+## Installation
 
 ```bash
+# 1. Clone
+git clone <ce-repo> peyi
+cd peyi
+
+# 2. Installe les dépendances (déclenche `prisma generate`)
+npm install
+
+# 3. Configure l'environnement
+cp .env.example .env.local
+# Édite .env.local avec tes vraies clés Supabase + URL du site
+# Voir la section "Variables d'environnement" ci-dessous
+
+# 4. Pousse le schéma en DB (première fois)
+npm run db:push
+
+# 5. Seed (catégories, communes de Guyane, etc.)
+npm run db:seed
+
+# 6. Lance le dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Ouvre <http://localhost:3000> — l'app est dispo, hot reload activé.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Variables d'environnement
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Tout est documenté dans `.env.example`. Résumé des **requises** :
 
-## Learn More
+| Variable                           | Source                                |
+| ---------------------------------- | ------------------------------------- |
+| `DATABASE_URL`                     | Supabase → Connect → Prisma (6543)    |
+| `DIRECT_URL`                       | Supabase → Connect → Prisma (5432)    |
+| `NEXT_PUBLIC_SUPABASE_URL`         | Supabase → Settings → API             |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`    | Supabase → Settings → API             |
+| `SUPABASE_SERVICE_ROLE_KEY`        | Supabase → Settings → API (server)    |
+| `NEXT_PUBLIC_SITE_URL`             | URL canonique de l'app (sans slash)   |
 
-To learn more about Next.js, take a look at the following resources:
+Et **recommandées en prod** :
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Variable                      | Source                          |
+| ----------------------------- | ------------------------------- |
+| `UPSTASH_REDIS_REST_URL`      | Upstash Console → REST URL      |
+| `UPSTASH_REDIS_REST_TOKEN`    | Upstash Console → REST Token    |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Sans Upstash, les rate limiters tombent en no-op. C'est acceptable
+en dev, **dangereux en prod** (spam auth, abuse signalements).
 
-## Deploy on Vercel
+Le fichier `src/lib/env.ts` valide ces variables au démarrage via
+zod — une variable manquante / mal formatée **fait fail-fast** avec
+un message listant tous les problèmes d'un coup.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Scripts
+
+```bash
+npm run dev              # Dev server (http://localhost:3000)
+npm run build            # Build de production
+npm run start            # Start du build (après build)
+npm run lint             # ESLint + règles Next
+npm run type-check       # tsc --noEmit (pas de build, juste la vérif)
+
+npm run db:push          # Push du schéma Prisma vers la DB (dev)
+npm run db:migrate       # Nouvelle migration (dev)
+npm run db:seed          # Seed de prod (catégories, communes)
+npm run db:seed-dev      # Seed dev (deals + listings fake pour tester)
+npm run db:studio        # Prisma Studio (admin DB visuel)
+npm run db:reset         # Reset complet de la DB (destructive, dev only)
+
+npm run promote-super-admin  # Donner le rôle SUPER_ADMIN à un user
+npm run delete-user      # Supprimer un compte (RGPD CLI miroir)
+```
+
+---
+
+## Structure du projet
+
+```
+src/
+├── app/                    # Routes Next (App Router)
+│   ├── (public)/           # Routes publiques (implicites, pas de groupe)
+│   ├── admin/              # Back-office modération (rôle ADMIN+)
+│   ├── api/                # Route handlers (metrics, export, etc.)
+│   ├── profil/             # Espace utilisateur connecté
+│   ├── poster/             # Création de bons plans
+│   ├── annonces/, bons-plans/  # Listings + détails par slug
+│   ├── sitemap.ts          # Sitemap dynamique (Next file convention)
+│   ├── robots.ts           # Robots.txt
+│   ├── opengraph-image.tsx # OG image racine (générée via next/og)
+│   ├── error.tsx           # Error boundary global
+│   └── global-error.tsx    # Fallback ultime (root layout crash)
+├── components/
+│   ├── ui/                 # Primitives design system (Button, Input…)
+│   ├── deals/, listings/   # Composants métier
+│   ├── analytics/          # WebVitals reporter
+│   └── layout/             # Header, Footer, BottomNav
+├── lib/
+│   ├── env.ts              # Validation zod des env vars (fail-fast)
+│   ├── prisma.ts           # Client Prisma singleton
+│   ├── log.ts              # Logger structuré JSON-ligne
+│   ├── rate-limit.ts       # Limiters Upstash (auth, write, report, export)
+│   ├── auth/               # getCurrentUser, requireUser, rôles
+│   ├── supabase/           # Clients (server, client, admin, middleware)
+│   ├── seo/                # JSON-LD + canonical helpers
+│   ├── deals/, listings/   # Queries Prisma + helpers métier
+│   └── storage/            # Wrappers Supabase Storage (images)
+├── middleware.ts           # Refresh session Supabase à chaque request
+└── config/site.ts          # Constantes site (nom, URL, socials…)
+
+prisma/
+├── schema.prisma           # Source de vérité du modèle de données
+└── seed.ts, seed-dev.ts    # Scripts de seed (prod + dev)
+
+scripts/
+├── promote-super-admin.ts  # Donne SUPER_ADMIN à un user
+└── delete-user.ts          # Suppression RGPD (miroir de l'action UI)
+
+docs/
+└── rgpd.md                 # Runbook RGPD (droits, procédures, DPO)
+```
+
+---
+
+## Features principales
+
+### Côté utilisateur
+- **Bons plans** : partage, vote (hot/new/top), expiration, coverage multi-images
+- **Petites annonces** : achat/vente/don/location, filtres avancés
+  (prix, km, surface, carburant, etc.)
+- **Messagerie** : thread par conversation, attaché à un listing
+- **Favoris** sur deals et listings
+- **Profils** : niveaux (karma + XP), avatar, bio, édition
+- **Signalements** (S21) sur annonces, deals, commentaires
+- **PWA installable** (iOS + Android) avec icône custom
+
+### Modération et admin
+- Rôles hiérarchiques : USER < MODERATOR < ADMIN < SUPER_ADMIN
+- Dashboard admin : utilisateurs, signalements, logs, bans temporaires /
+  permanents, rétrogradation de rôles, suppression de contenus
+- Audit trail polymorphique (targetType + targetId)
+
+### RGPD
+- Hub `/profil/confidentialite` (export, anonymisation, suppression)
+- Export JSON complet (portabilité)
+- Suppression de compte avec anonymisation des contenus conservés
+- Voir [`docs/rgpd.md`](./docs/rgpd.md) pour le runbook complet
+
+### SEO
+- Sitemap dynamique (deals non expirés, listings publiés, catégories, villes)
+- Robots.txt qui exclut les zones privées
+- JSON-LD schema.org : Organization, WebSite, Product+Offer, BreadcrumbList
+- OG images dynamiques (next/og) avec prix + cover + branding
+- Canonical URLs sur toutes les pages publiques
+- `metadataBase` configuré au root
+
+### Observability
+- Structured logger JSON-ligne (`src/lib/log.ts`)
+- Core Web Vitals reporter → `/api/metrics` via sendBeacon
+- Client error boundary → `/api/client-errors` (logs serveur)
+
+---
+
+## Déploiement
+
+Voir [`docs/deployment.md`](./docs/deployment.md) pour le runbook complet
+(checklist env vars, migrations, setup Supabase, Upstash, Vercel).
+
+---
+
+## Sécurité, modération, RGPD
+
+- Toutes les server actions sont protégées par rate limiting via Upstash.
+- Les rôles sont vérifiés côté serveur (jamais de confiance client).
+- Les utilisateurs bannis voient une bannière permanente + redirect
+  sur les routes d'écriture.
+- La suppression de compte anonymise les commentaires qui ont des
+  réponses (pour ne pas casser l'arbre de discussion) et supprime
+  tout le reste.
+- Le service role Supabase n'est utilisé que côté serveur, jamais
+  exposé au client.
+
+Pour les procédures RGPD manuelles (droit d'accès, rectification,
+opposition, etc.), voir [`docs/rgpd.md`](./docs/rgpd.md).
+
+---
+
+## Conventions de code
+
+- **TypeScript strict** activé (`strict: true`)
+- **ESLint** avec config Next
+- **Imports triés** : libs externes → imports @/lib → imports @/components
+- **Mobile-first** : design à 375px minimum, breakpoint `sm` (640px)
+  pour le desktop
+- **Copy en français** partout (UI + commentaires longs). Les noms
+  de variables restent en anglais par convention.
+- **Commits atomiques** avec messages descriptifs en français
+  (`feat(x):`, `fix(x):`, `docs(x):`…).
+
+---
+
+## Contribution
+
+Projet personnel d'Isaac Settou, fondateur de Péyi (École 42).
+Les contributions ne sont pas ouvertes pour le moment — le code
+vit ici pour documentation et review.
+
+---
+
+## Licence
+
+Tous droits réservés — code propriétaire. L'affichage public de ce
+dépôt ne constitue pas une licence d'usage.
