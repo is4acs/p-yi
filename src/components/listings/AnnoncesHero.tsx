@@ -1,4 +1,8 @@
+import Link from "next/link";
+import { Plus } from "lucide-react";
+
 import { prisma } from "@/lib/prisma";
+import { Button } from "@/components/ui/button";
 import { HighlightJaune } from "@/components/ui/highlight-jaune";
 import { ListingStatus } from "@prisma/client";
 
@@ -93,6 +97,22 @@ export async function AnnoncesHero({ total }: Props) {
             par la communauté, près de chez toi.
           </span>
         </p>
+
+        {/* CTA — ajouté en S33 pour régler un bug mobile : auparavant
+            le bouton "Poster" vivait seul dans le header sticky de la
+            page et flottait aligné à droite en mode découverte (pas de
+            H1 à gauche → vide disgracieux). On le ramène ici dans le
+            hero, même pattern responsive que HomeHero (w-full mobile,
+            inline sm:+). Pas de lien secondaire : on est déjà sur
+            `/annonces`, donc inutile de linker vers elle-même. */}
+        <div className="mt-5 sm:mt-6">
+          <Button asChild variant="peyi" size="peyi" className="w-full sm:w-auto">
+            <Link href="/poster/annonce">
+              <Plus aria-hidden />
+              Poster une annonce
+            </Link>
+          </Button>
+        </div>
 
         <ul className="mt-6 hidden flex-wrap items-baseline gap-x-5 gap-y-2 sm:flex">
           {kpis.map(({ value, label }) => (

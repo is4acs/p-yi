@@ -202,10 +202,16 @@ export default async function AnnoncesPage({
       <div className="sticky top-14 z-20 -mx-0 border-b border-border bg-background/95 px-4 pb-3 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:top-16 sm:px-0 sm:pt-6">
         {/* H1 + count : conservés uniquement en mode filtré. En
             découverte c'est le hero qui porte le titre ; doubler un H1
-            casserait la hiérarchie a11y. Le bouton "Poster" reste
-            toujours visible — c'est l'action primaire de la page. */}
-        <div className="flex items-center justify-between gap-3">
-          {hasFilters && (
+            casserait la hiérarchie a11y.
+
+            S33 : le bouton "Poster" ne vit plus ici qu'en mode filtré.
+            Avant, il flottait seul aligné à droite en mode découverte
+            (quand hasFilters=false → pas de H1 à gauche → vide). Le CTA
+            a été déplacé dans <AnnoncesHero> qui n'est rendu qu'en
+            mode découverte. Résultat : le bouton Poster est toujours
+            visible, mais à la bonne place selon le contexte. */}
+        {hasFilters && (
+          <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
                 Annonces
@@ -223,15 +229,15 @@ export default async function AnnoncesPage({
                 )}
               </p>
             </div>
-          )}
-          <Link
-            href="/poster/annonce"
-            className="ml-auto inline-flex h-10 shrink-0 items-center gap-1 rounded-full bg-peyi-orange-500 px-4 text-sm font-semibold text-white shadow-brand transition hover:bg-peyi-orange-600"
-          >
-            <Plus className="h-4 w-4" aria-hidden />
-            Poster
-          </Link>
-        </div>
+            <Link
+              href="/poster/annonce"
+              className="ml-auto inline-flex h-10 shrink-0 items-center gap-1 rounded-full bg-peyi-orange-500 px-4 text-sm font-semibold text-white shadow-brand transition hover:bg-peyi-orange-600"
+            >
+              <Plus className="h-4 w-4" aria-hidden />
+              Poster
+            </Link>
+          </div>
+        )}
 
         {/* Header simplifié S27 : une seule ligne SearchBar + bouton
             Filtrer. Tout le chrome de raffinage (type / sort / catégorie
