@@ -99,6 +99,16 @@ export const writeLimiter = makeLimiter("write", 10, "1 m");
 export const reportLimiter = makeLimiter("report", 5, "1 h");
 
 /**
+ * Export RGPD (portabilité). Clé = userId. 1 export toutes les 24 h :
+ * l'export est coûteux (lit ~10 tables en parallèle, sérialise tout
+ * le contenu de l'utilisateur), donc on limite fortement pour éviter
+ * qu'un compte compromis vide la base via exports répétés. 24 h
+ * correspond à la promesse qu'on fait déjà à l'utilisateur dans le
+ * hub /profil/confidentialite ("une fois par 24 heures").
+ */
+export const exportLimiter = makeLimiter("export", 1, "24 h");
+
+/**
  * Extrait l'IP cliente depuis les en-têtes de la request courante.
  *
  * Ordre de préférence :
