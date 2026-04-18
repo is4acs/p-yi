@@ -2,6 +2,8 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { headers } from "next/headers";
 
+import { env } from "@/lib/env";
+
 /**
  * Rate limiting via Upstash Redis (REST API, compatible edge + Node).
  *
@@ -24,8 +26,8 @@ import { headers } from "next/headers";
  * ```
  */
 
-const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
-const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+const REDIS_URL = env.UPSTASH_REDIS_REST_URL;
+const REDIS_TOKEN = env.UPSTASH_REDIS_REST_TOKEN;
 
 let warnedMissing = false;
 function warnMissingOnce() {
