@@ -130,5 +130,50 @@
     "categorySlug": "bricolage-jardin",
     "citySlug": "matoury",
     "storeSlug": "weldom-matoury"
+  },
+  {
+    "title": "Pavés de saumon frais Norvège à 22,99€/kg — Hyper U Cayenne",
+    "description": "Offre anniversaire Hyper U / Super U, rayon poissonnerie. Origine Norvège, en magasin les 18 et 19 avril 2026 uniquement.",
+    "price": 22.99,
+    "categorySlug": "supermarche-alimentation",
+    "citySlug": "cayenne",
+    "storeSlug": "hyper-u-cayenne",
+    "expiresAt": "2026-04-19T23:59:00Z"
+  },
+  {
+    "title": "Lentilles blondes Hibiscus 500g à 1,49€ — Hyper U Cayenne",
+    "description": "Offre anniversaire Hyper U / Super U, rayon épicerie. Sachet 500g (2,98€/kg). En magasin les 18 et 19 avril 2026.",
+    "price": 1.49,
+    "categorySlug": "supermarche-alimentation",
+    "citySlug": "cayenne",
+    "storeSlug": "hyper-u-cayenne",
+    "expiresAt": "2026-04-19T23:59:00Z"
+  },
+  {
+    "title": "Jus de pomme Frutail 1L à 1,19€ — Hyper U Cayenne",
+    "description": "Offre anniversaire Hyper U / Super U, rayon boissons. Brique 1L, 100% jus de pomme. En magasin les 18 et 19 avril 2026.",
+    "price": 1.19,
+    "categorySlug": "supermarche-alimentation",
+    "citySlug": "cayenne",
+    "storeSlug": "hyper-u-cayenne",
+    "expiresAt": "2026-04-19T23:59:00Z"
+  },
+  {
+    "title": "Maïs pour popcorn Hibiscus 500g à 1,29€ — Hyper U Cayenne",
+    "description": "Offre anniversaire Hyper U / Super U, rayon épicerie. Sachet 500g (2,58€/kg). En magasin les 18 et 19 avril 2026.",
+    "price": 1.29,
+    "categorySlug": "supermarche-alimentation",
+    "citySlug": "cayenne",
+    "storeSlug": "hyper-u-cayenne",
+    "expiresAt": "2026-04-19T23:59:00Z"
+  },
+  {
+    "title": "Génoises Trancetto Balconi 280g à 1,65€ — Hyper U Cayenne",
+    "description": "Offre anniversaire Hyper U / Super U, rayon goûter. Paquet de 10 snacks (cacao, fraise ou abricot), 5,89€/kg. En magasin les 18 et 19 avril 2026.",
+    "price": 1.65,
+    "categorySlug": "supermarche-alimentation",
+    "citySlug": "cayenne",
+    "storeSlug": "hyper-u-cayenne",
+    "expiresAt": "2026-04-19T23:59:00Z"
   }
 ]
