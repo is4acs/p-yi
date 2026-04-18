@@ -7,8 +7,9 @@
  * and the 6 demo users before re-inserting. Does NOT touch prod
  * reference data (cities, categories, stores, merchants, plans, badges).
  */
-import { PrismaClient, DealStatus, UserLevel } from "@prisma/client";
+import { PrismaClient, DealStatus } from "@prisma/client";
 import crypto from "node:crypto";
+import { PERSONAS, karmaLevel } from "../scripts/ingest/personas";
 
 const prisma = new PrismaClient();
 
@@ -37,24 +38,21 @@ function discountPercent(price: number, original?: number | null): number | null
   return Math.round(((original - price) / original) * 100);
 }
 
-// Demo users — phone-verified so they'd be allowed to post in prod
-const DEMO_USERS = [
-  { username: "marie973", fullName: "Marie L.", citySlug: "cayenne", karma: 1240 },
-  { username: "jeanpaul_kw", fullName: "Jean-Paul M.", citySlug: "kourou", karma: 520 },
-  { username: "sophie.mat", fullName: "Sophie R.", citySlug: "matoury", karma: 87 },
-  { username: "kevin_slm", fullName: "Kevin T.", citySlug: "saint-laurent-du-maroni", karma: 2180 },
-  { username: "clara_remire", fullName: "Clara D.", citySlug: "remire-montjoly", karma: 340 },
-  { username: "david973", fullName: "David P.", citySlug: "cayenne", karma: 45 },
-] as const;
-
-function karmaLevel(karma: number): UserLevel {
-  if (karma >= 5000) return "AMBASSADOR";
-  if (karma >= 2000) return "LEGEND";
-  if (karma >= 500) return "EXPERT";
-  if (karma >= 200) return "HUNTER";
-  if (karma >= 50) return "CURIOUS";
-  return "BEGINNER";
-}
+// Les 6 premiers personas servent aux deals de dev hardcodés ci-dessous.
+// Le pool complet (12) est utilisé par scripts/ingest pour l'ingestion
+// multi-source — ça garantit que les deux chemins partagent les mêmes
+// comptes et qu'aucun username ne se contredit.
+const DEMO_USERS = PERSONAS.slice(0, 6).map((p) => ({
+  username: p.username,
+  fullName: p.fullName,
+  citySlug: p.citySlug,
+  karma: p.karma,
+})) as ReadonlyArray<{
+  username: string;
+  fullName: string;
+  citySlug: string;
+  karma: number;
+}>;
 
 // Deal templates. cityS / storeS / merchantS are slugs resolved at runtime.
 // ageHours controls publishedAt (smaller = more recent). Temperature is
