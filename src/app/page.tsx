@@ -2,17 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Flame, Plus, Tag } from "lucide-react";
 
-import { prisma } from "@/lib/prisma";
 import { fetchDealsPage, fetchUserFavoriteSet, fetchUserVoteMap } from "@/lib/deals/queries";
 import {
   fetchListingsPage,
   fetchUserFavoriteListingSet,
 } from "@/lib/listings/queries";
-import { buildDealsUrl } from "@/lib/deals/url";
 import { getCurrentUser } from "@/lib/auth/current-user";
 
 import { Button } from "@/components/ui/button";
 import { DealCard } from "@/components/deals/DealCard";
+import { HomeCategoriesGrid } from "@/components/home/HomeCategoriesGrid";
 import { HomeSearchBar } from "@/components/home/HomeSearchBar";
 import { ListingCard } from "@/components/listings/ListingCard";
 
@@ -41,7 +40,7 @@ type Props = {
 };
 
 export default async function HomePage({ searchParams }: Props) {
-  const [{ deals }, { listings }, categories, currentUser] = await Promise.all([
+  const [{ deals }, { listings }, currentUser] = await Promise.all([
     fetchDealsPage({ sort: "hot", page: 1, category: null, city: null, q: null }),
     fetchListingsPage({
       sort: "new",
@@ -50,12 +49,6 @@ export default async function HomePage({ searchParams }: Props) {
       city: null,
       type: null,
       q: null,
-    }),
-    prisma.category.findMany({
-      where: { type: "DEAL", isActive: true },
-      orderBy: { sortOrder: "asc" },
-      take: 8,
-      select: { slug: true, name: true, icon: true },
     }),
     getCurrentUser(),
   ]);
@@ -115,27 +108,8 @@ export default async function HomePage({ searchParams }: Props) {
         </div>
       </section>
 
-      {/* Catégories */}
-      {categories.length > 0 && (
-        <section className="mt-8 px-4 sm:px-0">
-          <h2 className="font-display text-lg font-semibold">
-            Explorer par catégorie
-          </h2>
-          <ul className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
-            {categories.map((c) => (
-              <li key={c.slug} className="shrink-0">
-                <Link
-                  href={buildDealsUrl({ category: c.slug })}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-background px-3 text-sm font-medium text-foreground transition hover:border-peyi-orange-300 hover:text-peyi-orange-700"
-                >
-                  {c.icon && <span aria-hidden>{c.icon}</span>}
-                  {c.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      {/* Catégories — grille 2×4 (mobile) / 4×2 (desktop), tuiles colorées */}
+      <HomeCategoriesGrid />
 
       {/* Deals chauds */}
       <section className="mt-8 px-4 sm:px-0">
