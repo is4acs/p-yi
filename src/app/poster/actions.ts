@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { Prisma, DealStatus } from "@prisma/client";
+import { KarmaAction, Prisma, DealStatus } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { requireActiveUser } from "@/lib/auth/current-user";
@@ -10,8 +10,8 @@ import { createDealSchema } from "@/lib/validation/deal";
 import { makeDealSlug } from "@/lib/deals/slug";
 import { removeDealImage, uploadDealImage } from "@/lib/storage/deal-images";
 import { writeLimiter } from "@/lib/rate-limit";
-
-const KARMA_POST_DEAL = 5;
+import { awardKarma } from "@/lib/gamification/karma";
+import { checkAndAwardBadges } from "@/lib/gamification/badges";
 
 function redirectWithError(path: string, message: string): never {
   redirect(`${path}?error=${encodeURIComponent(message)}`);
@@ -102,7 +102,7 @@ export async function createDealAction(formData: FormData): Promise<void> {
   const slug = makeDealSlug(data.title);
   const expiresAt = data.expiresAt ? new Date(data.expiresAt) : null;
 
-  await prisma.deal.create({
+  const deal = await prisma.deal.create({
     data: {
       slug,
       title: data.title,
@@ -121,12 +121,15 @@ export async function createDealAction(formData: FormData): Promise<void> {
       cityId: city?.id ?? null,
       temperature: 0,
     },
+    select: { id: true },
   });
 
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { karma: { increment: KARMA_POST_DEAL } },
+  await awardKarma({
+    userId: user.id,
+    action: KarmaAction.DEAL_POSTED,
+    dealId: deal.id,
   });
+  await checkAndAwardBadges(user.id);
 
   revalidatePath("/bons-plans");
   redirect(`/bons-plans/${slug}`);

@@ -1,12 +1,24 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { VoteType } from "@prisma/client";
+import { KarmaAction, VoteType } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { requireActiveUser } from "@/lib/auth/current-user";
+import { awardKarma } from "@/lib/gamification/karma";
+import { checkAndAwardBadges } from "@/lib/gamification/badges";
 
 const KARMA_HOT_VOTE_AUTHOR = 1;
+
+// Seuils de température qui déclenchent un bonus de karma "one-shot" pour
+// l'auteur du deal. Liste ordonnée du plus petit au plus grand : on check
+// dans cet ordre pour accorder le premier palier atteint. Chaque palier
+// n'est accordé qu'une fois par deal grâce à la contrainte d'historique
+// (on cherche dans KarmaHistory si l'action + dealId existe déjà).
+const TEMPERATURE_MILESTONES: { threshold: number; action: KarmaAction }[] = [
+  { threshold: 100, action: KarmaAction.DEAL_HOT_100 },
+  { threshold: 500, action: KarmaAction.DEAL_HOT_500 },
+];
 
 export type VoteInput = "HOT" | "COLD";
 
@@ -38,7 +50,7 @@ export async function voteDealAction(
 
   const deal = await prisma.deal.findUnique({
     where: { id: dealId },
-    select: { id: true, authorId: true, slug: true },
+    select: { id: true, authorId: true, slug: true, temperature: true },
   });
   if (!deal) return { ok: false, error: "Bon plan introuvable." };
   if (deal.authorId === user.id) {
@@ -112,11 +124,44 @@ export async function voteDealAction(
     },
   });
 
+  // Le karma "+1 par vote chaud" continue d'être une écriture directe :
+  // il est trop fréquent pour mériter une ligne KarmaHistory à chaque
+  // clic, et les toggles off doivent pouvoir le décrémenter proprement
+  // sans casser l'audit trail.
   if (karmaDelta !== 0) {
     await prisma.user.update({
       where: { id: deal.authorId },
       data: { karma: { increment: karmaDelta } },
     });
+  }
+
+  // Milestones de température : à chaque franchissement d'un seuil par le
+  // HAUT uniquement, on accorde un bonus one-shot à l'auteur via
+  // KarmaHistory. La contrainte "une fois par deal" est portée par le
+  // check `findFirst(action + dealId)` ci-dessous — un deal qui redescend
+  // sous 100° puis remonte ne re-trigger pas la récompense.
+  if (upDelta > 0 || downDelta < 0) {
+    for (const { threshold, action } of TEMPERATURE_MILESTONES) {
+      if (updated.temperature >= threshold && deal.temperature < threshold) {
+        const already = await prisma.karmaHistory.findFirst({
+          where: {
+            userId: deal.authorId,
+            action,
+            dealId: deal.id,
+          },
+          select: { id: true },
+        });
+        if (!already) {
+          await awardKarma({
+            userId: deal.authorId,
+            action,
+            dealId: deal.id,
+            description: `Ton deal a atteint +${threshold}°`,
+          });
+        }
+      }
+    }
+    await checkAndAwardBadges(deal.authorId);
   }
 
   revalidatePath("/bons-plans");

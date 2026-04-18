@@ -1,10 +1,4 @@
-import type { UserLevel } from "@prisma/client";
-
-export const LEVEL_META: Record<UserLevel, { emoji: string; label: string }> = {
-  BEGINNER: { emoji: "🌱", label: "Débutant" },
-  CURIOUS: { emoji: "🦎", label: "Curieux" },
-  HUNTER: { emoji: "🔥", label: "Chasseur" },
-  EXPERT: { emoji: "⚡", label: "Expert" },
-  LEGEND: { emoji: "👑", label: "Légende" },
-  AMBASSADOR: { emoji: "🏆", label: "Ambassadeur" },
-};
+// Backward-compat re-export : ce module a été absorbé par la bibliothèque
+// de gamification. On garde cet alias pour ne pas casser les imports
+// existants (`/profil/page.tsx` et tout ce qui consomme `LEVEL_META`).
+export { LEVEL_META } from "@/lib/gamification/levels";
