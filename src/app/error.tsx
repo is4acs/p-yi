@@ -22,10 +22,30 @@ export default function ErrorPage({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Pour l'instant on log juste dans la console serveur/Vercel via
-    // l'overlay Next. Quand Sentry sera branché (S23), on envoie l'erreur
-    // ici avec `error.digest` pour corréler avec les logs serveur.
+    // Console pour le dev (overlay Next) + POST vers
+    // `/api/client-errors` pour que l'erreur soit capturée par le
+    // logger structuré serveur. `error.digest` permet de corréler
+    // avec les logs serveur si l'erreur vient d'un RSC crashé.
+    // Best-effort : `keepalive` survit à une navigation, `catch`
+    // swallow pour ne pas produire une erreur secondaire.
+    // eslint-disable-next-line no-console
     console.error("[app/error]", error);
+
+    if (typeof window === "undefined") return;
+    const body = JSON.stringify({
+      message: error.message,
+      digest: error.digest,
+      stack: error.stack,
+      url: window.location.pathname + window.location.search,
+    });
+    void fetch("/api/client-errors", {
+      method: "POST",
+      body,
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+    }).catch(() => {
+      /* swallow */
+    });
   }, [error]);
 
   return (
