@@ -7,6 +7,10 @@ import { prisma } from "@/lib/prisma";
 import { requireActiveUser } from "@/lib/auth/current-user";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { normalizePhone } from "@/lib/auth/phone";
+import {
+  removeAvatarImage,
+  uploadAvatarImage,
+} from "@/lib/storage/avatars";
 import { updateProfileSchema } from "@/lib/validation/profile";
 
 function redirectWithError(path: string, message: string): never {
@@ -148,4 +152,70 @@ export async function updateProfileAction(formData: FormData): Promise<void> {
   }
 
   redirectWithSuccess("/profil", "Profil mis à jour.");
+}
+
+/**
+ * Upload (or replace) the current user's avatar. Expects `avatar` on the
+ * FormData. The previous avatar blob is deleted best-effort so we don't
+ * leave orphans in the `avatars` bucket.
+ */
+export async function updateAvatarAction(formData: FormData): Promise<void> {
+  const user = await requireActiveUser("/profil/edit");
+
+  const file = formData.get("avatar");
+  if (!(file instanceof File) || file.size === 0) {
+    redirectWithError("/profil/edit", "Choisis une image avant d'envoyer.");
+  }
+
+  let newUrl: string;
+  try {
+    newUrl = await uploadAvatarImage(file, user.id);
+  } catch (err) {
+    redirectWithError(
+      "/profil/edit",
+      err instanceof Error ? err.message : "Échec de l'upload.",
+    );
+  }
+
+  const previousUrl = user.avatarUrl;
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { avatarUrl: newUrl },
+  });
+
+  if (previousUrl) {
+    await removeAvatarImage(previousUrl);
+  }
+
+  revalidatePath("/profil");
+  revalidatePath("/profil/edit");
+
+  redirectWithSuccess("/profil", "Photo de profil mise à jour.");
+}
+
+/**
+ * Removes the current user's avatar. Clears the Prisma row first (so the
+ * UI updates immediately) and best-effort deletes the storage blob.
+ */
+export async function removeAvatarAction(): Promise<void> {
+  const user = await requireActiveUser("/profil/edit");
+
+  if (!user.avatarUrl) {
+    redirect("/profil");
+  }
+
+  const previousUrl = user.avatarUrl;
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { avatarUrl: null },
+  });
+
+  await removeAvatarImage(previousUrl);
+
+  revalidatePath("/profil");
+  revalidatePath("/profil/edit");
+
+  redirectWithSuccess("/profil", "Photo de profil supprimée.");
 }
