@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import type { User } from "@prisma/client";
+import { UserRole, type User } from "@prisma/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 import { prisma } from "@/lib/prisma";
@@ -81,4 +81,67 @@ export async function requireUser(nextPath?: string): Promise<User> {
   if (!profile) redirect("/auth/complete-profile");
 
   return syncAuthDriftToPrisma(profile, authUser);
+}
+
+// -----------------------------------------------------------------------------
+// Hiérarchie de rôles — préparation pour la S21 (interface admin)
+// -----------------------------------------------------------------------------
+//
+// La hiérarchie est ordinale : un rôle donne toujours au moins les droits des
+// rôles de rang inférieur. Ça nous évite d'avoir à énumérer explicitement
+// chaque combinaison ("admin OU super_admin OU modérateur…") à chaque check.
+//
+// NB : `SUPER_ADMIN` sera ajouté à l'enum `UserRole` en S21, quand on créera
+// le modèle `AdminActionLog` et les vraies pages /admin. On le liste déjà
+// ici dans le tableau ci-dessous pour que la structure soit prête — tant
+// que la valeur n'est pas dans l'enum Prisma, elle n'est juste pas
+// atteignable. `PRO` et `AMBASSADOR` ne sont pas dans cette hiérarchie de
+// privilèges : ils sont orthogonaux (USER pro-isé ou pas), donc on les
+// traite comme équivalents à USER côté permissions.
+
+const ROLE_RANK: Record<UserRole, number> = {
+  USER: 0,
+  PRO: 0,
+  AMBASSADOR: 0,
+  MODERATOR: 10,
+  ADMIN: 20,
+};
+
+/**
+ * Renvoie `true` si `user.role` est ≥ à `minRole` dans la hiérarchie.
+ * Retourne `false` également si l'utilisateur est banni — un ban annule
+ * tous les privilèges.
+ */
+export function hasRole(
+  user: Pick<User, "role" | "isBanned"> | null | undefined,
+  minRole: UserRole,
+): boolean {
+  if (!user) return false;
+  if (user.isBanned) return false;
+  return ROLE_RANK[user.role] >= ROLE_RANK[minRole];
+}
+
+/**
+ * Variante de `requireUser` qui vérifie aussi le rôle minimum. Redirect
+ * vers /connexion si non authentifié, vers / si authentifié mais rôle
+ * insuffisant (on ne donne pas de signal "cette page existe" à un user
+ * standard qui tenterait de deviner l'URL admin).
+ *
+ * Usage prévu S21 :
+ * ```ts
+ * export default async function AdminPage() {
+ *   await requireRole(UserRole.ADMIN);
+ *   // …
+ * }
+ * ```
+ */
+export async function requireRole(
+  minRole: UserRole,
+  nextPath?: string,
+): Promise<User> {
+  const user = await requireUser(nextPath);
+  if (!hasRole(user, minRole)) {
+    redirect("/");
+  }
+  return user;
 }
