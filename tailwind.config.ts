@@ -169,16 +169,22 @@ const config: Config = {
         ],
       },
       borderRadius: {
-        // Échelle héritée (dérivée de `--radius`), gardée inchangée pour
-        // ne pas casser les 30+ composants qui l'utilisent.
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
-        xl: "calc(var(--radius) + 4px)",
-        "2xl": "calc(var(--radius) + 12px)",
-        // Ajouts handoff Peyi v1.0 : `xs` pour pastilles fines, `full`
-        // en raccourci lisible (au lieu de `rounded-[9999px]`).
-        xs: "6px",
+        // Échelle handoff Peyi v1.0 (avril 2026). On sort du pattern
+        // shadcn `calc(var(--radius) ± Xpx)` pour deux raisons :
+        //  1. Les valeurs handoff (10/14/20/28) ne dérivent pas d'une
+        //     base unique — elles suivent une progression non-linéaire
+        //     (+4/+6/+8) pour gagner en douceur visuelle aux grandes
+        //     tailles, cohérente avec Nunito + logo rond.
+        //  2. `--radius` (0.75rem) reste défini dans globals.css pour
+        //     compat shadcn à venir mais n'est plus référencé ici.
+        // Impact : ~260 usages `rounded-{sm,md,lg,xl}` gagnent de la
+        // douceur sans changer de classe. Pas de migration JSX.
+        xs: "6px", // pastilles fines, indicateurs de statut
+        sm: "10px", // boutons compacts, inputs embedded
+        md: "14px", // cartes standard, inputs, buttons
+        lg: "20px", // cartes hero, dialogs, popovers
+        xl: "28px", // hero sections, CTA blocks
+        "2xl": "32px", // messagerie (bulles), modals pleine hauteur
         full: "9999px",
       },
       boxShadow: {
