@@ -12,6 +12,7 @@ import { UserAvatar } from "@/components/layout/UserAvatar";
 import { deleteCommentAction } from "@/app/bons-plans/comments/actions";
 
 import { CommentForm } from "./CommentForm";
+import { ReportDialog } from "@/components/reports/ReportDialog";
 
 export type CommentView = {
   id: string;
@@ -130,6 +131,14 @@ export function CommentItem({
                   <Trash2 className="h-3 w-3" aria-hidden />
                   Supprimer
                 </Button>
+              )}
+              {!isAuthor && currentUserId && (
+                <ReportDialog
+                  kind="comment"
+                  targetId={comment.id}
+                  title="Signaler ce commentaire"
+                  variant="ghost"
+                />
               )}
             </div>
           )}

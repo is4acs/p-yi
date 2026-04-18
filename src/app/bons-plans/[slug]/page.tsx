@@ -30,6 +30,7 @@ import { AuthorControls } from "@/components/deals/AuthorControls";
 import { VoteButtons } from "@/components/deals/VoteButtons";
 import { FavoriteButton } from "@/components/deals/FavoriteButton";
 import { CommentList } from "@/components/comments/CommentList";
+import { ReportDialog } from "@/components/reports/ReportDialog";
 
 export const dynamic = "force-dynamic";
 
@@ -244,6 +245,14 @@ export default async function DealDetailPage({
             disabledHint={favoriteDisabledHint}
             size="md"
           />
+          {currentUser && !isAuthor && (
+            <ReportDialog
+              kind="deal"
+              targetId={deal.id}
+              title="Signaler ce bon plan"
+              variant="ghost"
+            />
+          )}
         </div>
       </header>
 

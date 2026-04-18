@@ -33,6 +33,7 @@ import { ListingGallery } from "@/components/listings/ListingGallery";
 import { ListingTypeChip } from "@/components/listings/ListingTypeChip";
 import { ListingAuthorControls } from "@/components/listings/ListingAuthorControls";
 import { ContactSellerForm } from "@/components/messages/ContactSellerForm";
+import { ReportDialog } from "@/components/reports/ReportDialog";
 
 export const dynamic = "force-dynamic";
 
@@ -320,6 +321,16 @@ export default async function ListingDetailPage({
               <MessageSquare className="h-4 w-4" aria-hidden />
               Connecte-toi pour contacter
             </Link>
+          )}
+          {currentUser && (
+            <div className="flex justify-end pt-1">
+              <ReportDialog
+                kind="listing"
+                targetId={listing.id}
+                title="Signaler cette annonce"
+                variant="ghost"
+              />
+            </div>
           )}
         </section>
       )}
