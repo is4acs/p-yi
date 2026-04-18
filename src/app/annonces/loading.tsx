@@ -19,7 +19,7 @@ export default function ListingsLoading() {
             <Skeleton className="h-7 w-28 sm:h-8 sm:w-36" />
             <Skeleton className="h-3 w-40" />
           </div>
-          <Skeleton className="h-9 w-24 rounded-full" />
+          <Skeleton className="h-10 w-24 rounded-full" />
         </div>
 
         {/* Row : SearchBar + Filtrer */}

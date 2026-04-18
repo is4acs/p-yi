@@ -203,7 +203,7 @@ export default async function AnnoncesPage({
           </div>
           <Link
             href="/poster/annonce"
-            className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full bg-peyi-orange-500 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-peyi-orange-600"
+            className="inline-flex h-10 shrink-0 items-center gap-1 rounded-full bg-peyi-orange-500 px-4 text-sm font-semibold text-white shadow-brand transition hover:bg-peyi-orange-600"
           >
             <Plus className="h-4 w-4" aria-hidden />
             Poster

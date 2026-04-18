@@ -104,7 +104,7 @@ export function ListingsFilterDrawer({ activeCount, totalResults, children }: Pr
               )}
             </DialogPrimitive.Title>
             <DialogPrimitive.Close
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-ink-500 transition hover:bg-ink-50 hover:text-ink-900"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full text-ink-500 transition hover:bg-ink-50 hover:text-ink-900"
               aria-label="Fermer les filtres"
             >
               <X className="h-5 w-5" aria-hidden />
