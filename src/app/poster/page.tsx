@@ -76,11 +76,7 @@ export default async function PosterPage({
       )}
 
       <div className="mt-6">
-        <DealPosterLayout
-          categories={categories}
-          cities={cities}
-          stores={stores}
-        >
+        <DealPosterLayout categories={categories} cities={cities}>
           <DealForm
             action={createDealAction}
             categories={categories}

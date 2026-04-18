@@ -32,10 +32,11 @@ export const createDealSchema = z
       .string()
       .optional()
       .or(z.literal("").transform(() => undefined)),
-    storeSlug: z
+    storeName: z
       .string()
+      .max(100, "Le nom du magasin est trop long (100 caractères max).")
       .optional()
-      .or(z.literal("").transform(() => undefined)),
+      .transform((v) => (v && v.trim().length > 0 ? v.trim() : undefined)),
     expiresAt: z
       .string()
       .optional()

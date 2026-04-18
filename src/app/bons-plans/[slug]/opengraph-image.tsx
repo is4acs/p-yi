@@ -48,6 +48,7 @@ export default async function DealOgImage({
       category: { select: { name: true, icon: true } },
       city: { select: { name: true } },
       store: { select: { name: true } },
+      storeName: true,
       merchant: { select: { name: true } },
     },
   });
@@ -59,7 +60,8 @@ export default async function DealOgImage({
       : formatPrice(Number(deal.price));
 
   const title = deal ? truncate(deal.title, 80) : "Les bons plans 100% Guyane";
-  const sellerName = deal?.store?.name ?? deal?.merchant?.name ?? null;
+  const sellerName =
+    deal?.store?.name ?? deal?.storeName ?? deal?.merchant?.name ?? null;
   const categoryIcon = deal?.category.icon ?? "🎉";
   const cover = deal?.coverImageUrl ?? null;
   const meta = deal

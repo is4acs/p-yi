@@ -36,9 +36,10 @@ export default async function EditDealPage({
       coverImageUrl: true,
       expiresAt: true,
       authorId: true,
+      storeName: true,
       category: { select: { slug: true } },
       city: { select: { slug: true } },
-      store: { select: { slug: true } },
+      store: { select: { name: true } },
     },
   });
   if (!deal) notFound();
@@ -75,7 +76,7 @@ export default async function EditDealPage({
     externalUrl: deal.externalUrl,
     categorySlug: deal.category.slug,
     citySlug: deal.city?.slug ?? null,
-    storeSlug: deal.store?.slug ?? null,
+    storeName: deal.storeName ?? deal.store?.name ?? null,
     expiresAt: deal.expiresAt
       ? deal.expiresAt.toISOString().slice(0, 10)
       : null,
@@ -116,14 +117,13 @@ export default async function EditDealPage({
         <DealPosterLayout
           categories={categories}
           cities={cities}
-          stores={stores}
           defaults={{
             title: defaults.title,
             price: defaults.price,
             originalPrice: defaults.originalPrice,
             categorySlug: defaults.categorySlug,
             citySlug: defaults.citySlug,
-            storeSlug: defaults.storeSlug,
+            storeName: defaults.storeName,
           }}
         >
           <DealForm

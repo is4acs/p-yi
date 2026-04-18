@@ -31,7 +31,6 @@ import { formatPrice as formatEuros } from "@/lib/format";
 
 type Category = { slug: string; name: string; icon: string | null };
 type City = { slug: string; name: string };
-type Store = { slug: string; name: string; citySlug: string };
 
 type Props = {
   title: string;
@@ -39,10 +38,9 @@ type Props = {
   originalPrice: string;
   categorySlug: string;
   citySlug: string;
-  storeSlug: string;
+  storeName: string;
   categories: Category[];
   cities: City[];
-  stores: Store[];
 };
 
 function parseDecimal(s: string): number | null {
@@ -57,10 +55,9 @@ export function LivePreview({
   originalPrice,
   categorySlug,
   citySlug,
-  storeSlug,
+  storeName,
   categories,
   cities,
-  stores,
 }: Props) {
   const priceNum = parseDecimal(price);
   const originalPriceNum = parseDecimal(originalPrice);
@@ -74,11 +71,7 @@ export function LivePreview({
 
   const category = categories.find((c) => c.slug === categorySlug);
   const city = cities.find((c) => c.slug === citySlug);
-  const store = stores.find((s) => s.slug === storeSlug);
-  // Si l'utilisateur a choisi un magasin sans commune, on affiche la
-  // commune rattachée au magasin (c'est l'info la plus précise).
-  const displayCity =
-    city ?? (store ? cities.find((c) => c.slug === store.citySlug) : undefined);
+  const trimmedStoreName = storeName.trim();
 
   const placeholderEmoji = category?.icon ?? "🏷️";
   const isTitleEmpty = title.trim().length === 0;
@@ -158,15 +151,13 @@ export function LivePreview({
                 </span>
               )}
             </div>
-            {(store || displayCity) && (
+            {(trimmedStoreName || city) && (
               <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
                 <MapPin className="h-3 w-3" aria-hidden />
                 <span className="truncate">
-                  {store
-                    ? displayCity
-                      ? `${store.name} · ${displayCity.name}`
-                      : store.name
-                    : displayCity?.name}
+                  {trimmedStoreName && city
+                    ? `${trimmedStoreName} · ${city.name}`
+                    : trimmedStoreName || city?.name}
                 </span>
               </div>
             )}
