@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Tokens CSS Peyi v1.0 — variables runtime (couleurs, radii, ombres,
+   espacements, transitions). Import APRÈS `@tailwind` pour que le
+   bloc `:root` de tokens.css vienne enrichir (pas remplacer) celui
+   défini par Tailwind/shadcn en base. */
+@import "../styles/tokens.css";
+
 @layer base {
   :root {
     /* Base (light) */

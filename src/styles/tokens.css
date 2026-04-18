@@ -1,0 +1,100 @@
+/* ============================================================================
+   Péyi — Design Tokens CSS (v1.0, avril 2026)
+   ============================================================================
+   Transcription 1:1 du handoff `logo-peyi/project/handoff/tokens.css`.
+   Source de vérité pour les valeurs consultables côté runtime (inline
+   styles, CSS animations, SVG fill, calculs) — les classes Tailwind
+   (`bg-peyi-orange-500`, `shadow-md`, …) restent le chemin privilégié
+   pour le JSX. Cas où ce fichier est utile :
+
+     • <svg><circle fill="var(--peyi-orange-500)" /></svg>
+     • @keyframes pulse-brand { 0% { box-shadow: 0 0 0 0 var(--peyi-orange-100); } }
+     • Inline fallback d'un composant externe qui n'accepte pas de className
+
+   Règles de maintenance :
+     1. Ce fichier reste en phase avec `tailwind.config.ts` et avec le
+        bundle handoff. Si tu édites une couleur ici, édite aussi le
+        Tailwind (et inversement).
+     2. Ne pas y ajouter de sélecteurs autres que `:root` — c'est un
+        fichier de **tokens**, pas de styles de composants. Les
+        utilitaires (`.hl-jaune`, `.scrollbar-hide`) vivent dans
+        `globals.css @layer utilities`.
+   ========================================================================== */
+
+:root {
+  /* ── BRAND ──────────────────────────────────────────────────────────── */
+  /* Orange Solèy — fond du logo (#FF914C) — couleur d'action */
+  --peyi-orange:      #FF914C;
+  --peyi-orange-50:   #FFF1E5;
+  --peyi-orange-100:  #FFE0CB;
+  --peyi-orange-500:  #FF914C;
+  --peyi-orange-600:  #F57A2E;
+  --peyi-orange-700:  #DB6418;
+
+  /* Vert Lawèt — lettre du logo (#7ED956) — couleur de marque */
+  --peyi-green:       #7ED956;
+  --peyi-green-50:    #EEFAE5;
+  --peyi-green-100:   #DAF3CC;
+  --peyi-green-500:   #7ED956;
+  --peyi-green-600:   #5FBE38;
+  --peyi-green-700:   #43961F;
+
+  /* Vert Forêt — réservé dark mode / bandes éditoriales */
+  --peyi-forest:      #1E4D12;
+  --peyi-forest-50:   #E3EEDA;
+  --peyi-forest-100:  #B9D2AE;
+  --peyi-forest-500:  #1E4D12;
+  --peyi-forest-600:  #183E0E;
+  --peyi-forest-700:  #122F0A;
+
+  /* Drapeau guyanais — accents éditoriaux uniquement (jamais CTA ni erreur) */
+  --peyi-rouge:       #DA1A35;
+  --peyi-jaune:       #FFD93D;
+
+  /* ── NEUTRES — teintés très subtilement orange ─────────────────────── */
+  --ink-900:  #1C1712;
+  --ink-700:  #3A322A;
+  --ink-500:  #6B5F53;
+  --ink-300:  #A89C8E;
+  --ink-200:  #CFC6BA;
+  --ink-100:  #E7E1D7;
+  --ink-50:   #F6F2EB;
+  --paper:    #FFFBF5;
+
+  /* ── SÉMANTIQUE ────────────────────────────────────────────────────── */
+  --success:  #16A34A;
+  --warning:  #F59E0B;
+  --danger:   #DC2626;
+  --info:     #2563EB;
+
+  /* ── RAYONS ────────────────────────────────────────────────────────── */
+  --r-xs:     6px;
+  --r-sm:    10px;
+  --r-md:    14px;
+  --r-lg:    20px;
+  --r-xl:    28px;
+  --r-full:  999px;
+
+  /* ── OMBRES ────────────────────────────────────────────────────────── */
+  --shadow-sm:    0 1px 2px rgba(28, 23, 18, 0.06), 0 1px 1px rgba(28, 23, 18, 0.04);
+  --shadow-md:    0 4px 12px rgba(28, 23, 18, 0.08), 0 2px 4px rgba(28, 23, 18, 0.04);
+  --shadow-lg:    0 12px 32px rgba(28, 23, 18, 0.12), 0 4px 8px rgba(28, 23, 18, 0.06);
+  --shadow-brand: 0 10px 24px rgba(255, 145, 76, 0.28);
+
+  /* ── ESPACEMENTS (base 4) ──────────────────────────────────────────── */
+  --space-1:    4px;
+  --space-2:    8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-6:   24px;
+  --space-8:   32px;
+  --space-12:  48px;
+  --space-16:  64px;
+  --space-20:  80px;
+  --space-30: 120px;
+
+  /* ── TRANSITIONS ───────────────────────────────────────────────────── */
+  --t-fast: 120ms ease;
+  --t-base: 180ms ease;
+  --t-slow: 280ms ease;
+}
