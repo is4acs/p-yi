@@ -135,28 +135,3 @@ export async function signOutAction() {
   await supabase.auth.signOut();
   redirect("/");
 }
-
-export async function signInWithGoogleAction() {
-  const { success, reset } = await authLimiter.limit(getClientIp());
-  if (!success) {
-    redirectWithError("/connexion", formatRateLimitMessage(reset));
-  }
-
-  const supabase = createSupabaseServerClient();
-
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: `${getSiteUrl()}/auth/callback`,
-    },
-  });
-
-  if (error || !data?.url) {
-    redirectWithError(
-      "/connexion",
-      "Connexion Google indisponible pour le moment.",
-    );
-  }
-
-  redirect(data.url);
-}
