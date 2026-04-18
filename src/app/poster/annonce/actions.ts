@@ -27,6 +27,10 @@ import {
 } from "@/lib/storage/listing-images";
 import { writeLimiter } from "@/lib/rate-limit";
 
+// Les petites annonces donnent un petit bonus de karma (3 pts) directement
+// en DB, sans passer par l'historique KarmaHistory. L'historique + les
+// badges sont réservés aux contributions "bons plans" qui sont la boucle
+// principale de gamification Péyi.
 const KARMA_POST_LISTING = 3;
 const DEFAULT_EXPIRY_DAYS = 30;
 

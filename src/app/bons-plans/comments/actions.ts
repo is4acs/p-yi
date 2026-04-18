@@ -1,13 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { KarmaAction } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { requireActiveUser } from "@/lib/auth/current-user";
 import { createCommentSchema } from "@/lib/validation/comment";
 import { writeLimiter } from "@/lib/rate-limit";
-
-const KARMA_COMMENT = 2;
+import { awardKarma } from "@/lib/gamification/karma";
+import { checkAndAwardBadges } from "@/lib/gamification/badges";
 
 function formatRateLimitMessage(reset: number): string {
   const secondsLeft = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
@@ -65,43 +66,52 @@ export async function createCommentAction(
     // same top-level thread.
     const effectiveParentId = parent.parentId ?? parent.id;
 
-    await prisma.$transaction([
-      prisma.comment.create({
+    const comment = await prisma.$transaction(async (tx) => {
+      const created = await tx.comment.create({
         data: {
           dealId: deal.id,
           authorId: user.id,
           parentId: effectiveParentId,
           content,
         },
-      }),
-      prisma.deal.update({
+        select: { id: true },
+      });
+      await tx.deal.update({
         where: { id: deal.id },
         data: { commentCount: { increment: 1 } },
-      }),
-      prisma.user.update({
-        where: { id: user.id },
-        data: { karma: { increment: KARMA_COMMENT } },
-      }),
-    ]);
+      });
+      return created;
+    });
+    await awardKarma({
+      userId: user.id,
+      action: KarmaAction.COMMENT_USEFUL,
+      dealId: deal.id,
+      commentId: comment.id,
+    });
   } else {
-    await prisma.$transaction([
-      prisma.comment.create({
+    const comment = await prisma.$transaction(async (tx) => {
+      const created = await tx.comment.create({
         data: {
           dealId: deal.id,
           authorId: user.id,
           content,
         },
-      }),
-      prisma.deal.update({
+        select: { id: true },
+      });
+      await tx.deal.update({
         where: { id: deal.id },
         data: { commentCount: { increment: 1 } },
-      }),
-      prisma.user.update({
-        where: { id: user.id },
-        data: { karma: { increment: KARMA_COMMENT } },
-      }),
-    ]);
+      });
+      return created;
+    });
+    await awardKarma({
+      userId: user.id,
+      action: KarmaAction.COMMENT_USEFUL,
+      dealId: deal.id,
+      commentId: comment.id,
+    });
   }
+  await checkAndAwardBadges(user.id);
 
   revalidatePath(`/bons-plans/${deal.slug}`);
   return { ok: true };

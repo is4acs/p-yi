@@ -12,15 +12,16 @@ import {
   Pencil,
   Phone,
   ShieldCheck,
+  Trophy,
 } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/current-user";
-import { LEVEL_META } from "@/lib/deals/user-level";
 import { fetchUnreadCount } from "@/lib/messages/queries";
 import { fetchUnreadNotificationsCount } from "@/lib/notifications/queries";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/layout/UserAvatar";
+import { LevelProgress } from "@/components/gamification/LevelProgress";
 
 import { signOutAction } from "../connexion/actions";
 
@@ -58,7 +59,6 @@ export default async function ProfilPage({ searchParams }: Props) {
     fetchUnreadNotificationsCount(user.id),
   ]);
   const favoriteCount = dealFavoriteCount + listingFavoriteCount;
-  const level = LEVEL_META[user.level];
 
   return (
     <main className="mx-auto max-w-md px-4 pb-16 pt-6 animate-in fade-in duration-300 sm:max-w-2xl sm:pt-10">
@@ -74,14 +74,23 @@ export default async function ProfilPage({ searchParams }: Props) {
         {user.fullName && (
           <p className="text-sm text-muted-foreground">{user.fullName}</p>
         )}
-        <p className="mt-1 text-sm text-muted-foreground">
-          <span aria-hidden>{level.emoji}</span> {level.label} ·{" "}
-          <span className="tabular-nums">
-            {user.karma.toLocaleString("fr-FR")}
-          </span>{" "}
-          karma
-        </p>
       </section>
+
+      <LevelProgress
+        karma={user.karma}
+        level={user.level}
+        className="mt-5"
+      />
+      <Link
+        href="/profil/recompenses"
+        className="mt-2 flex items-center justify-between rounded-md border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition hover:border-peyi-orange-300 hover:bg-peyi-orange-50/40"
+      >
+        <span className="inline-flex items-center gap-1.5">
+          <Trophy className="h-3.5 w-3.5 text-peyi-orange-600" aria-hidden />
+          Voir mes récompenses et badges
+        </span>
+        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+      </Link>
 
       {searchParams.success && (
         <div
