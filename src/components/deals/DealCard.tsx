@@ -58,9 +58,9 @@ function expiryWarning(expiresAt: Date | null): string | null {
 }
 
 /**
- * Tag marchand (Cdiscount, Amazon, Géant Matoury, …). La mockup
+ * Tag marchand (Cdiscount, Amazon, Carrefour Matoury, …). La mockup
  * hardcode une couleur par marque — on n'a pas cette donnée côté DB,
- * donc on binarise : store local (Géant Matoury, Carrefour Kourou) =
+ * donc on binarise : store local (Carrefour Matoury, Hyper U Cayenne) =
  * vert Péyi, marchand national (Amazon, Fnac) = ink-900. Ça suffit à
  * signaler visuellement le "local vs national" sans payload custom.
  */

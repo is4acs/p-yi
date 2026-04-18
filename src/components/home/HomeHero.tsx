@@ -113,8 +113,9 @@ export async function HomeHero() {
             Partage, vote et profite — entre Guyanais, près de chez toi.
           </span>
           <span className="hidden sm:inline">
-            PS5 Cdiscount, vol Cayenne–Paris, BBQ Weber du Géant Matoury.
-            Partage, vote et profite — entre Guyanais, près de chez toi.
+            PS5 sur Cdiscount, vol Cayenne–Paris, BBQ Weber chez Carrefour
+            Matoury. Partage, vote et profite — entre Guyanais, près de chez
+            toi.
           </span>
         </p>
 

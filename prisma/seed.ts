@@ -167,39 +167,36 @@ async function main() {
   const saintLaurent = await prisma.city.findUnique({ where: { slug: 'saint-laurent-du-maroni' } })
 
   const stores = [
-    // Grande distribution Matoury
-    { name: 'Géant Matoury', slug: 'geant-matoury', cityId: matoury?.id, isVerified: true },
-    { name: 'Carrefour Family Matoury', slug: 'carrefour-family-matoury', cityId: matoury?.id, isVerified: true },
-    { name: 'Super U Matoury', slug: 'super-u-matoury', cityId: matoury?.id, isVerified: true },
+    // Grande distribution Matoury — anchor de Family Plaza (Zone Terca)
+    { name: 'Carrefour Matoury', slug: 'carrefour-matoury', cityId: matoury?.id, isVerified: true },
     { name: 'Leader Price Matoury', slug: 'leader-price-matoury', cityId: matoury?.id, isVerified: true },
-    
-    // Grande distribution Cayenne
-    { name: 'Carrefour City Cayenne', slug: 'carrefour-city-cayenne', cityId: cayenne?.id, isVerified: true },
-    { name: 'Super U Cayenne', slug: 'super-u-cayenne', cityId: cayenne?.id, isVerified: true },
-    { name: 'Cora Family Cayenne', slug: 'cora-family-cayenne', cityId: cayenne?.id, isVerified: true },
-    
+
+    // Grande distribution Cayenne — Hyper U Collery + Géant (ex-Cora rebrandé 2025)
+    { name: 'Hyper U Cayenne', slug: 'hyper-u-cayenne', cityId: cayenne?.id, isVerified: true },
+    { name: 'Géant Cayenne', slug: 'geant-cayenne', cityId: cayenne?.id, isVerified: true },
+    { name: 'Leader Price Cayenne', slug: 'leader-price-cayenne', cityId: cayenne?.id, isVerified: true },
+
     // Rémire-Montjoly
     { name: 'Super U Rémire', slug: 'super-u-remire', cityId: remire?.id, isVerified: true },
-    { name: 'Carrefour Contact Rémire', slug: 'carrefour-contact-remire', cityId: remire?.id, isVerified: true },
-    
+    { name: 'Carrefour Market Rémire-Montjoly', slug: 'carrefour-market-remire-montjoly', cityId: remire?.id, isVerified: true },
+
     // Kourou
     { name: 'Super U Kourou', slug: 'super-u-kourou', cityId: kourou?.id, isVerified: true },
-    { name: 'Géant Kourou', slug: 'geant-kourou', cityId: kourou?.id, isVerified: true },
-    
+    { name: 'Leader Price Kourou', slug: 'leader-price-kourou', cityId: kourou?.id, isVerified: true },
+
     // Saint-Laurent
     { name: 'Super U Saint-Laurent', slug: 'super-u-saint-laurent', cityId: saintLaurent?.id, isVerified: true },
-    { name: 'Leader Price Saint-Laurent', slug: 'leader-price-saint-laurent', cityId: saintLaurent?.id, isVerified: true },
-    
+
     // Bricolage & équipement
-    { name: 'Mr Bricolage Matoury', slug: 'mr-bricolage-matoury', cityId: matoury?.id, isVerified: true },
+    { name: 'Mr Bricolage Cayenne', slug: 'mr-bricolage-cayenne', cityId: cayenne?.id, isVerified: true },
     { name: 'Bricorama Cayenne', slug: 'bricorama-cayenne', cityId: cayenne?.id, isVerified: true },
     { name: 'Weldom Matoury', slug: 'weldom-matoury', cityId: matoury?.id, isVerified: true },
-    
-    // Tech & Multimédia
+    { name: 'Weldom Cayenne', slug: 'weldom-cayenne', cityId: cayenne?.id, isVerified: true },
+
+    // Tech & Multimédia — Fnac Cayenne + Darty Matoury (Family Plaza)
     { name: 'Darty Matoury', slug: 'darty-matoury', cityId: matoury?.id, isVerified: true },
     { name: 'Fnac Cayenne', slug: 'fnac-cayenne', cityId: cayenne?.id, isVerified: true },
-    { name: 'Boulanger Matoury', slug: 'boulanger-matoury', cityId: matoury?.id, isVerified: true },
-    
+
     // Discount & Arrivages
     { name: 'Destock Guyane', slug: 'destock-guyane', cityId: matoury?.id, isVerified: true },
     { name: 'Guyane Discount', slug: 'guyane-discount', cityId: cayenne?.id, isVerified: true },
@@ -226,7 +223,6 @@ async function main() {
     { name: 'Cdiscount', slug: 'cdiscount', domain: 'cdiscount.com', affiliateProgram: 'awin', commissionRate: 5.0 },
     { name: 'Fnac', slug: 'fnac', domain: 'fnac.com', affiliateProgram: 'awin', commissionRate: 3.0 },
     { name: 'Darty', slug: 'darty', domain: 'darty.com', affiliateProgram: 'awin', commissionRate: 3.0 },
-    { name: 'Boulanger', slug: 'boulanger', domain: 'boulanger.com', affiliateProgram: 'awin', commissionRate: 3.5 },
     { name: 'Rue du Commerce', slug: 'rue-du-commerce', domain: 'rueducommerce.fr', affiliateProgram: 'awin', commissionRate: 4.0 },
     { name: 'Air Caraïbes', slug: 'air-caraibes', domain: 'aircaraibes.com', affiliateProgram: 'awin', commissionRate: 1.5 },
     { name: 'Air France', slug: 'air-france', domain: 'airfrance.fr', affiliateProgram: 'awin', commissionRate: 1.0 },
