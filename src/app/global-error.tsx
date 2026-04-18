@@ -90,6 +90,10 @@ export default function GlobalError({
               Code : {error.digest}
             </p>
           )}
+          {/* global-error.tsx est rendu sans le runtime Next complet (le
+              layout racine a crashé). next/link n'est pas garanti dispo,
+              un <a> brut est la seule option sûre ici. */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a
             href="/"
             style={{

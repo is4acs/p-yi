@@ -29,6 +29,11 @@ export default function OfflinePage() {
       </p>
 
       <div className="mt-6 flex flex-col gap-2">
+        {/* Page servie par le service worker en offline : la navigation
+            SPA via next/link ne peut pas ré-hydrater correctement sans
+            réseau. Un <a> force un hard-reload, ce qui est le bon
+            comportement pour sortir de l'état offline. */}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a
           href="/"
           className="inline-flex h-10 items-center justify-center gap-1.5 rounded-md bg-peyi-orange-500 px-4 text-sm font-semibold text-white transition hover:bg-peyi-orange-600"
