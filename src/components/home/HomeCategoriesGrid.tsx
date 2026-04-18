@@ -15,11 +15,17 @@ import { Icon, type IconName } from "@/components/ui/Icon";
  *  - On ne prend QUE les catégories `LISTING` ou `BOTH` (la home
  *    centre sur les annonces — les bons plans gardent leurs propres
  *    catégories sur `/bons-plans`).
- *  - Limite 8 pour tenir sur 2×4 sans scroll (les moins prioritaires
+ *  - **Ordre data-driven** (S28) : on trie par volume d'annonces
+ *    actives décroissant, tiebreak sur `sortOrder` (ordre éditorial
+ *    du seed). Les 8 catégories les plus vivantes en Guyane
+ *    remontent en premier — si Immobilier explose le mois prochain
+ *    il passe devant Véhicules sans toucher la DB. Reflète la
+ *    réalité du marché plutôt qu'un ordre figé au seed.
+ *  - Limite 8 pour tenir sur 2×4 sans scroll (les moins actives
  *    restent accessibles via `/annonces`).
  *  - Compteur par catégorie : PUBLISHED + non expirées, via groupBy.
  *    C'est 1 query en plus mais très rapide (index sur status +
- *    expiresAt déjà posé).
+ *    expiresAt déjà posé) — et cette query sert aussi au tri.
  *  - Rotation chromatique orange / green / rouge / jaune — pattern
  *    `i % 4` pour garantir l'alternance même si l'ordre des
  *    catégories change en DB.
@@ -54,11 +60,19 @@ function formatCount(n: number): string {
 
 export async function HomeCategoriesGrid() {
   const [categories, counts] = await Promise.all([
+    // Pas de `take: 8` ici : on fetch toutes les catégories éligibles
+    // pour pouvoir les trier par volume avant de slicer. Le seed n'a
+    // qu'une douzaine de catégories LISTING/BOTH actives — pas de
+    // souci de perf.
     prisma.category.findMany({
       where: { type: { in: ["LISTING", "BOTH"] }, isActive: true },
-      orderBy: { sortOrder: "asc" },
-      take: 8,
-      select: { id: true, slug: true, name: true, icon: true },
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        icon: true,
+        sortOrder: true,
+      },
     }),
     prisma.listing.groupBy({
       by: ["categoryId"],
@@ -73,6 +87,20 @@ export async function HomeCategoriesGrid() {
     counts.map((c) => [c.categoryId, c._count._all]),
   );
 
+  // Tri data-driven : volume d'annonces actives décroissant,
+  // tiebreak sur sortOrder (ordre éditorial du seed) pour garder un
+  // ordre déterministe quand plusieurs catégories ont 0 annonce.
+  // Puis on ne garde que le top 8 pour la grille 2×4.
+  const ordered = [...categories]
+    .sort((a, b) => {
+      const diff =
+        (countByCategoryId.get(b.id) ?? 0) -
+        (countByCategoryId.get(a.id) ?? 0);
+      if (diff !== 0) return diff;
+      return a.sortOrder - b.sortOrder;
+    })
+    .slice(0, 8);
+
   return (
     <section className="mt-8 px-4 sm:px-0">
       <div className="flex items-end justify-between gap-3">
@@ -82,7 +110,7 @@ export async function HomeCategoriesGrid() {
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {categories.map((c, i) => {
+        {ordered.map((c, i) => {
           const variant = VARIANTS[i % VARIANTS.length];
           const iconName = SLUG_TO_ICON[c.slug];
           const count = countByCategoryId.get(c.id) ?? 0;
