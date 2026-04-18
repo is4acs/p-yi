@@ -20,7 +20,7 @@ export default function AppleIcon() {
           alignItems: "center",
           justifyContent: "center",
           background:
-            "linear-gradient(135deg, #FF8A3D 0%, #FF6A1A 60%, #E25510 100%)",
+            "linear-gradient(135deg, #FF914C 0%, #F57A2E 60%, #DB6418 100%)",
           color: "white",
           fontFamily:
             "system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif",

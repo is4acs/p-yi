@@ -14,25 +14,25 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 10%;
 
-    /* Péyi brand */
-    --primary: 23 100% 62%;         /* #FF8A3D orange */
+    /* Péyi brand (design system v1.0, avril 2026) */
+    --primary: 23 100% 65%;         /* #FF914C orange Solèy (logo) */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 95 62% 59%;        /* #8DD954 vert tropical */
+    --secondary: 99 62% 59%;        /* #7ED956 vert Lawèt (logo) */
     --secondary-foreground: 0 0% 10%;
 
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 45%;
 
-    --accent: 30 100% 95%;          /* #FFF4E8 orange très pâle */
-    --accent-foreground: 22 76% 43%;
+    --accent: 27 100% 95%;          /* #FFF1E5 orange très pâle (peyi-orange-50) */
+    --accent-foreground: 22 82% 47%;
 
-    --destructive: 0 84% 60%;       /* #EF4444 */
+    --destructive: 0 84% 60%;       /* #DC2626 (token sémantique danger) */
     --destructive-foreground: 0 0% 100%;
 
     --border: 0 0% 90%;
     --input: 0 0% 90%;
-    --ring: 23 100% 62%;
+    --ring: 23 100% 65%;
 
     --chart-1: 23 100% 62%;
     --chart-2: 95 62% 59%;

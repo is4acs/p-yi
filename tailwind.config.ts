@@ -10,32 +10,68 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // --- Palette Peyi v1.0 (design handoff avril 2026) --------------
+        // Les teintes 50/100/500/600/700 sont les valeurs officielles du
+        // handoff (basées sur les couleurs exactes du logo). Les teintes
+        // 200/300/400/800/900 sont interpolées pour préserver l'échelle
+        // complète utilisée par ~220 usages dans l'UI existante.
         peyi: {
+          // Orange Solèy — fond du logo (#FF914C), couleur d'action
           orange: {
-            50: "#FFF4E8",
-            100: "#FFE5CC",
-            200: "#FFC999",
-            300: "#FFAD66",
-            400: "#FF9A4F",
-            500: "#FF8A3D",
-            600: "#F27024",
-            700: "#C2571A",
-            800: "#923E13",
-            900: "#62290C",
+            50: "#FFF1E5",
+            100: "#FFE0CB",
+            200: "#FFC59D",
+            300: "#FFA97A",
+            400: "#FF9B63",
+            500: "#FF914C",
+            600: "#F57A2E",
+            700: "#DB6418",
+            800: "#A84C12",
+            900: "#70310B",
+            DEFAULT: "#FF914C",
           },
+          // Vert Lawèt — lettre du logo (#7ED956), couleur de marque
           green: {
-            50: "#F0FAE5",
-            100: "#DCF4C2",
-            200: "#C0EB94",
-            300: "#A3E266",
-            400: "#96DE55",
-            500: "#8DD954",
-            600: "#6FB83A",
-            700: "#548C2C",
-            800: "#3A601E",
-            900: "#203410",
+            50: "#EEFAE5",
+            100: "#DAF3CC",
+            200: "#C1EBAA",
+            300: "#A4E285",
+            400: "#91DE6D",
+            500: "#7ED956",
+            600: "#5FBE38",
+            700: "#43961F",
+            800: "#2E6813",
+            900: "#1C3F0B",
+            DEFAULT: "#7ED956",
           },
+          // Vert Forêt — réservé dark mode / bandes éditoriales
+          forest: {
+            50: "#E3EEDA",
+            100: "#B9D2AE",
+            500: "#1E4D12",
+            600: "#183E0E",
+            700: "#122F0A",
+            DEFAULT: "#1E4D12",
+          },
+          // Drapeau guyanais — accents éditoriaux uniquement (jamais CTA
+          // ni erreur, ces rôles sont tenus par `destructive`).
+          rouge: "#DA1A35",
+          jaune: "#FFD93D",
         },
+
+        // Neutres teintés orange (tonalité chaude Peyi)
+        ink: {
+          50: "#F6F2EB",
+          100: "#E7E1D7",
+          200: "#CFC6BA",
+          300: "#A89C8E",
+          500: "#6B5F53",
+          700: "#3A322A",
+          900: "#1C1712",
+        },
+        paper: "#FFFBF5",
+
+        // Sémantique (héritée, inchangée)
         hot: "#EF4444",
         cold: "#3B82F6",
         warning: "#F59E0B",

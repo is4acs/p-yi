@@ -88,7 +88,7 @@ export default async function DealOgImage({
             justifyContent: "center",
             background: cover
               ? "#f5f5f5"
-              : "linear-gradient(135deg, #FF8A3D 0%, #FF6A1A 60%, #E25510 100%)",
+              : "linear-gradient(135deg, #FF914C 0%, #F57A2E 60%, #DB6418 100%)",
             overflow: "hidden",
           }}
         >
@@ -120,7 +120,7 @@ export default async function DealOgImage({
             flexDirection: "column",
             justifyContent: "space-between",
             padding: 56,
-            background: "linear-gradient(135deg, #FFF6EE 0%, #FFFFFF 100%)",
+            background: "linear-gradient(135deg, #FFF1E5 0%, #FFFFFF 100%)",
           }}
         >
           {/* Top : logo + label */}
@@ -137,7 +137,7 @@ export default async function DealOgImage({
                 height: 64,
                 borderRadius: 14,
                 background:
-                  "linear-gradient(135deg, #FF8A3D 0%, #FF6A1A 60%, #E25510 100%)",
+                  "linear-gradient(135deg, #FF914C 0%, #F57A2E 60%, #DB6418 100%)",
                 color: "white",
                 display: "flex",
                 alignItems: "center",
@@ -163,7 +163,7 @@ export default async function DealOgImage({
             <span
               style={{
                 fontSize: 22,
-                color: "#FF6A1A",
+                color: "#DB6418",
                 fontWeight: 800,
                 textTransform: "uppercase",
                 letterSpacing: "0.14em",
@@ -182,7 +182,7 @@ export default async function DealOgImage({
                   display: "flex",
                   padding: "14px 28px",
                   borderRadius: 18,
-                  background: "#FF6A1A",
+                  background: "#F57A2E",
                   color: "white",
                   fontSize: 56,
                   fontWeight: 800,

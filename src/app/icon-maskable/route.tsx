@@ -25,7 +25,7 @@ export async function GET() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#FF8A3D",
+          background: "#FF914C",
         }}
       >
         <div
@@ -36,7 +36,7 @@ export async function GET() {
             alignItems: "center",
             justifyContent: "center",
             background:
-              "linear-gradient(135deg, #FFA05C 0%, #FF7A2A 60%, #F0610E 100%)",
+              "linear-gradient(135deg, #FFA97A 0%, #F57A2E 60%, #DB6418 100%)",
             borderRadius: "22%",
             color: "white",
             fontFamily:

@@ -6,7 +6,7 @@ export const siteConfig = {
     "Bons plans et petites annonces 100% Guyane. Trouve les meilleures promos et vends près de chez toi.",
   url: env.NEXT_PUBLIC_SITE_URL ?? "https://peyi.com",
   ogImage: "/og-image.png",
-  themeColor: "#FF8A3D",
+  themeColor: "#FF914C",
   defaultLocale: "fr",
   defaultCity: "cayenne",
   contactEmail: "hello@peyi.com",
