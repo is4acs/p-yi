@@ -21,7 +21,7 @@ export default async function PosterPage({
 }) {
   const user = await requireUser("/poster");
 
-  const [categories, cities] = await Promise.all([
+  const [categories, cities, storesRaw] = await Promise.all([
     prisma.category.findMany({
       where: { isActive: true, type: { in: ["DEAL", "BOTH"] } },
       orderBy: { name: "asc" },
@@ -31,7 +31,17 @@ export default async function PosterPage({
       orderBy: { name: "asc" },
       select: { slug: true, name: true },
     }),
+    prisma.store.findMany({
+      orderBy: { name: "asc" },
+      select: { slug: true, name: true, city: { select: { slug: true } } },
+    }),
   ]);
+
+  const stores = storesRaw.map((s) => ({
+    slug: s.slug,
+    name: s.name,
+    citySlug: s.city.slug,
+  }));
 
   return (
     // lg:max-w-5xl pour accueillir l'aside sticky (preview + tips).
@@ -66,11 +76,16 @@ export default async function PosterPage({
       )}
 
       <div className="mt-6">
-        <DealPosterLayout categories={categories} cities={cities}>
+        <DealPosterLayout
+          categories={categories}
+          cities={cities}
+          stores={stores}
+        >
           <DealForm
             action={createDealAction}
             categories={categories}
             cities={cities}
+            stores={stores}
             submitLabel="Publier le bon plan"
           />
         </DealPosterLayout>

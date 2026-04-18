@@ -38,12 +38,13 @@ export default async function EditDealPage({
       authorId: true,
       category: { select: { slug: true } },
       city: { select: { slug: true } },
+      store: { select: { slug: true } },
     },
   });
   if (!deal) notFound();
   if (deal.authorId !== user.id) redirect(`/bons-plans/${deal.slug}`);
 
-  const [categories, cities] = await Promise.all([
+  const [categories, cities, storesRaw] = await Promise.all([
     prisma.category.findMany({
       where: { isActive: true, type: { in: ["DEAL", "BOTH"] } },
       orderBy: { name: "asc" },
@@ -53,7 +54,17 @@ export default async function EditDealPage({
       orderBy: { name: "asc" },
       select: { slug: true, name: true },
     }),
+    prisma.store.findMany({
+      orderBy: { name: "asc" },
+      select: { slug: true, name: true, city: { select: { slug: true } } },
+    }),
   ]);
+
+  const stores = storesRaw.map((s) => ({
+    slug: s.slug,
+    name: s.name,
+    citySlug: s.city.slug,
+  }));
 
   const defaults = {
     dealId: deal.id,
@@ -64,6 +75,7 @@ export default async function EditDealPage({
     externalUrl: deal.externalUrl,
     categorySlug: deal.category.slug,
     citySlug: deal.city?.slug ?? null,
+    storeSlug: deal.store?.slug ?? null,
     expiresAt: deal.expiresAt
       ? deal.expiresAt.toISOString().slice(0, 10)
       : null,
@@ -104,18 +116,21 @@ export default async function EditDealPage({
         <DealPosterLayout
           categories={categories}
           cities={cities}
+          stores={stores}
           defaults={{
             title: defaults.title,
             price: defaults.price,
             originalPrice: defaults.originalPrice,
             categorySlug: defaults.categorySlug,
             citySlug: defaults.citySlug,
+            storeSlug: defaults.storeSlug,
           }}
         >
           <DealForm
             action={updateDealAction}
             categories={categories}
             cities={cities}
+            stores={stores}
             defaults={defaults}
             submitLabel="Enregistrer"
           />

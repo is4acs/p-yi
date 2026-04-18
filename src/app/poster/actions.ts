@@ -34,8 +34,28 @@ function parseDealForm(formData: FormData) {
     externalUrl: formData.get("externalUrl") ?? undefined,
     categorySlug: formData.get("categorySlug"),
     citySlug: formData.get("citySlug") ?? undefined,
+    storeSlug: formData.get("storeSlug") ?? undefined,
     expiresAt: formData.get("expiresAt") ?? undefined,
   });
+}
+
+// Résolution du magasin choisi. Si l'utilisateur a sélectionné un magasin
+// sans renseigner de commune, on force cityId sur la commune du magasin
+// pour garder les deux données cohérentes côté lecture (filtres par ville).
+async function resolveStoreAndCity(
+  storeSlug: string | undefined,
+  citySlugFallbackId: string | null,
+): Promise<{ storeId: string | null; cityId: string | null }> {
+  if (!storeSlug) return { storeId: null, cityId: citySlugFallbackId };
+  const store = await prisma.store.findUnique({
+    where: { slug: storeSlug },
+    select: { id: true, cityId: true },
+  });
+  if (!store) return { storeId: null, cityId: citySlugFallbackId };
+  return {
+    storeId: store.id,
+    cityId: citySlugFallbackId ?? store.cityId,
+  };
 }
 
 function computeDiscount(
@@ -80,6 +100,11 @@ export async function createDealAction(formData: FormData): Promise<void> {
       })
     : null;
 
+  const { storeId, cityId } = await resolveStoreAndCity(
+    data.storeSlug,
+    city?.id ?? null,
+  );
+
   const price = new Prisma.Decimal(data.price);
   const originalPrice = data.originalPrice
     ? new Prisma.Decimal(data.originalPrice)
@@ -118,7 +143,8 @@ export async function createDealAction(formData: FormData): Promise<void> {
       expiresAt,
       authorId: user.id,
       categoryId: category.id,
-      cityId: city?.id ?? null,
+      cityId,
+      storeId,
       temperature: 0,
     },
     select: { id: true },
@@ -180,6 +206,11 @@ export async function updateDealAction(formData: FormData): Promise<void> {
       })
     : null;
 
+  const { storeId, cityId } = await resolveStoreAndCity(
+    data.storeSlug,
+    city?.id ?? null,
+  );
+
   const price = new Prisma.Decimal(data.price);
   const originalPrice = data.originalPrice
     ? new Prisma.Decimal(data.originalPrice)
@@ -218,7 +249,8 @@ export async function updateDealAction(formData: FormData): Promise<void> {
       coverImageUrl,
       expiresAt,
       categoryId: category.id,
-      cityId: city?.id ?? null,
+      cityId,
+      storeId,
     },
   });
 

@@ -32,6 +32,10 @@ export const createDealSchema = z
       .string()
       .optional()
       .or(z.literal("").transform(() => undefined)),
+    storeSlug: z
+      .string()
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
     expiresAt: z
       .string()
       .optional()
