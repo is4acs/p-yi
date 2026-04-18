@@ -98,9 +98,9 @@ export async function BonsPlansHero() {
             Tous les deals du peyi. Votés chauds ou froids par de vrais gens.
           </span>
           <span className="hidden sm:inline">
-            Des promos PS5 au vol Cayenne–Paris en passant par les BBQ Weber du
-            Géant Matoury : tous les deals sont ici. Votés chauds ou froids par
-            de vrais gens du peyi.
+            De la high-tech aux billets d'avion en passant par les courses du
+            quotidien : tous les deals sont ici. Votés chauds ou froids par de
+            vrais gens du peyi.
           </span>
         </p>
 
