@@ -21,7 +21,7 @@ import {
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { HomeCategoriesGrid } from "@/components/home/HomeCategoriesGrid";
 import { HomeCommunesSection } from "@/components/home/HomeCommunesSection";
-import { ListingCard } from "@/components/listings/ListingCard";
+import { ListingCardTile } from "@/components/listings/ListingCardTile";
 import { ListingsSearchBar } from "@/components/listings/ListingsSearchBar";
 import { ListingsSortTabs } from "@/components/listings/ListingsSortTabs";
 import { ListingsTypePills } from "@/components/listings/ListingsTypePills";
@@ -178,7 +178,10 @@ export default async function AnnoncesPage({
   const activeFilterCount = countActiveFilters({ category, city, type, filters });
 
   return (
-    <main className="mx-auto max-w-md pb-12 animate-in fade-in duration-300 sm:max-w-2xl">
+    // Grille 2/3/4 cols → on élargit à max-w-6xl pour donner de l'air
+    // au desktop (avant S27 : max-w-2xl, trop étroit pour une grille
+    // photo-first).
+    <main className="mx-auto max-w-md pb-12 animate-in fade-in duration-300 sm:max-w-2xl lg:max-w-6xl">
       <div className="sticky top-0 z-10 -mx-0 border-b border-border bg-background/95 px-4 pb-3 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-0 sm:pt-6">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
@@ -327,10 +330,14 @@ export default async function AnnoncesPage({
             clearFiltersHref="/annonces"
           />
         ) : (
-          <ul className="flex flex-col gap-3">
+          // Grille photo-first "marketplace" : 2 cols mobile, 3 cols
+          // tablette, 4 cols desktop. Gap 4 (16px) pour que chaque
+          // tuile respire. Hauteur naturelle variable (titre 1-2 lignes
+          // selon longueur).
+          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {listings.map((l) => (
               <li key={l.id}>
-                <ListingCard
+                <ListingCardTile
                   listing={l}
                   currentUserId={currentUser?.id ?? null}
                   isFavorited={favoriteSet.has(l.id)}

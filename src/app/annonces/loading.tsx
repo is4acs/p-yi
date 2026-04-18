@@ -1,18 +1,18 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { ListingCardSkeleton } from "@/components/listings/ListingCardSkeleton";
+import { ListingCardTileSkeleton } from "@/components/listings/ListingCardTileSkeleton";
 
 /**
- * Squelette de la page `/annonces` — pensé pour matcher le layout final
- * (sticky header + search + pills + tabs + filter bar + grille) pour
- * qu'il n'y ait pas de saut visuel quand les vraies données arrivent.
+ * Squelette de `/annonces` — aligné sur le layout post-S27 : header
+ * minimal (title + Poster + search + Filtrer), puis grille 2/3/4 cols
+ * de `ListingCardTileSkeleton`. Évite tout layout shift quand les
+ * vraies données arrivent.
  *
- * Si on ajoute un nouveau bloc persistant dans la sticky header (ex.
- * panel de filtres attribut, chips de filtres actifs), le skeleton doit
- * recevoir un placeholder équivalent.
+ * Si tu ajoutes un bloc persistant au header, ajoute un placeholder
+ * correspondant ici pour garder la parité visuelle.
  */
 export default function ListingsLoading() {
   return (
-    <main className="mx-auto max-w-md pb-12 sm:max-w-2xl">
+    <main className="mx-auto max-w-md pb-12 sm:max-w-2xl lg:max-w-6xl">
       <div className="sticky top-0 z-10 border-b border-border bg-background/95 px-4 pb-3 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-0 sm:pt-6">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0 flex-1 space-y-1.5">
@@ -22,36 +22,17 @@ export default function ListingsLoading() {
           <Skeleton className="h-9 w-24 rounded-full" />
         </div>
 
-        <div className="mt-3 space-y-2">
-          {/* Search bar */}
-          <Skeleton className="h-11 w-full rounded-full" />
-          {/* Type pills */}
-          <div className="flex gap-1">
-            <Skeleton className="h-7 w-12 rounded-full" />
-            <Skeleton className="h-7 w-20 rounded-full" />
-            <Skeleton className="h-7 w-24 rounded-full" />
-            <Skeleton className="h-7 w-20 rounded-full" />
-            <Skeleton className="h-7 w-16 rounded-full" />
-          </div>
-          {/* Sort tabs */}
-          <div className="flex gap-1">
-            <Skeleton className="h-8 w-24 rounded-full" />
-            <Skeleton className="h-8 w-20 rounded-full" />
-            <Skeleton className="h-8 w-20 rounded-full" />
-          </div>
-          {/* Filter bar (category + city + submit) */}
-          <div className="flex gap-2">
-            <Skeleton className="h-9 flex-1 rounded-md" />
-            <Skeleton className="h-9 flex-1 rounded-md" />
-            <Skeleton className="h-9 w-16 rounded-md" />
-          </div>
+        {/* Row : SearchBar + Filtrer */}
+        <div className="mt-3 flex items-center gap-2">
+          <Skeleton className="h-11 flex-1 rounded-full" />
+          <Skeleton className="h-10 w-24 rounded-full" />
         </div>
       </div>
 
-      <ul className="flex flex-col gap-3 px-4 pt-4 sm:px-0">
-        {Array.from({ length: 6 }).map((_, i) => (
+      <ul className="grid grid-cols-2 gap-4 px-4 pt-4 sm:grid-cols-3 sm:px-0 lg:grid-cols-4">
+        {Array.from({ length: 8 }).map((_, i) => (
           <li key={i}>
-            <ListingCardSkeleton />
+            <ListingCardTileSkeleton />
           </li>
         ))}
       </ul>
