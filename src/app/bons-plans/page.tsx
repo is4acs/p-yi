@@ -170,7 +170,13 @@ export default async function BonsPlansPage({
         </>
       )}
 
-      <div className="sticky top-0 z-10 -mx-0 border-b border-border bg-background/95 px-4 pb-3 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-0 sm:pt-6">
+      {/* Sticky ancré SOUS le Header global (`sticky top-0 z-30 h-14
+          sm:h-16`) et non à `top-0` comme avant S33 — sinon les deux
+          se chevauchent au même offset. `z-20` passe au-dessus des
+          `z-10` internes aux `DealCard` (vote-rail + FavoriteButton),
+          ce qui évite le bug S32 où le rail flottait par-dessus la
+          barre de recherche en scroll. */}
+      <div className="sticky top-14 z-20 -mx-0 border-b border-border bg-background/95 px-4 pb-3 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:top-16 sm:px-0 sm:pt-6">
         {/* H1 + count : on les conserve UNIQUEMENT en mode filtré.
             Quand le hero est affiché il porte déjà le H1 — doubler le
             titre casserait la hiérarchie a11y (deux H1 = pas d'ancrage
