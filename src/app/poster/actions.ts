@@ -8,7 +8,11 @@ import { prisma } from "@/lib/prisma";
 import { requireActiveUser } from "@/lib/auth/current-user";
 import { createDealSchema } from "@/lib/validation/deal";
 import { makeDealSlug } from "@/lib/deals/slug";
-import { removeDealImage, uploadDealImage } from "@/lib/storage/deal-images";
+import { removeDealImage } from "@/lib/storage/deal-images";
+import {
+  DEAL_BUCKET,
+  parseOwnedStorageUrl,
+} from "@/lib/storage/signed-upload";
 import { writeLimiter } from "@/lib/rate-limit";
 import { awardKarma } from "@/lib/gamification/karma";
 import { checkAndAwardBadges } from "@/lib/gamification/badges";
@@ -128,17 +132,17 @@ export async function createDealAction(formData: FormData): Promise<void> {
     : null;
   const discountPercent = computeDiscount(price, originalPrice);
 
+  // L'upload s'est déjà produit côté navigateur (ImagePicker → Supabase via
+  // URL signée). On ne reçoit ici qu'une URL publique qu'on valide pour
+  // s'assurer qu'elle pointe bien vers notre bucket et vers le dossier du
+  // user courant — un client malveillant ne peut donc pas injecter l'URL
+  // d'une image d'un autre compte.
   let coverImageUrl: string | null = null;
-  const file = formData.get("coverImage");
-  if (file instanceof File && file.size > 0) {
-    try {
-      coverImageUrl = await uploadDealImage(file, user.id);
-    } catch (err) {
-      redirectWithError(
-        "/poster",
-        err instanceof Error ? err.message : "Échec de l'upload.",
-      );
-    }
+  const rawCoverUrl = formData.get("coverImageUrl");
+  if (typeof rawCoverUrl === "string" && rawCoverUrl.trim().length > 0) {
+    const ok = parseOwnedStorageUrl(rawCoverUrl, DEAL_BUCKET, user.id);
+    if (!ok) redirectWithError("/poster", "Image de couverture invalide.");
+    coverImageUrl = rawCoverUrl;
   }
 
   const slug = makeDealSlug(data.title);
@@ -235,21 +239,28 @@ export async function updateDealAction(formData: FormData): Promise<void> {
     : null;
   const discountPercent = computeDiscount(price, originalPrice);
 
+  // L'ImagePicker renvoie l'URL finale quelle que soit sa provenance :
+  //   - vide → l'utilisateur a retiré la couverture, on clean.
+  //   - identique à l'existant → pas de changement.
+  //   - nouvelle URL Supabase valide → on remplace et on supprime l'ancienne.
+  // On valide toujours l'URL pour éviter qu'un attaquant glisse une URL
+  // pointant vers le dossier d'un autre user.
   let coverImageUrl: string | null = existing.coverImageUrl;
-  const file = formData.get("coverImage");
-  if (file instanceof File && file.size > 0) {
-    try {
-      const newUrl = await uploadDealImage(file, user.id);
-      if (existing.coverImageUrl) {
-        await removeDealImage(existing.coverImageUrl);
-      }
-      coverImageUrl = newUrl;
-    } catch (err) {
-      redirectWithError(
-        editPath,
-        err instanceof Error ? err.message : "Échec de l'upload.",
-      );
+  const rawCoverUrl = formData.get("coverImageUrl");
+  const submittedUrl =
+    typeof rawCoverUrl === "string" && rawCoverUrl.trim().length > 0
+      ? rawCoverUrl
+      : null;
+
+  if (submittedUrl !== existing.coverImageUrl) {
+    if (submittedUrl) {
+      const ok = parseOwnedStorageUrl(submittedUrl, DEAL_BUCKET, user.id);
+      if (!ok) redirectWithError(editPath, "Image de couverture invalide.");
     }
+    if (existing.coverImageUrl) {
+      await removeDealImage(existing.coverImageUrl);
+    }
+    coverImageUrl = submittedUrl;
   }
 
   const expiresAt = data.expiresAt ? new Date(data.expiresAt) : null;

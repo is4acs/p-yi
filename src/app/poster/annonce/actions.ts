@@ -21,10 +21,11 @@ import {
   denormalizeAttributes,
   getFieldsForCategory,
 } from "@/lib/listings/field-registry";
+import { removeListingImages } from "@/lib/storage/listing-images";
 import {
-  removeListingImages,
-  uploadListingImages,
-} from "@/lib/storage/listing-images";
+  LISTING_BUCKET,
+  parseOwnedStorageUrl,
+} from "@/lib/storage/signed-upload";
 import { writeLimiter } from "@/lib/rate-limit";
 
 // Les petites annonces donnent un petit bonus de karma (3 pts) directement
@@ -107,22 +108,19 @@ function extractAttributes(
 }
 
 /**
- * Rebuild the final ordered list of photo URLs from the client payload
- * (see `PhotosUploader` for the contract). Uploads every "new" file up
- * front, then walks the order tokens to interleave kept URLs with the
- * freshly-uploaded ones.
+ * Lit la liste ordonnée d'URLs de photos depuis la FormData.
+ * Les uploads eux-mêmes se font désormais directement navigateur →
+ * Supabase (voir `src/lib/client/upload.ts`) ; le serveur ne reçoit que
+ * les URLs publiques finales. On valide rigoureusement :
  *
- * Throws on :
- *  - malformed `photoOrder` JSON
- *  - invalid token shape (not `existing:<url>` / `new:<idx>`)
- *  - order length exceeding the category cap (client bypass attempt)
- *  - `existing:<url>` referencing a URL not in the listing's prior set
- *  - `new:<idx>` out of bounds
- *
- * On throw, any successfully-uploaded new files are removed from storage
- * to keep the bucket clean.
+ *   - format JSON + tableau de strings
+ *   - longueur ≤ cap de photos de la catégorie
+ *   - chaque URL pointe vers notre bucket `listings` ET vers le dossier
+ *     du user courant (anti-cross-tenant via `parseOwnedStorageUrl`)
+ *   - en mode édition, les URLs de l'ancienne galerie qui ne sont plus
+ *     présentes sont retournées pour suppression best-effort
  */
-async function resolvePhotoOrder({
+function parsePhotoUrls({
   formData,
   userId,
   categorySlug,
@@ -132,73 +130,44 @@ async function resolvePhotoOrder({
   userId: string;
   categorySlug: string;
   existingUrls: Set<string>;
-}): Promise<{ finalUrls: string[]; urlsToDelete: string[] }> {
-  const raw = formData.get("photoOrder");
-  let tokens: string[] = [];
+}): { finalUrls: string[]; urlsToDelete: string[] } {
+  const raw = formData.get("photoUrls");
+  let urls: string[] = [];
   if (typeof raw === "string" && raw.trim().length > 0) {
     try {
       const parsed = JSON.parse(raw);
       if (!Array.isArray(parsed)) throw new Error("not-array");
-      tokens = parsed.filter((t): t is string => typeof t === "string");
+      urls = parsed.filter((t): t is string => typeof t === "string");
     } catch {
       throw new Error("Photos : format invalide.");
     }
   }
 
   const max = maxPhotosForCategory(categorySlug);
-  if (tokens.length > max) {
+  if (urls.length > max) {
     throw new Error(`Tu ne peux pas ajouter plus de ${max} photos.`);
   }
 
-  const existingPrefix = "existing:";
-  const newPrefix = "new:";
-  for (const t of tokens) {
-    if (!t.startsWith(existingPrefix) && !t.startsWith(newPrefix)) {
-      throw new Error("Photos : jeton invalide.");
+  // Dédup : l'ordre est donné par la première occurrence, les suivantes
+  // sont ignorées (cas improbable mais protège contre un client buggué).
+  const seen = new Set<string>();
+  const finalUrls: string[] = [];
+  for (const url of urls) {
+    if (seen.has(url)) continue;
+    // Chaque URL doit appartenir au bucket listings ET au dossier du user.
+    // Les URLs existantes du listing respectent déjà cette règle (elles
+    // ont été uploadées par lui-même), mais on re-valide par défense en
+    // profondeur — si un jour on change l'origine Supabase ou le bucket,
+    // ça fail loud au lieu de silencieusement accepter une URL obsolète.
+    if (!parseOwnedStorageUrl(url, LISTING_BUCKET, userId)) {
+      throw new Error("Une photo référencée est invalide.");
     }
+    seen.add(url);
+    finalUrls.push(url);
   }
 
-  // Collect new files in FormData order — PhotosUploader writes them in
-  // the order of their `new:<N>` indices via a DataTransfer sync.
-  const newFiles: File[] = [];
-  for (const entry of formData.getAll("newPhotos")) {
-    if (entry instanceof File && entry.size > 0) newFiles.push(entry);
-  }
-
-  // Upload before we touch the DB. If one fails we haven't mutated yet.
-  const uploadedUrls =
-    newFiles.length > 0 ? await uploadListingImages(newFiles, userId) : [];
-
-  try {
-    const finalUrls: string[] = [];
-    const keptExisting = new Set<string>();
-
-    for (const tok of tokens) {
-      if (tok.startsWith(existingPrefix)) {
-        const url = tok.slice(existingPrefix.length);
-        if (!existingUrls.has(url)) {
-          throw new Error("Une photo référencée n'existe plus.");
-        }
-        finalUrls.push(url);
-        keptExisting.add(url);
-      } else {
-        const idx = Number(tok.slice(newPrefix.length));
-        if (!Number.isInteger(idx) || idx < 0 || idx >= uploadedUrls.length) {
-          throw new Error("Photos mal alignées.");
-        }
-        finalUrls.push(uploadedUrls[idx]);
-      }
-    }
-
-    const urlsToDelete = Array.from(existingUrls).filter(
-      (u) => !keptExisting.has(u),
-    );
-    return { finalUrls, urlsToDelete };
-  } catch (err) {
-    // Rollback uploads — we never want orphans in the bucket.
-    await removeListingImages(uploadedUrls);
-    throw err;
-  }
+  const urlsToDelete = Array.from(existingUrls).filter((u) => !seen.has(u));
+  return { finalUrls, urlsToDelete };
 }
 
 export async function createListingAction(formData: FormData): Promise<void> {
@@ -254,7 +223,7 @@ export async function createListingAction(formData: FormData): Promise<void> {
 
   let finalUrls: string[] = [];
   try {
-    const resolved = await resolvePhotoOrder({
+    const resolved = parsePhotoUrls({
       formData,
       userId: user.id,
       categorySlug: data.categorySlug,
@@ -264,7 +233,7 @@ export async function createListingAction(formData: FormData): Promise<void> {
   } catch (err) {
     redirectWithError(
       retryPath,
-      err instanceof Error ? err.message : "Échec de l'upload.",
+      err instanceof Error ? err.message : "Photos invalides.",
     );
   }
 
@@ -407,7 +376,7 @@ export async function updateListingAction(formData: FormData): Promise<void> {
   let finalUrls: string[] = [];
   let urlsToDelete: string[] = [];
   try {
-    const resolved = await resolvePhotoOrder({
+    const resolved = parsePhotoUrls({
       formData,
       userId: user.id,
       categorySlug: data.categorySlug,
@@ -418,7 +387,7 @@ export async function updateListingAction(formData: FormData): Promise<void> {
   } catch (err) {
     redirectWithError(
       editPath,
-      err instanceof Error ? err.message : "Échec de l'upload.",
+      err instanceof Error ? err.message : "Photos invalides.",
     );
   }
 
