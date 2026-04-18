@@ -169,11 +169,36 @@ const config: Config = {
         ],
       },
       borderRadius: {
+        // Échelle héritée (dérivée de `--radius`), gardée inchangée pour
+        // ne pas casser les 30+ composants qui l'utilisent.
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
         xl: "calc(var(--radius) + 4px)",
         "2xl": "calc(var(--radius) + 12px)",
+        // Ajouts handoff Peyi v1.0 : `xs` pour pastilles fines, `full`
+        // en raccourci lisible (au lieu de `rounded-[9999px]`).
+        xs: "6px",
+        full: "9999px",
+      },
+      boxShadow: {
+        // Ombre de marque — tint orange du logo. Utilisée sur les CTA
+        // primaires (Button variant="primary") pour renforcer l'affordance.
+        brand: "0 10px 24px rgba(255,145,76,0.28)",
+      },
+      transitionDuration: {
+        // Tokens sémantiques Peyi (handoff). `base` = 180ms = valeur par
+        // défaut de la plupart des interactions. `fast` = micro-feedback,
+        // `slow` = transitions amples (modals, navigation).
+        fast: "120ms",
+        base: "180ms",
+        slow: "280ms",
+      },
+      spacing: {
+        // Gouttières de la grille Peyi (desktop 40-56px, mobile 16-24px).
+        gutter: "24px",
+        "gutter-lg": "40px",
+        "gutter-xl": "56px",
       },
       keyframes: {
         "fade-in": {
