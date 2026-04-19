@@ -2,6 +2,7 @@ import type { User } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { attributeReferralOnSignup } from "@/lib/affiliate/attribute";
 
 const DEFAULT_CITY_SLUG = "cayenne";
 
@@ -44,7 +45,7 @@ export async function ensureUserProfile(): Promise<User | null> {
     select: { id: true },
   });
 
-  return prisma.user.upsert({
+  const profile = await prisma.user.upsert({
     where: { id: authUser.id },
     update: {},
     create: {
@@ -56,4 +57,12 @@ export async function ensureUserProfile(): Promise<User | null> {
       cityId: defaultCity?.id ?? null,
     },
   });
+
+  // Si un cookie `peyi_ref` est présent (visiteur arrivé via un lien
+  // d'affiliation dans les 30 derniers jours), on crée la Referral
+  // maintenant. Silencieusement no-op sinon. N'interrompt jamais le
+  // signup en cas d'erreur.
+  await attributeReferralOnSignup(profile.id);
+
+  return profile;
 }

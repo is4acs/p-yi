@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   FileText,
   Flag,
+  Gift,
   LayoutDashboard,
   ListTree,
   MessageSquare,
@@ -51,6 +52,7 @@ export default async function AdminLayout({
     { href: "/admin/messages", label: "Messages", icon: FileText },
     { href: "/admin/utilisateurs", label: "Utilisateurs", icon: Users },
     { href: "/admin/signalements", label: "Signalements", icon: Flag },
+    { href: "/admin/affiliation", label: "Affiliation", icon: Gift },
     ...(superAdmin
       ? [
           {
