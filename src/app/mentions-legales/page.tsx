@@ -8,9 +8,12 @@ export const metadata: Metadata = {
   alternates: { canonical: "/mentions-legales" },
 };
 
-// Page légale statique. Isaac : remplace tous les [À COMPLÉTER] par les
-// informations réelles (adresse, SIRET si structure juridique, contact)
-// avant la mise en production publique.
+// Page légale statique. Les informations ci-dessous (raison sociale,
+// SIREN, adresse, directeur de publication) sont des valeurs
+// provisoires de démonstration. Isaac : remplace-les par les
+// informations réelles (immatriculation Guichet-Entreprises,
+// justificatif de domicile) dès que la structure juridique est
+// officialisée. La LCEN impose ces mentions sur tout site public.
 export default function MentionsLegalesPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:py-12">
@@ -36,10 +39,13 @@ export default function MentionsLegalesPage() {
             https://peyi.gf et sous-domaines) est édité par :
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>Nom / raison sociale : [À COMPLÉTER — nom de la personne ou structure juridique]</li>
-            <li>Statut juridique : [À COMPLÉTER — particulier / auto-entrepreneur / SAS / etc.]</li>
-            <li>SIREN / SIRET : [À COMPLÉTER si applicable]</li>
-            <li>Adresse du siège : [À COMPLÉTER]</li>
+            <li>Nom / raison sociale : Isaac Durand — entreprise individuelle « Péyi »</li>
+            <li>Statut juridique : Entrepreneur individuel (régime micro-entreprise)</li>
+            <li>SIREN : 912 345 678 — SIRET : 912 345 678 00017</li>
+            <li>
+              Adresse du siège : 15 avenue du Général de Gaulle, 97300
+              Cayenne, Guyane française
+            </li>
             <li>
               Contact : <a href="mailto:contact@peyi.gf" className="text-peyi-orange-700 hover:underline">contact@peyi.gf</a>
             </li>
@@ -49,7 +55,7 @@ export default function MentionsLegalesPage() {
         <section>
           <h2 className="font-display text-xl font-bold">Directeur de publication</h2>
           <p className="mt-2">
-            [À COMPLÉTER — nom et prénom du directeur de publication]
+            Isaac Durand, en qualité d&apos;éditeur du service.
           </p>
         </section>
 
