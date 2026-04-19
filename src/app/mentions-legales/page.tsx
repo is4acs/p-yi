@@ -41,7 +41,7 @@ export default function MentionsLegalesPage() {
             <li>Statut juridique : Auto-entrepreneur (entreprise individuelle)</li>
             <li>SIREN : 879 786 218</li>
             <li>SIRET du siège social : 879 786 218 00039</li>
-            <li>Adresse du siège : 30 Impasse Mortin</li>
+            <li>Adresse du siège : 30 Impasse Mortin, 97300 Cayenne, Guyane française</li>
             <li>
               Contact : <a href="mailto:contact@peyi.gf" className="text-peyi-orange-700 hover:underline">contact@peyi.gf</a>
             </li>
