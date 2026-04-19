@@ -19,8 +19,12 @@ import { z } from "zod";
  *
  * Niveaux de criticité :
  *   - **server** : variables requises pour le fonctionnement du
- *     serveur (DB, Supabase service key, Upstash Redis…). Sans
- *     elles, l'app ne peut pas démarrer. Validation stricte.
+ *     serveur (DB, Supabase service key…). Sans elles, l'app ne
+ *     peut pas démarrer. Validation stricte.
+ *   - **prod-only** : Upstash Redis. Optionnel en dev/test (no-op
+ *     limiter), obligatoire en production — `parseEnv` throw si
+ *     `NODE_ENV=production` et qu'au moins une des deux variables
+ *     manque. Échappatoire explicite : `ALLOW_NO_RATE_LIMIT=1`.
  *   - **publicRuntime** : variables injectées dans le bundle
  *     client (préfixe `NEXT_PUBLIC_`). Next ne les met à dispo
  *     que si elles existent au build, donc la validation sert
@@ -54,9 +58,11 @@ const serverSchema = z.object({
     .string()
     .min(1, "SUPABASE_SERVICE_ROLE_KEY manquante — Dashboard → Settings → API"),
 
-  // Upstash Redis : rate limiting. Si manquant, l'app démarre mais
-  // sans rate limit (dev OK, prod = risque abuse). On valide en
-  // prod, on autorise en dev.
+  // Upstash Redis : rate limiting. REQUIS en production — sans, les
+  // endpoints sensibles (auth, écriture, signalements, export RGPD)
+  // tournent sans rate limit, ce qui ouvre la porte au brute-force,
+  // au spam et au DoS de l'export. En dev/test on accepte l'absence
+  // (le no-op de `rate-limit.ts` prend le relais).
   UPSTASH_REDIS_REST_URL: z
     .string()
     .url("UPSTASH_REDIS_REST_URL doit être une URL Upstash valide")
@@ -64,6 +70,16 @@ const serverSchema = z.object({
   UPSTASH_REDIS_REST_TOKEN: z
     .string()
     .min(1, "UPSTASH_REDIS_REST_TOKEN manquant")
+    .optional(),
+
+  // Échappatoire explicite pour autoriser un boot prod SANS Upstash.
+  // À n'utiliser que pour des situations exceptionnelles et auditées
+  // (build CI sans accès aux secrets, environnement de démo isolé,
+  // tests d'intégration éphémères). En production réelle, NE JAMAIS
+  // mettre cette variable. La présence du flag est loggée fort pour
+  // qu'on la voie passer dans les logs ops.
+  ALLOW_NO_RATE_LIMIT: z
+    .enum(["1", "true"])
     .optional(),
 
   // Node env (Next le pose, mais on valide le format).
@@ -125,6 +141,7 @@ function parseEnv(): ServerEnv & PublicEnv {
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
+    ALLOW_NO_RATE_LIMIT: process.env.ALLOW_NO_RATE_LIMIT,
     NODE_ENV: process.env.NODE_ENV,
     LOG_LEVEL: process.env.LOG_LEVEL,
   });
@@ -137,19 +154,31 @@ function parseEnv(): ServerEnv & PublicEnv {
     );
   }
 
-  // En prod, si Upstash est absent, on alerte fort : c'est une
-  // vulnérabilité (endpoints publics sans rate limit). En dev on
-  // laisse passer — `rate-limit.ts` a déjà un no-op fallback.
-  if (
-    serverParsed.data.NODE_ENV === "production" &&
-    (!serverParsed.data.UPSTASH_REDIS_REST_URL ||
-      !serverParsed.data.UPSTASH_REDIS_REST_TOKEN)
-  ) {
+  // En prod, Upstash est obligatoire. Sans rate limit, les endpoints
+  // sensibles sont vulnérables (brute-force auth, spam d'écriture,
+  // DoS de l'export RGPD). On refuse de booter pour forcer la prise
+  // en compte. Échappatoire : ALLOW_NO_RATE_LIMIT=1 (situations
+  // exceptionnelles uniquement, ex. build CI sans secrets).
+  const upstashConfigured =
+    Boolean(serverParsed.data.UPSTASH_REDIS_REST_URL) &&
+    Boolean(serverParsed.data.UPSTASH_REDIS_REST_TOKEN);
+
+  if (serverParsed.data.NODE_ENV === "production" && !upstashConfigured) {
+    if (!serverParsed.data.ALLOW_NO_RATE_LIMIT) {
+      throw new Error(
+        "[env] UPSTASH_REDIS_REST_URL et UPSTASH_REDIS_REST_TOKEN sont " +
+          "obligatoires en production (rate limiting). Sans, les endpoints " +
+          "sensibles sont exposés au brute-force, spam et DoS.\n" +
+          "→ Provisionne un Upstash Redis (free tier suffit) puis ajoute " +
+          "les deux variables aux secrets du déploiement.\n" +
+          "→ Pour autoriser un boot SANS rate limit (CI build, démo), " +
+          "set ALLOW_NO_RATE_LIMIT=1 — à n'utiliser qu'en pleine connaissance.",
+      );
+    }
     // eslint-disable-next-line no-console
     console.warn(
-      "[env] ⚠️ UPSTASH_REDIS_REST_URL/TOKEN absent en production. " +
-        "Les endpoints sensibles tournent SANS rate limit. " +
-        "Configure Upstash immédiatement.",
+      "[env] ⚠️ ALLOW_NO_RATE_LIMIT actif en production : aucun rate " +
+        "limit appliqué. Mode acceptable uniquement pour build CI ou démo.",
     );
   }
 
