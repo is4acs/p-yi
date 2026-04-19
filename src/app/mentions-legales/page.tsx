@@ -8,12 +8,11 @@ export const metadata: Metadata = {
   alternates: { canonical: "/mentions-legales" },
 };
 
-// Page légale statique. Les informations ci-dessous (raison sociale,
-// SIREN, adresse, directeur de publication) sont des valeurs
-// provisoires de démonstration. Isaac : remplace-les par les
-// informations réelles (immatriculation Guichet-Entreprises,
-// justificatif de domicile) dès que la structure juridique est
-// officialisée. La LCEN impose ces mentions sur tout site public.
+// Page légale statique. Identité et SIRET réels (Isaac Settou,
+// micro-entreprise). L'adresse reste une valeur provisoire —
+// remplace par l'adresse réelle ou une adresse de domiciliation
+// commerciale avant le go-live grand public (LCEN impose une
+// adresse publique cohérente avec le SIRET déclaré).
 export default function MentionsLegalesPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:py-12">
@@ -39,9 +38,9 @@ export default function MentionsLegalesPage() {
             https://peyi.gf et sous-domaines) est édité par :
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>Nom / raison sociale : Isaac Durand — entreprise individuelle « Péyi »</li>
+            <li>Nom / raison sociale : Isaac Settou — entreprise individuelle « Péyi »</li>
             <li>Statut juridique : Entrepreneur individuel (régime micro-entreprise)</li>
-            <li>SIREN : 912 345 678 — SIRET : 912 345 678 00017</li>
+            <li>SIREN : 879 786 218 — SIRET : 879 786 218 00039</li>
             <li>
               Adresse du siège : 15 avenue du Général de Gaulle, 97300
               Cayenne, Guyane française
@@ -55,7 +54,7 @@ export default function MentionsLegalesPage() {
         <section>
           <h2 className="font-display text-xl font-bold">Directeur de publication</h2>
           <p className="mt-2">
-            Isaac Durand, en qualité d&apos;éditeur du service.
+            Isaac Settou, en qualité d&apos;éditeur du service.
           </p>
         </section>
 
