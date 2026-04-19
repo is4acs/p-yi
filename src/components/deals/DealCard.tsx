@@ -15,7 +15,7 @@ import type { DealCardData } from "@/lib/deals/queries";
 import { PriceTag } from "./PriceTag";
 import { CategoryChip } from "./CategoryChip";
 import { CommuneChip } from "./CommuneChip";
-import { DealImagePlaceholder } from "./DealImagePlaceholder";
+import { DealCover } from "./DealCover";
 import { VoteButtons } from "./VoteButtons";
 import { FavoriteButton } from "./FavoriteButton";
 
@@ -102,6 +102,12 @@ export function DealCard({
   const isLocalStore = Boolean(deal.store);
   const placeholderEmoji = deal.category.icon ?? null;
   const placeholderLabel = sellerName ?? deal.title;
+  // `storeLogoUrl` sert de cover dégradée quand l'auteur n'a pas
+  // uploadé de photo (cas majoritaire sur l'app). On privilégie le
+  // logo du magasin physique ; à défaut on retombe sur le marchand
+  // online (Amazon, Fnac…) qui en a souvent un aussi.
+  const storeLogoUrl =
+    deal.store?.logoUrl ?? deal.merchant?.logoUrl ?? null;
 
   const isAuthor = currentUserId === deal.authorId;
   const isAuthenticated = Boolean(currentUserId);
@@ -131,7 +137,9 @@ export function DealCard({
             href={`/bons-plans/${deal.slug}`}
             className="block h-full w-full active:scale-[0.99]"
           >
-            <DealImagePlaceholder
+            <DealCover
+              coverImageUrl={deal.coverImageUrl}
+              storeLogoUrl={storeLogoUrl}
               emoji={placeholderEmoji}
               label={placeholderLabel}
               className="h-full w-full"
@@ -252,7 +260,9 @@ export function DealCard({
         aria-hidden
         className="hidden shrink-0 sm:block"
       >
-        <DealImagePlaceholder
+        <DealCover
+          coverImageUrl={deal.coverImageUrl}
+          storeLogoUrl={storeLogoUrl}
           emoji={placeholderEmoji}
           label={placeholderLabel}
           className="h-[110px] w-[140px]"
@@ -272,7 +282,9 @@ export function DealCard({
             bord du viewport sur les screenshots iPhone). */}
         <div className="flex items-start gap-2.5 sm:block sm:gap-0">
           <div aria-hidden className="shrink-0 sm:hidden">
-            <DealImagePlaceholder
+            <DealCover
+              coverImageUrl={deal.coverImageUrl}
+              storeLogoUrl={storeLogoUrl}
               emoji={placeholderEmoji}
               label={placeholderLabel}
               className="h-[72px] w-[72px]"
