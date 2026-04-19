@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Clock, Flame, Images } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -9,9 +8,9 @@ import {
   formatPriceType,
 } from "@/lib/listings/queries";
 import { Badge } from "@/components/ui/badge";
-import { DealImagePlaceholder } from "@/components/deals/DealImagePlaceholder";
 import { ListingFavoriteButton } from "./ListingFavoriteButton";
 import { ListingTypeChip } from "./ListingTypeChip";
+import { ListingCardGallery } from "./ListingCardGallery";
 
 /**
  * ListingCardTile — variante **photo-first** pour la grille `/annonces`.
@@ -105,59 +104,52 @@ export function ListingCardTile({
         className,
       )}
     >
+      <div className="relative aspect-[5/3] overflow-hidden bg-muted/40">
+        <ListingCardGallery
+          href={`/annonces/${listing.slug}`}
+          photos={listing.images}
+          coverImageUrl={listing.coverImageUrl}
+          title={listing.title}
+          categoryIcon={listing.category.icon ?? null}
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          imageClassName="transition-transform duration-base group-hover:scale-[1.02]"
+        />
+
+        {/* Slot top-left : un seul badge à la fois. URGENT (Flame)
+            prime sur NOUVEAU (vert). Pas d'empilement — l'œil doit
+            attraper UN signal, pas déchiffrer une pile. */}
+        {listing.isUrgent ? (
+          <span className="pointer-events-none absolute left-2 top-2 z-20 inline-flex items-center gap-1 rounded-full bg-hot/90 px-2 py-[3px] font-display text-[10px] font-extrabold uppercase tracking-[0.08em] text-white shadow">
+            <Flame className="h-3 w-3" aria-hidden />
+            Urgent
+          </span>
+        ) : showNewBadge ? (
+          <Badge variant="new" className="pointer-events-none absolute left-2 top-2 z-20 shadow">
+            Nouveau
+          </Badge>
+        ) : null}
+
+        {showTypeChip && (
+          <span className="pointer-events-none absolute bottom-2 left-2 z-20">
+            <ListingTypeChip type={listing.type} />
+          </span>
+        )}
+
+        {photoCount > 1 && (
+          <span
+            className="pointer-events-none absolute bottom-2 right-2 z-20 inline-flex items-center gap-0.5 rounded-full bg-black/65 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow backdrop-blur tabular-nums"
+            aria-label={`${photoCount} photos`}
+          >
+            <Images className="h-3 w-3" aria-hidden />
+            {photoCount}
+          </span>
+        )}
+      </div>
+
       <Link
         href={`/annonces/${listing.slug}`}
-        className="flex flex-col active:scale-[0.99]"
+        className="block active:scale-[0.99]"
       >
-        <div className="relative aspect-[5/3] overflow-hidden bg-muted/40">
-          {listing.coverImageUrl ? (
-            <Image
-              src={listing.coverImageUrl}
-              alt={listing.title}
-              fill
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-cover transition-transform duration-base group-hover:scale-[1.02]"
-              unoptimized
-            />
-          ) : (
-            <DealImagePlaceholder
-              emoji={listing.category.icon ?? null}
-              label={listing.title}
-              className="h-full w-full"
-            />
-          )}
-
-          {/* Slot top-left : un seul badge à la fois. URGENT (Flame)
-              prime sur NOUVEAU (vert). Pas d'empilement — l'œil doit
-              attraper UN signal, pas déchiffrer une pile. */}
-          {listing.isUrgent ? (
-            <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-hot/90 px-2 py-[3px] font-display text-[10px] font-extrabold uppercase tracking-[0.08em] text-white shadow">
-              <Flame className="h-3 w-3" aria-hidden />
-              Urgent
-            </span>
-          ) : showNewBadge ? (
-            <Badge variant="new" className="absolute left-2 top-2 shadow">
-              Nouveau
-            </Badge>
-          ) : null}
-
-          {showTypeChip && (
-            <span className="absolute bottom-2 left-2">
-              <ListingTypeChip type={listing.type} />
-            </span>
-          )}
-
-          {photoCount > 1 && (
-            <span
-              className="pointer-events-none absolute bottom-2 right-2 inline-flex items-center gap-0.5 rounded-full bg-black/65 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow backdrop-blur tabular-nums"
-              aria-label={`${photoCount} photos`}
-            >
-              <Images className="h-3 w-3" aria-hidden />
-              {photoCount}
-            </span>
-          )}
-        </div>
-
         {/* Padding body : 9/11/10px = cadence handoff. Pas de space-y :
             on laisse les `leading-*` et margin individuels faire le
             rythme vertical (plus fin qu'un gap uniforme). */}
@@ -181,7 +173,7 @@ export function ListingCardTile({
 
       {/* Favori en overlay absolu sur l'image — pas dans le Link pour
           éviter que le tap sur le cœur déclenche une nav vers le détail. */}
-      <div className="absolute right-2 top-2">
+      <div className="absolute right-2 top-2 z-30">
         <ListingFavoriteButton
           listingId={listing.id}
           initialFavorited={isFavorited}

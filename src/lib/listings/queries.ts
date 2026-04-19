@@ -31,6 +31,15 @@ export const listingCardSelect = {
   city: { select: { name: true, slug: true } },
   category: { select: { name: true, slug: true, icon: true } },
   _count: { select: { images: true } },
+  // On charge jusqu'à 5 photos pour alimenter le carrousel des cartes
+  // (swipe à la Avito). Cap volontaire : au-delà, on affiche +N et on
+  // demande à l'utilisateur d'ouvrir le détail — évite de tirer 15 URLs
+  // par ligne sur une grille paginée.
+  images: {
+    orderBy: { sortOrder: "asc" },
+    take: 5,
+    select: { url: true },
+  },
 } satisfies Prisma.ListingSelect;
 
 export type ListingCardData = Prisma.ListingGetPayload<{

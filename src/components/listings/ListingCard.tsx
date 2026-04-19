@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Clock, Flame, Images, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -12,9 +11,9 @@ import {
 import { summarizeAttributesForCard } from "@/lib/listings/field-registry";
 import { CategoryChip } from "@/components/deals/CategoryChip";
 import { CommuneChip } from "@/components/deals/CommuneChip";
-import { DealImagePlaceholder } from "@/components/deals/DealImagePlaceholder";
 import { ListingFavoriteButton } from "./ListingFavoriteButton";
 import { ListingTypeChip } from "./ListingTypeChip";
+import { ListingCardGallery } from "./ListingCardGallery";
 
 export type { ListingCardData };
 
@@ -57,29 +56,16 @@ export function ListingCard({
         className,
       )}
     >
-      <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg sm:h-28 sm:w-28">
-        <Link
+      <div className="group/gallery relative h-24 w-24 shrink-0 overflow-hidden rounded-lg sm:h-28 sm:w-28">
+        <ListingCardGallery
           href={`/annonces/${listing.slug}`}
-          className="block h-full w-full active:scale-[0.99]"
-        >
-          {listing.coverImageUrl ? (
-            <Image
-              src={listing.coverImageUrl}
-              alt={listing.title}
-              fill
-              sizes="(max-width: 640px) 96px, 112px"
-              className="object-cover"
-              unoptimized
-            />
-          ) : (
-            <DealImagePlaceholder
-              emoji={listing.category.icon ?? null}
-              label={listing.title}
-              className="h-full w-full"
-            />
-          )}
-        </Link>
-        <div className="absolute right-1 top-1">
+          photos={listing.images}
+          coverImageUrl={listing.coverImageUrl}
+          title={listing.title}
+          categoryIcon={listing.category.icon ?? null}
+          sizes="(max-width: 640px) 96px, 112px"
+        />
+        <div className="absolute right-1 top-1 z-20">
           <ListingFavoriteButton
             listingId={listing.id}
             initialFavorited={isFavorited}
@@ -89,14 +75,14 @@ export function ListingCard({
           />
         </div>
         {listing.isUrgent && (
-          <span className="absolute left-1 top-1 inline-flex items-center gap-0.5 rounded-full bg-hot/90 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white shadow">
+          <span className="pointer-events-none absolute left-1 top-1 z-20 inline-flex items-center gap-0.5 rounded-full bg-hot/90 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white shadow">
             <Flame className="h-2.5 w-2.5" aria-hidden />
             Urgent
           </span>
         )}
         {photoCount > 1 && (
           <span
-            className="pointer-events-none absolute bottom-1 left-1 inline-flex items-center gap-0.5 rounded-full bg-black/65 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow backdrop-blur tabular-nums"
+            className="pointer-events-none absolute bottom-1 left-1 z-20 inline-flex items-center gap-0.5 rounded-full bg-black/65 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow backdrop-blur tabular-nums"
             aria-label={`${photoCount} photos`}
           >
             <Images className="h-3 w-3" aria-hidden />
