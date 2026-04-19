@@ -23,10 +23,11 @@ export const metadata: Metadata = {
 };
 
 type Props = {
-  searchParams: { error?: string };
+  searchParams: Promise<{ error?: string }>;
 };
 
-export default async function ProfilEditPage({ searchParams }: Props) {
+export default async function ProfilEditPage(props: Props) {
+  const searchParams = await props.searchParams;
   const user = await requireUser("/profil/edit");
 
   return (

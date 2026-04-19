@@ -15,12 +15,13 @@ export const metadata: Metadata = {
   description: "Encore une étape avant de plonger dans les bons plans.",
 };
 
-export default async function CompleteProfilePage({
-  searchParams,
-}: {
-  searchParams: { error?: string };
-}) {
-  const supabase = createSupabaseServerClient();
+export default async function CompleteProfilePage(
+  props: {
+    searchParams: Promise<{ error?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

@@ -40,11 +40,12 @@ const SELECTABLE_ROLES: UserRole[] = [
   UserRole.ADMIN,
 ];
 
-export default async function AdminRolesPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
+export default async function AdminRolesPage(
+  props: {
+    searchParams: Promise<SearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const admin = await requireRole(
     UserRole.SUPER_ADMIN,
     "/admin/utilisateurs/roles",

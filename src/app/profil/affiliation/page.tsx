@@ -38,10 +38,11 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 type Props = {
-  searchParams: { success?: string; error?: string };
+  searchParams: Promise<{ success?: string; error?: string }>;
 };
 
-export default async function AffiliationPage({ searchParams }: Props) {
+export default async function AffiliationPage(props: Props) {
+  const searchParams = await props.searchParams;
   const user = await requireUser("/profil/affiliation");
 
   // Matérialise le profil d'affiliation à la première visite (génère le

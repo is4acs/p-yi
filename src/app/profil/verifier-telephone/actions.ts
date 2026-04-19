@@ -70,7 +70,7 @@ export async function verifyPhoneAction(formData: FormData): Promise<void> {
 
   const { phone, code } = parsed.data;
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.verifyOtp({
     phone,
     token: code,
@@ -129,7 +129,7 @@ export async function resendOtpAction(formData: FormData): Promise<void> {
   }
   const { phone } = parsed.data;
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.updateUser({ phone });
 
   if (error) {

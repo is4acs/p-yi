@@ -23,7 +23,7 @@ function formatRateLimitMessage(reset: number): string {
 
 export async function signInAction(formData: FormData) {
   // Rate limit par IP — protège contre le brute force.
-  const { success, reset } = await authLimiter.limit(getClientIp());
+  const { success, reset } = await authLimiter.limit(await getClientIp());
   if (!success) {
     redirectWithError("/connexion", formatRateLimitMessage(reset));
   }
@@ -41,7 +41,7 @@ export async function signInAction(formData: FormData) {
   }
 
   const { email, password } = parsed.data;
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
@@ -70,7 +70,7 @@ export async function signInAction(formData: FormData) {
 }
 
 export async function signUpAction(formData: FormData) {
-  const { success, reset } = await authLimiter.limit(getClientIp());
+  const { success, reset } = await authLimiter.limit(await getClientIp());
   if (!success) {
     redirectWithError("/connexion?mode=signup", formatRateLimitMessage(reset));
   }
@@ -99,7 +99,7 @@ export async function signUpAction(formData: FormData) {
     redirectWithError("/connexion?mode=signup", "Ce pseudo est déjà pris.");
   }
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
 
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -131,7 +131,7 @@ export async function signUpAction(formData: FormData) {
 }
 
 export async function signOutAction() {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   await supabase.auth.signOut();
   redirect("/");
 }

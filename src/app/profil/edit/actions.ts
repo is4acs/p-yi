@@ -120,7 +120,7 @@ export async function updateProfileAction(formData: FormData): Promise<void> {
   if (phoneChanged && data.phone) supabaseUpdates.phone = data.phone;
 
   if (Object.keys(supabaseUpdates).length > 0) {
-    const supabase = createSupabaseServerClient();
+    const supabase = await createSupabaseServerClient();
     const { error } = await supabase.auth.updateUser(supabaseUpdates);
     if (error) {
       console.error("[updateProfileAction] supabase updateUser failed", {

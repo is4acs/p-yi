@@ -16,7 +16,7 @@ const DEFAULT_CITY_SLUG = "cayenne";
  * Idempotent: calling it twice for the same auth user is safe (upsert).
  */
 export async function ensureUserProfile(): Promise<User | null> {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user: authUser },
   } = await supabase.auth.getUser();

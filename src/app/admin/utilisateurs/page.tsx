@@ -34,11 +34,12 @@ function parsePage(raw: string | undefined): number {
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : 1;
 }
 
-export default async function AdminUsersPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
+export default async function AdminUsersPage(
+  props: {
+    searchParams: Promise<SearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
   // MODERATOR minimum pour voir la liste. On affichera les actions de
   // rôle (promouvoir/rétrograder) seulement si super-admin.
   const admin = await requireRole(UserRole.MODERATOR, "/admin/utilisateurs");

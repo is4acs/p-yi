@@ -28,7 +28,7 @@ export async function attributeReferralOnSignup(
   refereeId: string,
 ): Promise<{ attributed: boolean; reason?: string }> {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const refCookie = cookieStore.get(AFFILIATE_COOKIE_NAME);
     if (!refCookie?.value) {
       return { attributed: false, reason: "no_cookie" };
@@ -65,7 +65,7 @@ export async function attributeReferralOnSignup(
 
     // Capture IP et User-Agent pour anti-fraude (IP hashée avec le code
     // comme sel, donc non corrélable entre parrains).
-    const headerList = headers();
+    const headerList = await headers();
     const rawIp =
       headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       headerList.get("x-real-ip") ||
@@ -116,14 +116,14 @@ export async function attributeReferralOnSignup(
  * éviter de conserver un cookie périmé.
  *
  * NOTE : on ne peut supprimer un cookie que depuis une server action ou
- * une route handler (contrainte Next.js 14). Cette fonction est un
- * helper ; l'appelant doit être dans un contexte où `cookies().delete`
- * est autorisé (sinon elle échouera silencieusement — acceptable, le
- * cookie expirera de toute façon après 30 j).
+ * une route handler. Cette fonction est un helper ; l'appelant doit être
+ * dans un contexte où `cookies().delete` est autorisé (sinon elle
+ * échouera silencieusement — acceptable, le cookie expirera de toute
+ * façon après 30 j).
  */
-export function clearReferralCookie(): void {
+export async function clearReferralCookie(): Promise<void> {
   try {
-    cookies().delete(AFFILIATE_COOKIE_NAME);
+    (await cookies()).delete(AFFILIATE_COOKIE_NAME);
   } catch {
     // Context doesn't allow cookie mutation — ignored.
   }

@@ -12,7 +12,7 @@ modifier le code sans avoir à tout re-deviner.
 
 | Couche     | Techno                    | Pourquoi                                            |
 | ---------- | ------------------------- | --------------------------------------------------- |
-| Framework  | Next.js 14 (App Router)   | RSC natif, file-based routing, bon SSR/ISR          |
+| Framework  | Next.js 15 (App Router)   | RSC natif, file-based routing, bon SSR/ISR          |
 | Langage    | TypeScript strict         | Catch au build, contrat clair entre fichiers        |
 | Style      | Tailwind + tokens Péyi    | Pas de CSS-in-JS, design cohérent via tokens        |
 | UI         | Radix + Lucide + Sonner   | Primitives accessibles sans dépendance lourde       |

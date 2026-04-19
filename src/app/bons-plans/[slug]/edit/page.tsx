@@ -14,13 +14,14 @@ export const metadata: Metadata = {
   title: "Modifier le bon plan",
 };
 
-export default async function EditDealPage({
-  params,
-  searchParams,
-}: {
-  params: { slug: string };
-  searchParams: { error?: string };
-}) {
+export default async function EditDealPage(
+  props: {
+    params: Promise<{ slug: string }>;
+    searchParams: Promise<{ error?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const user = await requireUser(`/bons-plans/${params.slug}/edit`);
 
   const deal = await prisma.deal.findUnique({
@@ -93,7 +94,6 @@ export default async function EditDealPage({
         <ArrowLeft className="h-4 w-4" aria-hidden />
         Retour au bon plan
       </Link>
-
       <div className="mt-4">
         <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
           Modifier le bon plan
@@ -102,7 +102,6 @@ export default async function EditDealPage({
           Mets à jour les détails de ton offre.
         </p>
       </div>
-
       {searchParams.error && (
         <div
           role="alert"
@@ -111,7 +110,6 @@ export default async function EditDealPage({
           {searchParams.error}
         </div>
       )}
-
       <div className="mt-6">
         <DealPosterLayout
           categories={categories}

@@ -35,11 +35,12 @@ function parsePage(raw: string | undefined): number {
  * La recherche `q` filtre sur le contenu (case-insensitive) ou sur le
  * username de l'expéditeur — utile pour croiser avec un signalement.
  */
-export default async function AdminMessagesPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
+export default async function AdminMessagesPage(
+  props: {
+    searchParams: Promise<SearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const q = searchParams.q?.trim() || "";
   const page = parsePage(searchParams.page);
   const skip = (page - 1) * PAGE_SIZE;

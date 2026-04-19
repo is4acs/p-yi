@@ -33,10 +33,11 @@ export const metadata: Metadata = {
 };
 
 type Props = {
-  searchParams: { success?: string; error?: string };
+  searchParams: Promise<{ success?: string; error?: string }>;
 };
 
-export default async function ProfilPage({ searchParams }: Props) {
+export default async function ProfilPage(props: Props) {
+  const searchParams = await props.searchParams;
   const user = await requireUser("/profil");
   const [
     city,

@@ -12,7 +12,7 @@ export async function removeDealImage(publicUrl: string): Promise<void> {
   if (idx === -1) return;
 
   const path = publicUrl.slice(idx + marker.length);
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   await supabase.storage.from(DEAL_BUCKET).remove([path]);
 }
 
@@ -22,7 +22,7 @@ export async function removeDealImage(publicUrl: string): Promise<void> {
  * Best-effort, ne throw jamais — voir la jumelle dans listing-images.
  */
 export async function removeAllDealImagesForUser(userId: string): Promise<void> {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   try {
     const { data, error } = await supabase.storage
       .from(DEAL_BUCKET)

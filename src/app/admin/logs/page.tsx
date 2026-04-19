@@ -63,11 +63,12 @@ const ACTION_COLORS: Record<AdminActionType, string> = {
   DISMISS_REPORT: "text-muted-foreground bg-muted border-border",
 };
 
-export default async function AdminLogsPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
+export default async function AdminLogsPage(
+  props: {
+    searchParams: Promise<SearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
   // Réservé aux super-admins : les logs sont sensibles (listent qui
   // modère quoi), on ne veut pas qu'un modérateur débutant puisse
   // auditer ses pairs.

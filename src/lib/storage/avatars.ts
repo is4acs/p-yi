@@ -36,7 +36,7 @@ export async function uploadAvatarImage(
     throw new Error("Image trop lourde (2 Mo maximum).");
   }
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const ext = extFor(file.type as AllowedMime);
   const path = `${userId}/${Date.now()}-${randomBytes(4).toString("hex")}.${ext}`;
 
@@ -67,6 +67,6 @@ export async function removeAvatarImage(publicUrl: string): Promise<void> {
   if (idx === -1) return;
 
   const path = publicUrl.slice(idx + marker.length);
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   await supabase.storage.from(AVATAR_BUCKET).remove([path]);
 }

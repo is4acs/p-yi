@@ -94,11 +94,12 @@ async function getListing(slug: string) {
   });
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { slug: string };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ slug: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const listing = await prisma.listing.findFirst({
     where: { slug: params.slug, status: ListingStatus.PUBLISHED },
     select: {
@@ -147,11 +148,12 @@ export async function generateMetadata({
   };
 }
 
-export default async function ListingDetailPage({
-  params,
-}: {
-  params: { slug: string };
-}) {
+export default async function ListingDetailPage(
+  props: {
+    params: Promise<{ slug: string }>;
+  }
+) {
+  const params = await props.params;
   const [listing, currentUser] = await Promise.all([
     getListing(params.slug),
     getCurrentUser(),

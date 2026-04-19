@@ -21,10 +21,8 @@ import { recordAffiliateClick } from "@/lib/affiliate/track";
  */
 export const dynamic = "force-dynamic";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { code: string } },
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ code: string }> }) {
+  const params = await props.params;
   const code = params.code;
   const rawTo = request.nextUrl.searchParams.get("to");
   const landing =

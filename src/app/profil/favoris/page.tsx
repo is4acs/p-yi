@@ -31,11 +31,12 @@ function parseTab(input: string | undefined): Tab {
   return input === "listings" ? "listings" : "deals";
 }
 
-export default async function FavorisPage({
-  searchParams,
-}: {
-  searchParams: { tab?: string };
-}) {
+export default async function FavorisPage(
+  props: {
+    searchParams: Promise<{ tab?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const user = await requireUser("/profil/favoris");
   const tab = parseTab(searchParams.tab);
 

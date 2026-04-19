@@ -12,7 +12,7 @@ Partage, vote, profite — tout ça près de chez toi.
 
 | Couche       | Techno                                              |
 | ------------ | --------------------------------------------------- |
-| Frontend     | Next.js 14 (App Router, RSC), React 18, TypeScript  |
+| Frontend     | Next.js 15 (App Router, RSC), React 18, TypeScript  |
 | Styling      | Tailwind CSS + [design system Péyi v1.0](./docs/design-system.md) (tokens orange/vert + Nunito) |
 | UI           | Radix UI (dialogs, labels), icônes Péyi + Lucide, Sonner |
 | Backend      | Next.js server actions + API routes                 |

@@ -37,7 +37,7 @@ export async function recordAffiliateClick(
       return { tracked: false, reason: "unknown_or_banned" };
     }
 
-    const headerList = headers();
+    const headerList = await headers();
     const rawIp =
       headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       headerList.get("x-real-ip") ||

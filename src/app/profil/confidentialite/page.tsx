@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 type Props = {
-  searchParams?: { success?: string; error?: string };
+  searchParams?: Promise<{ success?: string; error?: string }>;
 };
 
 /**
@@ -38,7 +38,8 @@ type Props = {
  * un réseau semi-public (les annonces et bons plans sont publics par
  * nature). On ajoutera ça plus tard si Isaac le demande.
  */
-export default async function ConfidentialitePage({ searchParams }: Props) {
+export default async function ConfidentialitePage(props: Props) {
+  const searchParams = await props.searchParams;
   const user = await requireUser("/profil/confidentialite");
 
   // Aperçu rapide du volume de données de l'utilisateur — utile pour

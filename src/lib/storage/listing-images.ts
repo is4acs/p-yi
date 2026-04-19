@@ -12,7 +12,7 @@ export async function removeListingImage(publicUrl: string): Promise<void> {
   if (idx === -1) return;
 
   const path = publicUrl.slice(idx + marker.length);
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   await supabase.storage.from(LISTING_BUCKET).remove([path]);
 }
 
@@ -39,7 +39,7 @@ export async function removeListingImages(publicUrls: string[]): Promise<void> {
  * improbable (cap produit: ~50 photos par annonce × quelques annonces).
  */
 export async function removeAllListingImagesForUser(userId: string): Promise<void> {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   try {
     const { data, error } = await supabase.storage
       .from(LISTING_BUCKET)
