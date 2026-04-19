@@ -114,6 +114,17 @@ export const reportLimiter = makeLimiter("report", 5, "1 h");
 export const exportLimiter = makeLimiter("export", 1, "24 h");
 
 /**
+ * Endpoints télémetrie publics non authentifiés (`/api/client-errors`,
+ * `/api/metrics`). Clé = IP. 60 events par minute : largement
+ * suffisant pour un user normal qui crash quelques fois et envoie ses
+ * Web Vitals à chaque navigation, mais bloque un attaquant qui tente
+ * de gonfler les logs ou la facture observabilité. Ces endpoints
+ * tournent en `runtime: nodejs` derrière Vercel mais Vercel ne plafonne
+ * pas par IP — d'où ce limiter applicatif.
+ */
+export const telemetryLimiter = makeLimiter("telemetry", 60, "1 m");
+
+/**
  * Extrait l'IP cliente depuis les en-têtes de la request courante.
  *
  * Ordre de préférence :

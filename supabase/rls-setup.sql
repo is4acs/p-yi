@@ -4,6 +4,23 @@
 -- Re-exécutable en toute sécurité (idempotent).
 -- ============================================================================
 --
+-- ⚠️ EN CAS DE TIMEOUT DU SQL EDITOR ⚠️
+--   Supabase impose un statement timeout court (~60 s). L'`ALTER TABLE ...
+--   ENABLE ROW LEVEL SECURITY` requiert un lock ACCESS EXCLUSIVE ; si des
+--   transactions Prisma sont en cours au même instant, la commande attend
+--   le lock et peut dépasser le timeout. Deux stratégies :
+--
+--   1. RECOMMANDÉ — exécute les 5 sections (1 à 5) **une par une** via
+--      copy-paste séparés. Chaque section est courte, elles ne bloquent
+--      pas la précédente, et tu vois laquelle pose problème.
+--
+--   2. Coupe le trafic applicatif pendant 30 secondes (mets Vercel en
+--      maintenance ou déconnecte temporairement le pooler Supabase)
+--      puis ré-exécute le fichier complet d'une traite.
+--
+--   Le `SET LOCAL lock_timeout` ci-dessous fait fail-fast à 5 s au lieu
+--   de 60 s — tu sauras tout de suite quelle table est verrouillée.
+--
 -- Contexte
 --   Toutes les lectures/écritures côté serveur transitent par Prisma via
 --   DATABASE_URL. En Supabase hébergé ce DSN utilise le rôle `postgres`, qui
@@ -37,8 +54,10 @@
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
--- 1) Tables de contenu utilisateur — SELECT restreint
+-- BLOC 1) Tables de contenu utilisateur — SELECT restreint
 -- ----------------------------------------------------------------------------
+
+SET LOCAL lock_timeout = '5s';
 
 ALTER TABLE public.deals             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.listings          ENABLE ROW LEVEL SECURITY;
@@ -86,10 +105,12 @@ TO anon, authenticated
 USING (true);
 
 -- ----------------------------------------------------------------------------
--- 2) Tables de référence publique — SELECT ouvert
+-- BLOC 2) Tables de référence publique — SELECT ouvert
 -- ----------------------------------------------------------------------------
 -- Ces tables ne contiennent aucune donnée personnelle et sont déjà
 -- affichées publiquement (listes déroulantes, filtres, pages catégorie…).
+
+SET LOCAL lock_timeout = '5s';
 
 ALTER TABLE public.cities      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.categories  ENABLE ROW LEVEL SECURITY;
@@ -121,16 +142,13 @@ DROP POLICY IF EXISTS "pro_plans_select_active" ON public.pro_plans;
 CREATE POLICY "pro_plans_select_active" ON public.pro_plans FOR SELECT TO anon, authenticated USING ("isActive" = true);
 
 -- ----------------------------------------------------------------------------
--- 3) Users — SELECT ultra restreint (champs publics seulement)
+-- BLOC 3) Users — deny-all
 -- ----------------------------------------------------------------------------
--- Les utilisateurs sont affichés publiquement (auteur d'un deal, profil
--- public, classement karma). On autorise la SELECT sur la table mais on
--- ne l'utilise pas côté client — les server actions Prisma sélectionnent
--- elles-mêmes uniquement les champs appropriés. Les bannis et
--- shadow-bannés restent visibles (sinon on casse les threads).
 -- NB : la colonne `email` reste présente dans la table mais les requêtes
 -- passent par Prisma côté serveur — aucun client anon/auth n'a besoin
 -- d'un SELECT direct. On ferme donc totalement.
+
+SET LOCAL lock_timeout = '5s';
 
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 -- Aucune policy SELECT → deny all pour anon/authenticated.
@@ -139,11 +157,13 @@ ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 -- limité à id/username/avatarUrl/karma/level.)
 
 -- ----------------------------------------------------------------------------
--- 4) Tables strictement privées — RLS ON, aucune policy = deny all
+-- BLOC 4) Tables strictement privées — RLS ON, aucune policy = deny all
 -- ----------------------------------------------------------------------------
 -- Ces tables ne DOIVENT jamais être exposées à un client anon/auth.
 -- L'accès se fait uniquement via Prisma après une vérification
 -- `requireActiveUser()` côté serveur.
+
+SET LOCAL lock_timeout = '5s';
 
 ALTER TABLE public.sessions              ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.messages              ENABLE ROW LEVEL SECURITY;
@@ -165,7 +185,7 @@ ALTER TABLE public.affiliate_clicks      ENABLE ROW LEVEL SECURITY;
 -- rôle `postgres` qui bypasse RLS.)
 
 -- ----------------------------------------------------------------------------
--- 5) Tables de jointure many-to-many
+-- BLOC 5) Tables de jointure many-to-many
 -- ----------------------------------------------------------------------------
 -- Prisma nomme ses tables implicites `_DealTags`, `_ListingTags`, `_BadgeToUser`.
 -- On les trouve avec :
@@ -173,6 +193,8 @@ ALTER TABLE public.affiliate_clicks      ENABLE ROW LEVEL SECURITY;
 -- On active RLS dessus pour le principe, sans policy (écriture uniquement
 -- via Prisma). Si le nom diffère dans ton déploiement (Prisma peut générer
 -- une variante), adapte.
+
+SET LOCAL lock_timeout = '5s';
 
 DO $$
 DECLARE

@@ -1,4 +1,5 @@
 import { logger } from "@/lib/log";
+import { getClientIp, telemetryLimiter } from "@/lib/rate-limit";
 
 /**
  * Endpoint de collecte des erreurs client-side remontées par les
@@ -14,8 +15,11 @@ import { logger } from "@/lib/log";
  *   - Pas de DB : le log stdout suffit (même rationale que
  *     `/api/metrics`). L'observability pipeline gère la collecte.
  *   - Pas d'auth : les erreurs client sont anonymes par nature.
- *     Le risque de flood existe mais Vercel coupe à 1000 reqs/s
- *     par défaut sur un déploiement Hobby, largement suffisant.
+ *   - Rate-limit applicatif (`telemetryLimiter`, 60 req/min/IP) en
+ *     plus du cap Vercel (~1000 req/s global), pour qu'un attaquant
+ *     ne puisse pas gonfler la facture observabilité ou polluer les
+ *     logs. On renvoie 204 même quand on bucket-drop pour ne pas
+ *     révéler la limite et garder le contrat fire-and-forget.
  *
  * Champs attendus (tous optionnels — on prend ce qui arrive) :
  *   - `message` : Error.message
@@ -35,6 +39,13 @@ type ClientErrorBody = {
 
 export async function POST(req: Request) {
   try {
+    const ip = await getClientIp();
+    const { success } = await telemetryLimiter.limit(ip);
+    if (!success) {
+      // On drop silencieusement (toujours 204) pour rester fire-and-forget.
+      return new Response(null, { status: 204 });
+    }
+
     const body = (await req.json()) as ClientErrorBody;
     logger.error("client-error", {
       message: body.message ?? "unknown",

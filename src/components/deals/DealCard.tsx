@@ -160,7 +160,7 @@ export function DealCard({
           <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
             <div className="min-w-0 space-y-1.5">
               <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                {sellerName ? (
+                {sellerLogoUrl && sellerName ? (
                   <StoreLogo
                     name={sellerName}
                     logoUrl={sellerLogoUrl}
