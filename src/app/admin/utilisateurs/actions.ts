@@ -64,6 +64,16 @@ export async function adminBanUserAction(formData: FormData) {
     },
   });
 
+  // Révoque immédiatement toutes les sessions actives. Sans ça, un user
+  // banni resterait techniquement connecté tant que son cookie Supabase
+  // n'est pas expiré — `requireActiveUser` finirait par le dégager
+  // (rebond vers /banni à la prochaine requête server action), mais
+  // entre-temps il peut spammer des endpoints côté client. Deleting ses
+  // rows `sessions` coupe ça net.
+  const revoked = await prisma.session.deleteMany({
+    where: { userId: target.id },
+  });
+
   await logAdminAction({
     adminId: admin.id,
     action: AdminActionType.BAN_USER,
@@ -74,6 +84,7 @@ export async function adminBanUserAction(formData: FormData) {
       username: target.username,
       days: days || null,
       bannedUntil: bannedUntil?.toISOString() ?? null,
+      revokedSessions: revoked.count,
     },
   });
 

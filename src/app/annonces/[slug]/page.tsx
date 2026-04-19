@@ -39,6 +39,8 @@ import { ListingTypeChip } from "@/components/listings/ListingTypeChip";
 import { ListingAuthorControls } from "@/components/listings/ListingAuthorControls";
 import { ContactSellerForm } from "@/components/messages/ContactSellerForm";
 import { ReportDialog } from "@/components/reports/ReportDialog";
+import { ShareRow } from "@/components/shared/ShareRow";
+import { getSiteUrl } from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
 
@@ -335,6 +337,14 @@ export default async function ListingDetailPage(
           )}
         </div>
       </header>
+
+      {/* Partage */}
+      <section className="mt-4 px-4 sm:px-0">
+        <ShareRow
+          url={`${getSiteUrl()}/annonces/${listing.slug}`}
+          text={`${listing.title}${listing.price ? ` — ${listing.price}€` : ""}`}
+        />
+      </section>
 
       {/* Contact */}
       {!isAuthor && (
