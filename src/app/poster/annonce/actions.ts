@@ -27,6 +27,7 @@ import {
   parseOwnedStorageUrl,
 } from "@/lib/storage/signed-upload";
 import { writeLimiter } from "@/lib/rate-limit";
+import { maybeQualifyReferee } from "@/lib/affiliate/qualify";
 
 // Les petites annonces donnent un petit bonus de karma (3 pts) directement
 // en DB, sans passer par l'historique KarmaHistory. L'historique + les
@@ -299,6 +300,10 @@ export async function createListingAction(formData: FormData): Promise<void> {
     where: { id: user.id },
     data: { karma: { increment: KARMA_POST_LISTING } },
   });
+
+  // Fait avancer la qualification si l'auteur est filleul d'un parrain.
+  // No-op sinon. Ne casse jamais la création de l'annonce.
+  await maybeQualifyReferee(user.id);
 
   revalidatePath("/annonces");
   redirect(`/annonces/${slug}`);

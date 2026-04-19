@@ -16,6 +16,7 @@ import {
 import { writeLimiter } from "@/lib/rate-limit";
 import { awardKarma } from "@/lib/gamification/karma";
 import { checkAndAwardBadges } from "@/lib/gamification/badges";
+import { maybeQualifyReferee } from "@/lib/affiliate/qualify";
 
 function redirectWithError(path: string, message: string): never {
   redirect(`${path}?error=${encodeURIComponent(message)}`);
@@ -163,6 +164,11 @@ export async function createDealAction(formData: FormData): Promise<void> {
     dealId: deal.id,
   });
   await checkAndAwardBadges(user.id);
+
+  // Si l'auteur est filleul d'un parrain, on (re)calcule sa qualification :
+  // dès qu'il atteint 5 bons plans + 5 annonces publiés, son parrain touche
+  // la récompense du palier correspondant. No-op sinon.
+  await maybeQualifyReferee(user.id);
 
   revalidatePath("/bons-plans");
   redirect(`/bons-plans/${slug}`);

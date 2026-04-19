@@ -72,6 +72,12 @@ model User {
   notifications    Notification[]
   sessions         Session[]
   karmaHistory     KarmaHistory[]
+
+  // Affiliation
+  affiliateProfile AffiliateProfile?
+  referralsMade    Referral[]        @relation("ReferrerReferrals")
+  referralReceived Referral?         @relation("RefereeReferral")
+  affiliatePayouts AffiliatePayout[]
   
   // Timestamps
   createdAt        DateTime  @default(now())
@@ -936,4 +942,159 @@ enum NotificationType {
   REPORT_RESOLVED          // ton signalement a été traité
   SYSTEM                   // message système
   PROMOTIONAL              // promo Péyi
+  REFERRAL_QUALIFIED       // un filleul vient de se qualifier
+  AFFILIATE_TIER_REACHED   // un palier d'affiliation est atteint
+  AFFILIATE_PAYOUT         // un paiement d'affiliation a été traité
+}
+
+// =============================================================================
+// AFFILIATION / PARRAINAGE
+// =============================================================================
+// Système d'affiliation progressif. Chaque utilisateur peut créer son profil
+// d'affiliation (code unique) et inviter d'autres utilisateurs via un lien
+// `?ref=<code>`. Un filleul est "qualifié" dès qu'il publie 5 bons plans +
+// 5 annonces (status=PUBLISHED) dans les 90 jours suivant son inscription.
+// Chaque palier atteint (10 / 25 / 50 / 100 / 250 filleuls qualifiés) crédite
+// le parrain d'une récompense (voir `AFFILIATE_TIER_REWARDS` dans
+// `src/lib/affiliate/tiers.ts`). Les paiements sont effectués manuellement au
+// démarrage via export CSV admin.
+
+model AffiliateProfile {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Code public (lien d'invitation : peyi.app/?ref=<code>)
+  code            String   @unique
+
+  // Compteurs dénormalisés (mis à jour à chaque event)
+  clicksCount     Int      @default(0)
+  signupsCount    Int      @default(0)  // inscrits via le lien
+  qualifiedCount  Int      @default(0)  // parmi les inscrits, ceux qualifiés
+  tierReached     Int      @default(0)  // dernier palier atteint (0/10/25/50/100/250)
+
+  // Comptabilité (tous montants en centimes pour éviter les erreurs décimales)
+  totalEarnedCents    Int  @default(0)  // cumulé sur la vie du compte
+  pendingPayoutCents  Int  @default(0)  // dû, pas encore payé
+  paidOutCents        Int  @default(0)  // déjà versé
+
+  // Cap mensuel anti-abus (500 € = 50000 centimes par défaut)
+  monthlyCapCents     Int  @default(50000)
+
+  // Bonus "1er filleul qualifié" one-shot
+  firstBonusAwarded   Boolean @default(false)
+
+  // Statut
+  isBanned            Boolean @default(false) // fraude détectée → désactive les gains
+  banReason           String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([code])
+  @@index([qualifiedCount(sort: Desc)])
+  @@map("affiliate_profiles")
+}
+
+model Referral {
+  id            String          @id @default(uuid())
+
+  referrerId    String
+  referrer      User            @relation("ReferrerReferrals", fields: [referrerId], references: [id], onDelete: Cascade)
+
+  // Un utilisateur ne peut avoir qu'un seul parrain (unique)
+  refereeId     String          @unique
+  referee       User            @relation("RefereeReferral", fields: [refereeId], references: [id], onDelete: Cascade)
+
+  // Code utilisé au moment du clic/signup (snapshot, au cas où le parrain
+  // changerait son code plus tard)
+  code          String
+
+  status        ReferralStatus  @default(PENDING)
+
+  // Snapshot des compteurs au moment de la qualification (anti-fraude :
+  // si le filleul supprime des contenus > 30 j après qualification, on
+  // conserve la qualification acquise).
+  dealsPublished    Int         @default(0)
+  listingsPublished Int         @default(0)
+
+  // Dates clés
+  qualifiedAt   DateTime?
+  expiresAt     DateTime        // signupDate + 90 jours
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  // Anti-fraude : infos captées à l'inscription
+  signupIpHash  String?
+  signupUserAgent String?
+
+  @@index([referrerId, status])
+  @@index([code])
+  @@index([expiresAt, status])
+  @@map("referrals")
+}
+
+enum ReferralStatus {
+  PENDING       // inscrit, pas encore qualifié, dans le délai de 90 j
+  QUALIFIED     // a publié ≥5 bons plans + ≥5 annonces
+  EXPIRED       // 90 jours écoulés sans qualification
+  REJECTED      // annulé par l'admin (fraude, contenus supprimés dans les 30 j)
+}
+
+model AffiliatePayout {
+  id          String              @id @default(uuid())
+
+  userId      String
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  amountCents Int
+  currency    String              @default("EUR")
+
+  status      AffiliatePayoutStatus @default(PENDING)
+  method      String?             // "BANK_TRANSFER", "PAYPAL", etc.
+  reference   String?             // n° virement, référence Paypal
+  notes       String?             @db.Text
+
+  // Lien vers le palier qui a déclenché ce payout
+  tierReached Int?                // 10, 25, 50, 100, 250
+
+  requestedAt DateTime            @default(now())
+  paidAt      DateTime?
+  rejectedAt  DateTime?
+  rejectionReason String?
+
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([userId, status])
+  @@index([status, requestedAt])
+  @@map("affiliate_payouts")
+}
+
+enum AffiliatePayoutStatus {
+  PENDING     // dû, en attente de virement
+  PROCESSING  // en cours de traitement admin
+  PAID        // versé
+  REJECTED    // rejeté (fraude / compte fermé)
+}
+
+model AffiliateClick {
+  id          String   @id @default(uuid())
+
+  code        String   // code du parrain (pas de FK pour garder trace même si le profil est supprimé)
+
+  // Tracking anonyme
+  ipHash      String?  // SHA-256 de l'IP (RGPD)
+  userAgent   String?
+  referrer    String?  // header Referer (d'où vient le clic)
+  landingPath String?  // page d'atterrissage
+
+  // Si le clic a mené à une inscription, on lie la Referral ici
+  convertedToSignup Boolean @default(false)
+
+  createdAt   DateTime @default(now())
+
+  @@index([code, createdAt])
+  @@index([ipHash, createdAt])
+  @@map("affiliate_clicks")
 }

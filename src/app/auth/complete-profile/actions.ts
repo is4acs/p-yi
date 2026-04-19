@@ -6,6 +6,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { prisma } from "@/lib/prisma";
 import { completeProfileSchema } from "@/lib/validation/auth";
+import { attributeReferralOnSignup } from "@/lib/affiliate/attribute";
 
 const DEFAULT_CITY_SLUG = "cayenne";
 
@@ -51,7 +52,7 @@ export async function completeProfileAction(formData: FormData) {
     select: { id: true },
   });
 
-  await prisma.user.upsert({
+  const upserted = await prisma.user.upsert({
     where: { id: authUser.id },
     update: { username },
     create: {
@@ -70,6 +71,10 @@ export async function completeProfileAction(formData: FormData) {
   await admin.auth.admin.updateUserById(authUser.id, {
     user_metadata: { ...authUser.user_metadata, username },
   });
+
+  // Attribue le parrainage si un cookie `peyi_ref` est présent.
+  // No-op silencieux sinon ; n'interrompt jamais le flow de signup.
+  await attributeReferralOnSignup(upserted.id);
 
   redirect("/bons-plans");
 }
