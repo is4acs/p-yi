@@ -14,6 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { createReportAction } from "./actions";
 
 type TargetKind = "listing" | "deal" | "comment" | "user";
@@ -192,13 +193,13 @@ export function ReportDialog({
               >
                 Annuler
               </Button>
-              <Button
-                type="submit"
-                disabled={isPending}
+              <SubmitButton
+                pending={isPending}
+                pendingLabel="Envoi…"
                 className="bg-red-600 hover:bg-red-700"
               >
-                {isPending ? "Envoi…" : "Signaler"}
-              </Button>
+                Signaler
+              </SubmitButton>
             </DialogFooter>
           </form>
         )}

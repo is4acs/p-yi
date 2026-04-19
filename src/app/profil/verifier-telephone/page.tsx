@@ -4,9 +4,9 @@ import type { Metadata } from "next";
 import { ArrowLeft, RefreshCcw, ShieldCheck } from "lucide-react";
 
 import { requireUser } from "@/lib/auth/current-user";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 import { resendOtpAction, verifyPhoneAction } from "./actions";
 
@@ -95,22 +95,22 @@ export default async function VerifyPhonePage({ searchParams }: Props) {
           </p>
         </div>
 
-        <Button type="submit" size="lg" className="w-full">
+        <SubmitButton size="lg" className="w-full" pendingLabel="Vérification…">
           Vérifier
-        </Button>
+        </SubmitButton>
       </form>
 
       <form action={resendOtpAction} className="mt-4">
         <input type="hidden" name="phone" value={phone} />
-        <Button
-          type="submit"
+        <SubmitButton
           variant="outline"
           size="sm"
+          pendingLabel="Envoi du code…"
           className="w-full gap-2 text-muted-foreground"
         >
           <RefreshCcw className="h-3.5 w-3.5" aria-hidden />
           Renvoyer le code
-        </Button>
+        </SubmitButton>
       </form>
 
       <p className="mt-6 text-center text-xs text-muted-foreground">

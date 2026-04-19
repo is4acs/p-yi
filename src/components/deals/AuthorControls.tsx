@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { deleteDealAction } from "@/app/poster/actions";
 
 type Props = {
@@ -29,15 +30,15 @@ export function AuthorControls({ dealId, editHref }: Props) {
         }}
       >
         <input type="hidden" name="dealId" value={dealId} />
-        <Button
-          type="submit"
+        <SubmitButton
           variant="outline"
           size="sm"
+          pendingLabel="Suppression…"
           className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
         >
           <Trash2 className="h-4 w-4" aria-hidden />
           Supprimer
-        </Button>
+        </SubmitButton>
       </form>
     </div>
   );

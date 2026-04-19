@@ -4,6 +4,7 @@ import { useState } from "react";
 import { MessageSquare, Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { sendMessageAction } from "@/app/messages/actions";
 
 type Props = {
@@ -83,10 +84,10 @@ export function ContactSellerForm({ recipientUsername, listingSlug }: Props) {
           >
             Annuler
           </Button>
-          <Button type="submit" size="sm" disabled={!canSubmit}>
+          <SubmitButton size="sm" disabled={!canSubmit} pendingLabel="Envoi…">
             <Send className="h-3.5 w-3.5" aria-hidden />
             Envoyer
-          </Button>
+          </SubmitButton>
         </div>
       </div>
     </form>

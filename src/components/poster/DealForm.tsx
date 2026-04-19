@@ -3,9 +3,9 @@
 import { useMemo, useState } from "react";
 import { Send } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 import { ImagePicker } from "./ImagePicker";
 
@@ -205,10 +205,10 @@ export function DealForm({
         />
       </div>
 
-      <Button type="submit" size="lg" className="w-full">
+      <SubmitButton size="lg" className="w-full" pendingLabel="Publication…">
         <Send className="h-4 w-4" aria-hidden />
         {submitLabel}
-      </Button>
+      </SubmitButton>
     </form>
   );
 }

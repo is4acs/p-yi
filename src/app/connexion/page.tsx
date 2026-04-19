@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import { ArrowLeft, CheckCircle2, Mail } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 import { signInAction, signUpAction } from "./actions";
 import { GoogleSignInButton } from "./google-sign-in-button";
@@ -169,7 +169,11 @@ export default function ConnexionPage({
           />
         </div>
 
-        <Button type="submit" size="lg" className="w-full">
+        <SubmitButton
+          size="lg"
+          className="w-full"
+          pendingLabel={isSignup ? "Création…" : "Connexion…"}
+        >
           {isSignup ? (
             <>
               <CheckCircle2 className="h-4 w-4" aria-hidden />
@@ -178,7 +182,7 @@ export default function ConnexionPage({
           ) : (
             "Se connecter"
           )}
-        </Button>
+        </SubmitButton>
       </form>
 
       <p className="mt-6 text-center text-xs text-muted-foreground">

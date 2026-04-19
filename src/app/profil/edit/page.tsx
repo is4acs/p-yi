@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth/current-user";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { UserAvatar } from "@/components/layout/UserAvatar";
 
 import {
@@ -92,23 +93,23 @@ export default async function ProfilEditPage({ searchParams }: Props) {
                 required
                 className="flex-1"
               />
-              <Button type="submit" size="sm">
+              <SubmitButton size="sm" pendingLabel="Envoi…">
                 <Upload className="h-3.5 w-3.5" aria-hidden />
                 Envoyer
-              </Button>
+              </SubmitButton>
             </form>
 
             {user.avatarUrl && (
               <form action={removeAvatarAction}>
-                <Button
-                  type="submit"
+                <SubmitButton
                   variant="outline"
                   size="sm"
+                  pendingLabel="Suppression…"
                   className="w-full border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive sm:w-auto"
                 >
                   <Trash2 className="h-3.5 w-3.5" aria-hidden />
                   Retirer la photo
-                </Button>
+                </SubmitButton>
               </form>
             )}
           </div>
@@ -193,10 +194,10 @@ export default async function ProfilEditPage({ searchParams }: Props) {
         </div>
 
         <div className="flex items-center gap-2 pt-2">
-          <Button type="submit" size="lg" className="flex-1">
+          <SubmitButton size="lg" className="flex-1" pendingLabel="Enregistrement…">
             <Save className="h-4 w-4" aria-hidden />
             Enregistrer
-          </Button>
+          </SubmitButton>
           <Button asChild variant="outline" size="lg">
             <Link href="/profil">Annuler</Link>
           </Button>
