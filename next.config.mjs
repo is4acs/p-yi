@@ -129,6 +129,12 @@ const nextConfig = {
         hostname: "*.supabase.co",
         pathname: "/storage/v1/object/public/**",
       },
+      // Unsplash — utilisé uniquement pour les photos de démo (seed SQL).
+      // À retirer si jamais on passe 100 % des annonces via Supabase Storage.
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
     ],
   },
   async headers() {
