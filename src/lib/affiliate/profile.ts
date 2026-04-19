@@ -52,13 +52,14 @@ export async function getOrCreateAffiliateProfile(
 }
 
 /**
- * Construit l'URL d'invitation complète à partir d'un code. Utilise la
- * variable d'environnement `NEXT_PUBLIC_APP_URL` quand disponible, sinon
- * un fallback local.
+ * Construit l'URL d'invitation complète à partir d'un code. Utilise
+ * `NEXT_PUBLIC_SITE_URL` (déjà utilisée par le reste de l'app pour les
+ * métadonnées, les mails, l'OG, etc.). Fallback `localhost:3000` en dev
+ * pour éviter les 404 de test.
  */
 export function buildInviteUrl(code: string): string {
   const base =
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
-    "https://peyi.app";
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+    "http://localhost:3000";
   return `${base}/r/${encodeURIComponent(code)}`;
 }
