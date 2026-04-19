@@ -2,6 +2,7 @@ import { NotificationType } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/log";
+import { dispatchNotification } from "@/lib/notifications/dispatch";
 
 // Chaque badge seedé porte un `requirement` JSON de la forme
 // `{ type, threshold }`. On le type ici pour centraliser les règles
@@ -155,21 +156,29 @@ export async function checkAndAwardBadges(
       const satisfied = await checkRequirement(userId, req);
       if (!satisfied) continue;
 
-      await prisma.$transaction([
-        prisma.user.update({
-          where: { id: userId },
-          data: { badges: { connect: { id: badge.id } } },
-        }),
-        prisma.notification.create({
-          data: {
-            userId,
-            type: NotificationType.BADGE_EARNED,
-            title: `Nouveau badge : ${badge.name}${badge.emoji ? ` ${badge.emoji}` : ""}`,
-            message: badge.description,
-            actionUrl: "/profil/recompenses",
-          },
-        }),
-      ]);
+      // Connecte le badge au user — c'est la seule écriture critique.
+      // La notif (in-app + push + email) est dispatchée APRÈS, pour
+      // que l'attribution du badge ne soit pas bloquée par un canal
+      // externe latent et vice-versa.
+      await prisma.user.update({
+        where: { id: userId },
+        data: { badges: { connect: { id: badge.id } } },
+      });
+
+      await dispatchNotification({
+        userId,
+        type: NotificationType.BADGE_EARNED,
+        title: `Nouveau badge : ${badge.name}${badge.emoji ? ` ${badge.emoji}` : ""}`,
+        message: badge.description,
+        actionPath: "/profil/recompenses",
+        pushTag: `badge:${badge.slug}`,
+      }).catch((err) => {
+        logger.warn("gamification.badge.dispatch.failed", {
+          userId,
+          badge: badge.slug,
+          err: err instanceof Error ? err.message : String(err),
+        });
+      });
 
       awarded.push({
         slug: badge.slug,
