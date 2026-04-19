@@ -87,6 +87,13 @@ Pour chaque bucket, **Policies** :
 En free tier tu as 10 000 requêtes/jour, largement suffisant pour
 la bêta (~1 req par action sensible utilisateur).
 
+> ⚠️ **Obligatoire en production** : `src/lib/env.ts` refuse de booter
+> si `NODE_ENV=production` et qu'une des deux variables Upstash manque.
+> Sans rate limit, l'auth est exposée au brute-force, l'écriture au
+> spam, et l'export RGPD au DoS. Échappatoire (situations
+> exceptionnelles uniquement, ex. build CI sans accès aux secrets) :
+> `ALLOW_NO_RATE_LIMIT=1`.
+
 ---
 
 ## 4. Setup Vercel
@@ -101,7 +108,7 @@ la bêta (~1 req par action sensible utilisateur).
 ### 4.2 Variables d'environnement
 
 Dans **Settings → Environment Variables**, ajoute toutes les variables
-de `.env.example` section **REQUIS** et **RECOMMANDÉ** :
+de `.env.example` sections **REQUIS** et **REQUIS EN PRODUCTION** :
 
 | Variable                          | Scope                   |
 | --------------------------------- | ----------------------- |

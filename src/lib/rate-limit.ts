@@ -12,10 +12,13 @@ import { env } from "@/lib/env";
  *    Chacun est un `Ratelimit` pré-configuré avec sa fenêtre et sa clé.
  *  - Algorithme sliding window : plus fluide que fixed window, évite le
  *    pic de trafic à chaque changement de minute.
- *  - Dégrade proprement : si `UPSTASH_REDIS_REST_URL` ou
+ *  - Dégrade proprement en dev/test : si `UPSTASH_REDIS_REST_URL` ou
  *    `UPSTASH_REDIS_REST_TOKEN` manque (typique en dev local sans Redis),
  *    tous les limiters sont remplacés par un no-op qui autorise tout.
  *    Un warning est loggé une seule fois.
+ *  - En **production**, `src/lib/env.ts` refuse de booter sans Upstash
+ *    (sauf si `ALLOW_NO_RATE_LIMIT=1` est posé explicitement). Donc en
+ *    pratique, le no-op n'est atteint en prod qu'avec opt-in volontaire.
  *  - L'`analytics: true` du Ratelimit expose des métriques dans le
  *    dashboard Upstash — pratique pour monitorer les abus en prod.
  *
@@ -35,8 +38,8 @@ function warnMissingOnce() {
   warnedMissing = true;
   // eslint-disable-next-line no-console
   console.warn(
-    "[rate-limit] UPSTASH_REDIS_REST_URL/TOKEN manquant — rate limiting désactivé " +
-      "(mode dev ou preview). Configure les deux variables en prod pour activer.",
+    "[rate-limit] UPSTASH_REDIS_REST_URL/TOKEN manquant — rate limiting désactivé. " +
+      "OK en dev/test. En prod, env.ts bloque le boot (sauf ALLOW_NO_RATE_LIMIT=1).",
   );
 }
 
