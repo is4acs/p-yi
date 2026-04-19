@@ -14,13 +14,14 @@ export const metadata: Metadata = {
   title: "Modifier l'annonce",
 };
 
-export default async function EditListingPage({
-  params,
-  searchParams,
-}: {
-  params: { slug: string };
-  searchParams: { error?: string };
-}) {
+export default async function EditListingPage(
+  props: {
+    params: Promise<{ slug: string }>;
+    searchParams: Promise<{ error?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const user = await requireUser(`/annonces/${params.slug}/edit`);
 
   const listing = await prisma.listing.findUnique({

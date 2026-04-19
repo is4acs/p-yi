@@ -37,10 +37,11 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 type Props = {
-  searchParams: { success?: string; error?: string };
+  searchParams: Promise<{ success?: string; error?: string }>;
 };
 
-export default async function AdminAffiliationPage({ searchParams }: Props) {
+export default async function AdminAffiliationPage(props: Props) {
+  const searchParams = await props.searchParams;
   // Moderator suffit pour voir, mais les actions (mark paid, reject, ban)
   // exigent ADMIN. On garde MODERATOR au niveau page pour que l'équipe
   // puisse monitorer sans pouvoir toucher à la caisse.

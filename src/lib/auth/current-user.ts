@@ -46,7 +46,7 @@ async function syncAuthDriftToPrisma(
  * profile has not been created yet (OAuth first login).
  */
 export async function getCurrentUser(): Promise<User | null> {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user: authUser },
   } = await supabase.auth.getUser();
@@ -67,7 +67,7 @@ export async function getCurrentUser(): Promise<User | null> {
  * Prisma profile yet (OAuth first login). Returns the User row otherwise.
  */
 export async function requireUser(nextPath?: string): Promise<User> {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user: authUser },
   } = await supabase.auth.getUser();

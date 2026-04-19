@@ -36,10 +36,11 @@ const HOME_DEALS_COUNT = 6;
 const HOME_LISTINGS_COUNT = 4;
 
 type Props = {
-  searchParams?: { deleted?: string };
+  searchParams?: Promise<{ deleted?: string }>;
 };
 
-export default async function HomePage({ searchParams }: Props) {
+export default async function HomePage(props: Props) {
+  const searchParams = await props.searchParams;
   const [{ deals }, { listings }, currentUser] = await Promise.all([
     fetchDealsPage({ sort: "hot", page: 1, category: null, city: null, q: null }),
     fetchListingsPage({
@@ -74,17 +75,14 @@ export default async function HomePage({ searchParams }: Props) {
           l&apos;aventure Péyi.
         </div>
       )}
-
       {/* Hero S31 — refonte éditoriale alignée mockup Claude Design.
           Eyebrow guyanais, H1 avec deux `<HighlightJaune>` (bons plans
           + annonces pour signer les 2 pôles du produit), lede concret
           avec refs locales, SearchBar conservée, CTA primary + lien
           secondaire, 3 KPIs temps-réel. Cf. `HomeHero` pour détails. */}
       <HomeHero />
-
       {/* Catégories — grille 2×4 (mobile) / 4×2 (desktop), tuiles colorées */}
       <HomeCategoriesGrid />
-
       {/* Deals chauds */}
       <section className="mt-8 px-4 sm:px-0">
         <div className="flex items-end justify-between gap-3">
@@ -109,7 +107,7 @@ export default async function HomePage({ searchParams }: Props) {
           // un feeling "marketplace" (cf. Vinted, FB Marketplace).
           // 85vw mobile = on voit ~1.15 carte, ce qui signale visuellement
           // qu'il faut swiper pour voir la suite.
-          <ul
+          (<ul
             className="-mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             aria-label="Bons plans tendance"
           >
@@ -133,10 +131,9 @@ export default async function HomePage({ searchParams }: Props) {
                 />
               </li>
             ))}
-          </ul>
+          </ul>)
         )}
       </section>
-
       {/* Petites annonces */}
       <section className="mt-10 px-4 sm:px-0">
         <div className="flex items-end justify-between gap-3">
@@ -176,7 +173,6 @@ export default async function HomePage({ searchParams }: Props) {
           </ul>
         )}
       </section>
-
       {/* Explorer par commune — entrée hyperlocale, pattern secondaire
           (après catégories + trending) pour relancer la navigation
           en bas de home avant le footer. */}

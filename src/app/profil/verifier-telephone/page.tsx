@@ -18,10 +18,11 @@ export const metadata: Metadata = {
 };
 
 type Props = {
-  searchParams: { phone?: string; error?: string; success?: string };
+  searchParams: Promise<{ phone?: string; error?: string; success?: string }>;
 };
 
-export default async function VerifyPhonePage({ searchParams }: Props) {
+export default async function VerifyPhonePage(props: Props) {
+  const searchParams = await props.searchParams;
   await requireUser("/profil");
 
   const phone = searchParams.phone?.trim();

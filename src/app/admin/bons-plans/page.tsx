@@ -26,11 +26,12 @@ function parsePage(raw: string | undefined): number {
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : 1;
 }
 
-export default async function AdminDealsPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
+export default async function AdminDealsPage(
+  props: {
+    searchParams: Promise<SearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const q = searchParams.q?.trim() || "";
   const page = parsePage(searchParams.page);
   const skip = (page - 1) * PAGE_SIZE;

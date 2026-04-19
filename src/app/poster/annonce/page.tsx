@@ -24,11 +24,12 @@ type SearchParams = {
   error?: string;
 };
 
-export default async function PosterAnnoncePage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
+export default async function PosterAnnoncePage(
+  props: {
+    searchParams: Promise<SearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const user = await requireUser("/poster/annonce");
 
   // Pull the full LISTING category tree once — small table, cheap query,

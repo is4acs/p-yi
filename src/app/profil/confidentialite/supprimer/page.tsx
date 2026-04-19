@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 type Props = {
-  searchParams?: { error?: string };
+  searchParams?: Promise<{ error?: string }>;
 };
 
 /**
@@ -34,7 +34,8 @@ type Props = {
  * forcer une action délibérée : un utilisateur pressé ou ayant cliqué
  * par inadvertance devra quand même faire cette saisie explicite.
  */
-export default async function DeleteAccountPage({ searchParams }: Props) {
+export default async function DeleteAccountPage(props: Props) {
+  const searchParams = await props.searchParams;
   const user = await requireUser("/profil/confidentialite/supprimer");
 
   const [listingCount, dealCount, commentCount, messageCount] =

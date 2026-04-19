@@ -14,11 +14,12 @@ export const metadata: Metadata = {
   description: "Partage tes meilleures affaires avec la communauté Péyi.",
 };
 
-export default async function PosterPage({
-  searchParams,
-}: {
-  searchParams: { error?: string };
-}) {
+export default async function PosterPage(
+  props: {
+    searchParams: Promise<{ error?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const user = await requireUser("/poster");
 
   const [categories, cities, storesRaw] = await Promise.all([
@@ -55,7 +56,6 @@ export default async function PosterPage({
         <ArrowLeft className="h-4 w-4" aria-hidden />
         Annuler
       </Link>
-
       <div className="mt-4">
         <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
           Poster un bon plan
@@ -65,7 +65,6 @@ export default async function PosterPage({
           @{user.username}.
         </p>
       </div>
-
       {searchParams.error && (
         <div
           role="alert"
@@ -74,7 +73,6 @@ export default async function PosterPage({
           {searchParams.error}
         </div>
       )}
-
       <div className="mt-6">
         <DealPosterLayout categories={categories} cities={cities}>
           <DealForm

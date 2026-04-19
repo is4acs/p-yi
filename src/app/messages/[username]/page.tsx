@@ -23,20 +23,21 @@ import { sendMessageAction } from "../actions";
 export const dynamic = "force-dynamic";
 
 type Props = {
-  params: { username: string };
-  searchParams: { listing?: string; error?: string };
+  params: Promise<{ username: string }>;
+  searchParams: Promise<{ listing?: string; error?: string }>;
 };
 
-export async function generateMetadata({
-  params,
-}: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
   return {
     title: `Conversation avec @${params.username}`,
     description: "Messagerie privée sur Péyi.",
   };
 }
 
-export default async function ThreadPage({ params, searchParams }: Props) {
+export default async function ThreadPage(props: Props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const user = await requireUser(
     `/messages/${params.username}${searchParams.listing ? `?listing=${searchParams.listing}` : ""}`,
   );

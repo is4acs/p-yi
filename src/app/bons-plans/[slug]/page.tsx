@@ -95,11 +95,12 @@ async function getDeal(slug: string) {
 
 // ---------- SEO ----------
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { slug: string };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ slug: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const deal = await prisma.deal.findFirst({
     where: { slug: params.slug, status: DealStatus.PUBLISHED },
     select: {
@@ -141,11 +142,12 @@ export async function generateMetadata({
 
 // ---------- page ----------
 
-export default async function DealDetailPage({
-  params,
-}: {
-  params: { slug: string };
-}) {
+export default async function DealDetailPage(
+  props: {
+    params: Promise<{ slug: string }>;
+  }
+) {
+  const params = await props.params;
   const [deal, currentUser] = await Promise.all([
     getDeal(params.slug),
     getCurrentUser(),

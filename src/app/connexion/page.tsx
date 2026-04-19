@@ -25,11 +25,12 @@ type SearchParams = {
   confirmSent?: string;
 };
 
-export default function ConnexionPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
+export default async function ConnexionPage(
+  props: {
+    searchParams: Promise<SearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const isSignup = searchParams.mode === "signup";
   const error = searchParams.error;
   const confirmSent = searchParams.confirmSent === "1";

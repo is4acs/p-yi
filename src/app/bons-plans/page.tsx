@@ -60,11 +60,12 @@ async function resolveFacets(
   };
 }
 
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    searchParams: Promise<SearchParams>;
+  }
+): Promise<Metadata> {
+  const searchParams = await props.searchParams;
   const q = parseQuery(searchParams.q);
   const categorySlug = searchParams.category?.trim() || null;
   const citySlug = searchParams.city?.trim() || null;
@@ -123,11 +124,12 @@ export async function generateMetadata({
   };
 }
 
-export default async function BonsPlansPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
+export default async function BonsPlansPage(
+  props: {
+    searchParams: Promise<SearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const sort = parseSort(searchParams.sort);
   const page = parsePage(searchParams.page);
   const category = searchParams.category?.trim() || null;

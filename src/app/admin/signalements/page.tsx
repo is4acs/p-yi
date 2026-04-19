@@ -46,11 +46,12 @@ const STATUS_LABEL: Record<ReportStatus, string> = {
   DISMISSED: "Rejeté",
 };
 
-export default async function AdminReportsPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
+export default async function AdminReportsPage(
+  props: {
+    searchParams: Promise<SearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const status = searchParams.status || "pending";
   const page = parsePage(searchParams.page);
   const skip = (page - 1) * PAGE_SIZE;

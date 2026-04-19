@@ -23,7 +23,7 @@ export async function completeProfileAction(formData: FormData) {
     redirectWithError(parsed.error.issues[0]?.message ?? "Pseudo invalide.");
   }
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user: authUser },
   } = await supabase.auth.getUser();

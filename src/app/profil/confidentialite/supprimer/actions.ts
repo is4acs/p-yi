@@ -220,7 +220,7 @@ export async function deleteMyAccountAction(formData: FormData): Promise<void> {
 
   // Étape 5 — Invalide la session courante côté cookies.
   try {
-    const supabase = createSupabaseServerClient();
+    const supabase = await createSupabaseServerClient();
     await supabase.auth.signOut();
   } catch {
     // Déjà déconnecté implicitement côté Supabase si l'user est

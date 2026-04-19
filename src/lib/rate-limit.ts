@@ -24,7 +24,7 @@ import { env } from "@/lib/env";
  *
  * Usage typique dans une server action :
  * ```ts
- * const { success } = await authLimiter.limit(getClientIp());
+ * const { success } = await authLimiter.limit(await getClientIp());
  * if (!success) redirectWithError("/connexion", "Trop de tentatives…");
  * ```
  */
@@ -131,8 +131,8 @@ export const exportLimiter = makeLimiter("export", 1, "24 h");
  * ⚠️ Cette fonction ne peut être appelée que dans un contexte où
  * `headers()` est disponible (server action, RSC, route handler).
  */
-export function getClientIp(): string {
-  const h = headers();
+export async function getClientIp(): Promise<string> {
+  const h = await headers();
   const xff = h.get("x-forwarded-for");
   if (xff) {
     // xff peut contenir plusieurs IP séparées par des virgules — la première

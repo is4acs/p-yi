@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.verifyOtp({ type, token_hash });
   if (error) {
     console.error("[auth/confirm] verifyOtp failed:", error);

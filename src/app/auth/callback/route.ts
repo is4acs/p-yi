@@ -33,13 +33,13 @@ export async function GET(request: NextRequest) {
   // l'échange va échouer. On log les noms des cookies sb-* reçus pour
   // pouvoir poster-mortem distinguer « cookie absent » (cross-site
   // stripping Safari) de « cookie présent mais invalide ».
-  const sbCookies = cookies()
+  const sbCookies = (await cookies())
     .getAll()
     .filter((c) => c.name.startsWith("sb-"))
     .map((c) => c.name);
   const hasVerifier = sbCookies.some((n) => n.endsWith("-code-verifier"));
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     console.error("[auth/callback] exchangeCodeForSession failed:", {

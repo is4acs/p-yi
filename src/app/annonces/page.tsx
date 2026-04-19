@@ -83,11 +83,12 @@ async function resolveFacets(
   };
 }
 
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    searchParams: Promise<SearchParams>;
+  }
+): Promise<Metadata> {
+  const searchParams = await props.searchParams;
   const q = parseQuery(searchParams.q);
   const categorySlug = searchParams.category?.trim() || null;
   const citySlug = searchParams.city?.trim() || null;
@@ -140,11 +141,12 @@ export async function generateMetadata({
   };
 }
 
-export default async function AnnoncesPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
+export default async function AnnoncesPage(
+  props: {
+    searchParams: Promise<SearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const sort = parseSort(searchParams.sort);
   const page = parsePage(searchParams.page);
   const type = parseType(searchParams.type);
@@ -194,7 +196,6 @@ export default async function AnnoncesPage({
           <PopularSearchChips />
         </>
       )}
-
       {/* Sticky ancré SOUS le Header global (`sticky top-0 z-30 h-14
           sm:h-16`) et non à `top-0` — cf. justification identique sur
           `/bons-plans/page.tsx`. `z-20` passe au-dessus des z-10
@@ -332,7 +333,6 @@ export default async function AnnoncesPage({
           </div>
         )}
       </div>
-
       {/* Mode découverte : pas de filtre → on affiche les blocs
           d'exploration (catégories + communes) AVANT la liste. Donne à
           l'utilisateur des points d'entrée clairs au lieu d'un mur
@@ -345,7 +345,6 @@ export default async function AnnoncesPage({
           <HomeCommunesSection />
         </>
       )}
-
       <div className="mt-6 px-4 pt-4 sm:px-0">
         {!hasFilters && listings.length > 0 && (
           <h2 className="mb-3 font-display text-lg font-semibold text-ink-900">
@@ -363,7 +362,7 @@ export default async function AnnoncesPage({
           // tablette, 4 cols desktop. Gap 4 (16px) pour que chaque
           // tuile respire. Hauteur naturelle variable (titre 1-2 lignes
           // selon longueur).
-          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          (<ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {listings.map((l) => (
               <li key={l.id}>
                 <ListingCardTile
@@ -373,7 +372,7 @@ export default async function AnnoncesPage({
                 />
               </li>
             ))}
-          </ul>
+          </ul>)
         )}
 
         <ListingsPagination
