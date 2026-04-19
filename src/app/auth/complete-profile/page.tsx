@@ -4,9 +4,9 @@ import { CheckCircle2 } from "lucide-react";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 import { completeProfileAction } from "./actions";
 
@@ -73,10 +73,10 @@ export default async function CompleteProfilePage({
           </p>
         </div>
 
-        <Button type="submit" size="lg" className="w-full">
+        <SubmitButton size="lg" className="w-full" pendingLabel="Création…">
           <CheckCircle2 className="h-4 w-4" aria-hidden />
           C&apos;est parti
-        </Button>
+        </SubmitButton>
       </form>
     </main>
   );

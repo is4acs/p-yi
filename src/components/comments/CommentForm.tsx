@@ -5,6 +5,7 @@ import { Send } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { createCommentAction } from "@/app/bons-plans/comments/actions";
 
 type Props = {
@@ -88,10 +89,15 @@ export function CommentForm({
               Annuler
             </Button>
           )}
-          <Button type="submit" size="sm" disabled={disabled}>
+          <SubmitButton
+            size="sm"
+            disabled={disabled}
+            pending={pending}
+            pendingLabel={compact ? "Envoi…" : "Publication…"}
+          >
             <Send className="h-3.5 w-3.5" aria-hidden />
             {compact ? "Répondre" : "Publier"}
-          </Button>
+          </SubmitButton>
         </div>
       </div>
     </form>

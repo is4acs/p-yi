@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowUp, Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import {
   bumpListingAction,
   deleteListingAction,
@@ -26,10 +27,10 @@ export function ListingAuthorControls({ listingId, editHref }: Props) {
 
       <form action={bumpListingAction}>
         <input type="hidden" name="listingId" value={listingId} />
-        <Button type="submit" variant="outline" size="sm">
+        <SubmitButton variant="outline" size="sm" pendingLabel="Remontée…">
           <ArrowUp className="h-4 w-4" aria-hidden />
           Remonter
-        </Button>
+        </SubmitButton>
       </form>
 
       <form
@@ -41,15 +42,15 @@ export function ListingAuthorControls({ listingId, editHref }: Props) {
         }}
       >
         <input type="hidden" name="listingId" value={listingId} />
-        <Button
-          type="submit"
+        <SubmitButton
           variant="outline"
           size="sm"
+          pendingLabel="Suppression…"
           className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
         >
           <Trash2 className="h-4 w-4" aria-hidden />
           Supprimer
-        </Button>
+        </SubmitButton>
       </form>
     </div>
   );

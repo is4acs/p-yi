@@ -20,6 +20,7 @@ import { requireUser } from "@/lib/auth/current-user";
 import { fetchUnreadCount } from "@/lib/messages/queries";
 import { fetchUnreadNotificationsCount } from "@/lib/notifications/queries";
 import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { UserAvatar } from "@/components/layout/UserAvatar";
 import { LevelProgress } from "@/components/gamification/LevelProgress";
 
@@ -270,15 +271,15 @@ export default async function ProfilPage({ searchParams }: Props) {
       </nav>
 
       <form action={signOutAction} className="mt-8">
-        <Button
-          type="submit"
+        <SubmitButton
           variant="outline"
           size="lg"
+          pendingLabel="Déconnexion…"
           className="w-full gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
         >
           <LogOut className="h-4 w-4" aria-hidden />
           Se déconnecter
-        </Button>
+        </SubmitButton>
       </form>
     </main>
   );

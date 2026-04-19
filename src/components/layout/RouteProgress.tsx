@@ -21,13 +21,15 @@ export function RouteProgress() {
   const [progress, setProgress] = useState(0);
 
   // 1. When the route actually changes, finish the bar and fade it out.
+  //    Finish fast (180ms) so the bar feels snappy — any longer and the user
+  //    perceives it as "still loading" even once the new page is rendered.
   useEffect(() => {
     if (!loading) return;
     setProgress(100);
     const tid = window.setTimeout(() => {
       setLoading(false);
       setProgress(0);
-    }, 250);
+    }, 180);
     return () => window.clearTimeout(tid);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, searchParams?.toString()]);
@@ -80,7 +82,10 @@ export function RouteProgress() {
 
     function start() {
       setLoading(true);
-      setProgress(20);
+      // Démarrer à 35% — assez haut pour que la barre soit immédiatement
+      // visible sur la largeur du viewport, évitant l'effet "rien ne se
+      // passe" sur un écran desktop large.
+      setProgress(35);
     }
 
     document.addEventListener("click", onClick, { capture: true });
@@ -107,10 +112,10 @@ export function RouteProgress() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-0.5"
+      className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-1"
     >
       <div
-        className="h-full bg-peyi-orange-500 shadow-[0_0_8px_rgba(242,112,36,0.6)] transition-[width,opacity] duration-200 ease-out"
+        className="h-full bg-peyi-orange-500 shadow-[0_0_10px_rgba(242,112,36,0.75)] transition-[width,opacity] duration-150 ease-out"
         style={{
           width: `${progress}%`,
           opacity: loading || progress > 0 ? 1 : 0,

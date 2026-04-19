@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 import { requireUser } from "@/lib/auth/current-user";
 import { formatRelativeTime } from "@/lib/format";
@@ -16,6 +16,7 @@ import {
   type ThreadListing,
 } from "@/lib/messages/queries";
 import { UserAvatar } from "@/components/layout/UserAvatar";
+import { ReplySendButton } from "@/components/messages/ReplySendButton";
 
 import { sendMessageAction } from "../actions";
 
@@ -228,13 +229,7 @@ function ReplyForm({
         placeholder={`Répondre à @${recipientUsername}…`}
         className="min-h-[40px] max-h-32 w-full resize-y rounded-full border border-border bg-card px-4 py-2 text-sm placeholder:text-muted-foreground focus:border-peyi-orange-400 focus:outline-none focus:ring-2 focus:ring-peyi-orange-200"
       />
-      <button
-        type="submit"
-        aria-label="Envoyer"
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-peyi-orange-500 text-white shadow transition active:scale-[0.95] hover:bg-peyi-orange-600"
-      >
-        <Send className="h-4 w-4" aria-hidden />
-      </button>
+      <ReplySendButton />
     </form>
   );
 }

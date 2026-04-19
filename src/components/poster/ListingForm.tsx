@@ -8,9 +8,9 @@ import type {
   PriceType,
 } from "@prisma/client";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { cn } from "@/lib/utils";
 import { CONDITION_LABEL, TYPE_LABEL } from "@/lib/listings/queries";
 import { maxPhotosForCategory } from "@/lib/listings/photo-limits";
@@ -325,10 +325,10 @@ export function ListingForm({
         </label>
       </fieldset>
 
-      <Button type="submit" size="lg" className="w-full">
+      <SubmitButton size="lg" className="w-full" pendingLabel="Publication…">
         <Send className="h-4 w-4" aria-hidden />
         {submitLabel}
-      </Button>
+      </SubmitButton>
     </form>
   );
 }
