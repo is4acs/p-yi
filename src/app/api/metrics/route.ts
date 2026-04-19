@@ -1,4 +1,5 @@
 import { logger } from "@/lib/log";
+import { getClientIp, telemetryLimiter } from "@/lib/rate-limit";
 
 /**
  * Endpoint de collecte des Core Web Vitals envoyés par le client
@@ -16,16 +17,17 @@ import { logger } from "@/lib/log";
  * Sécurité :
  *   - Pas d'auth : les Web Vitals sont par design anonymes et
  *     publics. Le pire qu'un attaquant puisse faire, c'est spammer
- *     nos logs — on pose un rate limit léger via `metricsLimiter`
- *     pour éviter l'abus (10 reqs/min par IP).
+ *     nos logs — on applique `telemetryLimiter` (60 req/min/IP)
+ *     pour éviter l'abus.
  *   - Aucun champ PII n'est loggé : on reçoit `name`, `value`,
  *     `rating`, `delta`, `id`, `navigationType`, `url` (chemin).
  *     Pas de user id, pas d'email, pas de cookie — rien à exposer.
  *
  * HTTP :
  *   - `204 No Content` si OK. Pas de body attendu côté client.
- *   - `204` aussi en cas d'erreur : métriques best-effort, on ne
- *     veut pas que le client retry.
+ *   - `204` aussi en cas d'erreur ou de rate limit : métriques
+ *     best-effort, on ne veut pas que le client retry et on ne
+ *     révèle pas la limite côté attaquant.
  */
 export const runtime = "nodejs";
 
@@ -41,6 +43,13 @@ type WebVitalBody = {
 
 export async function POST(req: Request) {
   try {
+    const ip = await getClientIp();
+    const { success } = await telemetryLimiter.limit(ip);
+    if (!success) {
+      // Drop silencieusement pour rester fire-and-forget.
+      return new Response(null, { status: 204 });
+    }
+
     const payload = (await req.json()) as WebVitalBody;
 
     // Validation légère : on accepte les métriques "raisonnables"

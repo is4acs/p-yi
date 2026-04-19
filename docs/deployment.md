@@ -294,6 +294,48 @@ barre de recherche Vercel.
 Pour chercher tous les errors Prisma des dernières 24h :
 `level:"error" msg:"prisma"`.
 
+### Observability — Log Drain externe (recommandé en prod)
+
+Les logs Vercel sont éphémères (rétention 24 h en plan Hobby, 7 j
+en Pro). Pour conserver l'historique, alerter sur les erreurs et
+corréler avec les Web Vitals, il faut brancher un **log drain** vers
+un collecteur externe. Trois options testées, choisis-en une :
+
+**Option A — Vercel Log Drains natifs** (le plus simple, payant à
+partir de 100 € / mois côté provider)
+
+Vercel Dashboard → **Settings → Log Drains** → **Add Log Drain**.
+Choisis l'un des intégrations natives :
+- **Datadog** : OAuth en 2 clics, ingestion auto, dashboards prêts
+- **Better Stack** (ex Logtail) : free tier généreux (1 GB/mois)
+- **Axiom** : free tier 0,5 GB/jour, requêtes SQL-like
+
+Format requis : `JSON` (notre logger émet déjà du JSON-ligne, rien
+à adapter). Filtre : laisse `All` la première fois, tu affineras
+ensuite si tu veux exclure les logs `level:"debug"`.
+
+**Option B — Forward via Webhook** (gratuit, DIY)
+
+Configure un **Custom Webhook** Log Drain qui pointe vers ton propre
+endpoint (Cloudflare Worker, Lambda, etc.) qui forwarde où tu veux
+(Slack, Discord, S3…). Utile pour alertes en temps réel sans plan
+payant.
+
+**Option C — Self-hosted Grafana Loki** (gratuit, plus d'ops)
+
+1. Déploie Loki sur Fly.io ou un VPS (~5 €/mois)
+2. Vercel Log Drain → endpoint HTTP Loki (`/loki/api/v1/push`)
+3. Branche Grafana en frontal pour les dashboards
+
+### Alertes minimum à mettre en place
+
+Quel que soit l'outil :
+
+- Toute ligne `level:"error"` qui contient `prisma` → notification Slack
+- Plus de 10 `client-error` en 5 min → enquête (probable régression UI)
+- Plus de 5 `level:"warn"` `rate-limit-hit` en 1 min sur le même IP →
+  potentielle attaque, considérer un block Cloudflare
+
 ---
 
 ## 10. Dépannage
