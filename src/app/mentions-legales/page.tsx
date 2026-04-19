@@ -8,13 +8,10 @@ export const metadata: Metadata = {
   alternates: { canonical: "/mentions-legales" },
 };
 
-// Page légale statique.
-// ⚠️ BLOQUEUR LANCEMENT PUBLIC ⚠️
-// Les `[À COMPLÉTER]` ci-dessous DOIVENT être remplacés par les
-// informations réelles de l'éditeur AVANT la mise en ligne publique.
-// Obligation légale : LCEN art. 6-III (loi n°2004-575).
-// Sans ces mentions, l'éditeur s'expose à 75 000 € d'amende et 1 an
-// d'emprisonnement. Cf. docs/deployment.md §7 "Pré-lancement public".
+// Page légale statique — informations de l'éditeur Péyi (obligation
+// LCEN art. 6-III, loi n°2004-575). Si l'adresse, le SIREN ou le
+// directeur de publication change, mettre à jour ici ET la date de
+// "Dernière mise à jour" ci-dessous.
 export default function MentionsLegalesPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:py-12">
@@ -29,7 +26,7 @@ export default function MentionsLegalesPage() {
         Mentions légales
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Dernière mise à jour : 17 avril 2026
+        Dernière mise à jour : 19 avril 2026
       </p>
 
       <div className="mt-8 space-y-8 text-sm leading-6 text-foreground">
@@ -40,10 +37,11 @@ export default function MentionsLegalesPage() {
             https://peyi.gf et sous-domaines) est édité par :
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>Nom / raison sociale : [À COMPLÉTER — nom de la personne ou structure juridique]</li>
-            <li>Statut juridique : [À COMPLÉTER — particulier / auto-entrepreneur / SAS / etc.]</li>
-            <li>SIREN / SIRET : [À COMPLÉTER si applicable]</li>
-            <li>Adresse du siège : [À COMPLÉTER]</li>
+            <li>Nom : <strong>Isaac Settou</strong></li>
+            <li>Statut juridique : Auto-entrepreneur (entreprise individuelle)</li>
+            <li>SIREN : 879 786 218</li>
+            <li>SIRET du siège social : 879 786 218 00039</li>
+            <li>Adresse du siège : 30 Impasse Mortin</li>
             <li>
               Contact : <a href="mailto:contact@peyi.gf" className="text-peyi-orange-700 hover:underline">contact@peyi.gf</a>
             </li>
@@ -53,7 +51,7 @@ export default function MentionsLegalesPage() {
         <section>
           <h2 className="font-display text-xl font-bold">Directeur de publication</h2>
           <p className="mt-2">
-            [À COMPLÉTER — nom et prénom du directeur de publication]
+            Isaac Settou
           </p>
         </section>
 
