@@ -5,7 +5,7 @@ import {
   AFFILIATE_COOKIE_NAME,
   AFFILIATE_COOKIE_OPTIONS,
 } from "@/lib/affiliate/cookies";
-import { isValidCodeFormat } from "@/lib/affiliate/code";
+import { isValidCodeFormat } from "@/lib/affiliate/code-format";
 
 /**
  * Middleware global :

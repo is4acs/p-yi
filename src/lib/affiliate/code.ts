@@ -2,6 +2,8 @@ import { createHash, randomBytes } from "node:crypto";
 
 import { prisma } from "@/lib/prisma";
 
+export { isValidCodeFormat } from "./code-format";
+
 /**
  * Génération de codes d'affiliation lisibles. Format : `<username>-<4chars>`,
  * où `<4chars>` est une suite alphanumérique sans ambiguïté (pas de 0/O, 1/l,
@@ -10,6 +12,10 @@ import { prisma } from "@/lib/prisma";
  *
  * Le code est unique par utilisateur — deux parrains ne peuvent jamais
  * partager le même code, même si leurs pseudos sont proches.
+ *
+ * Ce fichier importe `node:crypto` — il ne doit JAMAIS être importé
+ * depuis le middleware (Edge runtime). Pour le check de format, passe
+ * par `code-format.ts` qui n'a aucune dépendance Node.
  */
 
 const UNAMBIGUOUS_CHARS = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"; // 31 chars
@@ -67,18 +73,6 @@ export async function generateUniqueAffiliateCode(
   }
   // Fallback rarissime : on appose un second suffixe pour garantir l'unicité.
   return `${buildCandidateCode(username)}-${randomSuffix(2)}`;
-}
-
-/**
- * Valide grossièrement le format d'un code reçu en query string. Évite les
- * injections et les requêtes inutiles : si le code ne matche pas le
- * pattern, on skippe sans toucher la DB.
- */
-const CODE_PATTERN = /^[a-z0-9]{1,20}-[A-Z0-9]{3,6}(?:-[A-Z0-9]{1,4})?$/;
-
-export function isValidCodeFormat(code: string): boolean {
-  if (code.length < 5 || code.length > 40) return false;
-  return CODE_PATTERN.test(code);
 }
 
 /**
