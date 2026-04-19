@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { NotificationType } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { requireActiveUser } from "@/lib/auth/current-user";
+import { dispatchNotification } from "@/lib/notifications/dispatch";
 
 export type FavoriteResult = {
   ok: boolean;
@@ -26,7 +28,7 @@ export async function toggleListingFavoriteAction(
 
   const listing = await prisma.listing.findUnique({
     where: { id: listingId },
-    select: { id: true, slug: true },
+    select: { id: true, slug: true, title: true, authorId: true },
   });
   if (!listing) return { ok: false, error: "Annonce introuvable." };
 
@@ -56,6 +58,27 @@ export async function toggleListingFavoriteAction(
       }),
     ]);
     favorited = true;
+
+    // Notifie le vendeur — signal utile : quelqu'un s'intéresse à son
+    // annonce sans forcément encore envoyer de message. On passe via
+    // dispatchNotification pour respecter les prefs email/push. Pas
+    // de notif si le user se favorite lui-même (cas rare mais bon).
+    if (listing.authorId !== user.id) {
+      await dispatchNotification({
+        userId: listing.authorId,
+        type: NotificationType.LISTING_FAVORITED,
+        title: `@${user.username} a liké ton annonce`,
+        message: `« ${listing.title.slice(0, 80)}${
+          listing.title.length > 80 ? "…" : ""
+        } » vient d'être ajoutée aux favoris.`,
+        actionPath: `/annonces/${listing.slug}`,
+        listingId: listing.id,
+        fromUserId: user.id,
+        // Un seul push par listing — évite les séries si 10 personnes
+        // favorite dans la même minute.
+        pushTag: `listing-fav:${listing.id}`,
+      });
+    }
   }
 
   revalidatePath("/profil/favoris");

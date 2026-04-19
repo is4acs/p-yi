@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { requireActiveUser } from "@/lib/auth/current-user";
 import { createMessageSchema } from "@/lib/validation/message";
 import { writeLimiter } from "@/lib/rate-limit";
+import { dispatchNotification } from "@/lib/notifications/dispatch";
 
 function redirectWithError(path: string, message: string): never {
   redirect(`${path}?error=${encodeURIComponent(message)}`);
@@ -131,7 +132,10 @@ export async function sendMessageAction(formData: FormData): Promise<void> {
     listingSlug = listing.slug;
   }
 
-  // Create message + notification + bump contactCount atomically.
+  // Create message + bump contactCount atomically. La notification est
+  // dispatchée hors transaction via dispatchNotification (in-app + push
+  // + email) pour que l'échec d'un canal de notif n'annule pas
+  // l'insertion du message.
   await prisma.$transaction(async (tx) => {
     await tx.message.create({
       data: {
@@ -148,27 +152,30 @@ export async function sendMessageAction(formData: FormData): Promise<void> {
         data: { contactCount: { increment: 1 } },
       });
     }
+  });
 
-    const preview =
-      data.content.length > 140
-        ? `${data.content.slice(0, 140).trimEnd()}…`
-        : data.content;
+  const preview =
+    data.content.length > 140
+      ? `${data.content.slice(0, 140).trimEnd()}…`
+      : data.content;
 
-    const actionUrl = listingSlug
-      ? `/messages/${user.username}?listing=${listingSlug}`
-      : `/messages/${user.username}`;
+  const actionPath = listingSlug
+    ? `/messages/${user.username}?listing=${listingSlug}`
+    : `/messages/${user.username}`;
 
-    await tx.notification.create({
-      data: {
-        userId: recipient.id,
-        type: NotificationType.NEW_MESSAGE,
-        title: `Nouveau message de @${user.username}`,
-        message: preview,
-        actionUrl,
-        listingId,
-        fromUserId: user.id,
-      },
-    });
+  // dispatchNotification ne throw jamais — safe to fire-and-forget
+  // sans casser l'UX côté expéditeur.
+  await dispatchNotification({
+    userId: recipient.id,
+    type: NotificationType.NEW_MESSAGE,
+    title: `Nouveau message de @${user.username}`,
+    message: preview,
+    actionPath,
+    listingId,
+    fromUserId: user.id,
+    // Un thread = un tag → les pushs successifs remplacent au lieu
+    // d'empiler, conforme au comportement iMessage / WhatsApp.
+    pushTag: `dm:${[user.id, recipient.id].sort().join(":")}`,
   });
 
   revalidatePath("/messages");
