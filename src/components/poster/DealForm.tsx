@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Send } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
@@ -46,14 +46,10 @@ export function DealForm({
 }: Props) {
   const v = defaults ?? {};
   const [citySlug, setCitySlug] = useState<string>(v.citySlug ?? "");
-
-  // Les suggestions du datalist sont filtrées par commune quand une
-  // ville est choisie — réduit le bruit mais n'empêche jamais la saisie
-  // libre (un datalist HTML n'est pas une contrainte, juste un hint).
-  const suggestedStores = useMemo(() => {
-    if (!citySlug) return stores;
-    return stores.filter((s) => s.citySlug === citySlug);
-  }, [stores, citySlug]);
+  // `stores` n'est plus consommé depuis qu'on a retiré le datalist de
+  // suggestions — on garde la prop pour la compat d'appel (et pour si un
+  // jour on réactive l'autocomplétion).
+  void stores;
 
   return (
     <form action={action} className="space-y-5">
@@ -150,19 +146,13 @@ export function DealForm({
             name="storeName"
             type="text"
             maxLength={100}
-            list="store-suggestions"
             defaultValue={v.storeName ?? ""}
             placeholder="Ex: Carrefour Matoury, Super U Kourou…"
             autoComplete="off"
           />
-          <datalist id="store-suggestions">
-            {suggestedStores.map((s) => (
-              <option key={s.slug} value={s.name} />
-            ))}
-          </datalist>
           <p className="text-xs text-muted-foreground">
-            Saisis librement le nom du magasin. On te propose les enseignes
-            déjà connues — laisse vide pour un deal en ligne.
+            Saisis librement le nom du magasin. Laisse vide pour un deal en
+            ligne.
           </p>
         </div>
       </div>
