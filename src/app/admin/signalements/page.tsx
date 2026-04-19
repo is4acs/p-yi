@@ -4,7 +4,10 @@ import { CheckCircle2, ExternalLink, X } from "lucide-react";
 import { ReportReason, ReportStatus } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
-import { adminResolveReportAction } from "./actions";
+import {
+  adminBulkResolveReportsAction,
+  adminResolveReportAction,
+} from "./actions";
 
 export const metadata: Metadata = {
   title: "Signalements",
@@ -179,7 +182,46 @@ export default async function AdminReportsPage(
           Aucun signalement dans cette vue.
         </p>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <>
+          {/* Toolbar batch — seulement visible sur les vues "à traiter".
+              On la monte comme un `<form id="bulk-form">` et on utilise
+              l'attribut HTML `form="bulk-form"` sur les checkboxes pour
+              qu'elles soumettent avec cette form, sans imbrication (les
+              forms imbriquées sont invalides et cassent les actions
+              per-item juste en dessous). */}
+          {status === "pending" && (
+            <form
+              id="bulk-form"
+              action={adminBulkResolveReportsAction}
+              className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-border bg-muted/20 p-2 text-xs"
+            >
+              <span className="text-muted-foreground">
+                Sélection en lot —
+              </span>
+              <input
+                type="text"
+                name="resolution"
+                placeholder="Action (ex. contenu supprimé)"
+                className="h-8 w-64 rounded-md border border-border bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-peyi-green-500"
+              />
+              <button
+                type="submit"
+                className="inline-flex h-8 items-center gap-1 rounded-md bg-peyi-green-600 px-2.5 text-xs font-semibold text-white hover:bg-peyi-green-700"
+              >
+                <CheckCircle2 className="h-3 w-3" aria-hidden /> Résoudre la sélection
+              </button>
+              <button
+                type="submit"
+                name="dismiss"
+                value="1"
+                className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-background px-2.5 text-xs font-semibold text-muted-foreground hover:border-red-300 hover:text-red-700"
+              >
+                <X className="h-3 w-3" aria-hidden /> Rejeter la sélection
+              </button>
+            </form>
+          )}
+
+          <ul className="flex flex-col gap-3">
           {reports.map((r) => {
             const isPending =
               r.status === ReportStatus.PENDING ||
@@ -220,6 +262,16 @@ export default async function AdminReportsPage(
               >
                 <div className="flex flex-wrap items-start justify-between gap-2 text-xs">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    {isPending && (
+                      <input
+                        type="checkbox"
+                        name="reportIds"
+                        value={r.id}
+                        form="bulk-form"
+                        aria-label={`Sélectionner le signalement ${REASON_LABEL[r.reason]}`}
+                        className="h-4 w-4 cursor-pointer accent-peyi-orange-600"
+                      />
+                    )}
                     <span className="inline-flex items-center rounded-full border border-red-300 bg-red-50 px-2 py-0.5 font-medium text-red-900">
                       {REASON_LABEL[r.reason]}
                     </span>
@@ -318,6 +370,7 @@ export default async function AdminReportsPage(
             );
           })}
         </ul>
+        </>
       )}
 
       {pageCount > 1 && (

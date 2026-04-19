@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { UserAvatar } from "@/components/layout/UserAvatar";
+import { PushSubscribeToggle } from "@/components/notifications/PushSubscribeToggle";
 
 import {
   removeAvatarAction,
@@ -204,6 +205,23 @@ export default async function ProfilEditPage(props: Props) {
           </Button>
         </div>
       </form>
+
+      {/* Notifications push : hors du form principal car l'activation
+          passe par des APIs browser (Notification, PushManager) et un
+          POST séparé, pas par le submit du formulaire. */}
+      <section className="mt-8 rounded-lg border border-border bg-card p-4">
+        <h2 className="font-display text-sm font-bold">
+          Notifications push
+        </h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Autorise Péyi à t&apos;envoyer une notification native (iOS /
+          Android / Chrome) pour les messages, les matchs d&apos;alertes
+          et les étapes d&apos;affiliation. Appliqué à ce device uniquement.
+        </p>
+        <div className="mt-3">
+          <PushSubscribeToggle />
+        </div>
+      </section>
     </main>
   );
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Flame, MessageSquare, Plus, Tag, User } from "lucide-react";
+import { Flame, Heart, MessageSquare, Plus, Tag, User } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -15,6 +15,9 @@ type Tab = {
   badgeKey?: "unread";
 };
 
+// 6 onglets pour laisser les Favoris accessibles en 1 tap. Sur un iPhone
+// SE (375px) ça donne ~62px par onglet, largement au-dessus de la cible
+// tactile 44×44 recommandée par Apple. Les labels tiennent en ~8 chars.
 const TABS: Tab[] = [
   {
     href: "/messages",
@@ -43,10 +46,18 @@ const TABS: Tab[] = [
     match: (p) => p === "/annonces" || p.startsWith("/annonces/"),
   },
   {
+    href: "/profil/favoris",
+    label: "Favoris",
+    icon: Heart,
+    match: (p) => p.startsWith("/profil/favoris"),
+  },
+  {
     href: "/profil",
     label: "Profil",
     icon: User,
-    match: (p) => p.startsWith("/profil"),
+    // Le sous-chemin `/profil/favoris` est géré par l'onglet Favoris, donc
+    // on l'exclut ici pour éviter le double highlight.
+    match: (p) => p.startsWith("/profil") && !p.startsWith("/profil/favoris"),
   },
 ];
 
@@ -62,7 +73,7 @@ export function BottomNav({ unreadCount }: Props) {
       aria-label="Navigation principale"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:hidden"
     >
-      <ul className="grid grid-cols-5">
+      <ul className="grid grid-cols-6">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = tab.match(pathname);

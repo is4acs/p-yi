@@ -36,6 +36,8 @@ import { VoteButtons } from "@/components/deals/VoteButtons";
 import { FavoriteButton } from "@/components/deals/FavoriteButton";
 import { CommentList } from "@/components/comments/CommentList";
 import { ReportDialog } from "@/components/reports/ReportDialog";
+import { ShareRow } from "@/components/shared/ShareRow";
+import { getSiteUrl } from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
 
@@ -295,6 +297,15 @@ export default async function DealDetailPage(
           )}
         </div>
       </header>
+
+      {/* Partage — WhatsApp/Messenger/Copier. Clé en Guyane où WhatsApp
+          est le canal de viralité principal, bien devant Facebook. */}
+      <section className="mt-4 px-4 sm:px-0">
+        <ShareRow
+          url={`${getSiteUrl()}/bons-plans/${deal.slug}`}
+          text={`${deal.title} — ${deal.isFree ? "Gratuit" : `${deal.price}€`}`}
+        />
+      </section>
 
       {/* Vote */}
       <section className="mt-5 px-4 sm:px-0">
