@@ -70,6 +70,7 @@ model User {
   reportsAgainst   Report[]  @relation("ReportedUserReports")
   adminActions     AdminActionLog[] @relation("AdminActions")
   notifications    Notification[]
+  pushSubscriptions PushSubscription[]
   sessions         Session[]
   karmaHistory     KarmaHistory[]
 
@@ -945,6 +946,38 @@ enum NotificationType {
   REFERRAL_QUALIFIED       // un filleul vient de se qualifier
   AFFILIATE_TIER_REACHED   // un palier d'affiliation est atteint
   AFFILIATE_PAYOUT         // un paiement d'affiliation a été traité
+}
+
+// Abonnement Web Push (endpoint + clés p256dh/auth) d'un device. Un
+// utilisateur peut avoir N rows (téléphone + desktop + tablette). On
+// garde le triplet tel quel produit par `PushSubscription.toJSON()`
+// côté navigateur ; l'envoi se fait via le package `web-push` côté
+// serveur en signant avec VAPID_PRIVATE_KEY.
+//
+// Cycle de vie :
+//  - création : /api/notifications/subscribe (POST), après que
+//    l'utilisateur a accepté le prompt Notification.requestPermission
+//  - suppression : /api/notifications/unsubscribe OU automatique
+//    côté serveur quand web-push retourne un 410 Gone (endpoint
+//    révoqué par Apple/Google).
+//
+// On indexe par userId (fanout "envoyer un push à user X" = 1-3 rows)
+// et on dé-duplique par endpoint (un même device ré-inscrit remplace).
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  endpoint  String   @unique @db.Text
+  p256dh    String   @db.Text
+  auth      String   @db.Text
+
+  userAgent String?  @db.Text
+  createdAt DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("push_subscriptions")
 }
 
 // =============================================================================
