@@ -1,12 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { KarmaAction, VoteType } from "@prisma/client";
+import { KarmaAction, NotificationType, VoteType } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { requireActiveUser } from "@/lib/auth/current-user";
 import { awardKarma } from "@/lib/gamification/karma";
 import { checkAndAwardBadges } from "@/lib/gamification/badges";
+import { dispatchNotification } from "@/lib/notifications/dispatch";
 
 const KARMA_HOT_VOTE_AUTHOR = 1;
 
@@ -50,7 +51,13 @@ export async function voteDealAction(
 
   const deal = await prisma.deal.findUnique({
     where: { id: dealId },
-    select: { id: true, authorId: true, slug: true, temperature: true },
+    select: {
+      id: true,
+      authorId: true,
+      slug: true,
+      title: true,
+      temperature: true,
+    },
   });
   if (!deal) return { ok: false, error: "Bon plan introuvable." };
   if (deal.authorId === user.id) {
@@ -157,6 +164,21 @@ export async function voteDealAction(
             action,
             dealId: deal.id,
             description: `Ton deal a atteint +${threshold}°`,
+          });
+          // Notif "deal hot" — in-app + push + email (respecte les prefs).
+          // On passe par dispatchNotification pour bénéficier du même
+          // pipeline que les messages/commentaires. Déclenché une seule
+          // fois par palier grâce au gardien KarmaHistory ci-dessus.
+          await dispatchNotification({
+            userId: deal.authorId,
+            type: NotificationType.DEAL_HOT,
+            title: `🔥 Ton bon plan est à +${threshold}°`,
+            message: `« ${deal.title.slice(0, 80)}${
+              deal.title.length > 80 ? "…" : ""
+            } » chauffe sur Péyi. Continue comme ça !`,
+            actionPath: `/bons-plans/${deal.slug}`,
+            dealId: deal.id,
+            pushTag: `deal-hot:${deal.id}:${threshold}`,
           });
         }
       }

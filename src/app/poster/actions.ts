@@ -17,6 +17,7 @@ import { writeLimiter } from "@/lib/rate-limit";
 import { awardKarma } from "@/lib/gamification/karma";
 import { checkAndAwardBadges } from "@/lib/gamification/badges";
 import { maybeQualifyReferee } from "@/lib/affiliate/qualify";
+import { matchAlertsForDeal } from "@/lib/notifications/alerts";
 
 function redirectWithError(path: string, message: string): never {
   redirect(`${path}?error=${encodeURIComponent(message)}`);
@@ -155,7 +156,16 @@ export async function createDealAction(formData: FormData): Promise<void> {
       storeId,
       temperature: 0,
     },
-    select: { id: true },
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      description: true,
+      price: true,
+      categoryId: true,
+      cityId: true,
+      authorId: true,
+    },
   });
 
   await awardKarma({
@@ -169,6 +179,11 @@ export async function createDealAction(formData: FormData): Promise<void> {
   // dès qu'il atteint 5 bons plans + 5 annonces publiés, son parrain touche
   // la récompense du palier correspondant. No-op sinon.
   await maybeQualifyReferee(user.id);
+
+  // Alerting : on notifie tous les users dont une alerte correspond
+  // (keywords ILIKE title+description + catégorie/ville/prix). Best
+  // effort — en cas d'échec, la publication reste intacte.
+  await matchAlertsForDeal(deal);
 
   revalidatePath("/bons-plans");
   redirect(`/bons-plans/${slug}`);
