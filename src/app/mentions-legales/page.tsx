@@ -8,11 +8,10 @@ export const metadata: Metadata = {
   alternates: { canonical: "/mentions-legales" },
 };
 
-// Page légale statique. Identité et SIRET réels (Isaac Settou,
-// micro-entreprise). L'adresse reste une valeur provisoire —
-// remplace par l'adresse réelle ou une adresse de domiciliation
-// commerciale avant le go-live grand public (LCEN impose une
-// adresse publique cohérente avec le SIRET déclaré).
+// Page légale statique. Toutes les mentions LCEN sont en place
+// (identité, statut, SIREN/SIRET, adresse, directeur de publication,
+// hébergeurs). À tenir à jour si la structure juridique évolue
+// (ex. passage en SASU, changement d'adresse, etc.).
 export default function MentionsLegalesPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:py-12">
@@ -42,8 +41,8 @@ export default function MentionsLegalesPage() {
             <li>Statut juridique : Entrepreneur individuel (régime micro-entreprise)</li>
             <li>SIREN : 879 786 218 — SIRET : 879 786 218 00039</li>
             <li>
-              Adresse du siège : 15 avenue du Général de Gaulle, 97300
-              Cayenne, Guyane française
+              Adresse du siège : 30 impasse Mortin, 97300 Cayenne,
+              Guyane française
             </li>
             <li>
               Contact : <a href="mailto:contact@peyi.gf" className="text-peyi-orange-700 hover:underline">contact@peyi.gf</a>
