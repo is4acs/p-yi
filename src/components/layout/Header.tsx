@@ -4,6 +4,7 @@ import type { User } from "@prisma/client";
 
 import { cn } from "@/lib/utils";
 
+import { GlobalSearchBar } from "./GlobalSearchBar";
 import { UserAvatar } from "./UserAvatar";
 
 type Props = {
@@ -20,14 +21,19 @@ export function Header({ user, unreadCount, unreadNotifications }: Props) {
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 px-4 sm:h-16">
         <Link
           href="/"
-          className="flex items-center gap-1.5 font-display text-xl font-bold tracking-tight"
+          className="flex shrink-0 items-center gap-1.5 font-display text-xl font-bold tracking-tight"
         >
           <span className="text-peyi-orange-500">Péyi</span>
         </Link>
 
+        {/* Barre de recherche globale — sur mobile elle prend la place
+            de la nav (cachée <sm:). Sur desktop elle est flanquée par
+            la nav à sa droite. */}
+        <GlobalSearchBar />
+
         <nav
           aria-label="Navigation principale"
-          className="hidden gap-1 text-sm font-medium sm:flex"
+          className="hidden gap-1 text-sm font-medium lg:flex"
         >
           <NavLink href="/bons-plans">Bons plans</NavLink>
           <NavLink href="/annonces">Annonces</NavLink>

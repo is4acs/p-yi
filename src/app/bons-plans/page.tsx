@@ -18,6 +18,7 @@ import { DealsFilterBar } from "@/components/deals/DealsFilterBar";
 import { DealsPagination } from "@/components/deals/DealsPagination";
 import { DealsSearchBar } from "@/components/deals/DealsSearchBar";
 import { EmptyDeals } from "@/components/deals/EmptyDeals";
+import { OnboardingNudge } from "@/components/onboarding/OnboardingNudge";
 
 export const dynamic = "force-dynamic";
 
@@ -159,11 +160,59 @@ export default async function BonsPlansPage(
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const hasFilters = Boolean(category || city || q);
 
+  // Onboarding steps (user connecté uniquement, page non filtrée).
+  // Chaque étape est pilotée par un champ que l'utilisateur peut
+  // remplir lui-même — pas de logique serveur cachée. Les liens
+  // pointent vers la page exacte où compléter.
+  let onboardingSteps: Array<{
+    key: string;
+    label: string;
+    href: string;
+    done: boolean;
+  }> = [];
+  if (currentUser && !hasFilters) {
+    const [publishedDealCount, publishedListingCount] = await Promise.all([
+      prisma.deal.count({
+        where: { authorId: currentUser.id, status: "PUBLISHED" },
+      }),
+      prisma.listing.count({
+        where: { authorId: currentUser.id, status: "PUBLISHED" },
+      }),
+    ]);
+    onboardingSteps = [
+      {
+        key: "avatar",
+        label: "Ajoute une photo de profil",
+        href: "/profil/edit",
+        done: Boolean(currentUser.avatarUrl),
+      },
+      {
+        key: "city",
+        label: "Renseigne ta commune",
+        href: "/profil/edit",
+        done: Boolean(currentUser.cityId),
+      },
+      {
+        key: "first-post",
+        label: "Publie ton premier contenu (bon plan ou annonce)",
+        href: "/poster",
+        done: publishedDealCount + publishedListingCount > 0,
+      },
+    ];
+  }
+
   return (
     <main className="mx-auto max-w-md pb-12 animate-in fade-in duration-300 sm:max-w-2xl">
       {/* Hero éditorial : mode découverte uniquement (sous filtre, on
           laisse la vedette aux résultats). */}
       {!hasFilters && <BonsPlansHero />}
+
+      {/* Onboarding nudge : profil incomplet / aucun post. Dismiss
+          persistant en localStorage. Server-computed steps → pas de
+          flash d'étapes fausses. */}
+      {onboardingSteps.length > 0 && (
+        <OnboardingNudge steps={onboardingSteps} />
+      )}
 
       {/* Strip catégories : TOUJOURS visible (refonte S34). Avant, elle
           était masquée sous filtre comme le hero, ce qui donnait une
