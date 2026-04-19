@@ -12,6 +12,7 @@ import type { VoteType } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { formatPrice, formatRelativeTime } from "@/lib/format";
 import type { DealCardData } from "@/lib/deals/queries";
+import { StoreLogo } from "@/components/common/StoreLogo";
 import { PriceTag } from "./PriceTag";
 import { CategoryChip } from "./CategoryChip";
 import { CommuneChip } from "./CommuneChip";
@@ -67,12 +68,15 @@ function expiryWarning(expiresAt: Date | null): string | null {
 function MerchantTag({
   name,
   isLocal,
+  logoUrl,
 }: {
   name: string;
   isLocal: boolean;
+  logoUrl: string | null;
 }) {
   return (
     <div className="flex min-w-0 items-center gap-2 text-[10px] uppercase tracking-[0.06em] text-muted-foreground">
+      <StoreLogo name={name} logoUrl={logoUrl} size="sm" />
       <span
         className={cn(
           "shrink-0 rounded-xs px-1.5 py-0.5 font-mono font-semibold text-white",
@@ -100,6 +104,7 @@ export function DealCard({
 }: Props) {
   const sellerName = deal.store?.name ?? deal.merchant?.name ?? null;
   const isLocalStore = Boolean(deal.store);
+  const sellerLogoUrl = deal.store?.logoUrl ?? deal.merchant?.logoUrl ?? null;
   const placeholderEmoji = deal.category.icon ?? null;
   const placeholderLabel = sellerName ?? deal.title;
 
@@ -155,7 +160,15 @@ export function DealCard({
           <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
             <div className="min-w-0 space-y-1.5">
               <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                <Store className="h-3 w-3 shrink-0" aria-hidden />
+                {sellerName ? (
+                  <StoreLogo
+                    name={sellerName}
+                    logoUrl={sellerLogoUrl}
+                    size="sm"
+                  />
+                ) : (
+                  <Store className="h-3 w-3 shrink-0" aria-hidden />
+                )}
                 <span className="truncate">{fallbackSellerName}</span>
               </div>
               <h3 className="line-clamp-2 font-display text-sm font-semibold leading-tight text-foreground group-hover:text-peyi-orange-700">
@@ -260,7 +273,13 @@ export function DealCard({
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        {sellerName && <MerchantTag name={sellerName} isLocal={isLocalStore} />}
+        {sellerName && (
+          <MerchantTag
+            name={sellerName}
+            isLocal={isLocalStore}
+            logoUrl={sellerLogoUrl}
+          />
+        )}
 
         {/* Ligne titre + image mobile. Sur sm:+ on passe en block pour
             que le titre prenne toute la largeur du body (l'image est
