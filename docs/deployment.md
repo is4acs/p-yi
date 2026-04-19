@@ -74,6 +74,34 @@ Pour chaque bucket, **Policies** :
 - `INSERT / UPDATE / DELETE` : `auth.uid() = owner` (ou géré côté app
   via service role, ce qu'on fait)
 
+Le fichier `supabase/storage-setup.sql` contient les buckets + policies
+prêts à l'emploi — copie-colle-le dans **SQL Editor** et exécute.
+
+### 2.5 Activer Row Level Security (RLS) sur les tables
+
+**Obligatoire avant ouverture publique.** Même si toutes les lectures
+passent aujourd'hui par Prisma (rôle `postgres` qui bypasse RLS), une
+fuite future de la clé `anon` laisserait l'API PostgREST exposer tout
+le contenu, y compris les brouillons, messages privés et logs admin.
+
+Dans **SQL Editor**, copie-colle et exécute `supabase/rls-setup.sql`.
+Il active RLS sur toutes les tables publiques et définit les policies
+SELECT (deals/listings publiés, catégories actives, références
+publiques). Les tables privées (messages, notifications, reports,
+admin_action_logs, affiliate_*) restent en deny-all pour les clés
+`anon`/`authenticated`.
+
+Vérification :
+
+```sql
+SELECT tablename, rowsecurity
+FROM pg_tables
+WHERE schemaname = 'public'
+ORDER BY tablename;
+```
+
+Toutes les lignes doivent avoir `rowsecurity = true`.
+
 ---
 
 ## 3. Setup Upstash
@@ -180,7 +208,34 @@ redéploie.
 
 ---
 
-## 7. Post-deploy — checklist de vérification
+## 7. Pré-lancement public — checklist légale & RGPD
+
+**À valider impérativement avant d'ouvrir le service au grand public
+français / DOM-TOM** (LCEN + RGPD). Sans ces éléments, le service
+expose son éditeur à des poursuites civiles / pénales et à des
+sanctions CNIL.
+
+- [ ] `src/app/mentions-legales/page.tsx` — remplacer **tous** les
+      `[À COMPLÉTER]` par les informations réelles de l'éditeur
+      (nom/raison sociale, statut, SIREN/SIRET, adresse du siège,
+      directeur de publication). Obligation LCEN art. 6-III.
+- [ ] `src/app/confidentialite/page.tsx` — faire relire par un DPO ou
+      juriste RGPD. La rédaction actuelle est conforme dans les grandes
+      lignes (art. 13) mais doit être validée selon la structure
+      juridique réelle (base légale "contrat" applicable uniquement si
+      l'éditeur est personne morale avec CGU acceptées).
+- [ ] `src/app/cgu/page.tsx` — idem : relecture juridique.
+- [ ] Contact `contact@peyi.gf` — vérifier que la boîte existe et est
+      relevée. L'art. 12 RGPD impose une réponse sous 30 jours.
+- [ ] Décision sur un **DPO** : obligatoire si traitement "à grande
+      échelle" de données de mineurs ou de santé. Péyi n'entre
+      probablement pas dedans au lancement mais à réévaluer.
+- [ ] **Registre des traitements** (art. 30 RGPD) — à tenir en interne
+      dès qu'il y a plus d'un utilisateur.
+
+---
+
+## 8. Post-deploy — checklist de vérification technique
 
 À faire après le premier déploiement, et idéalement à chaque release
 majeure :
@@ -203,7 +258,7 @@ majeure :
 
 ---
 
-## 8. Maintenance
+## 9. Maintenance
 
 ### Nouvelle migration Prisma
 
@@ -241,7 +296,7 @@ Pour chercher tous les errors Prisma des dernières 24h :
 
 ---
 
-## 9. Dépannage
+## 10. Dépannage
 
 **Build fail avec `Invalid environment variables`** :
 → `src/lib/env.ts` a rejeté la config. Compare avec `.env.example`.
@@ -266,9 +321,9 @@ dans les logs.
 
 ---
 
-## 10. Ressources externes
+## 11. Ressources externes
 
-- [Next.js 14 deployment docs](https://nextjs.org/docs/app/building-your-application/deploying)
+- [Next.js deployment docs](https://nextjs.org/docs/app/building-your-application/deploying)
 - [Supabase production checklist](https://supabase.com/docs/guides/platform/going-into-prod)
 - [Upstash Ratelimit docs](https://github.com/upstash/ratelimit-js)
 - [Prisma migrate deploy](https://www.prisma.io/docs/orm/prisma-migrate/workflows/prod-and-testing)

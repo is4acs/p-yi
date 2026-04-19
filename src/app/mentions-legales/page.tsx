@@ -8,9 +8,13 @@ export const metadata: Metadata = {
   alternates: { canonical: "/mentions-legales" },
 };
 
-// Page légale statique. Isaac : remplace tous les [À COMPLÉTER] par les
-// informations réelles (adresse, SIRET si structure juridique, contact)
-// avant la mise en production publique.
+// Page légale statique.
+// ⚠️ BLOQUEUR LANCEMENT PUBLIC ⚠️
+// Les `[À COMPLÉTER]` ci-dessous DOIVENT être remplacés par les
+// informations réelles de l'éditeur AVANT la mise en ligne publique.
+// Obligation légale : LCEN art. 6-III (loi n°2004-575).
+// Sans ces mentions, l'éditeur s'expose à 75 000 € d'amende et 1 an
+// d'emprisonnement. Cf. docs/deployment.md §7 "Pré-lancement public".
 export default function MentionsLegalesPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:py-12">
