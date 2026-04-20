@@ -5,6 +5,7 @@ import {
   Gift,
   LayoutDashboard,
   ListTree,
+  Megaphone,
   MessageSquare,
   Newspaper,
   ScrollText,
@@ -13,7 +14,7 @@ import {
 } from "lucide-react";
 
 import { requireRole } from "@/lib/auth/current-user";
-import { isSuperAdmin } from "@/lib/admin/roles";
+import { isAdmin, isSuperAdmin } from "@/lib/admin/roles";
 import { UserRole } from "@prisma/client";
 
 /**
@@ -42,6 +43,7 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const user = await requireRole(UserRole.MODERATOR, "/admin");
+  const admin = isAdmin(user);
   const superAdmin = isSuperAdmin(user);
 
   const navItems = [
@@ -53,6 +55,15 @@ export default async function AdminLayout({
     { href: "/admin/utilisateurs", label: "Utilisateurs", icon: Users },
     { href: "/admin/signalements", label: "Signalements", icon: Flag },
     { href: "/admin/affiliation", label: "Affiliation", icon: Gift },
+    ...(admin
+      ? [
+          {
+            href: "/admin/notifications",
+            label: "Broadcasts",
+            icon: Megaphone,
+          },
+        ]
+      : []),
     ...(superAdmin
       ? [
           {

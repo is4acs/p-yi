@@ -11,6 +11,10 @@ import { dispatchNotification } from "@/lib/notifications/dispatch";
 
 import { KARMA_RULES } from "./actions";
 import { computeLevel, LEVEL_META } from "./levels";
+import {
+  findCrossedMilestones,
+  MILESTONE_META,
+} from "./milestones";
 
 type PrismaTx = Prisma.TransactionClient;
 
@@ -118,6 +122,31 @@ export async function awardKarma(
     const updated = tx
       ? await run(tx as PrismaTx)
       : await prisma.$transaction(run);
+
+    // Détection des paliers "round numbers" franchis par cet award.
+    // On calcule le karma AVANT increment pour comparer correctement.
+    // findCrossedMilestones renvoie [] si points <= 0 ou si aucun
+    // palier n'a été franchi. Le dispatch est fait hors-transaction
+    // pour ne pas tenir la tx ouverte sur un endpoint push/email.
+    const karmaBefore = updated.karma - points;
+    const crossedMilestones = findCrossedMilestones(karmaBefore, updated.karma);
+    for (const milestone of crossedMilestones) {
+      const meta = MILESTONE_META[milestone];
+      void dispatchNotification({
+        userId: updated.id,
+        type: NotificationType.KARMA_MILESTONE,
+        title: meta.title,
+        message: meta.message,
+        actionPath: "/profil/recompenses",
+        pushTag: `karma-milestone:${milestone}`,
+      }).catch((err) => {
+        logger.warn("gamification.milestone.dispatch.failed", {
+          userId: updated.id,
+          milestone,
+          err: err instanceof Error ? err.message : String(err),
+        });
+      });
+    }
 
     const newLevel = computeLevel(updated.karma);
     let levelUp: AwardKarmaResult["levelUp"] = null;

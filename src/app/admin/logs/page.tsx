@@ -38,6 +38,7 @@ const ACTION_LABEL: Record<AdminActionType, string> = {
   SET_ROLE: "Change rôle",
   RESOLVE_REPORT: "Résout signalement",
   DISMISS_REPORT: "Rejette signalement",
+  BROADCAST_NOTIFICATION: "Broadcast notif",
 };
 
 const TARGET_LABEL: Record<AdminTargetType, string> = {
@@ -47,6 +48,7 @@ const TARGET_LABEL: Record<AdminTargetType, string> = {
   MESSAGE: "Message",
   USER: "Utilisateur",
   REPORT: "Signalement",
+  SYSTEM: "Système",
 };
 
 const ACTION_COLORS: Record<AdminActionType, string> = {
@@ -61,6 +63,7 @@ const ACTION_COLORS: Record<AdminActionType, string> = {
   SET_ROLE: "text-peyi-orange-800 bg-peyi-orange-50 border-peyi-orange-200",
   RESOLVE_REPORT: "text-peyi-green-800 bg-peyi-green-50 border-peyi-green-200",
   DISMISS_REPORT: "text-muted-foreground bg-muted border-border",
+  BROADCAST_NOTIFICATION: "text-peyi-orange-800 bg-peyi-orange-50 border-peyi-orange-200",
 };
 
 export default async function AdminLogsPage(
