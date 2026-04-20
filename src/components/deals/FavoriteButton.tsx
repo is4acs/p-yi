@@ -48,9 +48,9 @@ export function FavoriteButton({
 
   const sizing =
     size === "sm"
-      ? "h-8 w-8 rounded-full"
-      : "h-10 rounded-full px-3 text-sm font-semibold";
-  const iconSize = size === "sm" ? "h-4 w-4" : "h-4 w-4";
+      ? "h-10 w-10 rounded-full"
+      : "h-11 rounded-full px-4 text-sm font-semibold";
+  const iconSize = "h-4 w-4";
 
   return (
     <>
