@@ -125,3 +125,23 @@
     border-radius: 4px;
   }
 }
+
+/* Anti-zoom iOS Safari.
+   Dès qu'un champ de saisie a un font-size < 16px, Safari iOS zoome
+   automatiquement à son focus — ce qui fait "sauter" l'interface et
+   donne cet effet "app zoomée" sur iPhone. On force 16px minimum sur
+   tous les <input>, <select>, <textarea> en mobile (< 768px).
+   `!important` est justifié ici : on doit battre les utilities
+   Tailwind (text-sm, text-xs) appliquées aux champs natifs, et c'est
+   une contrainte UX/accessibility fondamentale. Sur md+ la règle ne
+   s'applique plus — les utilities reprennent le contrôle (shadcn
+   Input passe à text-sm par exemple).
+   font-size n'a aucun effet visuel sur input[type=checkbox|radio|
+   range|color|file], donc pas besoin de filtrer ces types. */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
