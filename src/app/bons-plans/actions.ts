@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { KarmaAction, NotificationType, VoteType } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
@@ -188,6 +188,7 @@ export async function voteDealAction(
 
   revalidatePath("/bons-plans");
   revalidatePath(`/bons-plans/${deal.slug}`);
+  revalidateTag(`deal:${deal.slug}`);
 
   return {
     ok: true,

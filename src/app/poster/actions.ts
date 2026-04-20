@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { KarmaAction, Prisma, DealStatus } from "@prisma/client";
 
@@ -291,6 +291,7 @@ export async function updateDealAction(formData: FormData): Promise<void> {
 
   revalidatePath("/bons-plans");
   revalidatePath(`/bons-plans/${existing.slug}`);
+  revalidateTag(`deal:${existing.slug}`);
   redirect(`/bons-plans/${existing.slug}`);
 }
 
@@ -317,5 +318,6 @@ export async function deleteDealAction(formData: FormData): Promise<void> {
   }
 
   revalidatePath("/bons-plans");
+  revalidateTag(`deal:${existing.slug}`);
   redirect("/bons-plans");
 }

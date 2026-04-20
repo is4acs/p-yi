@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NotificationType } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
@@ -83,6 +83,7 @@ export async function toggleListingFavoriteAction(
 
   revalidatePath("/profil/favoris");
   revalidatePath(`/annonces/${listing.slug}`);
+  revalidateTag(`listing:${listing.slug}`);
 
   return { ok: true, favorited };
 }

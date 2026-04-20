@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { AdminActionType, AdminTargetType, UserRole } from "@prisma/client";
 
@@ -101,6 +101,7 @@ export async function adminDeleteCommentAction(formData: FormData) {
 
   if (comment.deal?.slug) {
     revalidatePath(`/bons-plans/${comment.deal.slug}`);
+    revalidateTag(`deal:${comment.deal.slug}`);
   }
   revalidatePath("/admin/commentaires");
   redirect(

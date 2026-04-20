@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { unstable_cache } from "next/cache";
 import type { Metadata } from "next";
 import {
   ArrowLeft,
@@ -42,7 +43,11 @@ import { ReportDialog } from "@/components/reports/ReportDialog";
 import { ShareRow } from "@/components/shared/ShareRow";
 import { getSiteUrl } from "@/lib/site-url";
 
-export const dynamic = "force-dynamic";
+// Pas de `force-dynamic` : la page reste dynamique de fait (cookies via
+// `getCurrentUser`) mais on cache la requête Prisma lourde (jointures
+// auteur/ville/catégorie/images) via `unstable_cache` avec un tag par
+// slug. Mutations (favori/édition/message/admin) appellent
+// `revalidateTag(\`listing:\${slug}\`)` pour invalider.
 
 const listingDetailSelect = {
   id: true,
@@ -89,11 +94,37 @@ const listingDetailSelect = {
   },
 } as const;
 
-async function getListing(slug: string) {
-  return prisma.listing.findFirst({
-    where: { slug, status: ListingStatus.PUBLISHED },
-    select: listingDetailSelect,
-  });
+function getListing(slug: string) {
+  return unstable_cache(
+    async () =>
+      prisma.listing.findFirst({
+        where: { slug, status: ListingStatus.PUBLISHED },
+        select: listingDetailSelect,
+      }),
+    ["listing-detail", slug],
+    { tags: [`listing:${slug}`], revalidate: 3600 },
+  )();
+}
+
+function getListingMeta(slug: string) {
+  return unstable_cache(
+    async () =>
+      prisma.listing.findFirst({
+        where: { slug, status: ListingStatus.PUBLISHED },
+        select: {
+          title: true,
+          description: true,
+          slug: true,
+          coverImageUrl: true,
+          price: true,
+          priceType: true,
+          category: { select: { name: true } },
+          city: { select: { name: true } },
+        },
+      }),
+    ["listing-meta", slug],
+    { tags: [`listing:${slug}`], revalidate: 3600 },
+  )();
 }
 
 export async function generateMetadata(
@@ -102,19 +133,7 @@ export async function generateMetadata(
   }
 ): Promise<Metadata> {
   const params = await props.params;
-  const listing = await prisma.listing.findFirst({
-    where: { slug: params.slug, status: ListingStatus.PUBLISHED },
-    select: {
-      title: true,
-      description: true,
-      slug: true,
-      coverImageUrl: true,
-      price: true,
-      priceType: true,
-      category: { select: { name: true } },
-      city: { select: { name: true } },
-    },
-  });
+  const listing = await getListingMeta(params.slug);
   if (!listing) return { title: "Annonce introuvable" };
 
   // Préfixer la description par le prix améliore l'aperçu social (WhatsApp,
