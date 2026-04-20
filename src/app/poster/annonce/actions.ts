@@ -28,6 +28,7 @@ import {
 } from "@/lib/storage/signed-upload";
 import { writeLimiter } from "@/lib/rate-limit";
 import { maybeQualifyReferee } from "@/lib/affiliate/qualify";
+import { matchAlertsForListing } from "@/lib/notifications/alerts";
 
 // Les petites annonces donnent un petit bonus de karma (3 pts) directement
 // en DB, sans passer par l'historique KarmaHistory. L'historique + les
@@ -245,8 +246,19 @@ export async function createListingAction(formData: FormData): Promise<void> {
 
   const denorm = denormalizeAttributes(attributes);
 
+  let createdListing: {
+    id: string;
+    title: string;
+    slug: string;
+    description: string;
+    price: Prisma.Decimal | null;
+    categoryId: string;
+    cityId: string;
+    authorId: string;
+  } | null = null;
+
   try {
-    await prisma.$transaction(async (tx) => {
+    createdListing = await prisma.$transaction(async (tx) => {
       const listing = await tx.listing.create({
         data: {
           slug,
@@ -275,6 +287,16 @@ export async function createListingAction(formData: FormData): Promise<void> {
           categoryId: category.id,
           cityId: city.id,
         },
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          description: true,
+          price: true,
+          categoryId: true,
+          cityId: true,
+          authorId: true,
+        },
       });
 
       if (finalUrls.length > 0) {
@@ -286,6 +308,8 @@ export async function createListingAction(formData: FormData): Promise<void> {
           })),
         });
       }
+
+      return listing;
     });
   } catch (err) {
     // DB failed after upload — clean up orphan photos.
@@ -304,6 +328,13 @@ export async function createListingAction(formData: FormData): Promise<void> {
   // Fait avancer la qualification si l'auteur est filleul d'un parrain.
   // No-op sinon. Ne casse jamais la création de l'annonce.
   await maybeQualifyReferee(user.id);
+
+  // Alerting : matche les alertes utilisateur actives sur la nouvelle
+  // annonce. L'appel est best-effort — un échec n'annule pas la
+  // publication déjà commit.
+  if (createdListing) {
+    await matchAlertsForListing(createdListing);
+  }
 
   revalidatePath("/annonces");
   redirect(`/annonces/${slug}`);

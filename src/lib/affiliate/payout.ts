@@ -5,6 +5,8 @@ import {
 } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import { dispatchNotification } from "@/lib/notifications/dispatch";
+import { logger } from "@/lib/log";
 
 import { formatCents } from "./tiers";
 
@@ -81,8 +83,8 @@ export async function markPayoutPaid(
     throw new Error("Ce paiement a déjà été traité.");
   }
 
-  return prisma.$transaction(async (tx) => {
-    const updated = await tx.affiliatePayout.update({
+  const updated = await prisma.$transaction(async (tx) => {
+    const row = await tx.affiliatePayout.update({
       where: { id: payoutId },
       data: {
         status: AffiliatePayoutStatus.PAID,
@@ -98,18 +100,28 @@ export async function markPayoutPaid(
       data: { paidOutCents: { increment: payout.amountCents } },
     });
 
-    await tx.notification.create({
-      data: {
-        userId: payout.userId,
-        type: NotificationType.AFFILIATE_PAYOUT,
-        title: "Paiement d'affiliation reçu 💸",
-        message: `${formatCents(payout.amountCents)} viennent d'être versés${params.method ? ` (${params.method})` : ""}.`,
-        actionUrl: "/profil/affiliation",
-      },
-    });
-
-    return updated;
+    return row;
   });
+
+  // Notif hors transaction — pipeline unifié (in-app + push + email
+  // selon les prefs du parrain). Si un canal tombe, la transaction
+  // DB est déjà commit : aucun risque d'écriture fantôme.
+  await dispatchNotification({
+    userId: payout.userId,
+    type: NotificationType.AFFILIATE_PAYOUT,
+    title: "Paiement d'affiliation reçu 💸",
+    message: `${formatCents(payout.amountCents)} viennent d'être versés${
+      params.method ? ` (${params.method})` : ""
+    }.`,
+    actionPath: "/profil/affiliation",
+  }).catch((err) => {
+    logger.warn("affiliate.payout.dispatch.failed", {
+      userId: payout.userId,
+      err: err instanceof Error ? err.message : String(err),
+    });
+  });
+
+  return updated;
 }
 
 /**

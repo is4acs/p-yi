@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { KarmaAction } from "@prisma/client";
+import { KarmaAction, NotificationType } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { requireActiveUser } from "@/lib/auth/current-user";
@@ -9,6 +9,7 @@ import { createCommentSchema } from "@/lib/validation/comment";
 import { writeLimiter } from "@/lib/rate-limit";
 import { awardKarma } from "@/lib/gamification/karma";
 import { checkAndAwardBadges } from "@/lib/gamification/badges";
+import { dispatchNotification } from "@/lib/notifications/dispatch";
 
 function formatRateLimitMessage(reset: number): string {
   const secondsLeft = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
@@ -50,14 +51,25 @@ export async function createCommentAction(
 
   const deal = await prisma.deal.findUnique({
     where: { id: dealId },
-    select: { id: true, slug: true },
+    select: { id: true, slug: true, title: true, authorId: true },
   });
   if (!deal) return { ok: false, error: "Bon plan introuvable." };
+
+  // Aperçu réutilisé pour la notif (in-app + push + email). Même règle
+  // que pour les messages : 140 caractères maxi pour rester lisible en
+  // toast mobile.
+  const preview =
+    content.length > 140 ? `${content.slice(0, 140).trimEnd()}…` : content;
 
   if (parentId) {
     const parent = await prisma.comment.findUnique({
       where: { id: parentId },
-      select: { id: true, dealId: true, parentId: true },
+      select: {
+        id: true,
+        dealId: true,
+        parentId: true,
+        authorId: true,
+      },
     });
     if (!parent || parent.dealId !== deal.id) {
       return { ok: false, error: "Commentaire parent introuvable." };
@@ -88,6 +100,22 @@ export async function createCommentAction(
       dealId: deal.id,
       commentId: comment.id,
     });
+
+    // Notifie l'auteur du commentaire parent (sauf s'il répond à son
+    // propre commentaire, auquel cas on se tait).
+    if (parent.authorId !== user.id) {
+      await dispatchNotification({
+        userId: parent.authorId,
+        type: NotificationType.COMMENT_REPLY,
+        title: `@${user.username} t'a répondu`,
+        message: preview,
+        actionPath: `/bons-plans/${deal.slug}#comment-${comment.id}`,
+        dealId: deal.id,
+        commentId: comment.id,
+        fromUserId: user.id,
+        pushTag: `reply:${parent.id}`,
+      });
+    }
   } else {
     const comment = await prisma.$transaction(async (tx) => {
       const created = await tx.comment.create({
@@ -110,6 +138,23 @@ export async function createCommentAction(
       dealId: deal.id,
       commentId: comment.id,
     });
+
+    // Notifie l'auteur du bon plan (sauf s'il commente sa propre pub).
+    if (deal.authorId !== user.id) {
+      await dispatchNotification({
+        userId: deal.authorId,
+        type: NotificationType.NEW_COMMENT,
+        title: `@${user.username} a commenté « ${deal.title.slice(0, 40)}${
+          deal.title.length > 40 ? "…" : ""
+        } »`,
+        message: preview,
+        actionPath: `/bons-plans/${deal.slug}#comment-${comment.id}`,
+        dealId: deal.id,
+        commentId: comment.id,
+        fromUserId: user.id,
+        pushTag: `deal-comment:${deal.id}`,
+      });
+    }
   }
   await checkAndAwardBadges(user.id);
 

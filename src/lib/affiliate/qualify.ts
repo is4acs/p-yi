@@ -8,6 +8,7 @@ import {
 
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/log";
+import { dispatchNotification } from "@/lib/notifications/dispatch";
 
 import {
   FIRST_REFEREE_BONUS_CENTS,
@@ -18,6 +19,18 @@ import {
 } from "./tiers";
 
 type PrismaTx = Prisma.TransactionClient;
+
+// Intention de notif collectée dans la transaction puis dispatchée
+// après son commit. On garde la forme DispatchInput-compatible pour
+// éviter toute gymnastique côté appelant.
+type PendingNotification = {
+  userId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  actionPath: string;
+  fromUserId?: string | null;
+};
 
 /**
  * Vérifie et fait progresser le statut de parrainage d'un utilisateur
@@ -91,16 +104,29 @@ export async function maybeQualifyReferee(refereeId: string): Promise<void> {
     }
 
     // Qualification atteinte ! Tout se passe dans une transaction pour
-    // rester cohérent en cas d'erreur à mi-chemin.
-    await prisma.$transaction(async (tx) => {
-      await qualifyInTransaction(tx, {
+    // rester cohérent en cas d'erreur à mi-chemin. Les notifs (push +
+    // email + row in-app) sont dispatchées APRÈS le commit — elles ne
+    // doivent jamais annuler la qualification si un canal externe
+    // tombe.
+    const pending = await prisma.$transaction(async (tx) =>
+      qualifyInTransaction(tx, {
         referralId: referral.id,
         referrerId: referral.referrerId,
         refereeId,
         dealsPublished,
         listingsPublished,
+      }),
+    );
+
+    for (const n of pending) {
+      await dispatchNotification(n).catch((err) => {
+        logger.warn("affiliate.dispatch.failed", {
+          referrerId: n.userId,
+          type: n.type,
+          err: err instanceof Error ? err.message : String(err),
+        });
       });
-    });
+    }
   } catch (err) {
     logger.error("affiliate.qualify.failed", {
       refereeId,
@@ -112,6 +138,10 @@ export async function maybeQualifyReferee(refereeId: string): Promise<void> {
 /**
  * Corps transactionnel de la qualification. Sort dans une fonction à
  * part pour pouvoir être testé en isolation plus tard.
+ *
+ * Retourne la liste des notifications à dispatcher APRÈS le commit —
+ * on ne fait plus le dispatch ici pour ne pas bloquer la transaction
+ * sur un canal externe (Resend, Web Push) qui peut latence / échouer.
  */
 async function qualifyInTransaction(
   tx: PrismaTx,
@@ -122,7 +152,7 @@ async function qualifyInTransaction(
     dealsPublished: number;
     listingsPublished: number;
   },
-) {
+): Promise<PendingNotification[]> {
   const { referralId, referrerId, refereeId, dealsPublished, listingsPublished } =
     params;
 
@@ -131,7 +161,7 @@ async function qualifyInTransaction(
     where: { id: referralId },
     select: { status: true },
   });
-  if (!fresh || fresh.status !== ReferralStatus.PENDING) return;
+  if (!fresh || fresh.status !== ReferralStatus.PENDING) return [];
 
   await tx.referral.update({
     where: { id: referralId },
@@ -158,7 +188,7 @@ async function qualifyInTransaction(
     // — le parrainage reste QUALIFIED, juste les compteurs ne bougent
     // pas tant que le parrain n'a pas matérialisé son profil.
     logger.warn("affiliate.qualify.no_profile_for_referrer", { referrerId });
-    return;
+    return [];
   }
 
   const previousCount = affiliate.qualifiedCount;
@@ -194,32 +224,35 @@ async function qualifyInTransaction(
     },
   });
 
-  // Notification "filleul qualifié" systématique.
-  await tx.notification.create({
-    data: {
-      userId: referrerId,
-      type: NotificationType.REFERRAL_QUALIFIED,
-      title: "Un filleul vient de se qualifier ✨",
-      message: firstBonusCents > 0
+  // On prépare les notifications à dispatcher après commit (push +
+  // email + in-app). Elles ne sont pas écrites via tx.notification.create
+  // ici — dispatchNotification fera la row in-app lui-même, c'est la
+  // source de vérité unique pour tout le pipeline notifs.
+  const pending: PendingNotification[] = [];
+
+  pending.push({
+    userId: referrerId,
+    type: NotificationType.REFERRAL_QUALIFIED,
+    title: "Un filleul vient de se qualifier ✨",
+    message:
+      firstBonusCents > 0
         ? `Bravo ! Tu touches ${formatCents(firstBonusCents)} de bonus de bienvenue.`
         : "Il a publié 5 bons plans et 5 annonces. Continue comme ça !",
-      actionUrl: "/profil/affiliation",
-      fromUserId: refereeId,
-    },
+    actionPath: "/profil/affiliation",
+    fromUserId: refereeId,
   });
 
-  // Notification dédiée par palier franchi.
   for (const tier of newlyReached) {
-    await tx.notification.create({
-      data: {
-        userId: referrerId,
-        type: NotificationType.AFFILIATE_TIER_REACHED,
-        title: `🎉 ${tier.label}`,
-        message: `Tu viens de gagner ${formatCents(tier.rewardCents)}. Total à reverser : ${formatCents(affiliate.pendingPayoutCents)}.`,
-        actionUrl: "/profil/affiliation",
-      },
+    pending.push({
+      userId: referrerId,
+      type: NotificationType.AFFILIATE_TIER_REACHED,
+      title: `🎉 ${tier.label}`,
+      message: `Tu viens de gagner ${formatCents(tier.rewardCents)}. Total à reverser : ${formatCents(affiliate.pendingPayoutCents)}.`,
+      actionPath: "/profil/affiliation",
     });
   }
+
+  return pending;
 }
 
 /**

@@ -7,6 +7,7 @@ import {
 
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/log";
+import { dispatchNotification } from "@/lib/notifications/dispatch";
 
 import { KARMA_RULES } from "./actions";
 import { computeLevel, LEVEL_META } from "./levels";
@@ -134,14 +135,25 @@ export async function awardKarma(
       const rankAfter = LEVEL_META[newLevel].minKarma;
       if (rankAfter > rankBefore) {
         levelUp = { from: updated.level, to: newLevel };
-        await (tx ?? prisma).notification.create({
-          data: {
+        // On stocke l'intent hors du closure transactionnel — le
+        // dispatch effectif a lieu APRÈS commit (push + email +
+        // in-app). Si on était déjà dans une tx externe (tx !==
+        // undefined), on dispatch quand même hors — l'intent de notif
+        // ne doit pas tenir la tx ouverte sur un endpoint Resend.
+        const payload = {
+          userId: updated.id,
+          type: NotificationType.LEVEL_UP,
+          title: `Nouveau niveau : ${LEVEL_META[newLevel].label} ${LEVEL_META[newLevel].emoji}`,
+          message: LEVEL_META[newLevel].tagline,
+          actionPath: "/profil/recompenses",
+        };
+        // Fire-and-forget : le résultat est logué par dispatchNotification
+        // en cas d'échec.
+        void dispatchNotification(payload).catch((err) => {
+          logger.warn("gamification.levelUp.dispatch.failed", {
             userId: updated.id,
-            type: NotificationType.LEVEL_UP,
-            title: `Nouveau niveau : ${LEVEL_META[newLevel].label} ${LEVEL_META[newLevel].emoji}`,
-            message: LEVEL_META[newLevel].tagline,
-            actionUrl: "/profil/recompenses",
-          },
+            err: err instanceof Error ? err.message : String(err),
+          });
         });
       }
     }

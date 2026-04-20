@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import {
   AdminActionType,
   AdminTargetType,
+  NotificationType,
   ReportStatus,
   UserRole,
 } from "@prisma/client";
@@ -12,6 +13,8 @@ import {
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth/current-user";
 import { logAdminAction } from "@/lib/admin/log";
+import { dispatchNotification } from "@/lib/notifications/dispatch";
+import { logger } from "@/lib/log";
 
 /**
  * Marquer un signalement comme résolu ou rejeté.
@@ -46,6 +49,7 @@ export async function adminResolveReportAction(formData: FormData) {
       id: true,
       status: true,
       reason: true,
+      reporterId: true,
       reportedUserId: true,
       dealId: true,
       listingId: true,
@@ -98,6 +102,28 @@ export async function adminResolveReportAction(formData: FormData) {
     },
   });
 
+  // Notifie le reporter que son signalement a été traité (uniquement
+  // si RESOLVED — on ne spam pas les users dont les reports sont
+  // dismiss, c'est souvent du bruit / malentendu qui vaut mieux
+  // silencieux). Fire-and-forget.
+  if (!dismiss) {
+    await dispatchNotification({
+      userId: report.reporterId,
+      type: NotificationType.REPORT_RESOLVED,
+      title: "Signalement traité ✅",
+      message: resolution
+        ? `Ton signalement a été pris en compte. Action : ${resolution}.`
+        : "Merci ! Ton signalement a été pris en compte par la modération.",
+      actionPath: "/notifications",
+      pushTag: `report:${report.id}`,
+    }).catch((err) => {
+      logger.warn("reports.resolve.dispatch-failed", {
+        reportId: report.id,
+        err: err instanceof Error ? err.message : String(err),
+      });
+    });
+  }
+
   revalidatePath("/admin/signalements");
   revalidatePath("/admin");
   redirect(
@@ -148,6 +174,7 @@ export async function adminBulkResolveReportsAction(formData: FormData) {
     select: {
       id: true,
       reason: true,
+      reporterId: true,
       reportedUserId: true,
       dealId: true,
       listingId: true,
@@ -195,6 +222,31 @@ export async function adminBulkResolveReportsAction(formData: FormData) {
       }),
     ),
   );
+
+  // Notifie chaque reporter quand on résout (pas quand on rejette —
+  // cf. rationale du handler single). Fire-and-forget, un échec
+  // n'empêche pas les autres.
+  if (!dismiss) {
+    await Promise.all(
+      reports.map((report) =>
+        dispatchNotification({
+          userId: report.reporterId,
+          type: NotificationType.REPORT_RESOLVED,
+          title: "Signalement traité ✅",
+          message: resolution
+            ? `Ton signalement a été pris en compte. Action : ${resolution}.`
+            : "Merci ! Ton signalement a été pris en compte par la modération.",
+          actionPath: "/notifications",
+          pushTag: `report:${report.id}`,
+        }).catch((err) => {
+          logger.warn("reports.bulk-resolve.dispatch-failed", {
+            reportId: report.id,
+            err: err instanceof Error ? err.message : String(err),
+          });
+        }),
+      ),
+    );
+  }
 
   revalidatePath("/admin/signalements");
   revalidatePath("/admin");
