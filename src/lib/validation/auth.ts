@@ -34,6 +34,21 @@ export const completeProfileSchema = z.object({
   username: usernameSchema,
 });
 
+export const requestPasswordResetSchema = z.object({
+  email: z
+    .string()
+    .min(1, "L'e-mail est requis.")
+    .email("E-mail invalide."),
+});
+
+export const updatePasswordSchema = z.object({
+  password: z
+    .string()
+    .min(8, "Le mot de passe doit faire au moins 8 caractères."),
+});
+
 export type SignInInput = z.infer<typeof signInSchema>;
 export type SignUpInput = z.infer<typeof signUpSchema>;
 export type CompleteProfileInput = z.infer<typeof completeProfileSchema>;
+export type RequestPasswordResetInput = z.infer<typeof requestPasswordResetSchema>;
+export type UpdatePasswordInput = z.infer<typeof updatePasswordSchema>;

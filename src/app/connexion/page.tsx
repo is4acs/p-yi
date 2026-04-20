@@ -168,6 +168,16 @@ export default async function ConnexionPage(
             autoComplete={isSignup ? "new-password" : "current-password"}
             placeholder="8 caractères minimum"
           />
+          {!isSignup && (
+            <div className="text-right">
+              <Link
+                href="/connexion/mot-de-passe-oublie"
+                className="text-xs font-medium text-peyi-orange-700 hover:underline"
+              >
+                Mot de passe oublié&nbsp;?
+              </Link>
+            </div>
+          )}
         </div>
 
         <SubmitButton
