@@ -48,9 +48,13 @@ const SB = supabaseHosts();
  *  - `'unsafe-inline'` sur `style-src` : Tailwind injecte des styles
  *    inline pour les variants dynamiques, et `next/font` aussi. Difficile
  *    à retirer sans casser du design.
- *  - `img-src` inclut `https:` pour les images OG externes et les
- *    previews d'URL des bons plans (qu'on ne connaît pas à l'avance).
- *    On peut resserrer si jamais on proxie tout via `next/image`.
+ *  - `img-src` est resserré sur les sources qu'on sait charger :
+ *    Supabase Storage (avatars/deals/annonces uploadés) + Google CDN
+ *    (avatars OAuth — `UserAvatar` rend ces URLs via `<Image unoptimized>`
+ *    donc le navigateur fait la requête directe, soumise au CSP). Tout
+ *    le reste (logos marchands, covers externes) passe par `next/image`
+ *    optimisé : l'URL rendue est `/_next/image?url=...` côté `'self'`,
+ *    la whitelist serveur est `images.remotePatterns` (ci-dessous).
  *  - `frame-ancestors 'none'` + `X-Frame-Options: DENY` en complément =
  *    anti-clickjacking robuste y compris sur vieux browsers.
  *  - `object-src 'none'` bloque les plugins Flash/PDF obsolètes.
@@ -63,7 +67,7 @@ const csp = [
   `default-src 'self'`,
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   `style-src 'self' 'unsafe-inline'`,
-  `img-src 'self' data: blob: https: ${SB.http}`,
+  `img-src 'self' data: blob: ${SB.http} https://*.googleusercontent.com`,
   `font-src 'self' data:`,
   `connect-src 'self' ${SB.http} ${SB.ws}`,
   `manifest-src 'self'`,
