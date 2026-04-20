@@ -1,20 +1,16 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowLeft, BadgeCheck, Save, Trash2, Upload } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Save } from "lucide-react";
 
 import { requireUser } from "@/lib/auth/current-user";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { UserAvatar } from "@/components/layout/UserAvatar";
+import { AvatarUploader } from "@/components/user/AvatarUploader";
 import { PushSubscribeToggle } from "@/components/notifications/PushSubscribeToggle";
 
-import {
-  removeAvatarAction,
-  updateAvatarAction,
-  updateProfileAction,
-} from "./actions";
+import { updateProfileAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -67,54 +63,11 @@ export default async function ProfilEditPage(props: Props) {
         <h2 id="avatar-heading" className="text-sm font-semibold">
           Photo de profil
         </h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          JPG, PNG ou WebP. 2 Mo maximum. Visible sur tes posts et commentaires.
-        </p>
-
-        <div className="mt-4 flex flex-col items-center gap-4 sm:flex-row sm:items-center">
-          <UserAvatar
+        <div className="mt-4">
+          <AvatarUploader
             username={user.username}
-            avatarUrl={user.avatarUrl}
-            size="lg"
+            currentAvatarUrl={user.avatarUrl}
           />
-
-          <div className="flex w-full flex-col gap-2 sm:flex-1">
-            <form
-              action={updateAvatarAction}
-              encType="multipart/form-data"
-              className="flex flex-col gap-2 sm:flex-row sm:items-center"
-            >
-              <Label htmlFor="avatar" className="sr-only">
-                Nouvelle photo de profil
-              </Label>
-              <Input
-                id="avatar"
-                name="avatar"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                required
-                className="flex-1"
-              />
-              <SubmitButton size="sm" pendingLabel="Envoi…">
-                <Upload className="h-3.5 w-3.5" aria-hidden />
-                Envoyer
-              </SubmitButton>
-            </form>
-
-            {user.avatarUrl && (
-              <form action={removeAvatarAction}>
-                <SubmitButton
-                  variant="outline"
-                  size="sm"
-                  pendingLabel="Suppression…"
-                  className="w-full border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive sm:w-auto"
-                >
-                  <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                  Retirer la photo
-                </SubmitButton>
-              </form>
-            )}
-          </div>
         </div>
       </section>
 
