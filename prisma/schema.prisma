@@ -820,6 +820,7 @@ enum AdminActionType {
   SET_ROLE
   RESOLVE_REPORT
   DISMISS_REPORT
+  BROADCAST_NOTIFICATION
 }
 
 enum AdminTargetType {
@@ -829,6 +830,7 @@ enum AdminTargetType {
   MESSAGE
   USER
   REPORT
+  SYSTEM
 }
 
 // =============================================================================
