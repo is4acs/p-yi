@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import {
   BadgeCheck,
   Bell,
+  BellRing,
   Bookmark,
   ChevronRight,
   Gift,
@@ -45,6 +46,7 @@ export default async function ProfilPage(props: Props) {
     listingFavoriteCount,
     unreadCount,
     unreadNotifications,
+    activeAlertsCount,
   ] = await Promise.all([
     user.cityId
       ? prisma.city.findUnique({
@@ -60,6 +62,7 @@ export default async function ProfilPage(props: Props) {
     }),
     fetchUnreadCount(user.id),
     fetchUnreadNotificationsCount(user.id),
+    prisma.alert.count({ where: { userId: user.id, isActive: true } }),
   ]);
   const favoriteCount = dealFavoriteCount + listingFavoriteCount;
 
@@ -245,6 +248,28 @@ export default async function ProfilPage(props: Props) {
                 {favoriteCount === 0
                   ? "Aucun favori"
                   : `${dealFavoriteCount} bon${dealFavoriteCount > 1 ? "s" : ""} plan${dealFavoriteCount > 1 ? "s" : ""} · ${listingFavoriteCount} annonce${listingFavoriteCount > 1 ? "s" : ""}`}
+              </span>
+            </span>
+          </span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden />
+        </Link>
+
+        <Link
+          href="/profil/alertes"
+          className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 text-sm transition hover:border-peyi-orange-300 hover:bg-peyi-orange-50/40"
+        >
+          <span className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-peyi-orange-100 text-peyi-orange-600">
+              <BellRing className="h-4 w-4" aria-hidden />
+            </span>
+            <span className="min-w-0">
+              <span className="block font-semibold text-foreground">
+                Mes alertes
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {activeAlertsCount === 0
+                  ? "Aucune alerte active"
+                  : `${activeAlertsCount} alerte${activeAlertsCount > 1 ? "s" : ""} active${activeAlertsCount > 1 ? "s" : ""}`}
               </span>
             </span>
           </span>
