@@ -7,10 +7,11 @@ import { prisma } from "@/lib/prisma";
 import { requireActiveUser } from "@/lib/auth/current-user";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { normalizePhone } from "@/lib/auth/phone";
+import { removeAvatarImage } from "@/lib/storage/avatars";
 import {
-  removeAvatarImage,
-  uploadAvatarImage,
-} from "@/lib/storage/avatars";
+  AVATAR_BUCKET,
+  parseOwnedStorageUrl,
+} from "@/lib/storage/signed-upload";
 import { updateProfileSchema } from "@/lib/validation/profile";
 
 function redirectWithError(path: string, message: string): never {
@@ -155,54 +156,69 @@ export async function updateProfileAction(formData: FormData): Promise<void> {
 }
 
 /**
- * Upload (or replace) the current user's avatar. Expects `avatar` on the
- * FormData. The previous avatar blob is deleted best-effort so we don't
- * leave orphans in the `avatars` bucket.
+ * Finalise l'upload d'un avatar : le client a déjà compressé puis poussé
+ * le blob vers Supabase Storage via une URL signée, et nous remonte la
+ * `publicUrl`. On valide ici qu'elle pointe bien vers le bucket avatars
+ * et le dossier de l'utilisateur courant (sécurité = pas d'usurpation
+ * d'image d'autrui), on met à jour la DB, puis on supprime best-effort
+ * l'ancienne photo pour éviter les orphelins.
+ *
+ * Renvoie la nouvelle URL au client (pour optimistic UI) au lieu de
+ * rediriger : le composant fait `router.refresh()` lui-même, ce qui est
+ * plus fluide qu'un full reload de la page d'édition.
  */
-export async function updateAvatarAction(formData: FormData): Promise<void> {
+export type FinalizeAvatarResult =
+  | { ok: true; avatarUrl: string }
+  | { ok: false; error: string };
+
+export async function finalizeAvatarUploadAction(
+  publicUrl: string,
+): Promise<FinalizeAvatarResult> {
   const user = await requireActiveUser("/profil/edit");
 
-  const file = formData.get("avatar");
-  if (!(file instanceof File) || file.size === 0) {
-    redirectWithError("/profil/edit", "Choisis une image avant d'envoyer.");
+  if (typeof publicUrl !== "string" || publicUrl.length === 0) {
+    return { ok: false, error: "Aucune image reçue." };
   }
 
-  let newUrl: string;
-  try {
-    newUrl = await uploadAvatarImage(file, user.id);
-  } catch (err) {
-    redirectWithError(
-      "/profil/edit",
-      err instanceof Error ? err.message : "Échec de l'upload.",
-    );
+  const parsed = parseOwnedStorageUrl(publicUrl, AVATAR_BUCKET, user.id);
+  if (!parsed) {
+    return {
+      ok: false,
+      error: "Cette image ne provient pas de ton dossier d'avatars.",
+    };
   }
 
   const previousUrl = user.avatarUrl;
 
   await prisma.user.update({
     where: { id: user.id },
-    data: { avatarUrl: newUrl },
+    data: { avatarUrl: publicUrl },
   });
 
-  if (previousUrl) {
+  if (previousUrl && previousUrl !== publicUrl) {
     await removeAvatarImage(previousUrl);
   }
 
   revalidatePath("/profil");
   revalidatePath("/profil/edit");
 
-  redirectWithSuccess("/profil", "Photo de profil mise à jour.");
+  return { ok: true, avatarUrl: publicUrl };
 }
 
 /**
- * Removes the current user's avatar. Clears the Prisma row first (so the
- * UI updates immediately) and best-effort deletes the storage blob.
+ * Supprime l'avatar courant. Comme `finalizeAvatarUploadAction`, retourne
+ * un résultat plutôt qu'une redirection — le composant client gère lui-même
+ * le rafraîchissement RSC pour une UX plus fluide.
  */
-export async function removeAvatarAction(): Promise<void> {
+export type RemoveAvatarResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+export async function removeAvatarAction(): Promise<RemoveAvatarResult> {
   const user = await requireActiveUser("/profil/edit");
 
   if (!user.avatarUrl) {
-    redirect("/profil");
+    return { ok: true };
   }
 
   const previousUrl = user.avatarUrl;
@@ -217,5 +233,5 @@ export async function removeAvatarAction(): Promise<void> {
   revalidatePath("/profil");
   revalidatePath("/profil/edit");
 
-  redirectWithSuccess("/profil", "Photo de profil supprimée.");
+  return { ok: true };
 }
