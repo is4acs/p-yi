@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
 import { requireActiveUser } from "@/lib/auth/current-user";
@@ -48,6 +48,7 @@ export async function toggleFavoriteAction(
 
   revalidatePath("/profil/favoris");
   revalidatePath(`/bons-plans/${deal.slug}`);
+  revalidateTag(`deal:${deal.slug}`);
 
   return { ok: true, favorited };
 }

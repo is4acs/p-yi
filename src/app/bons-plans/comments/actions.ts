@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { KarmaAction, NotificationType } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
@@ -159,6 +159,7 @@ export async function createCommentAction(
   await checkAndAwardBadges(user.id);
 
   revalidatePath(`/bons-plans/${deal.slug}`);
+  revalidateTag(`deal:${deal.slug}`);
   return { ok: true };
 }
 
@@ -216,5 +217,6 @@ export async function deleteCommentAction(
   }
 
   revalidatePath(`/bons-plans/${comment.deal.slug}`);
+  revalidateTag(`deal:${comment.deal.slug}`);
   return { ok: true };
 }

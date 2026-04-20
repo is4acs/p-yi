@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { NotificationType } from "@prisma/client";
 
@@ -182,6 +182,7 @@ export async function sendMessageAction(formData: FormData): Promise<void> {
   revalidatePath(`/messages/${recipient.username}`);
   if (listingSlug) {
     revalidatePath(`/annonces/${listingSlug}`);
+    revalidateTag(`listing:${listingSlug}`);
   }
 
   const threadPath = listingSlug

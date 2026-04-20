@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { AdminActionType, AdminTargetType, UserRole } from "@prisma/client";
 
@@ -52,5 +52,6 @@ export async function adminDeleteDealAction(formData: FormData) {
 
   revalidatePath("/admin/bons-plans");
   revalidatePath("/bons-plans");
+  revalidateTag(`deal:${deal.slug}`);
   redirect("/admin/bons-plans?success=" + encodeURIComponent("Bon plan supprimé."));
 }

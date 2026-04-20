@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   Prisma,
@@ -486,6 +486,7 @@ export async function updateListingAction(formData: FormData): Promise<void> {
 
   revalidatePath("/annonces");
   revalidatePath(`/annonces/${existing.slug}`);
+  revalidateTag(`listing:${existing.slug}`);
   redirect(`/annonces/${existing.slug}`);
 }
 
@@ -520,6 +521,7 @@ export async function deleteListingAction(formData: FormData): Promise<void> {
   await removeListingImages(Array.from(urls));
 
   revalidatePath("/annonces");
+  revalidateTag(`listing:${existing.slug}`);
   redirect("/annonces");
 }
 
@@ -547,5 +549,6 @@ export async function bumpListingAction(formData: FormData): Promise<void> {
 
   revalidatePath("/annonces");
   revalidatePath(`/annonces/${existing.slug}`);
+  revalidateTag(`listing:${existing.slug}`);
   redirect(`/annonces/${existing.slug}`);
 }

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { AdminActionType, AdminTargetType, UserRole } from "@prisma/client";
 
@@ -70,5 +70,6 @@ export async function adminDeleteListingAction(formData: FormData) {
 
   revalidatePath("/admin/annonces");
   revalidatePath("/annonces");
+  revalidateTag(`listing:${listing.slug}`);
   redirect("/admin/annonces?success=" + encodeURIComponent("Annonce supprimée."));
 }

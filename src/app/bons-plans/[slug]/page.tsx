@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { unstable_cache } from "next/cache";
 import type { Metadata } from "next";
 import {
   ArrowLeft,
@@ -39,9 +40,13 @@ import { ReportDialog } from "@/components/reports/ReportDialog";
 import { ShareRow } from "@/components/shared/ShareRow";
 import { getSiteUrl } from "@/lib/site-url";
 
-export const dynamic = "force-dynamic";
-
 // ---------- data ----------
+
+// Pas de `force-dynamic` : la page reste dynamique de fait (cookies via
+// `getCurrentUser`) mais on cache la requête Prisma lourde (jointures
+// auteur/catégorie/ville/store/merchant) via `unstable_cache` avec un
+// tag par slug. Les mutations (vote/favori/commentaire/édition/admin)
+// appellent `revalidateTag(\`deal:\${slug}\`)` pour invalider.
 
 const dealDetailSelect = {
   id: true,
@@ -88,11 +93,35 @@ const dealDetailSelect = {
   merchant: { select: { name: true, slug: true, domain: true, logoUrl: true } },
 } as const;
 
-async function getDeal(slug: string) {
-  return prisma.deal.findFirst({
-    where: { slug, status: DealStatus.PUBLISHED },
-    select: dealDetailSelect,
-  });
+function getDeal(slug: string) {
+  return unstable_cache(
+    async () =>
+      prisma.deal.findFirst({
+        where: { slug, status: DealStatus.PUBLISHED },
+        select: dealDetailSelect,
+      }),
+    ["deal-detail", slug],
+    { tags: [`deal:${slug}`], revalidate: 3600 },
+  )();
+}
+
+function getDealMeta(slug: string) {
+  return unstable_cache(
+    async () =>
+      prisma.deal.findFirst({
+        where: { slug, status: DealStatus.PUBLISHED },
+        select: {
+          title: true,
+          description: true,
+          slug: true,
+          coverImageUrl: true,
+          category: { select: { name: true } },
+          city: { select: { name: true } },
+        },
+      }),
+    ["deal-meta", slug],
+    { tags: [`deal:${slug}`], revalidate: 3600 },
+  )();
 }
 
 // ---------- SEO ----------
@@ -103,17 +132,7 @@ export async function generateMetadata(
   }
 ): Promise<Metadata> {
   const params = await props.params;
-  const deal = await prisma.deal.findFirst({
-    where: { slug: params.slug, status: DealStatus.PUBLISHED },
-    select: {
-      title: true,
-      description: true,
-      slug: true,
-      coverImageUrl: true,
-      category: { select: { name: true } },
-      city: { select: { name: true } },
-    },
-  });
+  const deal = await getDealMeta(params.slug);
   if (!deal) return { title: "Bon plan introuvable" };
 
   const description =

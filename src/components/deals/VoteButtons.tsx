@@ -162,14 +162,14 @@ export function VoteButtons({
             aria-label={`Chaud (${optimistic.upvotes})`}
             title={disabledHint}
             className={cn(
-              "flex h-7 w-7 items-center justify-center rounded-full transition",
+              "flex h-10 w-10 items-center justify-center rounded-full transition",
               "disabled:cursor-not-allowed disabled:opacity-50",
               hotActive
                 ? "bg-peyi-orange-100 text-peyi-orange-700"
                 : "text-muted-foreground enabled:hover:bg-peyi-orange-50 enabled:hover:text-peyi-orange-700",
             )}
           >
-            <ChevronUp className="h-4 w-4" aria-hidden />
+            <ChevronUp className="h-5 w-5" aria-hidden />
           </button>
           <span
             className={cn(
@@ -188,14 +188,14 @@ export function VoteButtons({
             aria-label={`Froid (${optimistic.downvotes})`}
             title={disabledHint}
             className={cn(
-              "flex h-7 w-7 items-center justify-center rounded-full transition",
+              "flex h-10 w-10 items-center justify-center rounded-full transition",
               "disabled:cursor-not-allowed disabled:opacity-50",
               coldActive
                 ? "bg-cold/15 text-cold"
                 : "text-muted-foreground enabled:hover:bg-muted enabled:hover:text-foreground",
             )}
           >
-            <ChevronDown className="h-4 w-4" aria-hidden />
+            <ChevronDown className="h-5 w-5" aria-hidden />
           </button>
         </div>
         {error && (
@@ -234,7 +234,7 @@ export function VoteButtons({
           className={cn(
             "inline-flex items-center justify-center gap-1 font-semibold tabular-nums transition",
             "disabled:cursor-not-allowed disabled:opacity-60",
-            isCompact ? "py-1.5 text-[11px]" : "px-3 text-sm",
+            isCompact ? "min-h-10 py-2 text-xs" : "px-3 text-sm",
             hotActive
               ? "bg-hot/15 text-hot"
               : "text-muted-foreground enabled:hover:bg-hot/10 enabled:hover:text-hot",
@@ -265,7 +265,7 @@ export function VoteButtons({
           className={cn(
             "inline-flex items-center justify-center gap-1 font-semibold tabular-nums transition",
             "disabled:cursor-not-allowed disabled:opacity-60",
-            isCompact ? "py-1.5 text-[11px]" : "px-3 text-sm",
+            isCompact ? "min-h-10 py-2 text-xs" : "px-3 text-sm",
             coldActive
               ? "bg-cold/15 text-cold"
               : "text-muted-foreground enabled:hover:bg-cold/10 enabled:hover:text-cold",
