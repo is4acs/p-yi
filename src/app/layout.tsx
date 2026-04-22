@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Nunito } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { cn } from "@/lib/utils";
 import { WebVitals } from "@/components/analytics/WebVitals";
 import { BannedBanner } from "@/components/layout/BannedBanner";
@@ -185,6 +186,7 @@ export default async function RootLayout({
         <Footer />
         <BottomNav unreadCount={unreadCount} />
         <InstallBanner />
+        <Analytics />
       </body>
     </html>
   );
