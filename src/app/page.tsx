@@ -66,7 +66,7 @@ export default async function HomePage(props: Props) {
   ]);
 
   return (
-    <main className="mx-auto w-full max-w-md overflow-x-clip pb-14 animate-in fade-in duration-300 sm:max-w-2xl xl:max-w-6xl">
+    <main className="mx-auto w-full max-w-md overflow-x-clip pb-14 animate-in fade-in duration-300 sm:max-w-2xl lg:max-w-5xl xl:max-w-6xl">
       {searchParams?.deleted === "1" && (
         <div
           role="status"
@@ -87,9 +87,9 @@ export default async function HomePage(props: Props) {
       <HomePillarLinks />
       {/* Catégories — grille 2×4 (mobile) / 4×2 (desktop), tuiles colorées */}
       <HomeCategoriesGrid />
-      <div className="mt-8 xl:grid xl:grid-cols-12 xl:items-start xl:gap-8">
+      <div className="mt-8 lg:grid lg:grid-cols-12 lg:items-start lg:gap-8">
         {/* Deals chauds */}
-        <section className="px-4 sm:px-0 xl:col-span-7">
+        <section className="px-4 sm:px-0 lg:col-span-7">
           <div className="flex items-end justify-between gap-3">
             <div>
               <h2 className="flex items-center gap-2 font-display text-lg font-semibold">
@@ -145,7 +145,7 @@ export default async function HomePage(props: Props) {
         </section>
 
         {/* Petites annonces */}
-        <section className="mt-10 px-4 sm:px-0 xl:col-span-5 xl:mt-0">
+        <section className="mt-10 px-4 sm:px-0 lg:col-span-5 lg:mt-0">
           <div className="flex items-end justify-between gap-3">
             <div>
               <h2 className="flex items-center gap-2 font-display text-lg font-semibold">
