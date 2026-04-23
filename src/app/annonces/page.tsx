@@ -65,24 +65,37 @@ async function resolveFacets(
   categorySlug: string | null,
   citySlug: string | null,
 ) {
-  const [category, city] = await Promise.all([
-    categorySlug
-      ? prisma.category.findUnique({
-          where: { slug: categorySlug },
-          select: { name: true },
-        })
-      : null,
-    citySlug
-      ? prisma.city.findUnique({
-          where: { slug: citySlug },
-          select: { name: true },
-        })
-      : null,
-  ]);
-  return {
-    categoryName: category?.name ?? categorySlug ?? null,
-    cityName: city?.name ?? citySlug ?? null,
-  };
+  try {
+    const [category, city] = await Promise.all([
+      categorySlug
+        ? prisma.category.findUnique({
+            where: { slug: categorySlug },
+            select: { name: true },
+          })
+        : null,
+      citySlug
+        ? prisma.city.findUnique({
+            where: { slug: citySlug },
+            select: { name: true },
+          })
+        : null,
+    ]);
+    return {
+      categoryName: category?.name ?? categorySlug ?? null,
+      cityName: city?.name ?? citySlug ?? null,
+    };
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[listings/metadata] facet resolution failed", {
+      categorySlug,
+      citySlug,
+      err,
+    });
+    return {
+      categoryName: categorySlug ?? null,
+      cityName: citySlug ?? null,
+    };
+  }
 }
 
 export async function generateMetadata(

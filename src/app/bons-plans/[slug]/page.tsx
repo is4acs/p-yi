@@ -56,11 +56,21 @@ function isRenderableImageUrl(value: string | null | undefined): value is string
   if (!trimmed) return false;
   // `next/image` accepte les URLs absolues (http/https) et les paths
   // locaux commençant par `/`.
-  return (
-    trimmed.startsWith("/") ||
-    trimmed.startsWith("http://") ||
-    trimmed.startsWith("https://")
-  );
+  if (trimmed.startsWith("/")) {
+    return !trimmed.startsWith("//") && !/\s/.test(trimmed);
+  }
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    try {
+      const parsed = new URL(trimmed);
+      return (
+        (parsed.protocol === "http:" || parsed.protocol === "https:") &&
+        !/\s/.test(trimmed)
+      );
+    } catch {
+      return false;
+    }
+  }
+  return false;
 }
 
 // Pas de `force-dynamic` : la page reste dynamique de fait (cookies via
