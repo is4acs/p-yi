@@ -37,7 +37,7 @@ export function HomePillarLinks() {
                   </Link>
                 </li>
               ))}
-              {DEAL_CATEGORY_PILLARS.slice(0, 2).map((category) => (
+              {DEAL_CATEGORY_PILLARS.map((category) => (
                 <li key={`deal-cat-${category.slug}`}>
                   <Link
                     href={getDealsCategoryPath(category.slug)}
@@ -68,7 +68,7 @@ export function HomePillarLinks() {
                   </Link>
                 </li>
               ))}
-              {LISTING_CATEGORY_PILLARS.slice(0, 3).map((category) => (
+              {LISTING_CATEGORY_PILLARS.map((category) => (
                 <li key={`listing-cat-${category.slug}`}>
                   <Link
                     href={getListingsCategoryPath(category.slug)}

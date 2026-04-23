@@ -4,6 +4,7 @@ import {
   CORE_CITIES,
   DEAL_CATEGORY_PILLARS,
   LISTING_CATEGORY_PILLARS,
+  MIN_INDEXABLE_PILLAR_ITEMS,
   MIN_INDEXABLE_STORE_DEALS,
   STORE_PILLARS,
   getDealsCategoryPath,
@@ -133,60 +134,206 @@ export async function getStaticPagesEntries(): Promise<SitemapUrlEntry[]> {
   const base = getSiteUrl();
   const now = new Date();
 
-  const storeCounts = await prisma.store.findMany({
-    where: { slug: { in: STORE_PILLARS.map((store) => store.slug) } },
-    select: {
-      slug: true,
-      _count: {
+  const [storeCounts, cityCounts, categoryCounts, dealsTotal, listingsTotal, latestDeal, latestListing] =
+    await Promise.all([
+      prisma.store.findMany({
+        where: { slug: { in: STORE_PILLARS.map((store) => store.slug) } },
         select: {
-          deals: {
-            where: {
-              status: "PUBLISHED",
-              OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+          slug: true,
+          _count: {
+            select: {
+              deals: {
+                where: {
+                  status: "PUBLISHED",
+                  OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+                },
+              },
             },
           },
         },
-      },
-    },
-  });
+      }),
+      prisma.city.findMany({
+        where: { slug: { in: CORE_CITIES.map((city) => city.slug) } },
+        select: {
+          slug: true,
+          _count: {
+            select: {
+              deals: {
+                where: {
+                  status: "PUBLISHED",
+                  OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+                },
+              },
+              listings: {
+                where: { status: "PUBLISHED", expiresAt: { gt: now } },
+              },
+            },
+          },
+        },
+      }),
+      prisma.category.findMany({
+        where: {
+          slug: {
+            in: [
+              ...DEAL_CATEGORY_PILLARS.map((category) => category.slug),
+              ...LISTING_CATEGORY_PILLARS.map((category) => category.slug),
+            ],
+          },
+        },
+        select: {
+          slug: true,
+          _count: {
+            select: {
+              deals: {
+                where: {
+                  status: "PUBLISHED",
+                  OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+                },
+              },
+              listings: {
+                where: { status: "PUBLISHED", expiresAt: { gt: now } },
+              },
+            },
+          },
+        },
+      }),
+      prisma.deal.count({
+        where: {
+          status: "PUBLISHED",
+          OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+        },
+      }),
+      prisma.listing.count({
+        where: { status: "PUBLISHED", expiresAt: { gt: now } },
+      }),
+      prisma.deal.findFirst({
+        where: {
+          status: "PUBLISHED",
+          OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+        },
+        orderBy: { updatedAt: "desc" },
+        select: { updatedAt: true },
+      }),
+      prisma.listing.findFirst({
+        where: { status: "PUBLISHED", expiresAt: { gt: now } },
+        orderBy: { updatedAt: "desc" },
+        select: { updatedAt: true },
+      }),
+    ]);
+
+  const marketplaceLastmod =
+    latestDeal && latestListing
+      ? latestDeal.updatedAt > latestListing.updatedAt
+        ? latestDeal.updatedAt
+        : latestListing.updatedAt
+      : latestDeal?.updatedAt ?? latestListing?.updatedAt ?? now;
+
   const indexableStoreSlugs = storeCounts
     .filter((store) => store._count.deals >= MIN_INDEXABLE_STORE_DEALS)
     .map((store) => store.slug);
 
-  const staticPaths = [
-    { path: "/", changefreq: "daily" as const, priority: 1 },
-    { path: "/bons-plans", changefreq: "daily" as const, priority: 0.9 },
-    { path: "/annonces", changefreq: "daily" as const, priority: 0.9 },
-    { path: "/bons-plans/guyane", changefreq: "daily" as const, priority: 0.9 },
-    { path: "/annonces/guyane", changefreq: "daily" as const, priority: 0.9 },
-    { path: "/guide/bons-plans-guyane", changefreq: "monthly" as const, priority: 0.7 },
-    { path: "/guide/petites-annonces-guyane", changefreq: "monthly" as const, priority: 0.7 },
+  const staticPaths: Array<{
+    path: string;
+    changefreq: ChangeFreq;
+    priority: number;
+    lastmod?: Date;
+  }> = [
+    {
+      path: "/",
+      changefreq: "daily",
+      priority: 1,
+      lastmod: marketplaceLastmod,
+    },
+    {
+      path: "/bons-plans",
+      changefreq: "daily",
+      priority: 0.9,
+      lastmod: marketplaceLastmod,
+    },
+    {
+      path: "/annonces",
+      changefreq: "daily",
+      priority: 0.9,
+      lastmod: marketplaceLastmod,
+    },
+    ...(dealsTotal >= MIN_INDEXABLE_PILLAR_ITEMS
+      ? [
+          {
+            path: "/bons-plans/guyane",
+            changefreq: "daily" as const,
+            priority: 0.9,
+            lastmod: marketplaceLastmod,
+          },
+        ]
+      : []),
+    ...(listingsTotal >= MIN_INDEXABLE_PILLAR_ITEMS
+      ? [
+          {
+            path: "/annonces/guyane",
+            changefreq: "daily" as const,
+            priority: 0.9,
+            lastmod: marketplaceLastmod,
+          },
+        ]
+      : []),
+    {
+      path: "/guide/bons-plans-guyane",
+      changefreq: "monthly",
+      priority: 0.7,
+    },
+    {
+      path: "/guide/petites-annonces-guyane",
+      changefreq: "monthly",
+      priority: 0.7,
+    },
     {
       path: "/guide/vendre-sa-voiture-en-guyane",
-      changefreq: "monthly" as const,
+      changefreq: "monthly",
       priority: 0.7,
     },
     {
       path: "/guide/trouver-un-appartement-en-guyane",
-      changefreq: "monthly" as const,
+      changefreq: "monthly",
       priority: 0.7,
     },
-    { path: "/confidentialite", changefreq: "yearly" as const, priority: 0.2 },
-    { path: "/cgu", changefreq: "yearly" as const, priority: 0.2 },
-    { path: "/cookies", changefreq: "yearly" as const, priority: 0.2 },
-    { path: "/mentions-legales", changefreq: "yearly" as const, priority: 0.2 },
+    { path: "/confidentialite", changefreq: "yearly", priority: 0.2 },
+    { path: "/cgu", changefreq: "yearly", priority: 0.2 },
+    { path: "/cookies", changefreq: "yearly", priority: 0.2 },
+    { path: "/mentions-legales", changefreq: "yearly", priority: 0.2 },
   ];
 
-  const cityPaths = CORE_CITIES.flatMap((city) => [
-    getDealsCityPath(city.slug),
-    getListingsCityPath(city.slug),
-  ]);
+  const cityCountBySlug = new Map(
+    cityCounts.map((city) => [city.slug, city._count]),
+  );
+  const categoryCountBySlug = new Map(
+    categoryCounts.map((category) => [category.slug, category._count]),
+  );
+
+  const cityPaths = CORE_CITIES.flatMap((city) => {
+    const counts = cityCountBySlug.get(city.slug);
+    return [
+      ...(counts && counts.deals >= MIN_INDEXABLE_PILLAR_ITEMS
+        ? [getDealsCityPath(city.slug)]
+        : []),
+      ...(counts && counts.listings >= MIN_INDEXABLE_PILLAR_ITEMS
+        ? [getListingsCityPath(city.slug)]
+        : []),
+    ];
+  });
 
   const categoryPaths = [
-    ...DEAL_CATEGORY_PILLARS.map((category) => getDealsCategoryPath(category.slug)),
-    ...LISTING_CATEGORY_PILLARS.map((category) =>
-      getListingsCategoryPath(category.slug),
-    ),
+    ...DEAL_CATEGORY_PILLARS.flatMap((category) => {
+      const counts = categoryCountBySlug.get(category.slug);
+      return counts && counts.deals >= MIN_INDEXABLE_PILLAR_ITEMS
+        ? [getDealsCategoryPath(category.slug)]
+        : [];
+    }),
+    ...LISTING_CATEGORY_PILLARS.flatMap((category) => {
+      const counts = categoryCountBySlug.get(category.slug);
+      return counts && counts.listings >= MIN_INDEXABLE_PILLAR_ITEMS
+        ? [getListingsCategoryPath(category.slug)]
+        : [];
+    }),
   ];
 
   const storePaths = indexableStoreSlugs.map((slug) => getStorePath(slug));
@@ -194,25 +341,25 @@ export async function getStaticPagesEntries(): Promise<SitemapUrlEntry[]> {
   const allEntries: SitemapUrlEntry[] = [
     ...staticPaths.map((entry) => ({
       loc: toAbsoluteUrl(entry.path, base),
-      lastmod: now,
+      lastmod: entry.lastmod,
       changefreq: entry.changefreq,
       priority: entry.priority,
     })),
     ...cityPaths.map((path) => ({
       loc: toAbsoluteUrl(path, base),
-      lastmod: now,
+      lastmod: marketplaceLastmod,
       changefreq: "weekly" as const,
       priority: 0.8,
     })),
     ...categoryPaths.map((path) => ({
       loc: toAbsoluteUrl(path, base),
-      lastmod: now,
+      lastmod: marketplaceLastmod,
       changefreq: "weekly" as const,
       priority: 0.8,
     })),
     ...storePaths.map((path) => ({
       loc: toAbsoluteUrl(path, base),
-      lastmod: now,
+      lastmod: marketplaceLastmod,
       changefreq: "weekly" as const,
       priority: 0.7,
     })),
@@ -332,11 +479,10 @@ export async function getImagesEntries(): Promise<SitemapUrlEntry[]> {
 }
 
 export function buildSitemapIndexEntries(base: string): SitemapIndexEntry[] {
-  const now = new Date();
   return [
-    { loc: `${base}/sitemap-pages.xml`, lastmod: now },
-    { loc: `${base}/sitemap-deals.xml`, lastmod: now },
-    { loc: `${base}/sitemap-annonces.xml`, lastmod: now },
-    { loc: `${base}/sitemap-images.xml`, lastmod: now },
+    { loc: `${base}/sitemap-pages.xml` },
+    { loc: `${base}/sitemap-deals.xml` },
+    { loc: `${base}/sitemap-annonces.xml` },
+    { loc: `${base}/sitemap-images.xml` },
   ];
 }

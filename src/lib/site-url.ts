@@ -13,9 +13,12 @@ import { env } from "@/lib/env";
 export function getSiteUrl(): string {
   const raw = env.NEXT_PUBLIC_SITE_URL;
   if (!raw) {
-    // Cas où la variable est optionnelle dans le schéma (on autorise
-    // son absence en dev pour ne pas bloquer un nouveau contributeur
-    // qui n'a pas encore tout configuré) — on retombe sur localhost.
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "NEXT_PUBLIC_SITE_URL manquante en production (URL canonique requise).",
+      );
+    }
+    // En dev local uniquement, fallback ergonomique.
     return "http://localhost:3000";
   }
   return raw.replace(/\/$/, "");

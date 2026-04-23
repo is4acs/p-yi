@@ -17,14 +17,37 @@ type ListingPillarFilters = {
   take?: number;
 };
 
-export async function fetchDealsForPillar(filters: DealPillarFilters) {
-  const where: Prisma.DealWhereInput = {
+function buildDealsPillarWhere(filters: DealPillarFilters): Prisma.DealWhereInput {
+  return {
     status: "PUBLISHED",
     OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
     ...(filters.citySlug ? { city: { slug: filters.citySlug } } : {}),
     ...(filters.categorySlug ? { category: { slug: filters.categorySlug } } : {}),
     ...(filters.storeSlug ? { store: { slug: filters.storeSlug } } : {}),
   };
+}
+
+function buildListingsPillarWhere(
+  filters: ListingPillarFilters,
+): Prisma.ListingWhereInput {
+  return {
+    status: "PUBLISHED",
+    expiresAt: { gt: new Date() },
+    ...(filters.citySlug ? { city: { slug: filters.citySlug } } : {}),
+    ...(filters.categorySlug ? { category: { slug: filters.categorySlug } } : {}),
+  };
+}
+
+export async function countDealsForPillar(filters: DealPillarFilters) {
+  return prisma.deal.count({ where: buildDealsPillarWhere(filters) });
+}
+
+export async function countListingsForPillar(filters: ListingPillarFilters) {
+  return prisma.listing.count({ where: buildListingsPillarWhere(filters) });
+}
+
+export async function fetchDealsForPillar(filters: DealPillarFilters) {
+  const where = buildDealsPillarWhere(filters);
 
   const take = filters.take ?? 18;
 
@@ -46,12 +69,7 @@ export async function fetchDealsForPillar(filters: DealPillarFilters) {
 }
 
 export async function fetchListingsForPillar(filters: ListingPillarFilters) {
-  const where: Prisma.ListingWhereInput = {
-    status: "PUBLISHED",
-    expiresAt: { gt: new Date() },
-    ...(filters.citySlug ? { city: { slug: filters.citySlug } } : {}),
-    ...(filters.categorySlug ? { category: { slug: filters.categorySlug } } : {}),
-  };
+  const where = buildListingsPillarWhere(filters);
 
   const take = filters.take ?? 24;
 

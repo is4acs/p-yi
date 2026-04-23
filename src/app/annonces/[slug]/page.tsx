@@ -104,7 +104,11 @@ function getListing(slug: string) {
   return unstable_cache(
     async () =>
       prisma.listing.findFirst({
-        where: { slug, status: ListingStatus.PUBLISHED },
+        where: {
+          slug,
+          status: ListingStatus.PUBLISHED,
+          expiresAt: { gt: new Date() },
+        },
         select: listingDetailSelect,
       }),
     ["listing-detail", slug],
@@ -116,7 +120,11 @@ function getListingMeta(slug: string) {
   return unstable_cache(
     async () =>
       prisma.listing.findFirst({
-        where: { slug, status: ListingStatus.PUBLISHED },
+        where: {
+          slug,
+          status: ListingStatus.PUBLISHED,
+          expiresAt: { gt: new Date() },
+        },
         select: {
           title: true,
           description: true,
@@ -124,6 +132,7 @@ function getListingMeta(slug: string) {
           coverImageUrl: true,
           price: true,
           priceType: true,
+          expiresAt: true,
           category: { select: { name: true } },
           city: { select: { name: true } },
         },
@@ -140,7 +149,12 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const params = await props.params;
   const listing = await getListingMeta(params.slug);
-  if (!listing) return { title: "Annonce introuvable" };
+  if (!listing || listing.expiresAt <= new Date()) {
+    return {
+      title: "Annonce introuvable",
+      robots: { index: false, follow: false },
+    };
+  }
 
   // Préfixer la description par le prix améliore l'aperçu social (WhatsApp,
   // iMessage, Slack affichent 2-3 lignes) — l'info la plus utile est
@@ -185,7 +199,7 @@ export default async function ListingDetailPage(
     getListing(params.slug),
     getCurrentUser(),
   ]);
-  if (!listing) notFound();
+  if (!listing || listing.expiresAt <= new Date()) notFound();
 
   const isAuthor = currentUser?.id === listing.author.id;
   let isFavorited = false;

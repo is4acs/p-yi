@@ -38,7 +38,7 @@ export async function buildStoreMetadata(storeSlug: string): Promise<Metadata> {
   const store = await fetchStoreWithDealCount(storeSlug);
   if (!store) {
     return buildSeoMetadata({
-      title: `Promos ${configuredStore.name} | Péyi`,
+      title: `Promos ${configuredStore.name}`,
       description: `Les promos locales ${configuredStore.name} en Guyane.`,
       canonical: getStorePath(configuredStore.slug),
       index: false,
@@ -46,7 +46,7 @@ export async function buildStoreMetadata(storeSlug: string): Promise<Metadata> {
   }
 
   return buildSeoMetadata({
-    title: `Promo ${store.name} | Péyi`,
+    title: `Promo ${store.name}`,
     description: `Retrouve les promos ${store.name} en Guyane, avec les bons plans actifs et les offres locales les plus utiles.`,
     canonical: getStorePath(store.slug),
     index: store._count.deals >= MIN_INDEXABLE_STORE_DEALS,

@@ -289,10 +289,14 @@ const CONDITION_MAP: Record<string, string> = {
  * listings sont C2C (particulier à particulier) donc le seller est
  * toujours une `Person` (jamais une Organization).
  *
- * Prix : certains listings n'ont pas de prix fixe (NEGOTIABLE,
- * ON_REQUEST, FREE). Pour NEGOTIABLE/ON_REQUEST on met le prix
- * saisi avec une availability standard ; pour FREE ou price=null
- * on met price=0.
+ * Prix : on ne publie `Product/Offer` que si le prix est réellement
+ * exploitable et cohérent avec le contenu visible. Cas gérés :
+ *   - FREE -> `price=0`
+ *   - FIXED / NEGOTIABLE / PER_DAY / PER_MONTH -> prix numérique requis
+ *   - ON_REQUEST -> pas de prix structuré (la page affiche "Sur demande")
+ *
+ * Si le prix n'est pas fiable, on retourne `null` plutôt que d'inventer
+ * une valeur (ex. `0`) qui ne serait pas visible sur la page.
  */
 export function buildListingJsonLd(listing: ListingJsonLdInput): JsonLd | null {
   if (listing.listingType === "DEMAND") {
@@ -302,18 +306,22 @@ export function buildListingJsonLd(listing: ListingJsonLdInput): JsonLd | null {
     return null;
   }
 
+  const priceString = (() => {
+    if (listing.priceType === "FREE") return "0";
+    if (listing.priceType === "ON_REQUEST") return null;
+    return listing.price ? listing.price.toString() : null;
+  })();
+  if (!priceString) {
+    // Pas de prix fiable visible -> on n'expose pas de Offer.
+    return null;
+  }
+
   const base = getSiteUrl();
   const url = `${base}/annonces/${listing.slug}`;
 
   const description =
     listing.description.replace(/\s+/g, " ").trim().slice(0, 5000) ||
     `${listing.category.name} à ${listing.city.name} sur Péyi.`;
-
-  const priceString = listing.price
-    ? listing.price.toString()
-    : listing.priceType === "FREE"
-      ? "0"
-      : "0"; // ON_REQUEST fallback
 
   const offer: JsonLd = {
     "@type": "Offer",

@@ -43,8 +43,8 @@ export const config = {
      * - _next/static (build assets)
      * - _next/image (image optimizer)
      * - favicon, sitemap, robots
-     * - common image/font files served from /public
+     * - fichiers statiques (images/fonts/html) servis depuis /public
      */
-    "/((?!_next/static|_next/image|favicon.ico|sitemap(?:[\\w-]*)?\\.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff|woff2)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sitemap(?:[\\w-]*)?\\.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff|woff2|html)$).*)",
   ],
 };

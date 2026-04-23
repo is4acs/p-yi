@@ -3,7 +3,9 @@ import {
   renderListingsCityPage,
 } from "@/app/annonces/pillar-utils";
 
-export const metadata = buildListingsCityMetadata("cayenne");
+export async function generateMetadata() {
+  return buildListingsCityMetadata("cayenne");
+}
 
 export default async function ListingsCayennePage() {
   return renderListingsCityPage("cayenne");

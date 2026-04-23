@@ -149,11 +149,13 @@
 - Ajouter tests E2E crawl SEO (presence title/H1/canonical/JSON-LD sur templates piliers).
 
 ## 11) Suivi Git collaboration
-- `git pull` fait au début: **OUI** (`git pull --ff-only origin main`, fast-forward réussi).
+- `git pull` fait au début: **OUI** (`git pull` sur la branche `codex/seo-local-guyane-architecture`, dépôt à jour).
 - Messages de commit utilisés:
   - **`feat(seo): add local SEO architecture for Guyane pages`** (`df5a349`)
   - **`chore(seo): finalize implementation report tracking details`** (`f72abbd`)
-- `git push` fait à la fin: **OUI** (`git push -u origin codex/seo-local-guyane-architecture`).
+- Lot de correctifs en cours (ce rapport):
+  - **`fix(seo): harden indexation, sitemap freshness and search-console html verification`**
+- `git push` fait à la fin: **OUI** (`git push origin codex/seo-local-guyane-architecture`).
 
 ## 12) Fichiers créés / modifiés
 
@@ -198,11 +200,24 @@
 ### Fichiers modifiés
 - `src/app/annonces/[slug]/edit/page.tsx`
 - `src/app/annonces/[slug]/page.tsx`
+- `src/app/annonces/cayenne/page.tsx`
+- `src/app/annonces/guyane/page.tsx`
+- `src/app/annonces/kourou/page.tsx`
+- `src/app/annonces/matoury/page.tsx`
+- `src/app/annonces/remire-montjoly/page.tsx`
+- `src/app/annonces/saint-laurent-du-maroni/page.tsx`
 - `src/app/annonces/page.tsx`
 - `src/app/auth/complete-profile/page.tsx`
 - `src/app/bons-plans/[slug]/edit/page.tsx`
 - `src/app/bons-plans/[slug]/page.tsx`
+- `src/app/bons-plans/cayenne/page.tsx`
+- `src/app/bons-plans/guyane/page.tsx`
+- `src/app/bons-plans/kourou/page.tsx`
+- `src/app/bons-plans/matoury/page.tsx`
+- `src/app/bons-plans/remire-montjoly/page.tsx`
+- `src/app/bons-plans/saint-laurent-du-maroni/page.tsx`
 - `src/app/bons-plans/page.tsx`
+- `src/app/classement/page.tsx`
 - `src/app/layout.tsx`
 - `src/app/messages/[username]/page.tsx`
 - `src/app/messages/page.tsx`
@@ -218,9 +233,19 @@
 - `src/app/profil/recompenses/page.tsx`
 - `src/app/profil/verifier-telephone/page.tsx`
 - `src/app/robots.ts`
+- `src/components/seo/HomePillarLinks.tsx`
+- `.env.example`
 - `src/lib/deals/queries.ts`
+- `src/lib/env.ts`
 - `src/lib/seo/json-ld.ts`
+- `src/lib/seo/pillar-content.ts`
+- `src/lib/seo/pillar-queries.ts`
+- `src/lib/seo/sitemap.ts`
+- `src/lib/site-url.ts`
 - `src/middleware.ts`
+
+### Fichiers créés (lot de correctifs Search Console / indexation)
+- `public/google21822fef88989806.html`
 
 ### Fichier supprimé
 - `src/app/sitemap.ts`

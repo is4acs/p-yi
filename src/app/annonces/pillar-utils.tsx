@@ -15,11 +15,13 @@ import {
 import {
   CORE_CITIES,
   LISTING_CATEGORY_PILLARS,
+  MIN_INDEXABLE_PILLAR_ITEMS,
   getCityBySlug,
   getListingCategoryBySlug,
   getListingsCategoryPath,
   getListingsCityPath,
 } from "@/lib/seo/local-pages";
+import { countListingsForPillar } from "@/lib/seo/pillar-queries";
 
 const ROOT_BREADCRUMB = [
   { name: "Accueil", url: "/" },
@@ -36,34 +38,52 @@ export function getListingsCategoryStaticParams() {
   }));
 }
 
-export function buildListingsGlobalMetadata(): Metadata {
+async function isListingsPillarIndexable(input: {
+  citySlug?: string | null;
+  categorySlug?: string | null;
+}): Promise<boolean> {
+  const count = await countListingsForPillar(input);
+  return count >= MIN_INDEXABLE_PILLAR_ITEMS;
+}
+
+export async function buildListingsGlobalMetadata(): Promise<Metadata> {
+  const index = await isListingsPillarIndexable({});
   return buildSeoMetadata({
-    title: "Petites annonces en Guyane | Péyi",
+    title: "Petites annonces en Guyane",
     description:
       "Toutes les petites annonces en Guyane: voitures, immobilier, emploi et offres locales par ville.",
     canonical: "/annonces/guyane",
+    index,
   });
 }
 
-export function buildListingsCityMetadata(citySlug: string): Metadata {
+export async function buildListingsCityMetadata(
+  citySlug: string,
+): Promise<Metadata> {
   const city = getCityBySlug(citySlug);
   if (!city) notFound();
+  const index = await isListingsPillarIndexable({ citySlug: city.slug });
 
   return buildSeoMetadata({
-    title: `Petites annonces à ${city.name} | Péyi`,
+    title: `Petites annonces à ${city.name}`,
     description: `Consulte les annonces à ${city.name}: voitures, immobilier, emploi et services entre Guyanais.`,
     canonical: getListingsCityPath(city.slug),
+    index,
   });
 }
 
-export function buildListingsCategoryMetadata(categorySlug: string): Metadata {
+export async function buildListingsCategoryMetadata(
+  categorySlug: string,
+): Promise<Metadata> {
   const category = getListingCategoryBySlug(categorySlug);
   if (!category) notFound();
+  const index = await isListingsPillarIndexable({ categorySlug: category.slug });
 
   return buildSeoMetadata({
-    title: `Annonces ${category.name} en Guyane | Péyi`,
+    title: `Annonces ${category.name} en Guyane`,
     description: `Explore les annonces ${category.name.toLowerCase()} en Guyane: offres locales, prix visibles et résultats par ville.`,
     canonical: getListingsCategoryPath(category.slug),
+    index,
   });
 }
 

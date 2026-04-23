@@ -15,11 +15,13 @@ import {
 import {
   CORE_CITIES,
   DEAL_CATEGORY_PILLARS,
+  MIN_INDEXABLE_PILLAR_ITEMS,
   getCityBySlug,
   getDealCategoryBySlug,
   getDealsCategoryPath,
   getDealsCityPath,
 } from "@/lib/seo/local-pages";
+import { countDealsForPillar } from "@/lib/seo/pillar-queries";
 
 const ROOT_BREADCRUMB = [
   { name: "Accueil", url: "/" },
@@ -34,34 +36,50 @@ export function getDealsCategoryStaticParams() {
   return DEAL_CATEGORY_PILLARS.map((category) => ({ category: category.slug }));
 }
 
-export function buildDealsGlobalMetadata(): Metadata {
+async function isDealsPillarIndexable(input: {
+  citySlug?: string | null;
+  categorySlug?: string | null;
+}): Promise<boolean> {
+  const count = await countDealsForPillar(input);
+  return count >= MIN_INDEXABLE_PILLAR_ITEMS;
+}
+
+export async function buildDealsGlobalMetadata(): Promise<Metadata> {
+  const index = await isDealsPillarIndexable({});
   return buildSeoMetadata({
-    title: "Bons plans en Guyane | Péyi",
+    title: "Bons plans en Guyane",
     description:
       "Retrouve les bons plans en Guyane: promos locales, offres par ville et réductions utiles près de chez toi.",
     canonical: "/bons-plans/guyane",
+    index,
   });
 }
 
-export function buildDealsCityMetadata(citySlug: string): Metadata {
+export async function buildDealsCityMetadata(citySlug: string): Promise<Metadata> {
   const city = getCityBySlug(citySlug);
   if (!city) notFound();
+  const index = await isDealsPillarIndexable({ citySlug: city.slug });
 
   return buildSeoMetadata({
-    title: `Bons plans à ${city.name} | Péyi`,
+    title: `Bons plans à ${city.name}`,
     description: `Découvre les bons plans à ${city.name}: promos locales, offres utiles et deals récents partagés en Guyane.`,
     canonical: getDealsCityPath(city.slug),
+    index,
   });
 }
 
-export function buildDealsCategoryMetadata(categorySlug: string): Metadata {
+export async function buildDealsCategoryMetadata(
+  categorySlug: string,
+): Promise<Metadata> {
   const category = getDealCategoryBySlug(categorySlug);
   if (!category) notFound();
+  const index = await isDealsPillarIndexable({ categorySlug: category.slug });
 
   return buildSeoMetadata({
-    title: `Bons plans ${category.name} en Guyane | Péyi`,
+    title: `Bons plans ${category.name} en Guyane`,
     description: `Les bons plans ${category.name.toLowerCase()} en Guyane: offres locales, promos fraîches et comparatif rapide par ville.`,
     canonical: getDealsCategoryPath(category.slug),
+    index,
   });
 }
 

@@ -26,7 +26,7 @@ type GuideContent = {
 
 const GUIDE_CONTENT: Record<GuideSlug, GuideContent> = {
   "bons-plans-guyane": {
-    title: "Guide bons plans en Guyane | Péyi",
+    title: "Guide bons plans en Guyane",
     h1: "Guide pratique des bons plans en Guyane",
     description:
       "Nos méthodes locales pour repérer les promos vraiment utiles en Guyane, comparer les enseignes et éviter les fausses bonnes affaires.",
@@ -54,7 +54,7 @@ const GUIDE_CONTENT: Record<GuideSlug, GuideContent> = {
     ],
   },
   "petites-annonces-guyane": {
-    title: "Guide petites annonces Guyane | Péyi",
+    title: "Guide petites annonces Guyane",
     h1: "Guide des petites annonces en Guyane",
     description:
       "Les réflexes à adopter pour acheter ou vendre en Guyane via des annonces claires, localisées et fiables.",
@@ -79,7 +79,7 @@ const GUIDE_CONTENT: Record<GuideSlug, GuideContent> = {
     ],
   },
   "vendre-sa-voiture-en-guyane": {
-    title: "Vendre sa voiture en Guyane : guide local | Péyi",
+    title: "Vendre sa voiture en Guyane : guide local",
     h1: "Vendre sa voiture en Guyane: méthode locale efficace",
     description:
       "Un plan d’action concret pour publier une annonce voiture crédible en Guyane et vendre plus vite au bon prix.",
@@ -104,7 +104,7 @@ const GUIDE_CONTENT: Record<GuideSlug, GuideContent> = {
     ],
   },
   "trouver-un-appartement-en-guyane": {
-    title: "Trouver un appartement en Guyane : guide local | Péyi",
+    title: "Trouver un appartement en Guyane : guide local",
     h1: "Trouver un appartement en Guyane sans perdre de temps",
     description:
       "Une méthode locale pour repérer les annonces de location appartement en Guyane et sélectionner rapidement les options sérieuses.",

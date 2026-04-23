@@ -15,6 +15,13 @@
   - `/sitemap-annonces.xml`
   - `/sitemap-images.xml`
 
+## 2bis) Vérification propriété (méthode fichier HTML)
+- Fichier de validation en place: `/google21822fef88989806.html`
+- URL publique à tester: `https://www.peyi.gf/google21822fef88989806.html`
+- Le fichier doit retourner exactement:
+  - `google-site-verification: google21822fef88989806.html`
+- Ne jamais supprimer ce fichier après validation.
+
 ## 3) Inspection URL (priorité haute)
 - Vérifier indexation et canonical de:
   - `/bons-plans/guyane`

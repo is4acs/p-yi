@@ -110,7 +110,11 @@ function getDeal(slug: string) {
   return unstable_cache(
     async () =>
       prisma.deal.findFirst({
-        where: { slug, status: DealStatus.PUBLISHED },
+        where: {
+          slug,
+          status: DealStatus.PUBLISHED,
+          OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+        },
         select: dealDetailSelect,
       }),
     ["deal-detail", slug],
@@ -122,12 +126,17 @@ function getDealMeta(slug: string) {
   return unstable_cache(
     async () =>
       prisma.deal.findFirst({
-        where: { slug, status: DealStatus.PUBLISHED },
+        where: {
+          slug,
+          status: DealStatus.PUBLISHED,
+          OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+        },
         select: {
           title: true,
           description: true,
           slug: true,
           coverImageUrl: true,
+          expiresAt: true,
           category: { select: { name: true } },
           city: { select: { name: true } },
         },
@@ -146,7 +155,12 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const params = await props.params;
   const deal = await getDealMeta(params.slug);
-  if (!deal) return { title: "Bon plan introuvable" };
+  if (!deal || (deal.expiresAt && deal.expiresAt <= new Date())) {
+    return {
+      title: "Bon plan introuvable",
+      robots: { index: false, follow: false },
+    };
+  }
 
   const description =
     deal.description?.replace(/\s+/g, " ").trim().slice(0, 160) ||
@@ -186,7 +200,7 @@ export default async function DealDetailPage(
     getDeal(params.slug),
     getCurrentUser(),
   ]);
-  if (!deal) notFound();
+  if (!deal || (deal.expiresAt && deal.expiresAt <= new Date())) notFound();
 
   const isAuthor = currentUser?.id === deal.author.id;
   let myVote: VoteType | null = null;
