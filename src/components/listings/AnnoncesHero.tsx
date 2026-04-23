@@ -41,17 +41,27 @@ export async function AnnoncesHero({ total }: Props) {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-  const [freshThisWeek, activeMembers] = await Promise.all([
-    prisma.listing.count({
-      where: {
-        status: ListingStatus.PUBLISHED,
-        publishedAt: { gte: sevenDaysAgo },
-      },
-    }),
-    prisma.user.count({
-      where: { lastActiveAt: { gte: thirtyDaysAgo } },
-    }),
-  ]);
+  let freshThisWeek = 0;
+  let activeMembers = 0;
+
+  try {
+    const [fresh, active] = await Promise.all([
+      prisma.listing.count({
+        where: {
+          status: ListingStatus.PUBLISHED,
+          publishedAt: { gte: sevenDaysAgo },
+        },
+      }),
+      prisma.user.count({
+        where: { lastActiveAt: { gte: thirtyDaysAgo } },
+      }),
+    ]);
+    freshThisWeek = fresh;
+    activeMembers = active;
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[annonces/hero] KPI query failed", err);
+  }
 
   const kpis = [
     { value: total, label: "annonces en ligne" },
@@ -62,7 +72,7 @@ export async function AnnoncesHero({ total }: Props) {
   return (
     <section
       aria-labelledby="annonces-hero-title"
-      className="relative -mx-4 overflow-hidden bg-gradient-to-b from-peyi-green-50/70 to-transparent px-4 pb-6 pt-6 sm:mx-0 sm:px-0 sm:pb-10 sm:pt-12"
+      className="relative overflow-hidden bg-gradient-to-b from-peyi-green-50/70 to-transparent px-4 pb-6 pt-6 sm:px-0 sm:pb-10 sm:pt-12"
     >
       {/* Décorations — pastilles vert/orange en miroir du hero deals
           (orange/vert). Même intensité d'opacité pour conserver la

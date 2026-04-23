@@ -43,7 +43,7 @@ export function HomeSearchBar() {
         Que cherches-tu ?
       </label>
       <Search
-        className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-peyi-orange-600"
+        className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-peyi-orange-600 sm:left-4"
         aria-hidden
       />
       <input
@@ -53,9 +53,9 @@ export function HomeSearchBar() {
         autoComplete="off"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder="Que cherches-tu ? (iPhone, voiture, T3…)"
+        placeholder="Rechercher une annonce (voiture, T3, PS5...)"
         className={cn(
-          "h-14 w-full rounded-full border-[1.5px] border-ink-100 bg-white pl-12 pr-32 text-base shadow-sm transition",
+          "h-14 w-full rounded-full border-[1.5px] border-ink-100 bg-white pl-11 pr-28 text-sm shadow-sm transition sm:pl-12 sm:pr-32 sm:text-base",
           "focus:border-peyi-orange-500 focus:outline-none focus:ring-4 focus:ring-peyi-orange-100",
           "placeholder:text-ink-300",
         )}
@@ -65,7 +65,7 @@ export function HomeSearchBar() {
           type="button"
           onClick={() => setValue("")}
           aria-label="Effacer la recherche"
-          className="absolute right-28 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-ink-300 hover:bg-ink-50 hover:text-ink-700"
+          className="absolute right-20 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-ink-300 hover:bg-ink-50 hover:text-ink-700 sm:right-28"
         >
           <X className="h-4 w-4" aria-hidden />
         </button>
@@ -73,8 +73,8 @@ export function HomeSearchBar() {
       <button
         type="submit"
         className={cn(
-          "absolute right-1.5 top-1/2 inline-flex h-11 -translate-y-1/2 items-center rounded-full bg-peyi-orange-500 px-5 font-display text-sm font-bold text-white shadow-brand transition-[colors,transform] duration-base",
-          "hover:bg-peyi-orange-600 hover:-translate-y-[calc(50%+1px)]",
+          "absolute right-1.5 top-1/2 inline-flex h-10 -translate-y-1/2 items-center rounded-full bg-peyi-orange-500 px-4 font-display text-xs font-bold text-white shadow-brand transition-[colors,transform] duration-base sm:h-11 sm:px-5 sm:text-sm",
+          "hover:bg-peyi-orange-600 sm:hover:-translate-y-[calc(50%+1px)]",
           "active:scale-[0.98]",
         )}
       >

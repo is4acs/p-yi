@@ -21,6 +21,15 @@ export default function ErrorPage({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const localTime = new Date().toLocaleString("fr-GF", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+
   useEffect(() => {
     // Console pour le dev (overlay Next) + POST vers
     // `/api/client-errors` pour que l'erreur soit capturée par le
@@ -69,6 +78,9 @@ export default function ErrorPage({
           Code de suivi : <code className="font-mono">{error.digest}</code>
         </p>
       )}
+      <p className="mt-1 text-xs text-muted-foreground">
+        Heure locale : <code className="font-mono">{localTime}</code>
+      </p>
 
       <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
         <button

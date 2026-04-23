@@ -59,27 +59,42 @@ function formatCount(n: number): string {
 }
 
 export async function HomeCategoriesGrid() {
-  const [categories, counts] = await Promise.all([
-    // Pas de `take: 8` ici : on fetch toutes les catégories éligibles
-    // pour pouvoir les trier par volume avant de slicer. Le seed n'a
-    // qu'une douzaine de catégories LISTING/BOTH actives — pas de
-    // souci de perf.
-    prisma.category.findMany({
-      where: { type: { in: ["LISTING", "BOTH"] }, isActive: true },
-      select: {
-        id: true,
-        slug: true,
-        name: true,
-        icon: true,
-        sortOrder: true,
-      },
-    }),
-    prisma.listing.groupBy({
-      by: ["categoryId"],
-      where: { status: "PUBLISHED", expiresAt: { gt: new Date() } },
-      _count: { _all: true },
-    }),
-  ]);
+  let categories: Array<{
+    id: string;
+    slug: string;
+    name: string;
+    icon: string | null;
+    sortOrder: number;
+  }> = [];
+  let counts: Array<{ categoryId: string; _count: { _all: number } }> = [];
+
+  try {
+    [categories, counts] = await Promise.all([
+      // Pas de `take: 8` ici : on fetch toutes les catégories éligibles
+      // pour pouvoir les trier par volume avant de slicer. Le seed n'a
+      // qu'une douzaine de catégories LISTING/BOTH actives — pas de
+      // souci de perf.
+      prisma.category.findMany({
+        where: { type: { in: ["LISTING", "BOTH"] }, isActive: true },
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          icon: true,
+          sortOrder: true,
+        },
+      }),
+      prisma.listing.groupBy({
+        by: ["categoryId"],
+        where: { status: "PUBLISHED", expiresAt: { gt: new Date() } },
+        _count: { _all: true },
+      }),
+    ]);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[home/categories] query failed", err);
+    return null;
+  }
 
   if (categories.length === 0) return null;
 

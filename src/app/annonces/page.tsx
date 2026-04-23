@@ -163,8 +163,8 @@ export default async function AnnoncesPage(
   const q = parseQuery(searchParams.q);
   const filters = parseFilters(searchParams);
 
-  const [{ listings, total }, categories, cities, currentUser] =
-    await Promise.all([
+  const [listingsResult, categoriesResult, citiesResult, currentUserResult] =
+    await Promise.allSettled([
       fetchListingsPage({ sort, page, category, city, type, q, filters }),
       prisma.category.findMany({
         where: { type: { in: ["LISTING", "BOTH"] }, isActive: true },
@@ -178,11 +178,56 @@ export default async function AnnoncesPage(
       getCurrentUser(),
     ]);
 
+  const listingsPayload =
+    listingsResult.status === "fulfilled"
+      ? listingsResult.value
+      : { listings: [], total: 0 };
+  const listings = listingsPayload.listings;
+  const total = listingsPayload.total;
+
+  const categories =
+    categoriesResult.status === "fulfilled" ? categoriesResult.value : [];
+  const cities = citiesResult.status === "fulfilled" ? citiesResult.value : [];
+  const currentUser =
+    currentUserResult.status === "fulfilled" ? currentUserResult.value : null;
+
+  const hasDataLoadIssue =
+    listingsResult.status === "rejected" ||
+    categoriesResult.status === "rejected" ||
+    citiesResult.status === "rejected" ||
+    currentUserResult.status === "rejected";
+
+  if (hasDataLoadIssue) {
+    // eslint-disable-next-line no-console
+    console.error("[annonces/page] partial data load failure", {
+      listings:
+        listingsResult.status === "rejected"
+          ? listingsResult.reason
+          : undefined,
+      categories:
+        categoriesResult.status === "rejected"
+          ? categoriesResult.reason
+          : undefined,
+      cities:
+        citiesResult.status === "rejected" ? citiesResult.reason : undefined,
+      currentUser:
+        currentUserResult.status === "rejected"
+          ? currentUserResult.reason
+          : undefined,
+    });
+  }
+
   const listingIds = listings.map((l) => l.id);
-  const favoriteSet = await fetchUserFavoriteListingSet(
-    currentUser?.id ?? null,
-    listingIds,
-  );
+  let favoriteSet = new Set<string>();
+  try {
+    favoriteSet = await fetchUserFavoriteListingSet(
+      currentUser?.id ?? null,
+      listingIds,
+    );
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[annonces/page] favorite set load failed", err);
+  }
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const hasFilters =
@@ -193,7 +238,7 @@ export default async function AnnoncesPage(
     // Grille 2/3/4 cols → on élargit à max-w-6xl pour donner de l'air
     // au desktop (avant S27 : max-w-2xl, trop étroit pour une grille
     // photo-first).
-    <main className="mx-auto max-w-md pb-12 animate-in fade-in duration-300 sm:max-w-2xl lg:max-w-6xl">
+    <main className="mx-auto max-w-md overflow-x-clip pb-12 animate-in fade-in duration-300 sm:max-w-2xl lg:max-w-6xl">
       {/* Mode découverte (aucun filtre) : hero éditorial + chips de
           recherches populaires. Sous filtre ces blocs disparaissent —
           pattern hérité de `/bons-plans` (cf. `<BonsPlansHero>` et
@@ -354,6 +399,16 @@ export default async function AnnoncesPage(
         </>
       )}
       <div className="mt-6 px-4 pt-4 sm:px-0">
+        {hasDataLoadIssue && (
+          <div
+            role="status"
+            className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 sm:text-sm"
+          >
+            Certaines données sont temporairement indisponibles. Tu peux
+            recharger la page dans quelques secondes.
+          </div>
+        )}
+
         {!hasFilters && listings.length > 0 && (
           <h2 className="mb-3 font-display text-lg font-semibold text-ink-900">
             Dernières annonces

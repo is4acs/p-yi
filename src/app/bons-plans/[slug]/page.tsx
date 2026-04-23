@@ -50,6 +50,19 @@ import {
 
 // ---------- data ----------
 
+function isRenderableImageUrl(value: string | null | undefined): value is string {
+  if (!value) return false;
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  // `next/image` accepte les URLs absolues (http/https) et les paths
+  // locaux commençant par `/`.
+  return (
+    trimmed.startsWith("/") ||
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://")
+  );
+}
+
 // Pas de `force-dynamic` : la page reste dynamique de fait (cookies via
 // `getCurrentUser`) mais on cache la requête Prisma lourde (jointures
 // auteur/catégorie/ville/store/merchant) via `unstable_cache` avec un
@@ -154,7 +167,11 @@ export async function generateMetadata(
   }
 ): Promise<Metadata> {
   const params = await props.params;
-  const deal = await getDealMeta(params.slug);
+  const deal = await getDealMeta(params.slug).catch((err) => {
+    // eslint-disable-next-line no-console
+    console.error("[deal/metadata] load failed", { slug: params.slug, err });
+    return null;
+  });
   if (!deal || (deal.expiresAt && deal.expiresAt <= new Date())) {
     return {
       title: "Bon plan introuvable",
@@ -196,30 +213,82 @@ export default async function DealDetailPage(
   }
 ) {
   const params = await props.params;
-  const [deal, currentUser] = await Promise.all([
+  const [dealResult, currentUserResult] = await Promise.allSettled([
     getDeal(params.slug),
     getCurrentUser(),
   ]);
+
+  if (dealResult.status === "rejected") {
+    // eslint-disable-next-line no-console
+    console.error("[deal/page] load failed", { slug: params.slug, err: dealResult.reason });
+    return (
+      <main className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center px-4 py-12 text-center sm:max-w-2xl">
+        <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+          Bon plan indisponible temporairement
+        </h1>
+        <p className="mt-3 max-w-sm text-sm text-muted-foreground sm:text-base">
+          La fiche n&apos;a pas pu être chargée pour le moment. Réessaie dans
+          quelques secondes.
+        </p>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          <Link
+            href="/bons-plans"
+            className="inline-flex h-10 items-center rounded-full bg-peyi-orange-500 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-peyi-orange-600"
+          >
+            Retour aux bons plans
+          </Link>
+          <Link
+            href={`/bons-plans/${params.slug}`}
+            className="inline-flex h-10 items-center rounded-full border border-border bg-background px-4 text-sm font-semibold text-foreground transition hover:border-peyi-orange-300"
+          >
+            Recharger
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  const deal = dealResult.value;
+  const currentUser =
+    currentUserResult.status === "fulfilled" ? currentUserResult.value : null;
+
   if (!deal || (deal.expiresAt && deal.expiresAt <= new Date())) notFound();
+
+  if (currentUserResult.status === "rejected") {
+    // eslint-disable-next-line no-console
+    console.error("[deal/page] current user load failed", {
+      slug: params.slug,
+      err: currentUserResult.reason,
+    });
+  }
 
   const isAuthor = currentUser?.id === deal.author.id;
   let myVote: VoteType | null = null;
   let isFavorited = false;
   if (currentUser) {
-    const [vote, favorite] = await Promise.all([
-      isAuthor
-        ? Promise.resolve(null)
-        : prisma.vote.findUnique({
-            where: { userId_dealId: { userId: currentUser.id, dealId: deal.id } },
-            select: { value: true },
-          }),
-      prisma.favorite.findUnique({
-        where: { userId_dealId: { userId: currentUser.id, dealId: deal.id } },
-        select: { id: true },
-      }),
-    ]);
-    myVote = vote?.value ?? null;
-    isFavorited = Boolean(favorite);
+    try {
+      const [vote, favorite] = await Promise.all([
+        isAuthor
+          ? Promise.resolve(null)
+          : prisma.vote.findUnique({
+              where: { userId_dealId: { userId: currentUser.id, dealId: deal.id } },
+              select: { value: true },
+            }),
+        prisma.favorite.findUnique({
+          where: { userId_dealId: { userId: currentUser.id, dealId: deal.id } },
+          select: { id: true },
+        }),
+      ]);
+      myVote = vote?.value ?? null;
+      isFavorited = Boolean(favorite);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("[deal/page] vote/favorite load failed", {
+        slug: params.slug,
+        userId: currentUser.id,
+        err,
+      });
+    }
   }
   const canVote = Boolean(currentUser) && !isAuthor;
   const voteDisabledHint = !currentUser
@@ -235,7 +304,7 @@ export default async function DealDetailPage(
   const ctaUrl = deal.affiliateUrl ?? deal.externalUrl ?? deal.store?.website ?? null;
   const sellerName =
     deal.store?.name ?? deal.merchant?.name ?? "Vendeur non précisé";
-  const level = LEVEL_META[deal.author.level];
+  const level = LEVEL_META[deal.author.level] ?? LEVEL_META.BEGINNER;
   const placeholderEmoji = deal.category.icon ?? null;
   const placeholderLabel = deal.store?.name ?? deal.merchant?.name ?? deal.title;
   const categoryPath = getDealCategoryBySlug(deal.category.slug)
@@ -246,10 +315,13 @@ export default async function DealDetailPage(
     deal.store && getStoreBySlug(deal.store.slug)
       ? getStorePath(deal.store.slug)
       : null;
+  const sanitizedImages = deal.images.filter((img) =>
+    isRenderableImageUrl(img.url),
+  );
   const dealPhotos =
-    deal.images.length > 0
-      ? deal.images
-      : deal.coverImageUrl
+    sanitizedImages.length > 0
+      ? sanitizedImages
+      : isRenderableImageUrl(deal.coverImageUrl)
       ? [{ url: deal.coverImageUrl }]
       : [];
   const publishedDateLabel = new Intl.DateTimeFormat("fr-FR", {
@@ -263,41 +335,54 @@ export default async function DealDetailPage(
   // JSON-LD — Product + Offer pour la rich card produit, et
   // BreadcrumbList pour le fil d'ariane dans les SERPs. Tout est
   // sérialisé en une seule balise <script> pour simplifier.
-  const jsonLd = serializeJsonLd([
-    buildDealJsonLd({
+  let jsonLd = "";
+  try {
+    jsonLd = serializeJsonLd([
+      buildDealJsonLd({
+        slug: deal.slug,
+        title: deal.title,
+        description: deal.description,
+        price: deal.price,
+        currency: deal.currency,
+        isFree: deal.isFree,
+        expiresAt: deal.expiresAt,
+        publishedAt: deal.publishedAt,
+        coverImageUrl: isRenderableImageUrl(deal.coverImageUrl)
+          ? deal.coverImageUrl
+          : null,
+        category: deal.category,
+        city: deal.city,
+        store: deal.store ? { name: deal.store.name } : null,
+        merchant: deal.merchant ? { name: deal.merchant.name } : null,
+        author: { username: deal.author.username },
+      }),
+      buildBreadcrumbJsonLd([
+        { name: "Accueil", url: "/" },
+        { name: "Bons plans", url: "/bons-plans" },
+        { name: "Guyane", url: "/bons-plans/guyane" },
+        ...(deal.city
+          ? [{ name: deal.city.name, url: getDealsCityPath(deal.city.slug) }]
+          : []),
+        { name: deal.category.name, url: categoryPath },
+        { name: deal.title, url: `/bons-plans/${deal.slug}` },
+      ]),
+    ]);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[deal/page] json-ld generation failed", {
       slug: deal.slug,
-      title: deal.title,
-      description: deal.description,
-      price: deal.price,
-      currency: deal.currency,
-      isFree: deal.isFree,
-      expiresAt: deal.expiresAt,
-      publishedAt: deal.publishedAt,
-      coverImageUrl: deal.coverImageUrl,
-      category: deal.category,
-      city: deal.city,
-      store: deal.store ? { name: deal.store.name } : null,
-      merchant: deal.merchant ? { name: deal.merchant.name } : null,
-      author: { username: deal.author.username },
-    }),
-    buildBreadcrumbJsonLd([
-      { name: "Accueil", url: "/" },
-      { name: "Bons plans", url: "/bons-plans" },
-      { name: "Guyane", url: "/bons-plans/guyane" },
-      ...(deal.city
-        ? [{ name: deal.city.name, url: getDealsCityPath(deal.city.slug) }]
-        : []),
-      { name: deal.category.name, url: categoryPath },
-      { name: deal.title, url: `/bons-plans/${deal.slug}` },
-    ]),
-  ]);
+      err,
+    });
+  }
 
   return (
     <main className="mx-auto max-w-md pb-16 animate-in fade-in duration-300 sm:max-w-2xl">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonLd }}
-      />
+      {jsonLd ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: jsonLd }}
+        />
+      ) : null}
       {/* Back link */}
       <div className="px-4 pt-4 sm:px-0 sm:pt-6">
         <Link

@@ -47,7 +47,7 @@ export function GlobalSearchBar() {
           name="q"
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="Rechercher un bon plan, une annonce…"
+          placeholder="Rechercher"
           className="h-9 w-full rounded-full border border-border bg-card pl-8 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-peyi-orange-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-peyi-orange-400"
           autoComplete="off"
         />

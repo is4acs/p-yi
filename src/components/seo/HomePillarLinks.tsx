@@ -14,13 +14,16 @@ import {
 type PillarChip = {
   href: string;
   label: string;
-  /** Préfixe invisible pour garder un anchor text descriptif côté SEO. */
+  // Préfixe invisible pour garder un anchor text descriptif côté SEO.
   srPrefix: string;
-  /** Attribut `title` pour la tooltip UX. */
+  // Attribut `title` pour la tooltip UX.
   title: string;
 };
 
-function buildDealChips(): { cityChips: PillarChip[]; categoryChips: PillarChip[] } {
+function buildDealChips(): {
+  cityChips: PillarChip[];
+  categoryChips: PillarChip[];
+} {
   const cityChips = CORE_CITIES.map((city) => ({
     href: getDealsCityPath(city.slug),
     label: city.name,
@@ -36,7 +39,10 @@ function buildDealChips(): { cityChips: PillarChip[]; categoryChips: PillarChip[
   return { cityChips, categoryChips };
 }
 
-function buildListingChips(): { cityChips: PillarChip[]; categoryChips: PillarChip[] } {
+function buildListingChips(): {
+  cityChips: PillarChip[];
+  categoryChips: PillarChip[];
+} {
   const cityChips = CORE_CITIES.map((city) => ({
     href: getListingsCityPath(city.slug),
     label: city.name,
@@ -128,11 +134,15 @@ export function HomePillarLinks() {
   return (
     <section className="mt-8 px-4 sm:px-0" aria-labelledby="home-seo-explore">
       <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
-        <h2 id="home-seo-explore" className="font-display text-lg font-semibold text-ink-900">
+        <h2
+          id="home-seo-explore"
+          className="font-display text-lg font-semibold text-ink-900"
+        >
           Explorer la Guyane par ville et catégorie
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Accès rapide aux pages locales pour trouver bons plans et annonces par commune ou thématique.
+          Accès rapide aux pages locales pour trouver bons plans et annonces
+          par commune ou thématique.
         </p>
 
         <div className="mt-4 grid gap-5 sm:grid-cols-2 sm:gap-6">

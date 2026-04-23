@@ -79,10 +79,11 @@ export function Header({ user, unreadCount, unreadNotifications }: Props) {
           ) : (
             <Link
               href="/connexion"
-              className="inline-flex items-center gap-1.5 rounded-full bg-peyi-orange-500 px-3.5 py-1.5 text-sm font-semibold text-white transition hover:bg-peyi-orange-600"
+              className="inline-flex items-center gap-1.5 rounded-full bg-peyi-orange-500 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-peyi-orange-600 sm:px-3.5"
             >
               <LogIn className="h-4 w-4" aria-hidden />
-              Se connecter
+              <span className="sm:hidden">Connexion</span>
+              <span className="hidden sm:inline">Se connecter</span>
             </Link>
           )}
         </div>
