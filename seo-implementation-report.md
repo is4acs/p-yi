@@ -150,7 +150,9 @@
 
 ## 11) Suivi Git collaboration
 - `git pull` fait au début: **OUI** (`git pull --ff-only origin main`, fast-forward réussi).
-- Message de commit utilisé: **`feat(seo): add local SEO architecture for Guyane pages`** (`df5a349`).
+- Messages de commit utilisés:
+  - **`feat(seo): add local SEO architecture for Guyane pages`** (`df5a349`)
+  - **`chore(seo): finalize implementation report tracking details`** (`f72abbd`)
 - `git push` fait à la fin: **OUI** (`git push -u origin codex/seo-local-guyane-architecture`).
 
 ## 12) Fichiers créés / modifiés
