@@ -17,6 +17,7 @@ export const metadata: Metadata = {
   title: "Mes récompenses",
   description:
     "Ton niveau, tes badges et ton historique de karma sur Péyi — partage des bons plans et progresse !",
+  robots: { index: false, follow: false },
 };
 
 export default async function RecompensesPage() {

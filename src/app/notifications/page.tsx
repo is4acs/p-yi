@@ -37,6 +37,7 @@ export const metadata: Metadata = {
   title: "Notifications",
   description:
     "Tes notifications Péyi : messages, commentaires, badges et plus encore.",
+  robots: { index: false, follow: false },
 };
 
 export default async function NotificationsPage() {
@@ -269,4 +270,3 @@ function EmptyState() {
     </div>
   );
 }
-

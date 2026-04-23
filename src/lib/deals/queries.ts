@@ -101,6 +101,7 @@ function buildWhere({ category, city, q }: Filters): Prisma.DealWhereInput {
 
   return {
     status: DealStatus.PUBLISHED,
+    OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
     ...(category ? { category: { slug: category } } : {}),
     ...(city ? { city: { slug: city } } : {}),
     ...(search ?? {}),

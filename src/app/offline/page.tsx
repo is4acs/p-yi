@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "Hors ligne",
   description:
     "Tu es actuellement hors connexion. Certaines pages restent accessibles.",
+  robots: { index: false, follow: false },
 };
 
 /**

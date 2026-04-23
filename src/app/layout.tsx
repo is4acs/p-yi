@@ -19,6 +19,7 @@ import {
   buildWebSiteJsonLd,
   serializeJsonLd,
 } from "@/lib/seo/json-ld";
+import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 
 // Peyi design system v1.0 : Inter (body) + Nunito (display) + JetBrains
@@ -49,6 +50,8 @@ const jetBrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+const siteUrl = getSiteUrl();
+
 export const metadata: Metadata = {
   title: {
     default: "Péyi — Bons plans et petites annonces de Guyane",
@@ -57,7 +60,7 @@ export const metadata: Metadata = {
   description:
     "Péyi est la plateforme des bons plans et petites annonces 100% Guyane. Trouve les meilleures promos et vends près de chez toi.",
   applicationName: "Péyi",
-  metadataBase: new URL("https://peyi.com"),
+  metadataBase: new URL(siteUrl),
   openGraph: {
     type: "website",
     locale: "fr_FR",
@@ -65,7 +68,7 @@ export const metadata: Metadata = {
     title: "Péyi — Bons plans et petites annonces de Guyane",
     description:
       "La plateforme des bons plans et petites annonces 100% Guyane. Partage, vote, et profite des meilleures promos près de chez toi.",
-    url: "https://peyi.com",
+    url: siteUrl,
   },
   twitter: {
     card: "summary_large_image",

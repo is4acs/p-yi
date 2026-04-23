@@ -12,6 +12,7 @@ import { createDealAction } from "./actions";
 export const metadata: Metadata = {
   title: "Poster un bon plan",
   description: "Partage tes meilleures affaires avec la communauté Péyi.",
+  robots: { index: false, follow: false },
 };
 
 export default async function PosterPage(

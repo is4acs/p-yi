@@ -38,7 +38,15 @@ import { FavoriteButton } from "@/components/deals/FavoriteButton";
 import { CommentList } from "@/components/comments/CommentList";
 import { ReportDialog } from "@/components/reports/ReportDialog";
 import { ShareRow } from "@/components/shared/ShareRow";
+import { ListingGallery } from "@/components/listings/ListingGallery";
 import { getSiteUrl } from "@/lib/site-url";
+import {
+  getDealCategoryBySlug,
+  getDealsCategoryPath,
+  getDealsCityPath,
+  getStoreBySlug,
+  getStorePath,
+} from "@/lib/seo/local-pages";
 
 // ---------- data ----------
 
@@ -67,7 +75,12 @@ const dealDetailSelect = {
   commentCount: true,
   viewCount: true,
   expiresAt: true,
+  updatedAt: true,
   publishedAt: true,
+  images: {
+    orderBy: { sortOrder: "asc" },
+    select: { url: true },
+  },
   author: {
     select: {
       id: true,
@@ -211,6 +224,27 @@ export default async function DealDetailPage(
   const level = LEVEL_META[deal.author.level];
   const placeholderEmoji = deal.category.icon ?? null;
   const placeholderLabel = deal.store?.name ?? deal.merchant?.name ?? deal.title;
+  const categoryPath = getDealCategoryBySlug(deal.category.slug)
+    ? getDealsCategoryPath(deal.category.slug)
+    : `/bons-plans?category=${encodeURIComponent(deal.category.slug)}`;
+  const cityPath = deal.city ? getDealsCityPath(deal.city.slug) : null;
+  const storePath =
+    deal.store && getStoreBySlug(deal.store.slug)
+      ? getStorePath(deal.store.slug)
+      : null;
+  const dealPhotos =
+    deal.images.length > 0
+      ? deal.images
+      : deal.coverImageUrl
+      ? [{ url: deal.coverImageUrl }]
+      : [];
+  const publishedDateLabel = new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "long",
+  }).format(deal.publishedAt);
+  const updatedDateLabel = new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "long",
+  }).format(deal.updatedAt);
+  const showUpdatedAt = deal.updatedAt.getTime() - deal.publishedAt.getTime() > 60_000;
 
   // JSON-LD — Product + Offer pour la rich card produit, et
   // BreadcrumbList pour le fil d'ariane dans les SERPs. Tout est
@@ -235,7 +269,11 @@ export default async function DealDetailPage(
     buildBreadcrumbJsonLd([
       { name: "Accueil", url: "/" },
       { name: "Bons plans", url: "/bons-plans" },
-      { name: deal.category.name, url: `/bons-plans?category=${deal.category.slug}` },
+      { name: "Guyane", url: "/bons-plans/guyane" },
+      ...(deal.city
+        ? [{ name: deal.city.name, url: getDealsCityPath(deal.city.slug) }]
+        : []),
+      { name: deal.category.name, url: categoryPath },
       { name: deal.title, url: `/bons-plans/${deal.slug}` },
     ]),
   ]);
@@ -259,11 +297,15 @@ export default async function DealDetailPage(
 
       {/* Hero image */}
       <div className="relative mt-3 px-4 sm:px-0">
-        <DealImagePlaceholder
-          emoji={placeholderEmoji}
-          label={placeholderLabel}
-          className="aspect-[4/3] w-full sm:aspect-[16/10]"
-        />
+        {dealPhotos.length > 0 ? (
+          <ListingGallery photos={dealPhotos} title={deal.title} />
+        ) : (
+          <DealImagePlaceholder
+            emoji={placeholderEmoji}
+            label={placeholderLabel}
+            className="aspect-[4/3] w-full sm:aspect-[16/10]"
+          />
+        )}
         <div className="absolute left-5 top-2 sm:left-1">
           <TemperatureBadge temperature={deal.temperature} />
         </div>
@@ -291,6 +333,16 @@ export default async function DealDetailPage(
             <span className="text-xs">· {deal.merchant.domain}</span>
           )}
         </div>
+
+        <p className="text-xs text-muted-foreground">
+          Publié le <time dateTime={deal.publishedAt.toISOString()}>{publishedDateLabel}</time>
+          {showUpdatedAt && (
+            <>
+              {" "}· mis à jour le{" "}
+              <time dateTime={deal.updatedAt.toISOString()}>{updatedDateLabel}</time>
+            </>
+          )}
+        </p>
 
         <div className="flex flex-wrap items-center gap-2">
           {isAuthor && (
@@ -456,6 +508,34 @@ export default async function DealDetailPage(
             </p>
           </div>
         </div>
+      </section>
+
+      <section className="mt-6 px-4 sm:px-0">
+        <h2 className="font-display text-lg font-semibold">Voir aussi</h2>
+        <ul className="mt-3 space-y-2 text-sm">
+          {cityPath && deal.city && (
+            <li>
+              <Link
+                href={cityPath}
+                className="text-peyi-orange-700 hover:underline"
+              >
+                Voir les bons plans à {deal.city.name}
+              </Link>
+            </li>
+          )}
+          <li>
+            <Link href={categoryPath} className="text-peyi-orange-700 hover:underline">
+              Voir les bons plans {deal.category.name.toLowerCase()} en Guyane
+            </Link>
+          </li>
+          {storePath && deal.store && (
+            <li>
+              <Link href={storePath} className="text-peyi-orange-700 hover:underline">
+                Voir les promos chez {deal.store.name}
+              </Link>
+            </li>
+          )}
+        </ul>
       </section>
 
       {/* Comments */}

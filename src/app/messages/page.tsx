@@ -14,6 +14,7 @@ export const metadata: Metadata = {
   title: "Messages",
   description:
     "Tes conversations privées avec les vendeurs et les membres Péyi.",
+  robots: { index: false, follow: false },
 };
 
 export default async function MessagesInboxPage() {

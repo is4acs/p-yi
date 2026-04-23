@@ -33,6 +33,7 @@ export const metadata: Metadata = {
   title: "Parrainage & affiliation",
   description:
     "Invite tes amis à rejoindre Péyi et gagne une récompense progressive à chaque palier atteint.",
+  robots: { index: false, follow: false },
 };
 
 export const dynamic = "force-dynamic";

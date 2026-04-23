@@ -17,6 +17,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Modifier mon profil",
   description: "Mets à jour ton pseudo, ton e-mail et ton numéro de téléphone.",
+  robots: { index: false, follow: false },
 };
 
 type Props = {

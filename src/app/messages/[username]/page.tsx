@@ -32,6 +32,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   return {
     title: `Conversation avec @${params.username}`,
     description: "Messagerie privée sur Péyi.",
+    robots: { index: false, follow: false },
   };
 }
 

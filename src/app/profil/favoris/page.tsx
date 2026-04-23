@@ -23,6 +23,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Mes favoris",
   description: "Les bons plans et annonces que tu as sauvegardés.",
+  robots: { index: false, follow: false },
 };
 
 type Tab = "deals" | "listings";

@@ -16,6 +16,7 @@ export const metadata: Metadata = {
   title: "Poster une annonce",
   description:
     "Vends, échange ou donne près de chez toi. Publie ton annonce sur Péyi.",
+  robots: { index: false, follow: false },
 };
 
 type SearchParams = {

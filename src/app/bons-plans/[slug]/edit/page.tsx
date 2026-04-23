@@ -12,6 +12,7 @@ import { updateDealAction } from "@/app/poster/actions";
 
 export const metadata: Metadata = {
   title: "Modifier le bon plan",
+  robots: { index: false, follow: false },
 };
 
 export default async function EditDealPage(

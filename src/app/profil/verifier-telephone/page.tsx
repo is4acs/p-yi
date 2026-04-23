@@ -15,6 +15,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Vérifier mon numéro",
   description: "Entre le code à 6 chiffres reçu par SMS pour confirmer ton numéro.",
+  robots: { index: false, follow: false },
 };
 
 type Props = {

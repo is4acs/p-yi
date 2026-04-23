@@ -13,6 +13,7 @@ import { DealCard } from "@/components/deals/DealCard";
 import { HomeCategoriesGrid } from "@/components/home/HomeCategoriesGrid";
 import { HomeCommunesSection } from "@/components/home/HomeCommunesSection";
 import { HomeHero } from "@/components/home/HomeHero";
+import { HomePillarLinks } from "@/components/seo/HomePillarLinks";
 import { ListingCard } from "@/components/listings/ListingCard";
 
 export const dynamic = "force-dynamic";
@@ -81,6 +82,9 @@ export default async function HomePage(props: Props) {
           avec refs locales, SearchBar conservée, CTA primary + lien
           secondaire, 3 KPIs temps-réel. Cf. `HomeHero` pour détails. */}
       <HomeHero />
+      {/* Entrées SEO locales : liens descriptifs crawlables vers les
+          pages piliers ville/catégorie. */}
+      <HomePillarLinks />
       {/* Catégories — grille 2×4 (mobile) / 4×2 (desktop), tuiles colorées */}
       <HomeCategoriesGrid />
       {/* Deals chauds */}
