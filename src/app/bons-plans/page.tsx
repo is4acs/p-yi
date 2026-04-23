@@ -9,7 +9,6 @@ import {
 } from "@/lib/deals/queries";
 import { parsePage, parseQuery, parseSort } from "@/lib/deals/url";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { buildCanonicalPath } from "@/lib/seo/canonical";
 import { BonsPlansHero } from "@/components/deals/BonsPlansHero";
 import { DealCard } from "@/components/deals/DealCard";
 import { DealCategoryStrip } from "@/components/deals/DealCategoryStrip";
@@ -19,6 +18,9 @@ import { DealsPagination } from "@/components/deals/DealsPagination";
 import { DealsSearchBar } from "@/components/deals/DealsSearchBar";
 import { EmptyDeals } from "@/components/deals/EmptyDeals";
 import { OnboardingNudge } from "@/components/onboarding/OnboardingNudge";
+import { ExplorerAlso } from "@/components/seo/SeoBlocks";
+import { getDealsFacetCanonicalPath } from "@/lib/seo/local-pages";
+import { buildDealsGlobalExploreLinks } from "@/lib/seo/pillar-content";
 
 export const dynamic = "force-dynamic";
 
@@ -68,28 +70,20 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const searchParams = await props.searchParams;
   const q = parseQuery(searchParams.q);
+  const sort = parseSort(searchParams.sort);
+  const page = parsePage(searchParams.page);
   const categorySlug = searchParams.category?.trim() || null;
   const citySlug = searchParams.city?.trim() || null;
 
-  // Canonical : on garde les facettes permanentes (category + city)
-  // mais on ignore sort, page, q — ces querystrings sont des "vues"
-  // qui canonicalisent toutes vers la même URL de base. Les
-  // recherches (q) ne sont pas indexées : noindex ci-dessous.
-  const canonical = buildCanonicalPath("/bons-plans", {
-    category: categorySlug,
-    city: citySlug,
-  });
-
-  if (q) {
-    return {
-      title: `Recherche « ${q} »`,
-      description: `Bons plans en Guyane correspondant à « ${q} ».`,
-      alternates: { canonical: "/bons-plans" },
-      // Les pages de recherche interne gaspillent le crawl budget
-      // et ne convertissent pas en organique — on les exclut.
-      robots: { index: false, follow: true },
-    };
-  }
+  // Toutes les vues filtrées/recherchées (query params) passent en
+  // noindex pour éviter la bloat SEO. Les pages piliers dédiées
+  // (/bons-plans/guyane, /bons-plans/{ville}, /bons-plans/{cat}/guyane)
+  // portent l'indexation locale.
+  const hasFacet = Boolean(categorySlug || citySlug);
+  const hasQueryVariant = Boolean(q) || sort !== "hot" || page > 1;
+  const isFilteredView = hasFacet || hasQueryVariant;
+  const facetCanonical =
+    getDealsFacetCanonicalPath({ categorySlug, citySlug }) ?? "/bons-plans";
 
   const { categoryName, cityName } = await resolveFacets(
     categorySlug,
@@ -107,8 +101,9 @@ export async function generateMetadata(
     return {
       title,
       description,
-      alternates: { canonical },
-      openGraph: { title, description, url: canonical },
+      alternates: { canonical: facetCanonical },
+      robots: { index: !isFilteredView, follow: true },
+      openGraph: { title, description, url: facetCanonical },
       twitter: { title, description, card: "summary_large_image" },
     };
   }
@@ -120,6 +115,7 @@ export async function generateMetadata(
     title,
     description,
     alternates: { canonical: "/bons-plans" },
+    robots: { index: true, follow: true },
     openGraph: { title, description, url: "/bons-plans" },
     twitter: { title, description, card: "summary_large_image" },
   };
@@ -303,6 +299,12 @@ export default async function BonsPlansPage(
           city={city}
           q={q}
         />
+
+        {!hasFilters && (
+          <div className="mt-6">
+            <ExplorerAlso links={buildDealsGlobalExploreLinks()} />
+          </div>
+        )}
       </div>
     </main>
   );

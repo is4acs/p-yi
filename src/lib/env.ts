@@ -154,6 +154,16 @@ function parseEnv(): ServerEnv & PublicEnv {
     );
   }
 
+  if (
+    serverParsed.data.NODE_ENV === "production" &&
+    !publicParsed.data.NEXT_PUBLIC_SITE_URL
+  ) {
+    throw new Error(
+      "[env] NEXT_PUBLIC_SITE_URL est obligatoire en production " +
+        "(canonical, sitemap, OG URLs, redirects OAuth).",
+    );
+  }
+
   // En prod, Upstash est obligatoire. Sans rate limit, les endpoints
   // sensibles sont vulnérables (brute-force auth, spam d'écriture,
   // DoS de l'export RGPD). On refuse de booter pour forcer la prise

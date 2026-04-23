@@ -42,6 +42,11 @@ import { ContactSellerForm } from "@/components/messages/ContactSellerForm";
 import { ReportDialog } from "@/components/reports/ReportDialog";
 import { ShareRow } from "@/components/shared/ShareRow";
 import { getSiteUrl } from "@/lib/site-url";
+import {
+  getListingCategoryBySlug,
+  getListingsCategoryPath,
+  getListingsCityPath,
+} from "@/lib/seo/local-pages";
 
 // Pas de `force-dynamic` : la page reste dynamique de fait (cookies via
 // `getCurrentUser`) mais on cache la requête Prisma lourde (jointures
@@ -67,6 +72,7 @@ const listingDetailSelect = {
   allowMessages: true,
   status: true,
   publishedAt: true,
+  updatedAt: true,
   bumpedAt: true,
   expiresAt: true,
   viewCount: true,
@@ -98,7 +104,11 @@ function getListing(slug: string) {
   return unstable_cache(
     async () =>
       prisma.listing.findFirst({
-        where: { slug, status: ListingStatus.PUBLISHED },
+        where: {
+          slug,
+          status: ListingStatus.PUBLISHED,
+          expiresAt: { gt: new Date() },
+        },
         select: listingDetailSelect,
       }),
     ["listing-detail", slug],
@@ -110,7 +120,11 @@ function getListingMeta(slug: string) {
   return unstable_cache(
     async () =>
       prisma.listing.findFirst({
-        where: { slug, status: ListingStatus.PUBLISHED },
+        where: {
+          slug,
+          status: ListingStatus.PUBLISHED,
+          expiresAt: { gt: new Date() },
+        },
         select: {
           title: true,
           description: true,
@@ -118,6 +132,7 @@ function getListingMeta(slug: string) {
           coverImageUrl: true,
           price: true,
           priceType: true,
+          expiresAt: true,
           category: { select: { name: true } },
           city: { select: { name: true } },
         },
@@ -134,7 +149,12 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const params = await props.params;
   const listing = await getListingMeta(params.slug);
-  if (!listing) return { title: "Annonce introuvable" };
+  if (!listing || listing.expiresAt <= new Date()) {
+    return {
+      title: "Annonce introuvable",
+      robots: { index: false, follow: false },
+    };
+  }
 
   // Préfixer la description par le prix améliore l'aperçu social (WhatsApp,
   // iMessage, Slack affichent 2-3 lignes) — l'info la plus utile est
@@ -179,7 +199,7 @@ export default async function ListingDetailPage(
     getListing(params.slug),
     getCurrentUser(),
   ]);
-  if (!listing) notFound();
+  if (!listing || listing.expiresAt <= new Date()) notFound();
 
   const isAuthor = currentUser?.id === listing.author.id;
   let isFavorited = false;
@@ -208,6 +228,17 @@ export default async function ListingDetailPage(
   const locationLabel = listing.neighborhood
     ? `${listing.city.name} · ${listing.neighborhood}`
     : listing.city.name;
+  const cityPath = getListingsCityPath(listing.city.slug);
+  const categoryPath = getListingCategoryBySlug(listing.category.slug)
+    ? getListingsCategoryPath(listing.category.slug)
+    : `/annonces?category=${encodeURIComponent(listing.category.slug)}`;
+  const publishedDateLabel = new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "long",
+  }).format(listing.publishedAt);
+  const updatedDateLabel = new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "long",
+  }).format(listing.updatedAt);
+  const showUpdatedAt = listing.updatedAt.getTime() - listing.publishedAt.getTime() > 60_000;
 
   // JSON-LD : Product + Offer + BreadcrumbList. On injecte au début du
   // `<main>` pour que le crawler le trouve vite, et on le sérialise via
@@ -222,10 +253,11 @@ export default async function ListingDetailPage(
       price: listing.price,
       currency: listing.currency,
       priceType: listing.priceType,
+      listingType: listing.type,
       condition: listing.condition,
       coverImageUrl: listing.coverImageUrl,
       images: listing.images,
-      category: { name: listing.category.name },
+      category: { name: listing.category.name, slug: listing.category.slug },
       city: { name: listing.city.name },
       author: { username: listing.author.username },
       publishedAt: listing.publishedAt,
@@ -233,13 +265,15 @@ export default async function ListingDetailPage(
     buildBreadcrumbJsonLd([
       { name: "Accueil", url: "/" },
       { name: "Annonces", url: "/annonces" },
+      { name: "Guyane", url: "/annonces/guyane" },
+      { name: listing.city.name, url: cityPath },
       {
         name: listing.category.name,
-        url: `/annonces?category=${listing.category.slug}`,
+        url: categoryPath,
       },
       { name: listing.title, url: `/annonces/${listing.slug}` },
     ]),
-  ]);
+  ].filter((node): node is Record<string, unknown> => Boolean(node)));
 
   return (
     <main className="mx-auto max-w-md pb-16 animate-in fade-in duration-300 sm:max-w-2xl">
@@ -260,17 +294,14 @@ export default async function ListingDetailPage(
         </Link>
         <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" aria-hidden />
         <Link
-          href={`/annonces?category=${encodeURIComponent(listing.category.slug)}`}
+          href={categoryPath}
           className="truncate font-medium transition hover:text-foreground"
         >
           {listing.category.icon ? `${listing.category.icon} ` : ""}
           {listing.category.name}
         </Link>
         <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" aria-hidden />
-        <Link
-          href={`/annonces?city=${encodeURIComponent(listing.city.slug)}`}
-          className="truncate font-medium transition hover:text-foreground"
-        >
+        <Link href={cityPath} className="truncate font-medium transition hover:text-foreground">
           {listing.city.name}
         </Link>
       </nav>
@@ -338,6 +369,17 @@ export default async function ListingDetailPage(
             </span>
           </p>
         )}
+
+        <p className="text-xs text-muted-foreground">
+          Publiée le{" "}
+          <time dateTime={listing.publishedAt.toISOString()}>{publishedDateLabel}</time>
+          {showUpdatedAt && (
+            <>
+              {" "}· mise à jour le{" "}
+              <time dateTime={listing.updatedAt.toISOString()}>{updatedDateLabel}</time>
+            </>
+          )}
+        </p>
 
         <div className="flex flex-wrap items-center gap-2">
           {isAuthor ? (
@@ -476,6 +518,27 @@ export default async function ListingDetailPage(
             </p>
           </div>
         </div>
+      </section>
+
+      <section className="mt-6 px-4 sm:px-0">
+        <h2 className="font-display text-lg font-semibold">Voir aussi</h2>
+        <ul className="mt-3 space-y-2 text-sm">
+          <li>
+            <Link href={cityPath} className="text-peyi-orange-700 hover:underline">
+              Voir les annonces à {listing.city.name}
+            </Link>
+          </li>
+          <li>
+            <Link href={categoryPath} className="text-peyi-orange-700 hover:underline">
+              Voir les annonces {listing.category.name.toLowerCase()} en Guyane
+            </Link>
+          </li>
+          <li>
+            <Link href="/annonces/guyane" className="text-peyi-orange-700 hover:underline">
+              Voir toutes les annonces en Guyane
+            </Link>
+          </li>
+        </ul>
       </section>
 
       {/* Expiry */}

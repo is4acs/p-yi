@@ -12,6 +12,7 @@ import { updateListingAction } from "@/app/poster/annonce/actions";
 
 export const metadata: Metadata = {
   title: "Modifier l'annonce",
+  robots: { index: false, follow: false },
 };
 
 export default async function EditListingPage(

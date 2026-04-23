@@ -113,6 +113,66 @@ export function buildBreadcrumbJsonLd(items: BreadcrumbItem[]): JsonLd {
 }
 
 // -----------------------------------------------------------------------------
+// FAQ + Collection pages
+// -----------------------------------------------------------------------------
+
+type FaqItem = {
+  question: string;
+  answer: string;
+};
+
+type CollectionPageInput = {
+  name: string;
+  description: string;
+  path: string;
+};
+
+/**
+ * `FAQPage` utilisable uniquement quand la FAQ est réellement visible dans
+ * la page. L'appelant doit garantir cette contrainte d'éligibilité.
+ */
+export function buildFaqJsonLd(items: FaqItem[]): JsonLd | null {
+  if (items.length === 0) return null;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer,
+      },
+    })),
+  };
+}
+
+/**
+ * `CollectionPage` pour les pages piliers (ville/catégorie/enseigne) et
+ * guides. Fournit un signal de type de page éditoriale sans inventer de
+ * propriétés métier non visibles.
+ */
+export function buildCollectionPageJsonLd(input: CollectionPageInput): JsonLd {
+  const base = getSiteUrl();
+  const url = input.path.startsWith("http")
+    ? input.path
+    : `${base}${input.path}`;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: input.name,
+    description: input.description.replace(/\s+/g, " ").trim(),
+    url,
+    inLanguage: "fr-FR",
+    isPartOf: {
+      "@id": `${base}/#website`,
+    },
+  };
+}
+
+// -----------------------------------------------------------------------------
 // Deal → Product + Offer
 // -----------------------------------------------------------------------------
 
@@ -203,10 +263,11 @@ type ListingJsonLdInput = {
   price: Prisma.Decimal | null;
   currency: string;
   priceType: string;
+  listingType: string;
   condition: string | null;
   coverImageUrl: string | null;
   images: { url: string }[];
-  category: { name: string };
+  category: { name: string; slug: string };
   city: { name: string };
   author: { username: string };
   publishedAt: Date;
@@ -228,24 +289,39 @@ const CONDITION_MAP: Record<string, string> = {
  * listings sont C2C (particulier à particulier) donc le seller est
  * toujours une `Person` (jamais une Organization).
  *
- * Prix : certains listings n'ont pas de prix fixe (NEGOTIABLE,
- * ON_REQUEST, FREE). Pour NEGOTIABLE/ON_REQUEST on met le prix
- * saisi avec une availability standard ; pour FREE ou price=null
- * on met price=0.
+ * Prix : on ne publie `Product/Offer` que si le prix est réellement
+ * exploitable et cohérent avec le contenu visible. Cas gérés :
+ *   - FREE -> `price=0`
+ *   - FIXED / NEGOTIABLE / PER_DAY / PER_MONTH -> prix numérique requis
+ *   - ON_REQUEST -> pas de prix structuré (la page affiche "Sur demande")
+ *
+ * Si le prix n'est pas fiable, on retourne `null` plutôt que d'inventer
+ * une valeur (ex. `0`) qui ne serait pas visible sur la page.
  */
-export function buildListingJsonLd(listing: ListingJsonLdInput): JsonLd {
+export function buildListingJsonLd(listing: ListingJsonLdInput): JsonLd | null {
+  if (listing.listingType === "DEMAND") {
+    // Une annonce de type "recherche" n'est pas une offre produit :
+    // on n'expose donc pas de Product/Offer pour rester fidèle au
+    // contenu visible et éviter les faux positifs rich results.
+    return null;
+  }
+
+  const priceString = (() => {
+    if (listing.priceType === "FREE") return "0";
+    if (listing.priceType === "ON_REQUEST") return null;
+    return listing.price ? listing.price.toString() : null;
+  })();
+  if (!priceString) {
+    // Pas de prix fiable visible -> on n'expose pas de Offer.
+    return null;
+  }
+
   const base = getSiteUrl();
   const url = `${base}/annonces/${listing.slug}`;
 
   const description =
     listing.description.replace(/\s+/g, " ").trim().slice(0, 5000) ||
     `${listing.category.name} à ${listing.city.name} sur Péyi.`;
-
-  const priceString = listing.price
-    ? listing.price.toString()
-    : listing.priceType === "FREE"
-      ? "0"
-      : "0"; // ON_REQUEST fallback
 
   const offer: JsonLd = {
     "@type": "Offer",
@@ -265,7 +341,8 @@ export function buildListingJsonLd(listing: ListingJsonLdInput): JsonLd {
 
   const result: JsonLd = {
     "@context": "https://schema.org",
-    "@type": "Product",
+    "@type":
+      listing.category.slug === "emploi-services" ? "Service" : "Product",
     name: listing.title,
     description,
     url,
@@ -285,6 +362,14 @@ export function buildListingJsonLd(listing: ListingJsonLdInput): JsonLd {
 
   if (listing.condition && CONDITION_MAP[listing.condition]) {
     result.itemCondition = CONDITION_MAP[listing.condition];
+  }
+
+  if (listing.category.slug === "emploi-services") {
+    result.serviceType = listing.category.name;
+    result.provider = {
+      "@type": "Person",
+      name: `@${listing.author.username}`,
+    };
   }
 
   return result;

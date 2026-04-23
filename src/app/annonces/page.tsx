@@ -3,7 +3,6 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
-import { buildCanonicalPath } from "@/lib/seo/canonical";
 import {
   fetchListingsPage,
   fetchUserFavoriteListingSet,
@@ -19,6 +18,9 @@ import {
   parseType,
 } from "@/lib/listings/url";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { ExplorerAlso } from "@/components/seo/SeoBlocks";
+import { getListingsFacetCanonicalPath } from "@/lib/seo/local-pages";
+import { buildListingsGlobalExploreLinks } from "@/lib/seo/pillar-content";
 import { HomeCategoriesGrid } from "@/components/home/HomeCategoriesGrid";
 import { HomeCommunesSection } from "@/components/home/HomeCommunesSection";
 import { AnnoncesHero } from "@/components/listings/AnnoncesHero";
@@ -90,22 +92,26 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const searchParams = await props.searchParams;
   const q = parseQuery(searchParams.q);
+  const sort = parseSort(searchParams.sort);
+  const page = parsePage(searchParams.page);
+  const type = parseType(searchParams.type);
   const categorySlug = searchParams.category?.trim() || null;
   const citySlug = searchParams.city?.trim() || null;
+  const filters = parseFilters(searchParams);
 
-  const canonical = buildCanonicalPath("/annonces", {
-    category: categorySlug,
-    city: citySlug,
-  });
-
-  if (q) {
-    return {
-      title: `Recherche « ${q} » · Annonces`,
-      description: `Petites annonces en Guyane correspondant à « ${q} ».`,
-      alternates: { canonical: "/annonces" },
-      robots: { index: false, follow: true },
-    };
-  }
+  // Toutes les vues filtrées/recherchées restent noindex pour éviter
+  // l'indexation de variantes combinatoires. Les pages piliers propres
+  // portent la visibilité locale.
+  const hasFacet = Boolean(categorySlug || citySlug);
+  const hasQueryVariant =
+    Boolean(q) ||
+    sort !== "new" ||
+    page > 1 ||
+    Boolean(type) ||
+    hasActiveFilters(filters);
+  const isFilteredView = hasFacet || hasQueryVariant;
+  const facetCanonical =
+    getListingsFacetCanonicalPath({ categorySlug, citySlug }) ?? "/annonces";
 
   const { categoryName, cityName } = await resolveFacets(
     categorySlug,
@@ -123,8 +129,9 @@ export async function generateMetadata(
     return {
       title,
       description,
-      alternates: { canonical },
-      openGraph: { title, description, url: canonical },
+      alternates: { canonical: facetCanonical },
+      robots: { index: !isFilteredView, follow: true },
+      openGraph: { title, description, url: facetCanonical },
       twitter: { title, description, card: "summary_large_image" },
     };
   }
@@ -136,6 +143,7 @@ export async function generateMetadata(
     title,
     description,
     alternates: { canonical: "/annonces" },
+    robots: { index: true, follow: true },
     openGraph: { title, description, url: "/annonces" },
     twitter: { title, description, card: "summary_large_image" },
   };
@@ -385,6 +393,12 @@ export default async function AnnoncesPage(
           q={q}
           filters={filters}
         />
+
+        {!hasFilters && (
+          <div className="mt-6">
+            <ExplorerAlso links={buildListingsGlobalExploreLinks()} />
+          </div>
+        )}
       </div>
     </main>
   );

@@ -13,6 +13,7 @@ import { completeProfileAction } from "./actions";
 export const metadata: Metadata = {
   title: "Choisis ton pseudo",
   description: "Encore une étape avant de plonger dans les bons plans.",
+  robots: { index: false, follow: false },
 };
 
 export default async function CompleteProfilePage(

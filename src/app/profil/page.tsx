@@ -31,6 +31,7 @@ import { signOutAction } from "../connexion/actions";
 export const metadata: Metadata = {
   title: "Profil",
   description: "Ton profil Péyi : karma, badges et historique.",
+  robots: { index: false, follow: false },
 };
 
 type Props = {

@@ -16,6 +16,7 @@ export const metadata: Metadata = {
   title: "Classement des contributeurs",
   description:
     "Les Péyi-lovers qui partagent le plus de bons plans en Guyane. Grimpe dans le classement en participant !",
+  alternates: { canonical: "/classement" },
 };
 
 export const dynamic = "force-dynamic";

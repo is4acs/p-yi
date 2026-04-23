@@ -10,16 +10,14 @@ import { getSiteUrl } from "@/lib/site-url";
  *   - `Allow: /` comme règle générale — tout le contenu public est
  *     indexable par défaut.
  *   - On bloque explicitement les sections privées (profil, messages,
- *     notifications, admin, api, auth, connexion, banni). Même si ces
- *     routes sont authentifiées et que les crawlers ne verraient que
- *     des redirections, noindex via robots est un double filet.
+ *     notifications, admin, api).
+ *   - Les pages publiques mais non stratégiques SEO (connexion,
+ *     recherche interne, flows auth/poster, etc.) restent crawlables
+ *     et portent une balise meta `noindex` côté page. Cela évite les
+ *     cas où Google indexe une URL "bloquée par robots.txt" sans avoir
+ *     lu son `noindex`.
  *   - `sitemap` pointe vers notre sitemap dynamique pour que le
  *     crawler n'ait pas à le deviner.
- *
- * Note : `/poster` n'est PAS disallow — Google peut afficher la page
- * de création (qui redirige vers login en fait), et c'est OK pour la
- * découverte. Idem `/auth/complete-profile` qui est une étape de
- * flow, pas du contenu.
  *
  * On utilise un seul user-agent `*` ; si un jour on doit gérer des
  * règles fines (ex. interdire un scraper abusif), on pourra ajouter
@@ -46,9 +44,6 @@ export default function robots(): MetadataRoute.Robots {
           "/notifications",
           "/notifications/",
           "/api/",
-          "/auth/",
-          "/connexion",
-          "/banni",
         ],
       },
     ],
