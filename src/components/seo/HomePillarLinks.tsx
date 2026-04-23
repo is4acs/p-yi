@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { Flame, MapPin, Tag } from "lucide-react";
-import type { ReactNode } from "react";
+import { ArrowRight, MapPin, Tag } from "lucide-react";
 
 import {
   CORE_CITIES,
@@ -12,92 +11,125 @@ import {
   getListingsCityPath,
 } from "@/lib/seo/local-pages";
 
-type SeoLink = {
+type PillarChip = {
   href: string;
   label: string;
+  // Préfixe invisible pour garder un anchor text descriptif côté SEO.
+  srPrefix: string;
+  // Attribut `title` pour la tooltip UX.
+  title: string;
 };
 
-function SeoLinkGrid({ links }: { links: SeoLink[] }) {
+function buildDealChips(): {
+  cityChips: PillarChip[];
+  categoryChips: PillarChip[];
+} {
+  const cityChips = CORE_CITIES.map((city) => ({
+    href: getDealsCityPath(city.slug),
+    label: city.name,
+    srPrefix: "Voir les bons plans à ",
+    title: `Bons plans à ${city.name}`,
+  }));
+  const categoryChips = DEAL_CATEGORY_PILLARS.map((category) => ({
+    href: getDealsCategoryPath(category.slug),
+    label: category.name,
+    srPrefix: "Voir les bons plans ",
+    title: `Bons plans ${category.name.toLowerCase()} en Guyane`,
+  }));
+  return { cityChips, categoryChips };
+}
+
+function buildListingChips(): {
+  cityChips: PillarChip[];
+  categoryChips: PillarChip[];
+} {
+  const cityChips = CORE_CITIES.map((city) => ({
+    href: getListingsCityPath(city.slug),
+    label: city.name,
+    srPrefix: "Voir les annonces à ",
+    title: `Annonces à ${city.name}`,
+  }));
+  const categoryChips = LISTING_CATEGORY_PILLARS.map((category) => ({
+    href: getListingsCategoryPath(category.slug),
+    label: category.name,
+    srPrefix: "Voir les annonces ",
+    title: `Annonces ${category.name.toLowerCase()} en Guyane`,
+  }));
+  return { cityChips, categoryChips };
+}
+
+function Chip({ chip }: { chip: PillarChip }) {
   return (
-    <ul className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-      {links.map((link) => (
-        <li key={link.href}>
-          <Link
-            href={link.href}
-            className="inline-flex w-full items-center rounded-md border border-peyi-orange-200/80 bg-peyi-orange-50/70 px-2.5 py-2 text-sm font-medium text-peyi-orange-800 transition hover:border-peyi-orange-300 hover:bg-peyi-orange-100/80"
-          >
-            <span className="truncate">{link.label}</span>
-          </Link>
-        </li>
-      ))}
-    </ul>
+    <Link
+      href={chip.href}
+      title={chip.title}
+      className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-ink-800 transition hover:border-peyi-orange-300 hover:bg-peyi-orange-50 hover:text-peyi-orange-700"
+    >
+      <span className="sr-only">{chip.srPrefix}</span>
+      {chip.label}
+    </Link>
   );
 }
 
 function PillarColumn({
   title,
-  icon,
-  cityLinks,
-  categoryLinks,
+  hubHref,
+  hubLabel,
+  hubSrSuffix,
+  cityChips,
+  categoryChips,
 }: {
   title: string;
-  icon: ReactNode;
-  cityLinks: SeoLink[];
-  categoryLinks: SeoLink[];
+  hubHref: string;
+  hubLabel: string;
+  hubSrSuffix: string;
+  cityChips: PillarChip[];
+  categoryChips: PillarChip[];
 }) {
   return (
-    <div className="rounded-lg border border-border/70 bg-muted/20 p-4">
-      <h3 className="flex items-center gap-2 font-display text-base font-semibold text-ink-900">
-        {icon}
-        {title}
-      </h3>
-
-      <div className="mt-3">
-        <h4 className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-          <MapPin className="h-3.5 w-3.5" aria-hidden />
-          Villes
-        </h4>
-        <SeoLinkGrid links={cityLinks} />
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        <Link
+          href={hubHref}
+          className="inline-flex items-center gap-1 text-xs font-semibold text-peyi-orange-700 hover:text-peyi-orange-800"
+        >
+          <span aria-hidden>{hubLabel}</span>
+          <span className="sr-only">{hubSrSuffix}</span>
+          <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+        </Link>
       </div>
 
-      <div className="mt-4">
-        <h4 className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-          Catégories
-        </h4>
-        <SeoLinkGrid links={categoryLinks} />
+      <div>
+        <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <MapPin className="h-3 w-3" aria-hidden />
+          Par ville
+        </p>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {cityChips.map((chip) => (
+            <Chip key={chip.href} chip={chip} />
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <Tag className="h-3 w-3" aria-hidden />
+          Par catégorie
+        </p>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {categoryChips.map((chip) => (
+            <Chip key={chip.href} chip={chip} />
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
 export function HomePillarLinks() {
-  const dealsCityLinks: SeoLink[] = [
-    { href: "/bons-plans/guyane", label: "Bons plans Guyane" },
-    ...CORE_CITIES.map((city) => ({
-      href: getDealsCityPath(city.slug),
-      label: `Bons plans ${city.name}`,
-    })),
-  ];
-
-  const dealsCategoryLinks: SeoLink[] = DEAL_CATEGORY_PILLARS.map((category) => ({
-    href: getDealsCategoryPath(category.slug),
-    label: `Promos ${category.name} Guyane`,
-  }));
-
-  const listingsCityLinks: SeoLink[] = [
-    { href: "/annonces/guyane", label: "Annonces Guyane" },
-    ...CORE_CITIES.map((city) => ({
-      href: getListingsCityPath(city.slug),
-      label: `Annonces ${city.name}`,
-    })),
-  ];
-
-  const listingsCategoryLinks: SeoLink[] = LISTING_CATEGORY_PILLARS.map(
-    (category) => ({
-      href: getListingsCategoryPath(category.slug),
-      label: `Annonces ${category.name} Guyane`,
-    }),
-  );
+  const deals = buildDealChips();
+  const listings = buildListingChips();
 
   return (
     <section className="mt-8 px-4 sm:px-0" aria-labelledby="home-seo-explore">
@@ -108,23 +140,27 @@ export function HomePillarLinks() {
         >
           Explorer la Guyane par ville et catégorie
         </h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Liens directs vers nos pages piliers locales pour trouver rapidement
-          des offres pertinentes en Guyane.
+        <p className="mt-1 text-sm text-muted-foreground">
+          Accès rapide aux pages locales pour trouver bons plans et annonces
+          par commune ou thématique.
         </p>
 
-        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <div className="mt-4 grid gap-5 sm:grid-cols-2 sm:gap-6">
           <PillarColumn
             title="Bons plans"
-            icon={<Flame className="h-4 w-4 text-hot" aria-hidden />}
-            cityLinks={dealsCityLinks}
-            categoryLinks={dealsCategoryLinks}
+            hubHref="/bons-plans/guyane"
+            hubLabel="Tout voir"
+            hubSrSuffix="les bons plans en Guyane"
+            cityChips={deals.cityChips}
+            categoryChips={deals.categoryChips}
           />
           <PillarColumn
             title="Petites annonces"
-            icon={<Tag className="h-4 w-4 text-peyi-green-700" aria-hidden />}
-            cityLinks={listingsCityLinks}
-            categoryLinks={listingsCategoryLinks}
+            hubHref="/annonces/guyane"
+            hubLabel="Tout voir"
+            hubSrSuffix="les annonces en Guyane"
+            cityChips={listings.cityChips}
+            categoryChips={listings.categoryChips}
           />
         </div>
       </div>
