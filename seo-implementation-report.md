@@ -150,8 +150,8 @@
 
 ## 11) Suivi Git collaboration
 - `git pull` fait au début: **OUI** (`git pull --ff-only origin main`, fast-forward réussi).
-- Message de commit utilisé: **À renseigner après commit**.
-- `git push` fait à la fin: **À renseigner après push**.
+- Message de commit utilisé: **`feat(seo): add local SEO architecture for Guyane pages`** (`df5a349`).
+- `git push` fait à la fin: **OUI** (`git push -u origin codex/seo-local-guyane-architecture`).
 
 ## 12) Fichiers créés / modifiés
 
