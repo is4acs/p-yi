@@ -193,7 +193,7 @@ export default async function AnnoncesPage(
     // Grille 2/3/4 cols → on élargit à max-w-6xl pour donner de l'air
     // au desktop (avant S27 : max-w-2xl, trop étroit pour une grille
     // photo-first).
-    <main className="mx-auto max-w-md pb-12 animate-in fade-in duration-300 sm:max-w-2xl lg:max-w-6xl">
+    <main className="mx-auto max-w-md overflow-x-clip pb-12 animate-in fade-in duration-300 sm:max-w-2xl lg:max-w-6xl">
       {/* Mode découverte (aucun filtre) : hero éditorial + chips de
           recherches populaires. Sous filtre ces blocs disparaissent —
           pattern hérité de `/bons-plans` (cf. `<BonsPlansHero>` et

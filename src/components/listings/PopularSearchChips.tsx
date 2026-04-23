@@ -68,7 +68,7 @@ export function PopularSearchChips() {
   return (
     <section
       aria-label="Recherches populaires"
-      className="-mx-4 border-b border-ink-100 bg-background px-4 py-4 sm:mx-0 sm:px-0 sm:py-5"
+      className="border-b border-ink-100 bg-background px-4 py-4 sm:px-0 sm:py-5"
     >
       <div className="scrollbar-hide flex snap-x snap-mandatory items-center gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:snap-none sm:gap-2.5 sm:overflow-visible sm:pb-0">
         <span className="shrink-0 snap-start pr-1 font-display text-sm font-bold text-ink-700">

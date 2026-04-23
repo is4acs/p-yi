@@ -62,7 +62,7 @@ export async function AnnoncesHero({ total }: Props) {
   return (
     <section
       aria-labelledby="annonces-hero-title"
-      className="relative -mx-4 overflow-hidden bg-gradient-to-b from-peyi-green-50/70 to-transparent px-4 pb-6 pt-6 sm:mx-0 sm:px-0 sm:pb-10 sm:pt-12"
+      className="relative overflow-hidden bg-gradient-to-b from-peyi-green-50/70 to-transparent px-4 pb-6 pt-6 sm:px-0 sm:pb-10 sm:pt-12"
     >
       {/* Décorations — pastilles vert/orange en miroir du hero deals
           (orange/vert). Même intensité d'opacité pour conserver la
