@@ -41,17 +41,27 @@ export async function AnnoncesHero({ total }: Props) {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-  const [freshThisWeek, activeMembers] = await Promise.all([
-    prisma.listing.count({
-      where: {
-        status: ListingStatus.PUBLISHED,
-        publishedAt: { gte: sevenDaysAgo },
-      },
-    }),
-    prisma.user.count({
-      where: { lastActiveAt: { gte: thirtyDaysAgo } },
-    }),
-  ]);
+  let freshThisWeek = 0;
+  let activeMembers = 0;
+
+  try {
+    const [fresh, active] = await Promise.all([
+      prisma.listing.count({
+        where: {
+          status: ListingStatus.PUBLISHED,
+          publishedAt: { gte: sevenDaysAgo },
+        },
+      }),
+      prisma.user.count({
+        where: { lastActiveAt: { gte: thirtyDaysAgo } },
+      }),
+    ]);
+    freshThisWeek = fresh;
+    activeMembers = active;
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[annonces/hero] KPI query failed", err);
+  }
 
   const kpis = [
     { value: total, label: "annonces en ligne" },

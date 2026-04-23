@@ -25,21 +25,35 @@ export async function HomeCommunesSection() {
   // Top 6 communes par volume d'annonces actives. On fait un groupBy
   // direct sur Listing : c'est plus simple que de passer par la
   // relation City.listings, et ça profite de l'index cityId+status.
-  const counts = await prisma.listing.groupBy({
-    by: ["cityId"],
-    where: { status: "PUBLISHED", expiresAt: { gt: new Date() } },
-    _count: { _all: true },
-    orderBy: { _count: { cityId: "desc" } },
-    take: 6,
-  });
+  const counts = await prisma.listing
+    .groupBy({
+      by: ["cityId"],
+      where: { status: "PUBLISHED", expiresAt: { gt: new Date() } },
+      _count: { _all: true },
+      orderBy: { _count: { cityId: "desc" } },
+      take: 6,
+    })
+    .catch((err) => {
+      // eslint-disable-next-line no-console
+      console.error("[home/communes] query failed", err);
+      return null;
+    });
 
-  if (counts.length === 0) return null;
+  if (!counts || counts.length === 0) return null;
 
   const cityIds = counts.map((c) => c.cityId);
-  const cities = await prisma.city.findMany({
-    where: { id: { in: cityIds } },
-    select: { id: true, slug: true, name: true },
-  });
+  const cities = await prisma.city
+    .findMany({
+      where: { id: { in: cityIds } },
+      select: { id: true, slug: true, name: true },
+    })
+    .catch((err) => {
+      // eslint-disable-next-line no-console
+      console.error("[home/communes] city lookup failed", err);
+      return null;
+    });
+
+  if (!cities) return null;
   const cityById = new Map(cities.map((c) => [c.id, c]));
 
   // On préserve l'ordre de `counts` (desc par volume) en le mappant.
