@@ -29,11 +29,19 @@ const commentSelect = {
 } as const;
 
 async function fetchThread(dealId: string): Promise<CommentView[]> {
-  const rows = await prisma.comment.findMany({
-    where: { dealId },
-    orderBy: { createdAt: "asc" },
-    select: commentSelect,
-  });
+  const rows = await prisma.comment
+    .findMany({
+      where: { dealId },
+      orderBy: { createdAt: "asc" },
+      select: commentSelect,
+    })
+    .catch((err) => {
+      // eslint-disable-next-line no-console
+      console.error("[comments/thread] fetch failed", { dealId, err });
+      return null;
+    });
+
+  if (!rows) return [];
 
   const byParent = new Map<string, CommentView[]>();
   const topLevel: CommentView[] = [];

@@ -133,25 +133,68 @@ export default async function BonsPlansPage(
   const city = searchParams.city?.trim() || null;
   const q = parseQuery(searchParams.q);
 
-  const [{ deals, total }, categories, cities, currentUser] = await Promise.all([
-    fetchDealsPage({ sort, page, category, city, q }),
-    prisma.category.findMany({
-      where: { type: "DEAL", isActive: true },
-      orderBy: { sortOrder: "asc" },
-      select: { slug: true, name: true, icon: true },
-    }),
-    prisma.city.findMany({
-      orderBy: { name: "asc" },
-      select: { slug: true, name: true },
-    }),
-    getCurrentUser(),
-  ]);
+  const [dealsResult, categoriesResult, citiesResult, currentUserResult] =
+    await Promise.allSettled([
+      fetchDealsPage({ sort, page, category, city, q }),
+      prisma.category.findMany({
+        where: { type: "DEAL", isActive: true },
+        orderBy: { sortOrder: "asc" },
+        select: { slug: true, name: true, icon: true },
+      }),
+      prisma.city.findMany({
+        orderBy: { name: "asc" },
+        select: { slug: true, name: true },
+      }),
+      getCurrentUser(),
+    ]);
+
+  const dealsPayload =
+    dealsResult.status === "fulfilled"
+      ? dealsResult.value
+      : { deals: [], total: 0 };
+  const deals = dealsPayload.deals;
+  const total = dealsPayload.total;
+
+  const categories =
+    categoriesResult.status === "fulfilled" ? categoriesResult.value : [];
+  const cities = citiesResult.status === "fulfilled" ? citiesResult.value : [];
+  const currentUser =
+    currentUserResult.status === "fulfilled" ? currentUserResult.value : null;
+
+  const hasDataLoadIssue =
+    dealsResult.status === "rejected" ||
+    categoriesResult.status === "rejected" ||
+    citiesResult.status === "rejected" ||
+    currentUserResult.status === "rejected";
+
+  if (hasDataLoadIssue) {
+    // eslint-disable-next-line no-console
+    console.error("[deals/page] partial data load failure", {
+      deals: dealsResult.status === "rejected" ? dealsResult.reason : undefined,
+      categories:
+        categoriesResult.status === "rejected"
+          ? categoriesResult.reason
+          : undefined,
+      cities: citiesResult.status === "rejected" ? citiesResult.reason : undefined,
+      currentUser:
+        currentUserResult.status === "rejected"
+          ? currentUserResult.reason
+          : undefined,
+    });
+  }
 
   const dealIds = deals.map((d) => d.id);
-  const [voteMap, favoriteSet] = await Promise.all([
-    fetchUserVoteMap(currentUser?.id ?? null, dealIds),
-    fetchUserFavoriteSet(currentUser?.id ?? null, dealIds),
-  ]);
+  let voteMap = new Map<string, import("@prisma/client").VoteType>();
+  let favoriteSet = new Set<string>();
+  try {
+    [voteMap, favoriteSet] = await Promise.all([
+      fetchUserVoteMap(currentUser?.id ?? null, dealIds),
+      fetchUserFavoriteSet(currentUser?.id ?? null, dealIds),
+    ]);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[deals/page] vote/favorite load failed", err);
+  }
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const hasFilters = Boolean(category || city || q);
@@ -167,34 +210,42 @@ export default async function BonsPlansPage(
     done: boolean;
   }> = [];
   if (currentUser && !hasFilters) {
-    const [publishedDealCount, publishedListingCount] = await Promise.all([
-      prisma.deal.count({
-        where: { authorId: currentUser.id, status: "PUBLISHED" },
-      }),
-      prisma.listing.count({
-        where: { authorId: currentUser.id, status: "PUBLISHED" },
-      }),
-    ]);
-    onboardingSteps = [
-      {
-        key: "avatar",
-        label: "Ajoute une photo de profil",
-        href: "/profil/edit",
-        done: Boolean(currentUser.avatarUrl),
-      },
-      {
-        key: "city",
-        label: "Renseigne ta commune",
-        href: "/profil/edit",
-        done: Boolean(currentUser.cityId),
-      },
-      {
-        key: "first-post",
-        label: "Publie ton premier contenu (bon plan ou annonce)",
-        href: "/poster",
-        done: publishedDealCount + publishedListingCount > 0,
-      },
-    ];
+    try {
+      const [publishedDealCount, publishedListingCount] = await Promise.all([
+        prisma.deal.count({
+          where: { authorId: currentUser.id, status: "PUBLISHED" },
+        }),
+        prisma.listing.count({
+          where: { authorId: currentUser.id, status: "PUBLISHED" },
+        }),
+      ]);
+      onboardingSteps = [
+        {
+          key: "avatar",
+          label: "Ajoute une photo de profil",
+          href: "/profil/edit",
+          done: Boolean(currentUser.avatarUrl),
+        },
+        {
+          key: "city",
+          label: "Renseigne ta commune",
+          href: "/profil/edit",
+          done: Boolean(currentUser.cityId),
+        },
+        {
+          key: "first-post",
+          label: "Publie ton premier contenu (bon plan ou annonce)",
+          href: "/poster",
+          done: publishedDealCount + publishedListingCount > 0,
+        },
+      ];
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("[deals/page] onboarding counts load failed", {
+        userId: currentUser.id,
+        err,
+      });
+    }
   }
 
   return (
@@ -274,6 +325,16 @@ export default async function BonsPlansPage(
       </div>
 
       <div className="px-4 pt-4 sm:px-0">
+        {hasDataLoadIssue && (
+          <div
+            role="status"
+            className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 sm:text-sm"
+          >
+            Certaines données sont temporairement indisponibles. Tu peux
+            recharger la page dans quelques secondes.
+          </div>
+        )}
+
         {deals.length === 0 ? (
           <EmptyDeals hasFilters={hasFilters} />
         ) : (
