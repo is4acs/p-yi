@@ -51,7 +51,11 @@ export function CommentItem({
 
   const isAuthor = currentUserId === comment.author.id;
   const canDelete = isAuthor && !comment.isDeleted;
-  const level = LEVEL_META[comment.author.level];
+  // Fallback BEGINNER si la DB contient un niveau d'enum retiré du code
+  // (migration d'enum partielle). Sans ça, `level.emoji` plus bas crash
+  // la page détail entière — et `CommentItem` est rendu pour chaque
+  // commentaire sur chaque bon plan.
+  const level = LEVEL_META[comment.author.level] ?? LEVEL_META.BEGINNER;
 
   function onDelete() {
     if (!confirm("Supprimer ce commentaire ?")) return;

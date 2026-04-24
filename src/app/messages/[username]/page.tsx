@@ -110,7 +110,7 @@ export default async function ThreadPage(props: Props) {
 }
 
 function ThreadHeader({ other }: { other: ThreadOther }) {
-  const level = LEVEL_META[other.level];
+  const level = LEVEL_META[other.level] ?? LEVEL_META.BEGINNER;
   return (
     <div className="mt-3 flex items-center gap-3 rounded-lg border border-border bg-card p-3">
       <UserAvatar

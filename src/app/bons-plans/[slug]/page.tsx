@@ -576,7 +576,9 @@ export default async function DealDetailPage(
               {deal.store.address && (
                 <p className="text-muted-foreground">{deal.store.address}</p>
               )}
-              <p className="text-muted-foreground">{deal.store.city.name}</p>
+              {deal.store.city?.name && (
+                <p className="text-muted-foreground">{deal.store.city.name}</p>
+              )}
             </div>
           </div>
         </section>

@@ -17,8 +17,10 @@ type Props = {
  */
 export function LevelProgress({ karma, level, className }: Props) {
   const progress = levelProgress(karma);
-  const meta = LEVEL_META[level];
-  const nextMeta = progress.next ? LEVEL_META[progress.next] : null;
+  const meta = LEVEL_META[level] ?? LEVEL_META.BEGINNER;
+  const nextMeta = progress.next
+    ? LEVEL_META[progress.next] ?? null
+    : null;
 
   return (
     <div

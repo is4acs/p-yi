@@ -113,7 +113,7 @@ function PodiumCard({
   isMe: boolean;
 }) {
   const medal = ["🥇", "🥈", "🥉"][entry.rank - 1] ?? "🏅";
-  const levelMeta = LEVEL_META[entry.level];
+  const levelMeta = LEVEL_META[entry.level] ?? LEVEL_META.BEGINNER;
   return (
     <div
       className={cn(
@@ -151,7 +151,7 @@ function LeaderboardRow({
   entry: LeaderboardEntry;
   isMe: boolean;
 }) {
-  const levelMeta = LEVEL_META[entry.level];
+  const levelMeta = LEVEL_META[entry.level] ?? LEVEL_META.BEGINNER;
   return (
     <div
       className={cn(
