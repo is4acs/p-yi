@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Plus } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
+import { withTimeout } from "@/lib/async/with-timeout";
 import { Button } from "@/components/ui/button";
 import { HighlightJaune } from "@/components/ui/highlight-jaune";
 import { HomeSearchBar } from "@/components/home/HomeSearchBar";
@@ -46,6 +47,7 @@ function formatKpi(n: number): string {
   // formatage qu'ailleurs dans l'app (fr-FR partout).
   return new Intl.NumberFormat("fr-FR").format(n);
 }
+const HERO_QUERY_TIMEOUT_MS = 3_500;
 
 export async function HomeHero() {
   const now = new Date();
@@ -53,23 +55,35 @@ export async function HomeHero() {
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  const [dealsThisMonth, listingsThisWeek, activeMembers] = await Promise.all([
-    prisma.deal.count({
-      where: {
-        status: "PUBLISHED",
-        publishedAt: { gte: firstOfMonth },
-      },
-    }),
-    prisma.listing.count({
-      where: {
-        status: "PUBLISHED",
-        publishedAt: { gte: sevenDaysAgo },
-      },
-    }),
-    prisma.user.count({
-      where: { lastActiveAt: { gte: thirtyDaysAgo } },
-    }),
-  ]);
+  let dealsThisMonth = 0;
+  let listingsThisWeek = 0;
+  let activeMembers = 0;
+  try {
+    [dealsThisMonth, listingsThisWeek, activeMembers] = await withTimeout(
+      Promise.all([
+        prisma.deal.count({
+          where: {
+            status: "PUBLISHED",
+            publishedAt: { gte: firstOfMonth },
+          },
+        }),
+        prisma.listing.count({
+          where: {
+            status: "PUBLISHED",
+            publishedAt: { gte: sevenDaysAgo },
+          },
+        }),
+        prisma.user.count({
+          where: { lastActiveAt: { gte: thirtyDaysAgo } },
+        }),
+      ]),
+      HERO_QUERY_TIMEOUT_MS,
+      "home/hero-kpis",
+    );
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[home/hero] KPI query failed", err);
+  }
 
   const kpis = [
     { value: dealsThisMonth, label: "bons plans ce mois" },

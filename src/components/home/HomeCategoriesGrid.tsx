@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { withTimeout } from "@/lib/async/with-timeout";
 import { buildListingsUrl } from "@/lib/listings/url";
 
 import { CategoryTile } from "@/components/ui/category-tile";
@@ -48,6 +49,7 @@ const SLUG_TO_ICON: Partial<Record<string, IconName>> = {
 };
 
 const VARIANTS = ["orange", "green", "rouge", "jaune"] as const;
+const GRID_QUERY_TIMEOUT_MS = 3_500;
 
 function formatCount(n: number): string {
   if (n >= 1000) {
@@ -69,27 +71,31 @@ export async function HomeCategoriesGrid() {
   let counts: Array<{ categoryId: string; _count: { _all: number } }> = [];
 
   try {
-    [categories, counts] = await Promise.all([
-      // Pas de `take: 8` ici : on fetch toutes les catégories éligibles
-      // pour pouvoir les trier par volume avant de slicer. Le seed n'a
-      // qu'une douzaine de catégories LISTING/BOTH actives — pas de
-      // souci de perf.
-      prisma.category.findMany({
-        where: { type: { in: ["LISTING", "BOTH"] }, isActive: true },
-        select: {
-          id: true,
-          slug: true,
-          name: true,
-          icon: true,
-          sortOrder: true,
-        },
-      }),
-      prisma.listing.groupBy({
-        by: ["categoryId"],
-        where: { status: "PUBLISHED", expiresAt: { gt: new Date() } },
-        _count: { _all: true },
-      }),
-    ]);
+    [categories, counts] = await withTimeout(
+      Promise.all([
+        // Pas de `take: 8` ici : on fetch toutes les catégories éligibles
+        // pour pouvoir les trier par volume avant de slicer. Le seed n'a
+        // qu'une douzaine de catégories LISTING/BOTH actives — pas de
+        // souci de perf.
+        prisma.category.findMany({
+          where: { type: { in: ["LISTING", "BOTH"] }, isActive: true },
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            icon: true,
+            sortOrder: true,
+          },
+        }),
+        prisma.listing.groupBy({
+          by: ["categoryId"],
+          where: { status: "PUBLISHED", expiresAt: { gt: new Date() } },
+          _count: { _all: true },
+        }),
+      ]),
+      GRID_QUERY_TIMEOUT_MS,
+      "home/categories-grid",
+    );
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error("[home/categories] query failed", err);

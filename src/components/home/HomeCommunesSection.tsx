@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { prisma } from "@/lib/prisma";
+import { withTimeout } from "@/lib/async/with-timeout";
 import { buildListingsUrl } from "@/lib/listings/url";
 import { Icon } from "@/components/ui/Icon";
 
@@ -25,14 +26,17 @@ export async function HomeCommunesSection() {
   // Top 6 communes par volume d'annonces actives. On fait un groupBy
   // direct sur Listing : c'est plus simple que de passer par la
   // relation City.listings, et ça profite de l'index cityId+status.
-  const counts = await prisma.listing
-    .groupBy({
+  const counts = await withTimeout(
+    prisma.listing.groupBy({
       by: ["cityId"],
       where: { status: "PUBLISHED", expiresAt: { gt: new Date() } },
       _count: { _all: true },
       orderBy: { _count: { cityId: "desc" } },
       take: 6,
-    })
+    }),
+    3_500,
+    "home/communes-counts",
+  )
     .catch((err) => {
       // eslint-disable-next-line no-console
       console.error("[home/communes] query failed", err);
@@ -42,11 +46,14 @@ export async function HomeCommunesSection() {
   if (!counts || counts.length === 0) return null;
 
   const cityIds = counts.map((c) => c.cityId);
-  const cities = await prisma.city
-    .findMany({
+  const cities = await withTimeout(
+    prisma.city.findMany({
       where: { id: { in: cityIds } },
       select: { id: true, slug: true, name: true },
-    })
+    }),
+    3_500,
+    "home/communes-cities",
+  )
     .catch((err) => {
       // eslint-disable-next-line no-console
       console.error("[home/communes] city lookup failed", err);
