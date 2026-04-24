@@ -56,3 +56,26 @@ Des erreurs intermittentes en production faisaient tomber `error.tsx` sur les pa
 - Serveur lancé avec DB volontairement inaccessible (`127.0.0.1:5433`) pour simuler une panne backend.
 - Smoke-test exécuté sur 30 routes (sitemaps + pages piliers + 2 routes détail) : **30 OK / 0 fail**.
 - Objectif validé : plus de bascule vers la page d'erreur globale sur ces routes, même avec Prisma en échec.
+
+## 2026-04-24 — Anti-récurrence crash digest (middleware + sections serveur)
+
+### Pourquoi l'erreur revenait
+- Le patch précédent couvrait les pages principales, mais **pas toutes** les zones serveur appelées pendant le rendu.
+- Deux familles de points restaient vulnérables :
+  - Middleware session (`src/middleware.ts`, `src/lib/supabase/middleware.ts`) : si refresh Supabase échoue, ça peut impacter toutes les routes.
+  - Sections serveur de listing (`BonsPlansHero`, `DealCategoryStrip`, `HomeHero`, etc.) : certaines requêtes Prisma n'étaient pas encore timeoutées.
+
+### Correctifs ajoutés
+- Middleware durci : fallback `NextResponse.next()` si `updateSession` plante + timeout sur `supabase.auth.getUser()`.
+- Timeouts ajoutés sur composants serveur encore critiques :
+  - `src/components/deals/BonsPlansHero.tsx`
+  - `src/components/deals/DealCategoryStrip.tsx`
+  - `src/components/home/HomeHero.tsx`
+  - `src/components/home/HomeCategoriesGrid.tsx`
+  - `src/components/home/HomeCommunesSection.tsx`
+  - `src/components/listings/AnnoncesHero.tsx`
+
+### Validation
+- Test de robustesse relancé avec backend volontairement indisponible (DB injoignable simulée).
+- Routes vérifiées : `/bons-plans` (et variantes filtres), `/annonces` (et variantes filtres), détails fake slug.
+- Résultat : réponses HTTP 200, sans affichage de la page globale "Quelque chose s'est mal passé".
