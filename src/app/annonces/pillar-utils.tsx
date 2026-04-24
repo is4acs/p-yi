@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { ListingsPillarPage } from "@/components/seo/ListingsPillarPage";
+import { withTimeout } from "@/lib/async/with-timeout";
 import { buildSeoMetadata } from "@/lib/seo/metadata";
 import {
   buildListingsCategoryExploreLinks,
@@ -27,6 +28,7 @@ const ROOT_BREADCRUMB = [
   { name: "Accueil", url: "/" },
   { name: "Annonces", url: "/annonces" },
 ];
+const PILLAR_METADATA_TIMEOUT_MS = 2_000;
 
 export function getListingsCityStaticParams() {
   return CORE_CITIES.map((city) => ({ city: city.slug }));
@@ -48,7 +50,11 @@ async function isListingsPillarIndexable(input: {
   // `noindex` par défaut si on ne sait pas — plus safe pour le SEO
   // qu'un faux `index` sur une page qui pourrait rendre vide.
   try {
-    const count = await countListingsForPillar(input);
+    const count = await withTimeout(
+      countListingsForPillar(input),
+      PILLAR_METADATA_TIMEOUT_MS,
+      "listings/pillar-count",
+    );
     return count >= MIN_INDEXABLE_PILLAR_ITEMS;
   } catch (err) {
     // eslint-disable-next-line no-console

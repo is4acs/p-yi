@@ -30,3 +30,29 @@ Refactor du seul composant `src/components/seo/HomePillarLinks.tsx` :
 ### Commits liés
 - Branche : `claude/review-codex-changes-J0U5y`
 - Commit : `ui(seo): compact HomePillarLinks with chips + sr-only anchor text`
+
+## 2026-04-23 — Stabilisation anti-crash annonces / bons plans
+
+### Contexte
+Des erreurs intermittentes en production faisaient tomber `error.tsx` sur les pages `/bons-plans` et `/annonces` (digest Next côté client), avec des 504 observés sur certaines fiches.
+
+### Changement
+- Ajout d'un helper `src/lib/async/with-timeout.ts` pour fail-fast les appels lents (timeout contrôlé + `TimeoutError`).
+- Durcissement des pages critiques :
+  - `src/app/bons-plans/page.tsx`
+  - `src/app/annonces/page.tsx`
+  - `src/app/bons-plans/[slug]/page.tsx`
+  - `src/app/annonces/[slug]/page.tsx`
+  - `src/app/layout.tsx`
+  - `src/components/comments/CommentList.tsx`
+  - `src/components/seo/DealsPillarPage.tsx`
+  - `src/components/seo/ListingsPillarPage.tsx`
+  - `src/app/bons-plans/pillar-utils.tsx`
+  - `src/app/annonces/pillar-utils.tsx`
+- Durcissement sitemap pour éviter 500 en cas de DB indisponible :
+  - `src/lib/seo/sitemap.ts` renvoie désormais un XML vide (mais valide) au lieu d'une erreur fatale.
+
+### Validation locale (mode dégradé)
+- Serveur lancé avec DB volontairement inaccessible (`127.0.0.1:5433`) pour simuler une panne backend.
+- Smoke-test exécuté sur 30 routes (sitemaps + pages piliers + 2 routes détail) : **30 OK / 0 fail**.
+- Objectif validé : plus de bascule vers la page d'erreur globale sur ces routes, même avec Prisma en échec.

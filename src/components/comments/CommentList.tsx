@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { prisma } from "@/lib/prisma";
+import { withTimeout } from "@/lib/async/with-timeout";
 import { Button } from "@/components/ui/button";
 
 import { CommentForm } from "./CommentForm";
@@ -27,14 +28,18 @@ const commentSelect = {
     },
   },
 } as const;
+const COMMENTS_TIMEOUT_MS = 3_500;
 
 async function fetchThread(dealId: string): Promise<CommentView[]> {
-  const rows = await prisma.comment
-    .findMany({
+  const rows = await withTimeout(
+    prisma.comment.findMany({
       where: { dealId },
       orderBy: { createdAt: "asc" },
       select: commentSelect,
-    })
+    }),
+    COMMENTS_TIMEOUT_MS,
+    "comments/thread",
+  )
     .catch((err) => {
       // eslint-disable-next-line no-console
       console.error("[comments/thread] fetch failed", { dealId, err });

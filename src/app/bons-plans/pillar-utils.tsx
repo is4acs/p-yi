@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { DealsPillarPage } from "@/components/seo/DealsPillarPage";
+import { withTimeout } from "@/lib/async/with-timeout";
 import { buildSeoMetadata } from "@/lib/seo/metadata";
 import {
   buildDealsCategoryExploreLinks,
@@ -27,6 +28,7 @@ const ROOT_BREADCRUMB = [
   { name: "Accueil", url: "/" },
   { name: "Bons plans", url: "/bons-plans" },
 ];
+const PILLAR_METADATA_TIMEOUT_MS = 2_000;
 
 export function getDealsCityStaticParams() {
   return CORE_CITIES.map((city) => ({ city: city.slug }));
@@ -44,7 +46,11 @@ async function isDealsPillarIndexable(input: {
   // pour ne jamais casser la génération des metadata, et on tombe
   // côté `noindex` par défaut si on ne peut pas lire le count.
   try {
-    const count = await countDealsForPillar(input);
+    const count = await withTimeout(
+      countDealsForPillar(input),
+      PILLAR_METADATA_TIMEOUT_MS,
+      "deals/pillar-count",
+    );
     return count >= MIN_INDEXABLE_PILLAR_ITEMS;
   } catch (err) {
     // eslint-disable-next-line no-console

@@ -35,8 +35,11 @@ import { ListingsActiveFilterChips } from "@/components/listings/ListingsActiveF
 import { ListingsFilterDrawer } from "@/components/listings/ListingsFilterDrawer";
 import { ListingsPagination } from "@/components/listings/ListingsPagination";
 import { EmptyListings } from "@/components/listings/EmptyListings";
+import { withTimeout } from "@/lib/async/with-timeout";
 
 export const dynamic = "force-dynamic";
+const METADATA_TIMEOUT_MS = 2_000;
+const PAGE_DATA_TIMEOUT_MS = 4_500;
 
 type SearchParams = {
   sort?: string;
@@ -66,20 +69,24 @@ async function resolveFacets(
   citySlug: string | null,
 ) {
   try {
-    const [category, city] = await Promise.all([
-      categorySlug
-        ? prisma.category.findUnique({
-            where: { slug: categorySlug },
-            select: { name: true },
-          })
-        : null,
-      citySlug
-        ? prisma.city.findUnique({
-            where: { slug: citySlug },
-            select: { name: true },
-          })
-        : null,
-    ]);
+    const [category, city] = await withTimeout(
+      Promise.all([
+        categorySlug
+          ? prisma.category.findUnique({
+              where: { slug: categorySlug },
+              select: { name: true },
+            })
+          : null,
+        citySlug
+          ? prisma.city.findUnique({
+              where: { slug: citySlug },
+              select: { name: true },
+            })
+          : null,
+      ]),
+      METADATA_TIMEOUT_MS,
+      "listings/metadata-facets",
+    );
     return {
       categoryName: category?.name ?? categorySlug ?? null,
       cityName: city?.name ?? citySlug ?? null,
@@ -178,17 +185,33 @@ export default async function AnnoncesPage(
 
   const [listingsResult, categoriesResult, citiesResult, currentUserResult] =
     await Promise.allSettled([
-      fetchListingsPage({ sort, page, category, city, type, q, filters }),
-      prisma.category.findMany({
-        where: { type: { in: ["LISTING", "BOTH"] }, isActive: true },
-        orderBy: { sortOrder: "asc" },
-        select: { slug: true, name: true, icon: true },
-      }),
-      prisma.city.findMany({
-        orderBy: { name: "asc" },
-        select: { slug: true, name: true },
-      }),
-      getCurrentUser(),
+      withTimeout(
+        fetchListingsPage({ sort, page, category, city, type, q, filters }),
+        PAGE_DATA_TIMEOUT_MS,
+        "listings/page-list",
+      ),
+      withTimeout(
+        prisma.category.findMany({
+          where: { type: { in: ["LISTING", "BOTH"] }, isActive: true },
+          orderBy: { sortOrder: "asc" },
+          select: { slug: true, name: true, icon: true },
+        }),
+        PAGE_DATA_TIMEOUT_MS,
+        "listings/page-categories",
+      ),
+      withTimeout(
+        prisma.city.findMany({
+          orderBy: { name: "asc" },
+          select: { slug: true, name: true },
+        }),
+        PAGE_DATA_TIMEOUT_MS,
+        "listings/page-cities",
+      ),
+      withTimeout(
+        getCurrentUser(),
+        PAGE_DATA_TIMEOUT_MS,
+        "listings/page-current-user",
+      ),
     ]);
 
   const listingsPayload =
@@ -233,9 +256,10 @@ export default async function AnnoncesPage(
   const listingIds = listings.map((l) => l.id);
   let favoriteSet = new Set<string>();
   try {
-    favoriteSet = await fetchUserFavoriteListingSet(
-      currentUser?.id ?? null,
-      listingIds,
+    favoriteSet = await withTimeout(
+      fetchUserFavoriteListingSet(currentUser?.id ?? null, listingIds),
+      PAGE_DATA_TIMEOUT_MS,
+      "listings/page-favorites",
     );
   } catch (err) {
     // eslint-disable-next-line no-console

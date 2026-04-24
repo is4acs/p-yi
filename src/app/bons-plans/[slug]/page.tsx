@@ -19,6 +19,7 @@ import { DealStatus, type VoteType } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/format";
 import { isRenderableImageUrl } from "@/lib/images";
+import { withTimeout } from "@/lib/async/with-timeout";
 import { LEVEL_META } from "@/lib/deals/user-level";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import {
@@ -50,6 +51,8 @@ import {
 } from "@/lib/seo/local-pages";
 
 // ---------- data ----------
+const DETAIL_DATA_TIMEOUT_MS = 4_500;
+const DETAIL_METADATA_TIMEOUT_MS = 2_500;
 
 // Pas de `force-dynamic` : la page reste dynamique de fait (cookies via
 // `getCurrentUser`) mais on cache la requête Prisma lourde (jointures
@@ -110,14 +113,18 @@ const dealDetailSelect = {
 function getDeal(slug: string) {
   return unstable_cache(
     async () =>
-      prisma.deal.findFirst({
-        where: {
-          slug,
-          status: DealStatus.PUBLISHED,
-          OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-        },
-        select: dealDetailSelect,
-      }),
+      withTimeout(
+        prisma.deal.findFirst({
+          where: {
+            slug,
+            status: DealStatus.PUBLISHED,
+            OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+          },
+          select: dealDetailSelect,
+        }),
+        DETAIL_DATA_TIMEOUT_MS,
+        "deal/detail-query",
+      ),
     ["deal-detail", slug],
     { tags: [`deal:${slug}`], revalidate: 3600 },
   )();
@@ -126,22 +133,26 @@ function getDeal(slug: string) {
 function getDealMeta(slug: string) {
   return unstable_cache(
     async () =>
-      prisma.deal.findFirst({
-        where: {
-          slug,
-          status: DealStatus.PUBLISHED,
-          OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-        },
-        select: {
-          title: true,
-          description: true,
-          slug: true,
-          coverImageUrl: true,
-          expiresAt: true,
-          category: { select: { name: true } },
-          city: { select: { name: true } },
-        },
-      }),
+      withTimeout(
+        prisma.deal.findFirst({
+          where: {
+            slug,
+            status: DealStatus.PUBLISHED,
+            OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+          },
+          select: {
+            title: true,
+            description: true,
+            slug: true,
+            coverImageUrl: true,
+            expiresAt: true,
+            category: { select: { name: true } },
+            city: { select: { name: true } },
+          },
+        }),
+        DETAIL_METADATA_TIMEOUT_MS,
+        "deal/metadata-query",
+      ),
     ["deal-meta", slug],
     { tags: [`deal:${slug}`], revalidate: 3600 },
   )();
@@ -203,7 +214,11 @@ export default async function DealDetailPage(
   const params = await props.params;
   const [dealResult, currentUserResult] = await Promise.allSettled([
     getDeal(params.slug),
-    getCurrentUser(),
+    withTimeout(
+      getCurrentUser(),
+      DETAIL_DATA_TIMEOUT_MS,
+      "deal/detail-current-user",
+    ),
   ]);
 
   if (dealResult.status === "rejected") {
@@ -255,18 +270,22 @@ export default async function DealDetailPage(
   let isFavorited = false;
   if (currentUser) {
     try {
-      const [vote, favorite] = await Promise.all([
-        isAuthor
-          ? Promise.resolve(null)
-          : prisma.vote.findUnique({
-              where: { userId_dealId: { userId: currentUser.id, dealId: deal.id } },
-              select: { value: true },
-            }),
-        prisma.favorite.findUnique({
-          where: { userId_dealId: { userId: currentUser.id, dealId: deal.id } },
-          select: { id: true },
-        }),
-      ]);
+      const [vote, favorite] = await withTimeout(
+        Promise.all([
+          isAuthor
+            ? Promise.resolve(null)
+            : prisma.vote.findUnique({
+                where: { userId_dealId: { userId: currentUser.id, dealId: deal.id } },
+                select: { value: true },
+              }),
+          prisma.favorite.findUnique({
+            where: { userId_dealId: { userId: currentUser.id, dealId: deal.id } },
+            select: { id: true },
+          }),
+        ]),
+        DETAIL_DATA_TIMEOUT_MS,
+        "deal/detail-vote-favorite",
+      );
       myVote = vote?.value ?? null;
       isFavorited = Boolean(favorite);
     } catch (err) {

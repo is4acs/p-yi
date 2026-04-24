@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { withTimeout } from "@/lib/async/with-timeout";
 import { getSiteUrl } from "@/lib/site-url";
 import {
   CORE_CITIES,
@@ -35,6 +36,7 @@ type SitemapIndexEntry = {
   loc: string;
   lastmod?: Date | string;
 };
+const SITEMAP_QUERY_TIMEOUT_MS = 4_500;
 
 function escapeXml(value: string): string {
   return value
@@ -371,14 +373,25 @@ export async function getStaticPagesEntries(): Promise<SitemapUrlEntry[]> {
 export async function getDealsEntries(): Promise<SitemapUrlEntry[]> {
   const base = getSiteUrl();
   const now = new Date();
-  const deals = await prisma.deal.findMany({
-    where: {
-      status: "PUBLISHED",
-      OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-    },
-    select: { slug: true, updatedAt: true },
-    orderBy: { updatedAt: "desc" },
-  });
+  let deals: Array<{ slug: string; updatedAt: Date }> = [];
+  try {
+    deals = await withTimeout(
+      prisma.deal.findMany({
+        where: {
+          status: "PUBLISHED",
+          OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+        },
+        select: { slug: true, updatedAt: true },
+        orderBy: { updatedAt: "desc" },
+      }),
+      SITEMAP_QUERY_TIMEOUT_MS,
+      "sitemap/deals",
+    );
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[sitemap/deals] fetch failed", err);
+    return [];
+  }
 
   return deals.map((deal) => ({
     loc: `${base}/bons-plans/${deal.slug}`,
@@ -390,11 +403,22 @@ export async function getDealsEntries(): Promise<SitemapUrlEntry[]> {
 
 export async function getListingsEntries(): Promise<SitemapUrlEntry[]> {
   const base = getSiteUrl();
-  const listings = await prisma.listing.findMany({
-    where: { status: "PUBLISHED", expiresAt: { gt: new Date() } },
-    select: { slug: true, updatedAt: true },
-    orderBy: { updatedAt: "desc" },
-  });
+  let listings: Array<{ slug: string; updatedAt: Date }> = [];
+  try {
+    listings = await withTimeout(
+      prisma.listing.findMany({
+        where: { status: "PUBLISHED", expiresAt: { gt: new Date() } },
+        select: { slug: true, updatedAt: true },
+        orderBy: { updatedAt: "desc" },
+      }),
+      SITEMAP_QUERY_TIMEOUT_MS,
+      "sitemap/listings",
+    );
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[sitemap/listings] fetch failed", err);
+    return [];
+  }
 
   return listings.map((listing) => ({
     loc: `${base}/annonces/${listing.slug}`,
@@ -407,38 +431,62 @@ export async function getListingsEntries(): Promise<SitemapUrlEntry[]> {
 export async function getImagesEntries(): Promise<SitemapUrlEntry[]> {
   const base = getSiteUrl();
   const now = new Date();
+  type DealImageRow = {
+    slug: string;
+    updatedAt: Date;
+    coverImageUrl: string | null;
+    images: Array<{ url: string }>;
+  };
+  type ListingImageRow = {
+    slug: string;
+    updatedAt: Date;
+    coverImageUrl: string | null;
+    images: Array<{ url: string }>;
+  };
 
-  const [deals, listings] = await Promise.all([
-    prisma.deal.findMany({
-      where: {
-        status: "PUBLISHED",
-        OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-      },
-      select: {
-        slug: true,
-        updatedAt: true,
-        coverImageUrl: true,
-        images: {
-          orderBy: { sortOrder: "asc" },
-          select: { url: true },
-          take: 4,
-        },
-      },
-    }),
-    prisma.listing.findMany({
-      where: { status: "PUBLISHED", expiresAt: { gt: now } },
-      select: {
-        slug: true,
-        updatedAt: true,
-        coverImageUrl: true,
-        images: {
-          orderBy: { sortOrder: "asc" },
-          select: { url: true },
-          take: 4,
-        },
-      },
-    }),
-  ]);
+  let deals: DealImageRow[] = [];
+  let listings: ListingImageRow[] = [];
+  try {
+    [deals, listings] = await withTimeout(
+      Promise.all([
+        prisma.deal.findMany({
+          where: {
+            status: "PUBLISHED",
+            OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+          },
+          select: {
+            slug: true,
+            updatedAt: true,
+            coverImageUrl: true,
+            images: {
+              orderBy: { sortOrder: "asc" },
+              select: { url: true },
+              take: 4,
+            },
+          },
+        }),
+        prisma.listing.findMany({
+          where: { status: "PUBLISHED", expiresAt: { gt: now } },
+          select: {
+            slug: true,
+            updatedAt: true,
+            coverImageUrl: true,
+            images: {
+              orderBy: { sortOrder: "asc" },
+              select: { url: true },
+              take: 4,
+            },
+          },
+        }),
+      ]),
+      SITEMAP_QUERY_TIMEOUT_MS,
+      "sitemap/images",
+    );
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[sitemap/images] fetch failed", err);
+    return [];
+  }
 
   const dealEntries: SitemapUrlEntry[] = [];
   for (const deal of deals) {

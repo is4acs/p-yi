@@ -14,6 +14,7 @@ import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { fetchUnreadCount } from "@/lib/messages/queries";
 import { fetchUnreadNotificationsCount } from "@/lib/notifications/queries";
+import { withTimeout } from "@/lib/async/with-timeout";
 import {
   buildOrganizationJsonLd,
   buildWebSiteJsonLd,
@@ -51,6 +52,8 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 const siteUrl = getSiteUrl();
+const AUTH_TIMEOUT_MS = 3_000;
+const COUNTER_TIMEOUT_MS = 2_000;
 
 export const metadata: Metadata = {
   title: {
@@ -114,15 +117,61 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const user = await getCurrentUser();
-  // Fetch both counters in parallel for the nav — kept small because they hit
-  // every request. Both are indexed in Prisma so they stay cheap.
-  const [unreadCount, unreadNotifications] = user
-    ? await Promise.all([
-        fetchUnreadCount(user.id),
-        fetchUnreadNotificationsCount(user.id),
-      ])
-    : [0, 0];
+  let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
+  try {
+    user = await withTimeout(
+      getCurrentUser(),
+      AUTH_TIMEOUT_MS,
+      "layout/current-user",
+    );
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[layout] current user load failed", err);
+  }
+
+  // Fetch both counters in parallel for the nav. On timeout/failure we keep
+  // rendering the shell with zero badges instead of crashing the whole app.
+  let unreadCount = 0;
+  let unreadNotifications = 0;
+  if (user) {
+    const [unreadCountResult, unreadNotificationsResult] =
+      await Promise.allSettled([
+        withTimeout(
+          fetchUnreadCount(user.id),
+          COUNTER_TIMEOUT_MS,
+          "layout/unread-messages",
+        ),
+        withTimeout(
+          fetchUnreadNotificationsCount(user.id),
+          COUNTER_TIMEOUT_MS,
+          "layout/unread-notifications",
+        ),
+      ]);
+
+    unreadCount =
+      unreadCountResult.status === "fulfilled" ? unreadCountResult.value : 0;
+    unreadNotifications =
+      unreadNotificationsResult.status === "fulfilled"
+        ? unreadNotificationsResult.value
+        : 0;
+
+    if (
+      unreadCountResult.status === "rejected" ||
+      unreadNotificationsResult.status === "rejected"
+    ) {
+      // eslint-disable-next-line no-console
+      console.error("[layout] unread counters load failed", {
+        unreadCount:
+          unreadCountResult.status === "rejected"
+            ? unreadCountResult.reason
+            : undefined,
+        unreadNotifications:
+          unreadNotificationsResult.status === "rejected"
+            ? unreadNotificationsResult.reason
+            : undefined,
+      });
+    }
+  }
 
   // JSON-LD Organization + WebSite — injectés au root pour que chaque
   // page publique hérite du signal d'identité éditoriale. Google pose
