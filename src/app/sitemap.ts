@@ -94,14 +94,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // --- 2. Deals publiés non expirés -----------------------------------------
   // `updatedAt` comme lastModified : suit les boosts/bumps et garde le
   // sitemap frais pour les contenus qui bougent.
-  const deals = await prisma.deal.findMany({
-    where: {
-      status: "PUBLISHED",
-      OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-    },
-    select: { slug: true, updatedAt: true },
-    orderBy: { updatedAt: "desc" },
-  });
+  // Les 4 requêtes Prisma sont enveloppées en `.catch` pour que le build
+  // Vercel ne tombe PAS si le pool de connexions est saturé ou si la DB
+  // hoquette : le sitemap se régénère au prochain revalidate (1h).
+  const deals = await prisma.deal
+    .findMany({
+      where: {
+        status: "PUBLISHED",
+        OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+      },
+      select: { slug: true, updatedAt: true },
+      orderBy: { updatedAt: "desc" },
+    })
+    .catch((err) => {
+      // eslint-disable-next-line no-console
+      console.error("[sitemap] deals query failed", err);
+      return [] as Array<{ slug: string; updatedAt: Date }>;
+    });
   const dealRoutes: MetadataRoute.Sitemap = deals.map((d) => ({
     url: `${base}/bons-plans/${d.slug}`,
     lastModified: d.updatedAt,
@@ -110,11 +119,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // --- 3. Listings publiés --------------------------------------------------
-  const listings = await prisma.listing.findMany({
-    where: { status: "PUBLISHED" },
-    select: { slug: true, updatedAt: true },
-    orderBy: { updatedAt: "desc" },
-  });
+  const listings = await prisma.listing
+    .findMany({
+      where: { status: "PUBLISHED" },
+      select: { slug: true, updatedAt: true },
+      orderBy: { updatedAt: "desc" },
+    })
+    .catch((err) => {
+      // eslint-disable-next-line no-console
+      console.error("[sitemap] listings query failed", err);
+      return [] as Array<{ slug: string; updatedAt: Date }>;
+    });
   const listingRoutes: MetadataRoute.Sitemap = listings.map((l) => ({
     url: `${base}/annonces/${l.slug}`,
     lastModified: l.updatedAt,
@@ -126,10 +141,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // On indexe les pages filtrées par catégorie — c'est du longtail très
   // utile ("bons plans tech guyane", "voitures occasion cayenne", etc.).
   // Type BOTH apparaît sur les deux sections.
-  const categories = await prisma.category.findMany({
-    where: { isActive: true },
-    select: { slug: true, type: true },
-  });
+  const categories = await prisma.category
+    .findMany({
+      where: { isActive: true },
+      select: { slug: true, type: true },
+    })
+    .catch((err) => {
+      // eslint-disable-next-line no-console
+      console.error("[sitemap] categories query failed", err);
+      return [] as Array<{ slug: string; type: "DEAL" | "LISTING" | "BOTH" }>;
+    });
   // Note: Category n'a pas d'updatedAt dans le schéma — on met now().
   const categoryRoutes: MetadataRoute.Sitemap = categories.flatMap((c) => {
     const routes: MetadataRoute.Sitemap = [];
@@ -157,9 +178,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // On ne fait PAS le produit cartésien ville×catégorie pour éviter la
   // bloat (potentiellement 100+ URLs redondantes). Google sait combiner
   // les signaux sans qu'on lui mâche tout.
-  const cities = await prisma.city.findMany({
-    select: { slug: true },
-  });
+  const cities = await prisma.city
+    .findMany({
+      select: { slug: true },
+    })
+    .catch((err) => {
+      // eslint-disable-next-line no-console
+      console.error("[sitemap] cities query failed", err);
+      return [] as Array<{ slug: string }>;
+    });
   const cityRoutes: MetadataRoute.Sitemap = cities.flatMap((c) => [
     {
       url: `${base}/bons-plans?city=${c.slug}`,
