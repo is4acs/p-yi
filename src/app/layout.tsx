@@ -114,15 +114,37 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const user = await getCurrentUser();
-  // Fetch both counters in parallel for the nav — kept small because they hit
-  // every request. Both are indexed in Prisma so they stay cheap.
-  const [unreadCount, unreadNotifications] = user
-    ? await Promise.all([
+  // Le root layout tourne sur CHAQUE requête. Si `getCurrentUser` ou les
+  // counts de badge throwent (Supabase timeout, pool Prisma saturé,
+  // cookie corrompu…), Next remonte au boundary global et l'utilisateur
+  // voit "Quelque chose s'est mal passé" sur TOUT le site, y compris
+  // sur les pages publiques `/bons-plans` et `/annonces`. On absorbe
+  // tout ici : pire cas, l'utilisateur est traité comme déconnecté
+  // pour cette requête — rechargement = retour à la normale.
+  let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
+  try {
+    user = await getCurrentUser();
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[layout/root] getCurrentUser failed", err);
+  }
+
+  let unreadCount = 0;
+  let unreadNotifications = 0;
+  if (user) {
+    try {
+      [unreadCount, unreadNotifications] = await Promise.all([
         fetchUnreadCount(user.id),
         fetchUnreadNotificationsCount(user.id),
-      ])
-    : [0, 0];
+      ]);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("[layout/root] badge counts failed", {
+        userId: user.id,
+        err,
+      });
+    }
+  }
 
   // JSON-LD Organization + WebSite — injectés au root pour que chaque
   // page publique hérite du signal d'identité éditoriale. Google pose
