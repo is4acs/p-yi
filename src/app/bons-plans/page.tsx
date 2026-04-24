@@ -43,24 +43,41 @@ async function resolveFacets(
   categorySlug: string | null,
   citySlug: string | null,
 ) {
-  const [category, city] = await Promise.all([
-    categorySlug
-      ? prisma.category.findUnique({
-          where: { slug: categorySlug },
-          select: { name: true },
-        })
-      : null,
-    citySlug
-      ? prisma.city.findUnique({
-          where: { slug: citySlug },
-          select: { name: true },
-        })
-      : null,
-  ]);
-  return {
-    categoryName: category?.name ?? categorySlug ?? null,
-    cityName: city?.name ?? citySlug ?? null,
-  };
+  try {
+    const [category, city] = await Promise.all([
+      categorySlug
+        ? prisma.category.findUnique({
+            where: { slug: categorySlug },
+            select: { name: true },
+          })
+        : null,
+      citySlug
+        ? prisma.city.findUnique({
+            where: { slug: citySlug },
+            select: { name: true },
+          })
+        : null,
+    ]);
+    return {
+      categoryName: category?.name ?? categorySlug ?? null,
+      cityName: city?.name ?? citySlug ?? null,
+    };
+  } catch (err) {
+    // Pendant la génération des metadata, un crash Prisma remonte
+    // jusqu'au boundary global et affiche "Quelque chose s'est
+    // mal passé" à la place de la page. On retombe proprement sur
+    // les slugs bruts : le titre reste lisible, la page s'affiche.
+    // eslint-disable-next-line no-console
+    console.error("[deals/metadata] facet resolution failed", {
+      categorySlug,
+      citySlug,
+      err,
+    });
+    return {
+      categoryName: categorySlug ?? null,
+      cityName: citySlug ?? null,
+    };
+  }
 }
 
 export async function generateMetadata(

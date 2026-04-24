@@ -7,6 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { requireUser } from "@/lib/auth/current-user";
 import { formatRelativeTime } from "@/lib/format";
 import { LEVEL_META } from "@/lib/deals/user-level";
+import { isRenderableImageUrl } from "@/lib/images";
 import { formatPriceType } from "@/lib/listings/queries";
 import {
   fetchThread,
@@ -136,7 +137,7 @@ function ListingContextCard({ listing }: { listing: ThreadListing }) {
       href={`/annonces/${listing.slug}`}
       className="mt-2 flex items-center gap-3 rounded-lg border border-peyi-orange-200 bg-peyi-orange-50/40 p-2.5 text-sm transition hover:border-peyi-orange-400"
     >
-      {listing.coverImageUrl ? (
+      {isRenderableImageUrl(listing.coverImageUrl) ? (
         <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md">
           <Image
             src={listing.coverImageUrl}

@@ -42,8 +42,19 @@ async function isListingsPillarIndexable(input: {
   citySlug?: string | null;
   categorySlug?: string | null;
 }): Promise<boolean> {
-  const count = await countListingsForPillar(input);
-  return count >= MIN_INDEXABLE_PILLAR_ITEMS;
+  // Appelé depuis `generateMetadata` : si Prisma hiccup, on NE veut
+  // pas que la page remonte l'erreur au boundary (sinon la page pilier
+  // crash entière alors qu'elle est quasi-statique). On part sur
+  // `noindex` par défaut si on ne sait pas — plus safe pour le SEO
+  // qu'un faux `index` sur une page qui pourrait rendre vide.
+  try {
+    const count = await countListingsForPillar(input);
+    return count >= MIN_INDEXABLE_PILLAR_ITEMS;
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[listings/pillar/metadata] count failed", { input, err });
+    return false;
+  }
 }
 
 export async function buildListingsGlobalMetadata(): Promise<Metadata> {
