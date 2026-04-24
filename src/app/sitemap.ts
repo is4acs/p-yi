@@ -34,7 +34,12 @@ import { getSiteUrl } from "@/lib/site-url";
  *   des années. Si un jour on dépasse, il faudra splitter via
  *   `generateSitemaps` (Next 14 supporte sitemap index).
  */
-export const revalidate = 3600; // 1h
+// `force-dynamic` au lieu de `revalidate` : Prisma peut hang 60s côté
+// pgbouncer Supabase quand le pool est saturé (cold start Vercel + plusieurs
+// builds concurrents). Next retry 3 fois à 60s chacun → build échoue après
+// 3 minutes. En dynamic, le sitemap est calculé à la première requête
+// runtime (googlebot), Vercel edge cache la réponse ensuite.
+export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = getSiteUrl();
