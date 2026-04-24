@@ -14,6 +14,7 @@ import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { fetchUnreadCount } from "@/lib/messages/queries";
 import { fetchUnreadNotificationsCount } from "@/lib/notifications/queries";
+import { rethrowIfNextInternal } from "@/lib/next-errors";
 import { withTimeout } from "@/lib/async/with-timeout";
 import {
   buildOrganizationJsonLd,
@@ -117,6 +118,20 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Le root layout tourne sur CHAQUE requête. Si `getCurrentUser` ou les
+  // counts de badge throwent (Supabase timeout, pool Prisma saturé,
+  // cookie corrompu…), Next remonte au boundary global et l'utilisateur
+  // voit "Quelque chose s'est mal passé" sur TOUT le site, y compris sur
+  // les pages publiques `/bons-plans` et `/annonces`. On absorbe tout
+  // ici : pire cas, l'utilisateur est traité comme déconnecté pour
+  // cette requête — rechargement = retour à la normale.
+  //
+  // `withTimeout` plafonne chaque appel pour éviter qu'un Prisma bloqué
+  // ne laisse la page pendue plusieurs secondes avant de basculer. Les
+  // sentinelles Next (DYNAMIC_SERVER_USAGE sur cookies/headers pendant
+  // un prerender statique, NEXT_REDIRECT, NEXT_NOT_FOUND) doivent être
+  // relevées intactes via `rethrowIfNextInternal`, sinon on casse le
+  // build (`/_not-found` essaye de rendre statiquement et lit cookies).
   let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
   try {
     user = await withTimeout(
@@ -125,6 +140,7 @@ export default async function RootLayout({
       "layout/current-user",
     );
   } catch (err) {
+    rethrowIfNextInternal(err);
     // eslint-disable-next-line no-console
     console.error("[layout] current user load failed", err);
   }
@@ -147,6 +163,13 @@ export default async function RootLayout({
           "layout/unread-notifications",
         ),
       ]);
+
+    if (unreadCountResult.status === "rejected") {
+      rethrowIfNextInternal(unreadCountResult.reason);
+    }
+    if (unreadNotificationsResult.status === "rejected") {
+      rethrowIfNextInternal(unreadNotificationsResult.reason);
+    }
 
     unreadCount =
       unreadCountResult.status === "fulfilled" ? unreadCountResult.value : 0;

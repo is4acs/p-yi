@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { cn } from "@/lib/utils";
+import { isRenderableImageUrl } from "@/lib/images";
 
 type Props = {
   username: string;
@@ -33,7 +34,7 @@ export function UserAvatar({
     className,
   );
 
-  if (avatarUrl) {
+  if (isRenderableImageUrl(avatarUrl)) {
     return (
       <span className={base}>
         <Image

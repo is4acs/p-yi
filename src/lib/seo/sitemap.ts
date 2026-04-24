@@ -136,8 +136,12 @@ export async function getStaticPagesEntries(): Promise<SitemapUrlEntry[]> {
   const base = getSiteUrl();
   const now = new Date();
 
-  const [storeCounts, cityCounts, categoryCounts, dealsTotal, listingsTotal, latestDeal, latestListing] =
-    await Promise.all([
+  // `Promise.allSettled` + fallback par requête : un hiccup Prisma au
+  // build (DB pas prête, pool saturé, pas de secret dans un preview
+  // Vercel) ne doit PAS casser `next build`. On retombe sur des valeurs
+  // neutres — le sitemap se reconstruira au runtime via ISR.
+  const results = await Promise.allSettled([
+    withTimeout(
       prisma.store.findMany({
         where: { slug: { in: STORE_PILLARS.map((store) => store.slug) } },
         select: {
@@ -154,6 +158,10 @@ export async function getStaticPagesEntries(): Promise<SitemapUrlEntry[]> {
           },
         },
       }),
+      SITEMAP_QUERY_TIMEOUT_MS,
+      "sitemap/pages-stores",
+    ),
+    withTimeout(
       prisma.city.findMany({
         where: { slug: { in: CORE_CITIES.map((city) => city.slug) } },
         select: {
@@ -173,6 +181,10 @@ export async function getStaticPagesEntries(): Promise<SitemapUrlEntry[]> {
           },
         },
       }),
+      SITEMAP_QUERY_TIMEOUT_MS,
+      "sitemap/pages-cities",
+    ),
+    withTimeout(
       prisma.category.findMany({
         where: {
           slug: {
@@ -199,15 +211,27 @@ export async function getStaticPagesEntries(): Promise<SitemapUrlEntry[]> {
           },
         },
       }),
+      SITEMAP_QUERY_TIMEOUT_MS,
+      "sitemap/pages-categories",
+    ),
+    withTimeout(
       prisma.deal.count({
         where: {
           status: "PUBLISHED",
           OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
         },
       }),
+      SITEMAP_QUERY_TIMEOUT_MS,
+      "sitemap/pages-deals-total",
+    ),
+    withTimeout(
       prisma.listing.count({
         where: { status: "PUBLISHED", expiresAt: { gt: now } },
       }),
+      SITEMAP_QUERY_TIMEOUT_MS,
+      "sitemap/pages-listings-total",
+    ),
+    withTimeout(
       prisma.deal.findFirst({
         where: {
           status: "PUBLISHED",
@@ -216,12 +240,43 @@ export async function getStaticPagesEntries(): Promise<SitemapUrlEntry[]> {
         orderBy: { updatedAt: "desc" },
         select: { updatedAt: true },
       }),
+      SITEMAP_QUERY_TIMEOUT_MS,
+      "sitemap/pages-latest-deal",
+    ),
+    withTimeout(
       prisma.listing.findFirst({
         where: { status: "PUBLISHED", expiresAt: { gt: now } },
         orderBy: { updatedAt: "desc" },
         select: { updatedAt: true },
       }),
-    ]);
+      SITEMAP_QUERY_TIMEOUT_MS,
+      "sitemap/pages-latest-listing",
+    ),
+  ]);
+
+  type StoreCount = { slug: string; _count: { deals: number } };
+  type CityCount = {
+    slug: string;
+    _count: { deals: number; listings: number };
+  };
+  type CategoryCount = CityCount;
+  type LatestUpdate = { updatedAt: Date } | null;
+
+  const unwrap = <T>(i: number, fallback: T): T => {
+    const r = results[i];
+    if (r.status === "fulfilled") return r.value as T;
+    // eslint-disable-next-line no-console
+    console.error(`[sitemap/pages] query #${i} failed`, r.reason);
+    return fallback;
+  };
+
+  const storeCounts = unwrap<StoreCount[]>(0, []);
+  const cityCounts = unwrap<CityCount[]>(1, []);
+  const categoryCounts = unwrap<CategoryCount[]>(2, []);
+  const dealsTotal = unwrap<number>(3, 0);
+  const listingsTotal = unwrap<number>(4, 0);
+  const latestDeal = unwrap<LatestUpdate>(5, null);
+  const latestListing = unwrap<LatestUpdate>(6, null);
 
   const marketplaceLastmod =
     latestDeal && latestListing

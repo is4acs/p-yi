@@ -20,6 +20,7 @@ import { formatRelativeTime } from "@/lib/format";
 import { LEVEL_META } from "@/lib/deals/user-level";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { isRenderableImageUrl } from "@/lib/images";
+import { rethrowIfNextInternal } from "@/lib/next-errors";
 import { withTimeout } from "@/lib/async/with-timeout";
 import {
   CONDITION_LABEL,
@@ -231,7 +232,14 @@ export default async function ListingDetailPage(
     ),
   ]);
 
+  // Si Next jette une sentinelle (DYNAMIC_SERVER_USAGE depuis cookies(),
+  // NEXT_REDIRECT, NEXT_NOT_FOUND…), on ne doit JAMAIS l'avaler — sinon
+  // on casse le contrôle de flux serveur. Voir `lib/next-errors.ts`.
+  if (currentUserResult.status === "rejected") {
+    rethrowIfNextInternal(currentUserResult.reason);
+  }
   if (listingResult.status === "rejected") {
+    rethrowIfNextInternal(listingResult.reason);
     // eslint-disable-next-line no-console
     console.error("[listing/page] load failed", {
       slug: params.slug,

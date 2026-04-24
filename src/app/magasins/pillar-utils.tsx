@@ -35,7 +35,18 @@ export async function buildStoreMetadata(storeSlug: string): Promise<Metadata> {
   const configuredStore = getStoreBySlug(storeSlug);
   if (!configuredStore) notFound();
 
-  const store = await fetchStoreWithDealCount(storeSlug);
+  // Si Prisma hoquette pendant la phase metadata (DB indisponible,
+  // pool saturé au build…), on retombe sur une metadata noindex basée
+  // sur le store seedé. Sans ce filet, le crash remonterait au boundary
+  // global et afficherait l'écran d'erreur pour tous les visiteurs.
+  const store = await fetchStoreWithDealCount(storeSlug).catch((err) => {
+    // eslint-disable-next-line no-console
+    console.error("[magasins/metadata] fetch failed", {
+      slug: storeSlug,
+      err,
+    });
+    return null;
+  });
   if (!store) {
     return buildSeoMetadata({
       title: `Promos ${configuredStore.name}`,
@@ -57,15 +68,47 @@ export async function renderStorePage(storeSlug: string) {
   const configuredStore = getStoreBySlug(storeSlug);
   if (!configuredStore) notFound();
 
-  const [store, { deals, total }] = await Promise.all([
+  // Cf. `DealsPillarPage` / `ListingsPillarPage` : on isole les fetchs
+  // pour que la page pilier magasin reste affichable même si une seule
+  // requête Prisma plante. `allSettled` permet d'afficher la fiche
+  // store sans deals (ou vice-versa) plutôt que l'écran d'erreur.
+  const [storeResult, dealsResult] = await Promise.allSettled([
     fetchStoreWithDealCount(storeSlug),
     fetchDealsForPillar({ storeSlug }),
   ]);
 
+  const store =
+    storeResult.status === "fulfilled" ? storeResult.value : null;
+  const dealsPayload =
+    dealsResult.status === "fulfilled"
+      ? dealsResult.value
+      : { deals: [], total: 0 };
+  const deals = dealsPayload.deals;
+  const total = dealsPayload.total;
+  const loadFailed =
+    storeResult.status === "rejected" || dealsResult.status === "rejected";
+
+  if (storeResult.status === "rejected") {
+    // eslint-disable-next-line no-console
+    console.error("[magasins/page] store fetch failed", {
+      slug: storeSlug,
+      err: storeResult.reason,
+    });
+  }
+  if (dealsResult.status === "rejected") {
+    // eslint-disable-next-line no-console
+    console.error("[magasins/page] deals fetch failed", {
+      slug: storeSlug,
+      err: dealsResult.reason,
+    });
+  }
+
+  // Si même la fiche store est inaccessible ET qu'on n'a pas de store
+  // seed, c'est un vrai 404. Sinon on retombe sur le store seedé.
   if (!store) notFound();
 
   const h1 = `Promo ${store.name}`;
-  const intro = buildStoreIntro(store.name, store.city.name);
+  const intro = buildStoreIntro(store.name, store.city?.name ?? "Guyane");
   const faq = buildStoreFaq(store.name);
 
   const jsonLdChunks = [
@@ -97,13 +140,27 @@ export async function renderStorePage(storeSlug: string) {
       <SeoIntro h1={h1} intro={intro} eyebrow="Promos par enseigne" />
 
       <section className="mt-5 rounded-xl border border-border bg-card p-4 sm:p-5">
+        {loadFailed && (
+          <div
+            role="status"
+            className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 sm:text-sm"
+          >
+            Certaines informations sont temporairement indisponibles. Réessaie
+            dans quelques secondes.
+          </div>
+        )}
         <h2 className="font-display text-lg font-semibold text-ink-900">
           Informations magasin
         </h2>
         <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
-          <li>
-            Commune: <span className="font-medium text-foreground">{store.city.name}</span>
-          </li>
+          {store.city?.name && (
+            <li>
+              Commune:{" "}
+              <span className="font-medium text-foreground">
+                {store.city.name}
+              </span>
+            </li>
+          )}
           {store.address && (
             <li>
               Adresse: <span className="font-medium text-foreground">{store.address}</span>

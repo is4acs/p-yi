@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { cn } from "@/lib/utils";
+import { isRenderableImageUrl } from "@/lib/images";
 
 /**
  * Logo d'enseigne — `next/image` avec fond blanc (contain) pour
@@ -33,7 +34,13 @@ const SIZE_PX: Record<NonNullable<Props["size"]>, number> = {
 };
 
 export function StoreLogo({ name, logoUrl, size = "sm", className }: Props) {
-  if (!logoUrl) return null;
+  // `isRenderableImageUrl` filtre les URLs vides, malformées ou
+  // protocol-relative (`//…`). Sans ce garde, `next/image` lance une
+  // exception au render et propage "Quelque chose s'est mal passé" à
+  // l'utilisateur. Sur les cartes de deals avec un store externe
+  // (Carrefour, Cdiscount, etc.) dont le logo peut être un URL
+  // incomplet ou indisponible en base, c'est un risque permanent.
+  if (!isRenderableImageUrl(logoUrl)) return null;
 
   const dims = SIZE_CLASSES[size];
   const px = SIZE_PX[size];
@@ -51,6 +58,7 @@ export function StoreLogo({ name, logoUrl, size = "sm", className }: Props) {
         fill
         sizes={`${px}px`}
         className="object-contain"
+        unoptimized
       />
     </span>
   );

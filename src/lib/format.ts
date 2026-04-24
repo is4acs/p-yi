@@ -12,9 +12,20 @@ export function formatPrice(value: number | string): string {
   return priceFormatter.format(n);
 }
 
-export function formatRelativeTime(input: Date | string): string {
+export function formatRelativeTime(
+  input: Date | string | null | undefined,
+): string {
+  // Défense en profondeur : si `input` est null/undefined ou donne une
+  // Date invalide, on renvoie une string vide au lieu de crasher.
+  // `Intl.RelativeTimeFormat.format(NaN)` lève un `RangeError` qui
+  // remonterait sinon au boundary global et afficherait "Quelque
+  // chose s'est mal passé" sur toute la page.
+  if (input == null) return "";
   const date = typeof input === "string" ? new Date(input) : input;
-  const diffMs = date.getTime() - Date.now();
+  const ms = date.getTime();
+  if (!Number.isFinite(ms)) return "";
+
+  const diffMs = ms - Date.now();
   const diffMinutes = Math.round(diffMs / 60_000);
   const diffHours = Math.round(diffMs / 3_600_000);
   const diffDays = Math.round(diffMs / 86_400_000);

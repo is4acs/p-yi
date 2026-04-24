@@ -19,6 +19,7 @@ import { DealStatus, type VoteType } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/format";
 import { isRenderableImageUrl } from "@/lib/images";
+import { rethrowIfNextInternal } from "@/lib/next-errors";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { LEVEL_META } from "@/lib/deals/user-level";
 import { getCurrentUser } from "@/lib/auth/current-user";
@@ -221,7 +222,11 @@ export default async function DealDetailPage(
     ),
   ]);
 
+  if (currentUserResult.status === "rejected") {
+    rethrowIfNextInternal(currentUserResult.reason);
+  }
   if (dealResult.status === "rejected") {
+    rethrowIfNextInternal(dealResult.reason);
     // eslint-disable-next-line no-console
     console.error("[deal/page] load failed", { slug: params.slug, err: dealResult.reason });
     return (
@@ -590,7 +595,9 @@ export default async function DealDetailPage(
               {deal.store.address && (
                 <p className="text-muted-foreground">{deal.store.address}</p>
               )}
-              <p className="text-muted-foreground">{deal.store.city.name}</p>
+              {deal.store.city?.name && (
+                <p className="text-muted-foreground">{deal.store.city.name}</p>
+              )}
             </div>
           </div>
         </section>
