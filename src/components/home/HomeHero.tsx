@@ -53,23 +53,33 @@ export async function HomeHero() {
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  const [dealsThisMonth, listingsThisWeek, activeMembers] = await Promise.all([
-    prisma.deal.count({
-      where: {
-        status: "PUBLISHED",
-        publishedAt: { gte: firstOfMonth },
-      },
-    }),
-    prisma.listing.count({
-      where: {
-        status: "PUBLISHED",
-        publishedAt: { gte: sevenDaysAgo },
-      },
-    }),
-    prisma.user.count({
-      where: { lastActiveAt: { gte: thirtyDaysAgo } },
-    }),
-  ]);
+  // Cf. `AnnoncesHero` : un KPI à 0 en cas de hiccup DB vaut mieux
+  // qu'un crash qui flingue la page d'accueil.
+  let dealsThisMonth = 0;
+  let listingsThisWeek = 0;
+  let activeMembers = 0;
+  try {
+    [dealsThisMonth, listingsThisWeek, activeMembers] = await Promise.all([
+      prisma.deal.count({
+        where: {
+          status: "PUBLISHED",
+          publishedAt: { gte: firstOfMonth },
+        },
+      }),
+      prisma.listing.count({
+        where: {
+          status: "PUBLISHED",
+          publishedAt: { gte: sevenDaysAgo },
+        },
+      }),
+      prisma.user.count({
+        where: { lastActiveAt: { gte: thirtyDaysAgo } },
+      }),
+    ]);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[home/hero] KPI query failed", err);
+  }
 
   const kpis = [
     { value: dealsThisMonth, label: "bons plans ce mois" },

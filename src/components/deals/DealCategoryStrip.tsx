@@ -48,28 +48,47 @@ type Props = {
 };
 
 export async function DealCategoryStrip({ selectedCategory = null }: Props) {
-  const [categories, counts] = await Promise.all([
-    prisma.category.findMany({
-      where: { type: { in: ["DEAL", "BOTH"] }, isActive: true },
-      select: {
-        id: true,
-        slug: true,
-        name: true,
-        icon: true,
-        sortOrder: true,
-      },
-    }),
-    prisma.deal.groupBy({
-      by: ["categoryId"],
-      where: {
-        status: "PUBLISHED",
-        // Deal expiré = plus "un plan actif" → exclu du compteur.
-        // `expiresAt: null` (event-like sans date fin) reste compté.
-        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-      },
-      _count: { _all: true },
-    }),
-  ]);
+  // La strip est rendue sur TOUTES les vues `/bons-plans` (liste,
+  // filtrée, pilier). Un crash Prisma ici remonte au boundary global
+  // et flingue la page entière. On préfère masquer la strip qu'afficher
+  // l'écran d'erreur — l'utilisateur garde accès à la liste des deals.
+  let categories: Array<{
+    id: string;
+    slug: string;
+    name: string;
+    icon: string | null;
+    sortOrder: number;
+  }> = [];
+  let counts: Array<{ categoryId: string; _count: { _all: number } }> = [];
+
+  try {
+    [categories, counts] = await Promise.all([
+      prisma.category.findMany({
+        where: { type: { in: ["DEAL", "BOTH"] }, isActive: true },
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          icon: true,
+          sortOrder: true,
+        },
+      }),
+      prisma.deal.groupBy({
+        by: ["categoryId"],
+        where: {
+          status: "PUBLISHED",
+          // Deal expiré = plus "un plan actif" → exclu du compteur.
+          // `expiresAt: null` (event-like sans date fin) reste compté.
+          OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+        },
+        _count: { _all: true },
+      }),
+    ]);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[bons-plans/category-strip] query failed", err);
+    return null;
+  }
 
   if (categories.length === 0) return null;
 

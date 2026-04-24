@@ -39,24 +39,35 @@ export async function BonsPlansHero() {
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  const [dealsThisMonth, hotThisWeek, activeMembers] = await Promise.all([
-    prisma.deal.count({
-      where: {
-        status: "PUBLISHED",
-        publishedAt: { gte: firstOfMonth },
-      },
-    }),
-    prisma.deal.count({
-      where: {
-        status: "PUBLISHED",
-        temperature: { gte: 100 },
-        publishedAt: { gte: sevenDaysAgo },
-      },
-    }),
-    prisma.user.count({
-      where: { lastActiveAt: { gte: thirtyDaysAgo } },
-    }),
-  ]);
+  // Cf. `AnnoncesHero` : un hiccup Prisma ne doit pas flinguer la page
+  // `/bons-plans` entière. On retombe sur des KPIs à 0 — l'utilisateur
+  // voit quand même le hero + les deals.
+  let dealsThisMonth = 0;
+  let hotThisWeek = 0;
+  let activeMembers = 0;
+  try {
+    [dealsThisMonth, hotThisWeek, activeMembers] = await Promise.all([
+      prisma.deal.count({
+        where: {
+          status: "PUBLISHED",
+          publishedAt: { gte: firstOfMonth },
+        },
+      }),
+      prisma.deal.count({
+        where: {
+          status: "PUBLISHED",
+          temperature: { gte: 100 },
+          publishedAt: { gte: sevenDaysAgo },
+        },
+      }),
+      prisma.user.count({
+        where: { lastActiveAt: { gte: thirtyDaysAgo } },
+      }),
+    ]);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[bons-plans/hero] KPI query failed", err);
+  }
 
   const kpis = [
     { value: dealsThisMonth, label: "deals postés ce mois" },
