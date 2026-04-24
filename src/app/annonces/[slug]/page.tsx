@@ -20,6 +20,7 @@ import { formatRelativeTime } from "@/lib/format";
 import { LEVEL_META } from "@/lib/deals/user-level";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { isRenderableImageUrl } from "@/lib/images";
+import { withTimeout } from "@/lib/async/with-timeout";
 import {
   CONDITION_LABEL,
   formatPriceType,
@@ -54,6 +55,8 @@ import {
 // auteur/ville/catégorie/images) via `unstable_cache` avec un tag par
 // slug. Mutations (favori/édition/message/admin) appellent
 // `revalidateTag(\`listing:\${slug}\`)` pour invalider.
+const DETAIL_DATA_TIMEOUT_MS = 4_500;
+const DETAIL_METADATA_TIMEOUT_MS = 2_500;
 
 const listingDetailSelect = {
   id: true,
@@ -104,14 +107,18 @@ const listingDetailSelect = {
 function getListing(slug: string) {
   return unstable_cache(
     async () =>
-      prisma.listing.findFirst({
-        where: {
-          slug,
-          status: ListingStatus.PUBLISHED,
-          expiresAt: { gt: new Date() },
-        },
-        select: listingDetailSelect,
-      }),
+      withTimeout(
+        prisma.listing.findFirst({
+          where: {
+            slug,
+            status: ListingStatus.PUBLISHED,
+            expiresAt: { gt: new Date() },
+          },
+          select: listingDetailSelect,
+        }),
+        DETAIL_DATA_TIMEOUT_MS,
+        "listing/detail-query",
+      ),
     ["listing-detail", slug],
     { tags: [`listing:${slug}`], revalidate: 3600 },
   )();
@@ -120,24 +127,28 @@ function getListing(slug: string) {
 function getListingMeta(slug: string) {
   return unstable_cache(
     async () =>
-      prisma.listing.findFirst({
-        where: {
-          slug,
-          status: ListingStatus.PUBLISHED,
-          expiresAt: { gt: new Date() },
-        },
-        select: {
-          title: true,
-          description: true,
-          slug: true,
-          coverImageUrl: true,
-          price: true,
-          priceType: true,
-          expiresAt: true,
-          category: { select: { name: true } },
-          city: { select: { name: true } },
-        },
-      }),
+      withTimeout(
+        prisma.listing.findFirst({
+          where: {
+            slug,
+            status: ListingStatus.PUBLISHED,
+            expiresAt: { gt: new Date() },
+          },
+          select: {
+            title: true,
+            description: true,
+            slug: true,
+            coverImageUrl: true,
+            price: true,
+            priceType: true,
+            expiresAt: true,
+            category: { select: { name: true } },
+            city: { select: { name: true } },
+          },
+        }),
+        DETAIL_METADATA_TIMEOUT_MS,
+        "listing/metadata-query",
+      ),
     ["listing-meta", slug],
     { tags: [`listing:${slug}`], revalidate: 3600 },
   )();
@@ -213,7 +224,11 @@ export default async function ListingDetailPage(
   // page. Même logique que côté bons-plans après S34.
   const [listingResult, currentUserResult] = await Promise.allSettled([
     getListing(params.slug),
-    getCurrentUser(),
+    withTimeout(
+      getCurrentUser(),
+      DETAIL_DATA_TIMEOUT_MS,
+      "listing/detail-current-user",
+    ),
   ]);
 
   if (listingResult.status === "rejected") {
@@ -267,15 +282,19 @@ export default async function ListingDetailPage(
   let isFavorited = false;
   if (currentUser && !isAuthor) {
     try {
-      const fav = await prisma.favorite.findUnique({
-        where: {
-          userId_listingId: {
-            userId: currentUser.id,
-            listingId: listing.id,
+      const fav = await withTimeout(
+        prisma.favorite.findUnique({
+          where: {
+            userId_listingId: {
+              userId: currentUser.id,
+              listingId: listing.id,
+            },
           },
-        },
-        select: { id: true },
-      });
+          select: { id: true },
+        }),
+        DETAIL_DATA_TIMEOUT_MS,
+        "listing/detail-favorite",
+      );
       isFavorited = Boolean(fav);
     } catch (err) {
       // eslint-disable-next-line no-console
