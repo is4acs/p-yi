@@ -40,8 +40,17 @@ async function isDealsPillarIndexable(input: {
   citySlug?: string | null;
   categorySlug?: string | null;
 }): Promise<boolean> {
-  const count = await countDealsForPillar(input);
-  return count >= MIN_INDEXABLE_PILLAR_ITEMS;
+  // Cf. `isListingsPillarIndexable` — on absorbe les erreurs Prisma
+  // pour ne jamais casser la génération des metadata, et on tombe
+  // côté `noindex` par défaut si on ne peut pas lire le count.
+  try {
+    const count = await countDealsForPillar(input);
+    return count >= MIN_INDEXABLE_PILLAR_ITEMS;
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[deals/pillar/metadata] count failed", { input, err });
+    return false;
+  }
 }
 
 export async function buildDealsGlobalMetadata(): Promise<Metadata> {

@@ -35,7 +35,21 @@ export async function ListingsPillarPage({
   faq,
   exploreLinks,
 }: Props) {
-  const { listings, total } = await fetchListingsForPillar(filters);
+  // Cf. `DealsPillarPage` : on isole le fetch pour qu'un crash Prisma
+  // n'efface pas l'intégralité du contenu SEO statique de la page.
+  let listings: Awaited<ReturnType<typeof fetchListingsForPillar>>["listings"] =
+    [];
+  let total = 0;
+  let loadFailed = false;
+  try {
+    const payload = await fetchListingsForPillar(filters);
+    listings = payload.listings;
+    total = payload.total;
+  } catch (err) {
+    loadFailed = true;
+    // eslint-disable-next-line no-console
+    console.error("[listings/pillar] fetch failed", { filters, err });
+  }
 
   const jsonLdChunks = [
     buildCollectionPageJsonLd({
@@ -61,6 +75,15 @@ export async function ListingsPillarPage({
       <SeoIntro h1={h1} intro={intro} eyebrow={eyebrow} />
 
       <section className="mt-5 rounded-xl border border-border bg-card p-4 sm:p-5">
+        {loadFailed && (
+          <div
+            role="status"
+            className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 sm:text-sm"
+          >
+            Le flux des annonces est temporairement indisponible. Réessaie
+            dans quelques secondes.
+          </div>
+        )}
         <p className="text-sm text-muted-foreground">
           {total > 0
             ? `${total.toLocaleString("fr-FR")} annonce${total > 1 ? "s" : ""} active${total > 1 ? "s" : ""}.`

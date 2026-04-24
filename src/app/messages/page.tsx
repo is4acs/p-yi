@@ -5,6 +5,7 @@ import { Inbox, MessageSquare } from "lucide-react";
 
 import { requireUser } from "@/lib/auth/current-user";
 import { formatRelativeTime } from "@/lib/format";
+import { isRenderableImageUrl } from "@/lib/images";
 import { fetchInbox, type InboxConversation } from "@/lib/messages/queries";
 import { UserAvatar } from "@/components/layout/UserAvatar";
 
@@ -127,7 +128,7 @@ function ConversationRow({
         </p>
       </div>
 
-      {c.listing?.coverImageUrl ? (
+      {isRenderableImageUrl(c.listing?.coverImageUrl) ? (
         <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md">
           <Image
             src={c.listing.coverImageUrl}

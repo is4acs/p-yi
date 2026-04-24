@@ -4,6 +4,7 @@ import { Clock, Flame, Images, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/format";
+import { isRenderableImageUrl } from "@/lib/images";
 import {
   type ListingCardData,
   formatPriceType,
@@ -62,7 +63,7 @@ export function ListingCard({
           href={`/annonces/${listing.slug}`}
           className="block h-full w-full active:scale-[0.99]"
         >
-          {listing.coverImageUrl ? (
+          {isRenderableImageUrl(listing.coverImageUrl) ? (
             <Image
               src={listing.coverImageUrl}
               alt={listing.title}
