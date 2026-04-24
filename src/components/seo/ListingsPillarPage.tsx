@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { ListingCardTile } from "@/components/listings/ListingCardTile";
 import { ExplorerAlso, SeoFaq, SeoIntro } from "@/components/seo/SeoBlocks";
+import { withTimeout } from "@/lib/async/with-timeout";
 import type { ExploreLink, FaqItem } from "@/lib/seo/local-pages";
 import {
   buildBreadcrumbJsonLd,
@@ -10,6 +11,7 @@ import {
   serializeJsonLd,
 } from "@/lib/seo/json-ld";
 import { fetchListingsForPillar } from "@/lib/seo/pillar-queries";
+const PILLAR_DATA_TIMEOUT_MS = 4_500;
 
 type Props = {
   canonicalPath: string;
@@ -42,7 +44,11 @@ export async function ListingsPillarPage({
   let total = 0;
   let loadFailed = false;
   try {
-    const payload = await fetchListingsForPillar(filters);
+    const payload = await withTimeout(
+      fetchListingsForPillar(filters),
+      PILLAR_DATA_TIMEOUT_MS,
+      "listings/pillar-list",
+    );
     listings = payload.listings;
     total = payload.total;
   } catch (err) {

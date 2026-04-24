@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { withTimeout } from "@/lib/async/with-timeout";
 import { HighlightJaune } from "@/components/ui/highlight-jaune";
 
 /**
@@ -32,6 +33,7 @@ function formatKpi(n: number): string {
   // avec le reste de l'app (qui utilise `fr-FR` partout).
   return new Intl.NumberFormat("fr-FR").format(n);
 }
+const HERO_QUERY_TIMEOUT_MS = 3_500;
 
 export async function BonsPlansHero() {
   const now = new Date();
@@ -39,34 +41,36 @@ export async function BonsPlansHero() {
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  // Cf. `AnnoncesHero` : un hiccup Prisma ne doit pas flinguer la page
-  // `/bons-plans` entière. On retombe sur des KPIs à 0 — l'utilisateur
-  // voit quand même le hero + les deals.
   let dealsThisMonth = 0;
   let hotThisWeek = 0;
   let activeMembers = 0;
+
   try {
-    [dealsThisMonth, hotThisWeek, activeMembers] = await Promise.all([
-      prisma.deal.count({
-        where: {
-          status: "PUBLISHED",
-          publishedAt: { gte: firstOfMonth },
-        },
-      }),
-      prisma.deal.count({
-        where: {
-          status: "PUBLISHED",
-          temperature: { gte: 100 },
-          publishedAt: { gte: sevenDaysAgo },
-        },
-      }),
-      prisma.user.count({
-        where: { lastActiveAt: { gte: thirtyDaysAgo } },
-      }),
-    ]);
+    [dealsThisMonth, hotThisWeek, activeMembers] = await withTimeout(
+      Promise.all([
+        prisma.deal.count({
+          where: {
+            status: "PUBLISHED",
+            publishedAt: { gte: firstOfMonth },
+          },
+        }),
+        prisma.deal.count({
+          where: {
+            status: "PUBLISHED",
+            temperature: { gte: 100 },
+            publishedAt: { gte: sevenDaysAgo },
+          },
+        }),
+        prisma.user.count({
+          where: { lastActiveAt: { gte: thirtyDaysAgo } },
+        }),
+      ]),
+      HERO_QUERY_TIMEOUT_MS,
+      "deals/hero-kpis",
+    );
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.error("[bons-plans/hero] KPI query failed", err);
+    console.error("[deals/hero] KPI query failed", err);
   }
 
   const kpis = [

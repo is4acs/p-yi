@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { DealCard } from "@/components/deals/DealCard";
 import { ExplorerAlso, SeoFaq, SeoIntro } from "@/components/seo/SeoBlocks";
+import { withTimeout } from "@/lib/async/with-timeout";
 import { fetchDealsForPillar } from "@/lib/seo/pillar-queries";
 import type { ExploreLink, FaqItem } from "@/lib/seo/local-pages";
 import {
@@ -10,6 +11,7 @@ import {
   buildFaqJsonLd,
   serializeJsonLd,
 } from "@/lib/seo/json-ld";
+const PILLAR_DATA_TIMEOUT_MS = 4_500;
 
 type Props = {
   canonicalPath: string;
@@ -45,7 +47,11 @@ export async function DealsPillarPage({
   let total = 0;
   let loadFailed = false;
   try {
-    const payload = await fetchDealsForPillar(filters);
+    const payload = await withTimeout(
+      fetchDealsForPillar(filters),
+      PILLAR_DATA_TIMEOUT_MS,
+      "deals/pillar-list",
+    );
     deals = payload.deals;
     total = payload.total;
   } catch (err) {

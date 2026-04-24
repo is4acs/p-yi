@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
+import { withTimeout } from "@/lib/async/with-timeout";
 import { buildDealsUrl } from "@/lib/deals/url";
 
 /**
@@ -39,6 +40,7 @@ import { buildDealsUrl } from "@/lib/deals/url";
 // (~8-10 catégories DEAL) + laisse de la marge. Au-delà, scroll-x
 // prend le relais sur mobile et wrap flex sur desktop.
 const TOP_N = 12;
+const STRIP_QUERY_TIMEOUT_MS = 3_500;
 
 type Props = {
   /** Slug de la catégorie active (depuis la querystring `?category=`)
@@ -48,10 +50,6 @@ type Props = {
 };
 
 export async function DealCategoryStrip({ selectedCategory = null }: Props) {
-  // La strip est rendue sur TOUTES les vues `/bons-plans` (liste,
-  // filtrée, pilier). Un crash Prisma ici remonte au boundary global
-  // et flingue la page entière. On préfère masquer la strip qu'afficher
-  // l'écran d'erreur — l'utilisateur garde accès à la liste des deals.
   let categories: Array<{
     id: string;
     slug: string;
@@ -62,35 +60,58 @@ export async function DealCategoryStrip({ selectedCategory = null }: Props) {
   let counts: Array<{ categoryId: string; _count: { _all: number } }> = [];
 
   try {
-    [categories, counts] = await Promise.all([
-      prisma.category.findMany({
-        where: { type: { in: ["DEAL", "BOTH"] }, isActive: true },
-        select: {
-          id: true,
-          slug: true,
-          name: true,
-          icon: true,
-          sortOrder: true,
-        },
-      }),
-      prisma.deal.groupBy({
-        by: ["categoryId"],
-        where: {
-          status: "PUBLISHED",
-          // Deal expiré = plus "un plan actif" → exclu du compteur.
-          // `expiresAt: null` (event-like sans date fin) reste compté.
-          OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-        },
-        _count: { _all: true },
-      }),
-    ]);
+    [categories, counts] = await withTimeout(
+      Promise.all([
+        prisma.category.findMany({
+          where: { type: { in: ["DEAL", "BOTH"] }, isActive: true },
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            icon: true,
+            sortOrder: true,
+          },
+        }),
+        prisma.deal.groupBy({
+          by: ["categoryId"],
+          where: {
+            status: "PUBLISHED",
+            // Deal expiré = plus "un plan actif" → exclu du compteur.
+            // `expiresAt: null` (event-like sans date fin) reste compté.
+            OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+          },
+          _count: { _all: true },
+        }),
+      ]),
+      STRIP_QUERY_TIMEOUT_MS,
+      "deals/category-strip",
+    );
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.error("[bons-plans/category-strip] query failed", err);
-    return null;
+    console.error("[deals/category-strip] query failed", err);
   }
 
-  if (categories.length === 0) return null;
+  if (categories.length === 0) {
+    const baseChip =
+      "inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-ink-100 bg-background px-4 text-sm font-semibold text-ink-900 transition-[border-color,color] duration-150 hover:border-peyi-orange-300 hover:text-peyi-orange-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-peyi-orange-300 focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+    return (
+      <section
+        aria-label="Filtrer par catégorie"
+        className="relative -mx-4 border-b border-ink-100 bg-background sm:mx-0"
+      >
+        <ul className="scrollbar-hide flex snap-x snap-mandatory items-center gap-2 overflow-x-auto px-4 py-3 sm:flex-wrap sm:snap-none sm:overflow-visible sm:gap-2.5 sm:px-0 sm:py-4">
+          <li className="snap-start">
+            <Link href="/bons-plans" className={baseChip}>
+              <span aria-hidden className="text-base leading-none">
+                🔥
+              </span>
+              <span>Tous</span>
+            </Link>
+          </li>
+        </ul>
+      </section>
+    );
+  }
 
   const countByCategoryId = new Map<string, number>(
     counts.map((c) => [c.categoryId, c._count._all]),

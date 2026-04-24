@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 import { updateSession } from "@/lib/supabase/middleware";
 import {
@@ -22,7 +23,13 @@ import { isValidCodeFormat } from "@/lib/affiliate/code-format";
  * pour les cas où le code arrive via un deep link d'une campagne tierce.
  */
 export async function middleware(request: NextRequest) {
-  const response = await updateSession(request);
+  let response = NextResponse.next({ request });
+  try {
+    response = await updateSession(request);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[middleware] updateSession failed", err);
+  }
 
   const ref = request.nextUrl.searchParams.get("ref");
   if (

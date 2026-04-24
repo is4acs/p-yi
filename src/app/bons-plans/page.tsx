@@ -19,10 +19,13 @@ import { DealsSearchBar } from "@/components/deals/DealsSearchBar";
 import { EmptyDeals } from "@/components/deals/EmptyDeals";
 import { OnboardingNudge } from "@/components/onboarding/OnboardingNudge";
 import { ExplorerAlso } from "@/components/seo/SeoBlocks";
+import { withTimeout } from "@/lib/async/with-timeout";
 import { getDealsFacetCanonicalPath } from "@/lib/seo/local-pages";
 import { buildDealsGlobalExploreLinks } from "@/lib/seo/pillar-content";
 
 export const dynamic = "force-dynamic";
+const METADATA_TIMEOUT_MS = 2_000;
+const PAGE_DATA_TIMEOUT_MS = 4_500;
 
 type SearchParams = {
   sort?: string;
@@ -44,20 +47,24 @@ async function resolveFacets(
   citySlug: string | null,
 ) {
   try {
-    const [category, city] = await Promise.all([
-      categorySlug
-        ? prisma.category.findUnique({
-            where: { slug: categorySlug },
-            select: { name: true },
-          })
-        : null,
-      citySlug
-        ? prisma.city.findUnique({
-            where: { slug: citySlug },
-            select: { name: true },
-          })
-        : null,
-    ]);
+    const [category, city] = await withTimeout(
+      Promise.all([
+        categorySlug
+          ? prisma.category.findUnique({
+              where: { slug: categorySlug },
+              select: { name: true },
+            })
+          : null,
+        citySlug
+          ? prisma.city.findUnique({
+              where: { slug: citySlug },
+              select: { name: true },
+            })
+          : null,
+      ]),
+      METADATA_TIMEOUT_MS,
+      "deals/metadata-facets",
+    );
     return {
       categoryName: category?.name ?? categorySlug ?? null,
       cityName: city?.name ?? citySlug ?? null,
@@ -152,17 +159,33 @@ export default async function BonsPlansPage(
 
   const [dealsResult, categoriesResult, citiesResult, currentUserResult] =
     await Promise.allSettled([
-      fetchDealsPage({ sort, page, category, city, q }),
-      prisma.category.findMany({
-        where: { type: "DEAL", isActive: true },
-        orderBy: { sortOrder: "asc" },
-        select: { slug: true, name: true, icon: true },
-      }),
-      prisma.city.findMany({
-        orderBy: { name: "asc" },
-        select: { slug: true, name: true },
-      }),
-      getCurrentUser(),
+      withTimeout(
+        fetchDealsPage({ sort, page, category, city, q }),
+        PAGE_DATA_TIMEOUT_MS,
+        "deals/page-list",
+      ),
+      withTimeout(
+        prisma.category.findMany({
+          where: { type: "DEAL", isActive: true },
+          orderBy: { sortOrder: "asc" },
+          select: { slug: true, name: true, icon: true },
+        }),
+        PAGE_DATA_TIMEOUT_MS,
+        "deals/page-categories",
+      ),
+      withTimeout(
+        prisma.city.findMany({
+          orderBy: { name: "asc" },
+          select: { slug: true, name: true },
+        }),
+        PAGE_DATA_TIMEOUT_MS,
+        "deals/page-cities",
+      ),
+      withTimeout(
+        getCurrentUser(),
+        PAGE_DATA_TIMEOUT_MS,
+        "deals/page-current-user",
+      ),
     ]);
 
   const dealsPayload =
@@ -205,8 +228,16 @@ export default async function BonsPlansPage(
   let favoriteSet = new Set<string>();
   try {
     [voteMap, favoriteSet] = await Promise.all([
-      fetchUserVoteMap(currentUser?.id ?? null, dealIds),
-      fetchUserFavoriteSet(currentUser?.id ?? null, dealIds),
+      withTimeout(
+        fetchUserVoteMap(currentUser?.id ?? null, dealIds),
+        PAGE_DATA_TIMEOUT_MS,
+        "deals/page-votes",
+      ),
+      withTimeout(
+        fetchUserFavoriteSet(currentUser?.id ?? null, dealIds),
+        PAGE_DATA_TIMEOUT_MS,
+        "deals/page-favorites",
+      ),
     ]);
   } catch (err) {
     // eslint-disable-next-line no-console
@@ -228,14 +259,18 @@ export default async function BonsPlansPage(
   }> = [];
   if (currentUser && !hasFilters) {
     try {
-      const [publishedDealCount, publishedListingCount] = await Promise.all([
-        prisma.deal.count({
-          where: { authorId: currentUser.id, status: "PUBLISHED" },
-        }),
-        prisma.listing.count({
-          where: { authorId: currentUser.id, status: "PUBLISHED" },
-        }),
-      ]);
+      const [publishedDealCount, publishedListingCount] = await withTimeout(
+        Promise.all([
+          prisma.deal.count({
+            where: { authorId: currentUser.id, status: "PUBLISHED" },
+          }),
+          prisma.listing.count({
+            where: { authorId: currentUser.id, status: "PUBLISHED" },
+          }),
+        ]),
+        PAGE_DATA_TIMEOUT_MS,
+        "deals/page-onboarding-counts",
+      );
       onboardingSteps = [
         {
           key: "avatar",

@@ -15,6 +15,7 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { fetchUnreadCount } from "@/lib/messages/queries";
 import { fetchUnreadNotificationsCount } from "@/lib/notifications/queries";
 import { rethrowIfNextInternal } from "@/lib/next-errors";
+import { withTimeout } from "@/lib/async/with-timeout";
 import {
   buildOrganizationJsonLd,
   buildWebSiteJsonLd,
@@ -52,6 +53,8 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 const siteUrl = getSiteUrl();
+const AUTH_TIMEOUT_MS = 3_000;
+const COUNTER_TIMEOUT_MS = 2_000;
 
 export const metadata: Metadata = {
   title: {
@@ -118,40 +121,77 @@ export default async function RootLayout({
   // Le root layout tourne sur CHAQUE requête. Si `getCurrentUser` ou les
   // counts de badge throwent (Supabase timeout, pool Prisma saturé,
   // cookie corrompu…), Next remonte au boundary global et l'utilisateur
-  // voit "Quelque chose s'est mal passé" sur TOUT le site, y compris
-  // sur les pages publiques `/bons-plans` et `/annonces`. On absorbe
-  // tout ici : pire cas, l'utilisateur est traité comme déconnecté
-  // pour cette requête — rechargement = retour à la normale.
+  // voit "Quelque chose s'est mal passé" sur TOUT le site, y compris sur
+  // les pages publiques `/bons-plans` et `/annonces`. On absorbe tout
+  // ici : pire cas, l'utilisateur est traité comme déconnecté pour
+  // cette requête — rechargement = retour à la normale.
+  //
+  // `withTimeout` plafonne chaque appel pour éviter qu'un Prisma bloqué
+  // ne laisse la page pendue plusieurs secondes avant de basculer. Les
+  // sentinelles Next (DYNAMIC_SERVER_USAGE sur cookies/headers pendant
+  // un prerender statique, NEXT_REDIRECT, NEXT_NOT_FOUND) doivent être
+  // relevées intactes via `rethrowIfNextInternal`, sinon on casse le
+  // build (`/_not-found` essaye de rendre statiquement et lit cookies).
   let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
   try {
-    user = await getCurrentUser();
+    user = await withTimeout(
+      getCurrentUser(),
+      AUTH_TIMEOUT_MS,
+      "layout/current-user",
+    );
   } catch (err) {
-    // `getCurrentUser` lit les cookies via Supabase ; Next jette une
-    // erreur sentinelle `DYNAMIC_SERVER_USAGE` quand cette lecture se
-    // produit pendant un prerender statique (ex. /_not-found au build),
-    // pour basculer la route en dynamic. Il faut la relever, sinon le
-    // build échoue avec "couldn't be rendered statically because it
-    // used cookies". Pareil pour redirect()/notFound() qui passent par
-    // cette même mécanique. Cf. `lib/next-errors.ts`.
     rethrowIfNextInternal(err);
     // eslint-disable-next-line no-console
-    console.error("[layout/root] getCurrentUser failed", err);
+    console.error("[layout] current user load failed", err);
   }
 
+  // Fetch both counters in parallel for the nav. On timeout/failure we keep
+  // rendering the shell with zero badges instead of crashing the whole app.
   let unreadCount = 0;
   let unreadNotifications = 0;
   if (user) {
-    try {
-      [unreadCount, unreadNotifications] = await Promise.all([
-        fetchUnreadCount(user.id),
-        fetchUnreadNotificationsCount(user.id),
+    const [unreadCountResult, unreadNotificationsResult] =
+      await Promise.allSettled([
+        withTimeout(
+          fetchUnreadCount(user.id),
+          COUNTER_TIMEOUT_MS,
+          "layout/unread-messages",
+        ),
+        withTimeout(
+          fetchUnreadNotificationsCount(user.id),
+          COUNTER_TIMEOUT_MS,
+          "layout/unread-notifications",
+        ),
       ]);
-    } catch (err) {
-      rethrowIfNextInternal(err);
+
+    if (unreadCountResult.status === "rejected") {
+      rethrowIfNextInternal(unreadCountResult.reason);
+    }
+    if (unreadNotificationsResult.status === "rejected") {
+      rethrowIfNextInternal(unreadNotificationsResult.reason);
+    }
+
+    unreadCount =
+      unreadCountResult.status === "fulfilled" ? unreadCountResult.value : 0;
+    unreadNotifications =
+      unreadNotificationsResult.status === "fulfilled"
+        ? unreadNotificationsResult.value
+        : 0;
+
+    if (
+      unreadCountResult.status === "rejected" ||
+      unreadNotificationsResult.status === "rejected"
+    ) {
       // eslint-disable-next-line no-console
-      console.error("[layout/root] badge counts failed", {
-        userId: user.id,
-        err,
+      console.error("[layout] unread counters load failed", {
+        unreadCount:
+          unreadCountResult.status === "rejected"
+            ? unreadCountResult.reason
+            : undefined,
+        unreadNotifications:
+          unreadNotificationsResult.status === "rejected"
+            ? unreadNotificationsResult.reason
+            : undefined,
       });
     }
   }
