@@ -134,92 +134,119 @@ export async function getStaticPagesEntries(): Promise<SitemapUrlEntry[]> {
   const base = getSiteUrl();
   const now = new Date();
 
-  const [storeCounts, cityCounts, categoryCounts, dealsTotal, listingsTotal, latestDeal, latestListing] =
-    await Promise.all([
-      prisma.store.findMany({
-        where: { slug: { in: STORE_PILLARS.map((store) => store.slug) } },
-        select: {
-          slug: true,
-          _count: {
-            select: {
-              deals: {
-                where: {
-                  status: "PUBLISHED",
-                  OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-                },
+  // `Promise.allSettled` pour que le sitemap continue à se construire
+  // même si une seule requête Prisma échoue (DB indisponible au build,
+  // pool saturé, etc.). On logge puis on retombe sur les valeurs
+  // neutres — le build n'a PAS le droit de casser à cause d'une sitemap.
+  const results = await Promise.allSettled([
+    prisma.store.findMany({
+      where: { slug: { in: STORE_PILLARS.map((store) => store.slug) } },
+      select: {
+        slug: true,
+        _count: {
+          select: {
+            deals: {
+              where: {
+                status: "PUBLISHED",
+                OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
               },
             },
           },
         },
-      }),
-      prisma.city.findMany({
-        where: { slug: { in: CORE_CITIES.map((city) => city.slug) } },
-        select: {
-          slug: true,
-          _count: {
-            select: {
-              deals: {
-                where: {
-                  status: "PUBLISHED",
-                  OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-                },
+      },
+    }),
+    prisma.city.findMany({
+      where: { slug: { in: CORE_CITIES.map((city) => city.slug) } },
+      select: {
+        slug: true,
+        _count: {
+          select: {
+            deals: {
+              where: {
+                status: "PUBLISHED",
+                OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
               },
-              listings: {
-                where: { status: "PUBLISHED", expiresAt: { gt: now } },
-              },
+            },
+            listings: {
+              where: { status: "PUBLISHED", expiresAt: { gt: now } },
             },
           },
         },
-      }),
-      prisma.category.findMany({
-        where: {
-          slug: {
-            in: [
-              ...DEAL_CATEGORY_PILLARS.map((category) => category.slug),
-              ...LISTING_CATEGORY_PILLARS.map((category) => category.slug),
-            ],
-          },
+      },
+    }),
+    prisma.category.findMany({
+      where: {
+        slug: {
+          in: [
+            ...DEAL_CATEGORY_PILLARS.map((category) => category.slug),
+            ...LISTING_CATEGORY_PILLARS.map((category) => category.slug),
+          ],
         },
-        select: {
-          slug: true,
-          _count: {
-            select: {
-              deals: {
-                where: {
-                  status: "PUBLISHED",
-                  OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-                },
+      },
+      select: {
+        slug: true,
+        _count: {
+          select: {
+            deals: {
+              where: {
+                status: "PUBLISHED",
+                OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
               },
-              listings: {
-                where: { status: "PUBLISHED", expiresAt: { gt: now } },
-              },
+            },
+            listings: {
+              where: { status: "PUBLISHED", expiresAt: { gt: now } },
             },
           },
         },
-      }),
-      prisma.deal.count({
-        where: {
-          status: "PUBLISHED",
-          OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-        },
-      }),
-      prisma.listing.count({
-        where: { status: "PUBLISHED", expiresAt: { gt: now } },
-      }),
-      prisma.deal.findFirst({
-        where: {
-          status: "PUBLISHED",
-          OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-        },
-        orderBy: { updatedAt: "desc" },
-        select: { updatedAt: true },
-      }),
-      prisma.listing.findFirst({
-        where: { status: "PUBLISHED", expiresAt: { gt: now } },
-        orderBy: { updatedAt: "desc" },
-        select: { updatedAt: true },
-      }),
-    ]);
+      },
+    }),
+    prisma.deal.count({
+      where: {
+        status: "PUBLISHED",
+        OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+      },
+    }),
+    prisma.listing.count({
+      where: { status: "PUBLISHED", expiresAt: { gt: now } },
+    }),
+    prisma.deal.findFirst({
+      where: {
+        status: "PUBLISHED",
+        OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+      },
+      orderBy: { updatedAt: "desc" },
+      select: { updatedAt: true },
+    }),
+    prisma.listing.findFirst({
+      where: { status: "PUBLISHED", expiresAt: { gt: now } },
+      orderBy: { updatedAt: "desc" },
+      select: { updatedAt: true },
+    }),
+  ]);
+
+  type StoreCount = { slug: string; _count: { deals: number } };
+  type CityCount = {
+    slug: string;
+    _count: { deals: number; listings: number };
+  };
+  type CategoryCount = CityCount;
+  type LatestUpdate = { updatedAt: Date } | null;
+
+  const unwrap = <T>(i: number, fallback: T): T => {
+    const r = results[i];
+    if (r.status === "fulfilled") return r.value as T;
+    // eslint-disable-next-line no-console
+    console.error(`[sitemap/pages] query #${i} failed`, r.reason);
+    return fallback;
+  };
+
+  const storeCounts = unwrap<StoreCount[]>(0, []);
+  const cityCounts = unwrap<CityCount[]>(1, []);
+  const categoryCounts = unwrap<CategoryCount[]>(2, []);
+  const dealsTotal = unwrap<number>(3, 0);
+  const listingsTotal = unwrap<number>(4, 0);
+  const latestDeal = unwrap<LatestUpdate>(5, null);
+  const latestListing = unwrap<LatestUpdate>(6, null);
 
   const marketplaceLastmod =
     latestDeal && latestListing
