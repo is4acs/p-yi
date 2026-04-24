@@ -36,7 +36,23 @@ export async function DealsPillarPage({
   faq,
   exploreLinks,
 }: Props) {
-  const { deals, total } = await fetchDealsForPillar(filters);
+  // Un hiccup Prisma (ex. pool saturé pendant un pic de trafic) ne
+  // doit pas écrouler toute la page pilier — le gros du contenu est
+  // statique (H1, intro, FAQ, liens connexes) et reste utile même
+  // sans la liste des deals. On retombe sur un état vide avec un
+  // bandeau d'info plutôt que sur le boundary global.
+  let deals: Awaited<ReturnType<typeof fetchDealsForPillar>>["deals"] = [];
+  let total = 0;
+  let loadFailed = false;
+  try {
+    const payload = await fetchDealsForPillar(filters);
+    deals = payload.deals;
+    total = payload.total;
+  } catch (err) {
+    loadFailed = true;
+    // eslint-disable-next-line no-console
+    console.error("[deals/pillar] fetch failed", { filters, err });
+  }
 
   const jsonLdChunks = [
     buildCollectionPageJsonLd({
@@ -62,6 +78,15 @@ export async function DealsPillarPage({
       <SeoIntro h1={h1} intro={intro} eyebrow={eyebrow} />
 
       <section className="mt-5 rounded-xl border border-border bg-card p-4 sm:p-5">
+        {loadFailed && (
+          <div
+            role="status"
+            className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 sm:text-sm"
+          >
+            Le flux des bons plans est temporairement indisponible. Réessaie
+            dans quelques secondes.
+          </div>
+        )}
         <p className="text-sm text-muted-foreground">
           {total > 0
             ? `${total.toLocaleString("fr-FR")} bon plan${total > 1 ? "s" : ""} actif${total > 1 ? "s" : ""} trouvé${total > 1 ? "s" : ""}.`

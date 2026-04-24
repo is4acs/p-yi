@@ -63,6 +63,10 @@ async function resolveFacets(
       cityName: city?.name ?? citySlug ?? null,
     };
   } catch (err) {
+    // Pendant la génération des metadata, un crash Prisma remonte
+    // jusqu'au boundary global et affiche "Quelque chose s'est
+    // mal passé" à la place de la page. On retombe proprement sur
+    // les slugs bruts : le titre reste lisible, la page s'affiche.
     // eslint-disable-next-line no-console
     console.error("[deals/metadata] facet resolution failed", {
       categorySlug,

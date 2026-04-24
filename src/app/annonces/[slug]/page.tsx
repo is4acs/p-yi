@@ -19,6 +19,7 @@ import { ListingStatus } from "@prisma/client";
 import { formatRelativeTime } from "@/lib/format";
 import { LEVEL_META } from "@/lib/deals/user-level";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { isRenderableImageUrl } from "@/lib/images";
 import {
   CONDITION_LABEL,
   formatPriceType,
@@ -148,7 +149,18 @@ export async function generateMetadata(
   }
 ): Promise<Metadata> {
   const params = await props.params;
-  const listing = await getListingMeta(params.slug);
+  const listing = await getListingMeta(params.slug).catch((err) => {
+    // Un crash Prisma pendant la phase metadata remonte au
+    // boundary et affiche la page d'erreur générique. On renvoie
+    // un fallback indexable-noindex pour que la requête ne meure
+    // pas silencieusement.
+    // eslint-disable-next-line no-console
+    console.error("[listing/metadata] load failed", {
+      slug: params.slug,
+      err,
+    });
+    return null;
+  });
   if (!listing || listing.expiresAt <= new Date()) {
     return {
       title: "Annonce introuvable",
@@ -195,25 +207,84 @@ export default async function ListingDetailPage(
   }
 ) {
   const params = await props.params;
-  const [listing, currentUser] = await Promise.all([
+  // `Promise.allSettled` plutôt que `Promise.all` : si la requête
+  // user (Supabase auth) hiccup, on veut quand même afficher
+  // l'annonce en mode "déconnecté" plutôt que crasher toute la
+  // page. Même logique que côté bons-plans après S34.
+  const [listingResult, currentUserResult] = await Promise.allSettled([
     getListing(params.slug),
     getCurrentUser(),
   ]);
+
+  if (listingResult.status === "rejected") {
+    // eslint-disable-next-line no-console
+    console.error("[listing/page] load failed", {
+      slug: params.slug,
+      err: listingResult.reason,
+    });
+    return (
+      <main className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center px-4 py-12 text-center sm:max-w-2xl">
+        <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+          Annonce indisponible temporairement
+        </h1>
+        <p className="mt-3 max-w-sm text-sm text-muted-foreground sm:text-base">
+          La fiche n&apos;a pas pu être chargée pour le moment. Réessaie dans
+          quelques secondes.
+        </p>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          <Link
+            href="/annonces"
+            className="inline-flex h-10 items-center rounded-full bg-peyi-orange-500 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-peyi-orange-600"
+          >
+            Retour aux annonces
+          </Link>
+          <Link
+            href={`/annonces/${params.slug}`}
+            className="inline-flex h-10 items-center rounded-full border border-border bg-background px-4 text-sm font-semibold text-foreground transition hover:border-peyi-orange-300"
+          >
+            Recharger
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  const listing = listingResult.value;
+  const currentUser =
+    currentUserResult.status === "fulfilled" ? currentUserResult.value : null;
+
   if (!listing || listing.expiresAt <= new Date()) notFound();
+
+  if (currentUserResult.status === "rejected") {
+    // eslint-disable-next-line no-console
+    console.error("[listing/page] current user load failed", {
+      slug: params.slug,
+      err: currentUserResult.reason,
+    });
+  }
 
   const isAuthor = currentUser?.id === listing.author.id;
   let isFavorited = false;
   if (currentUser && !isAuthor) {
-    const fav = await prisma.favorite.findUnique({
-      where: {
-        userId_listingId: {
-          userId: currentUser.id,
-          listingId: listing.id,
+    try {
+      const fav = await prisma.favorite.findUnique({
+        where: {
+          userId_listingId: {
+            userId: currentUser.id,
+            listingId: listing.id,
+          },
         },
-      },
-      select: { id: true },
-    });
-    isFavorited = Boolean(fav);
+        select: { id: true },
+      });
+      isFavorited = Boolean(fav);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("[listing/page] favorite load failed", {
+        slug: params.slug,
+        userId: currentUser.id,
+        err,
+      });
+    }
   }
 
   const canFavorite = Boolean(currentUser) && !isAuthor;
@@ -224,7 +295,9 @@ export default async function ListingDetailPage(
     : undefined;
 
   const priceLabel = formatPriceType(listing.priceType, listing.price);
-  const level = LEVEL_META[listing.author.level];
+  // Fallback BEGINNER si la DB a un niveau supprimé du code (migration
+  // d'enum partielle) — sinon `level.emoji` plus bas crash la page.
+  const level = LEVEL_META[listing.author.level] ?? LEVEL_META.BEGINNER;
   const locationLabel = listing.neighborhood
     ? `${listing.city.name} · ${listing.neighborhood}`
     : listing.city.name;
@@ -240,47 +313,73 @@ export default async function ListingDetailPage(
   }).format(listing.updatedAt);
   const showUpdatedAt = listing.updatedAt.getTime() - listing.publishedAt.getTime() > 60_000;
 
+  // Images filtrées : `<Image>` crash au render si on lui passe une URL
+  // vide ou malformée (common quand un ancien upload a laissé une
+  // string vide en DB). On filtre avant pour que la page ne casse
+  // jamais à cause d'une ligne pourrie côté stockage.
+  const sanitizedImages = listing.images.filter((img) =>
+    isRenderableImageUrl(img.url),
+  );
+  const safeCoverImageUrl = isRenderableImageUrl(listing.coverImageUrl)
+    ? listing.coverImageUrl
+    : null;
+
   // JSON-LD : Product + Offer + BreadcrumbList. On injecte au début du
-  // `<main>` pour que le crawler le trouve vite, et on le sérialise via
-  // `serializeJsonLd` qui échappe les éventuels `</script>` dans la
-  // description utilisateur (sinon un utilisateur malin pourrait casser
-  // le parsing HTML depuis le champ description).
-  const jsonLd = serializeJsonLd([
-    buildListingJsonLd({
+  // `<main>` pour que le crawler le trouve vite. Un bug de génération
+  // (ex. champ inattendu à null) ne doit pas bloquer la page elle-même
+  // — on enveloppe donc la construction dans un try/catch.
+  let jsonLd = "";
+  try {
+    jsonLd = serializeJsonLd(
+      [
+        buildListingJsonLd({
+          slug: listing.slug,
+          title: listing.title,
+          description: listing.description,
+          price: listing.price,
+          currency: listing.currency,
+          priceType: listing.priceType,
+          listingType: listing.type,
+          condition: listing.condition,
+          coverImageUrl: safeCoverImageUrl,
+          images: sanitizedImages,
+          category: {
+            name: listing.category.name,
+            slug: listing.category.slug,
+          },
+          city: { name: listing.city.name },
+          author: { username: listing.author.username },
+          publishedAt: listing.publishedAt,
+        }),
+        buildBreadcrumbJsonLd([
+          { name: "Accueil", url: "/" },
+          { name: "Annonces", url: "/annonces" },
+          { name: "Guyane", url: "/annonces/guyane" },
+          { name: listing.city.name, url: cityPath },
+          {
+            name: listing.category.name,
+            url: categoryPath,
+          },
+          { name: listing.title, url: `/annonces/${listing.slug}` },
+        ]),
+      ].filter((node): node is Record<string, unknown> => Boolean(node)),
+    );
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[listing/page] json-ld generation failed", {
       slug: listing.slug,
-      title: listing.title,
-      description: listing.description,
-      price: listing.price,
-      currency: listing.currency,
-      priceType: listing.priceType,
-      listingType: listing.type,
-      condition: listing.condition,
-      coverImageUrl: listing.coverImageUrl,
-      images: listing.images,
-      category: { name: listing.category.name, slug: listing.category.slug },
-      city: { name: listing.city.name },
-      author: { username: listing.author.username },
-      publishedAt: listing.publishedAt,
-    }),
-    buildBreadcrumbJsonLd([
-      { name: "Accueil", url: "/" },
-      { name: "Annonces", url: "/annonces" },
-      { name: "Guyane", url: "/annonces/guyane" },
-      { name: listing.city.name, url: cityPath },
-      {
-        name: listing.category.name,
-        url: categoryPath,
-      },
-      { name: listing.title, url: `/annonces/${listing.slug}` },
-    ]),
-  ].filter((node): node is Record<string, unknown> => Boolean(node)));
+      err,
+    });
+  }
 
   return (
     <main className="mx-auto max-w-md pb-16 animate-in fade-in duration-300 sm:max-w-2xl">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonLd }}
-      />
+      {jsonLd ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: jsonLd }}
+        />
+      ) : null}
       <nav
         aria-label="Fil d'Ariane"
         className="flex flex-wrap items-center gap-1 px-4 pt-4 text-sm text-muted-foreground sm:px-0 sm:pt-6"
@@ -307,13 +406,16 @@ export default async function ListingDetailPage(
       </nav>
 
       {/* Hero : multi-photo gallery. Fall back to coverImageUrl (legacy
-          listings pre-Session 15) or a category emoji placeholder. */}
+          listings pre-Session 15) or a category emoji placeholder. On
+          ne passe que des URLs validées par `isRenderableImageUrl` —
+          sinon `next/image` throw au render et on retombe sur l'erreur
+          globale "Quelque chose s'est mal passé". */}
       <div className="relative mt-3 px-4 sm:px-0">
-        {listing.images.length > 0 ? (
-          <ListingGallery photos={listing.images} title={listing.title} />
-        ) : listing.coverImageUrl ? (
+        {sanitizedImages.length > 0 ? (
+          <ListingGallery photos={sanitizedImages} title={listing.title} />
+        ) : safeCoverImageUrl ? (
           <ListingGallery
-            photos={[{ url: listing.coverImageUrl }]}
+            photos={[{ url: safeCoverImageUrl }]}
             title={listing.title}
           />
         ) : (

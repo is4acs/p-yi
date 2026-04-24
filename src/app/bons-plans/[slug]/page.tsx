@@ -18,6 +18,7 @@ import { prisma } from "@/lib/prisma";
 import { DealStatus, type VoteType } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/format";
+import { isRenderableImageUrl } from "@/lib/images";
 import { LEVEL_META } from "@/lib/deals/user-level";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import {
@@ -49,29 +50,6 @@ import {
 } from "@/lib/seo/local-pages";
 
 // ---------- data ----------
-
-function isRenderableImageUrl(value: string | null | undefined): value is string {
-  if (!value) return false;
-  const trimmed = value.trim();
-  if (!trimmed) return false;
-  // `next/image` accepte les URLs absolues (http/https) et les paths
-  // locaux commençant par `/`.
-  if (trimmed.startsWith("/")) {
-    return !trimmed.startsWith("//") && !/\s/.test(trimmed);
-  }
-  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-    try {
-      const parsed = new URL(trimmed);
-      return (
-        (parsed.protocol === "http:" || parsed.protocol === "https:") &&
-        !/\s/.test(trimmed)
-      );
-    } catch {
-      return false;
-    }
-  }
-  return false;
-}
 
 // Pas de `force-dynamic` : la page reste dynamique de fait (cookies via
 // `getCurrentUser`) mais on cache la requête Prisma lourde (jointures

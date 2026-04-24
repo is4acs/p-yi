@@ -4,6 +4,7 @@ import { Clock, Flame, Images } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/format";
+import { isRenderableImageUrl } from "@/lib/images";
 import {
   type ListingCardData,
   formatPriceType,
@@ -110,7 +111,7 @@ export function ListingCardTile({
         className="flex flex-col active:scale-[0.99]"
       >
         <div className="relative aspect-[5/3] overflow-hidden bg-muted/40">
-          {listing.coverImageUrl ? (
+          {isRenderableImageUrl(listing.coverImageUrl) ? (
             <Image
               src={listing.coverImageUrl}
               alt={listing.title}
