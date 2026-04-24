@@ -54,6 +54,7 @@ const jetBrainsMono = JetBrains_Mono({
 const siteUrl = getSiteUrl();
 const AUTH_TIMEOUT_MS = 3_000;
 const COUNTER_TIMEOUT_MS = 2_000;
+const NEXT_DYNAMIC_USAGE_DIGEST = "DYNAMIC_SERVER_USAGE";
 
 export const metadata: Metadata = {
   title: {
@@ -125,8 +126,13 @@ export default async function RootLayout({
       "layout/current-user",
     );
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error("[layout] current user load failed", err);
+    // Pendant la génération statique (ex. /_not-found), Next bloque l'accès
+    // aux cookies et lève `DYNAMIC_SERVER_USAGE`. Ce cas est attendu: on
+    // garde simplement `user = null` sans polluer les logs de build.
+    if ((err as { digest?: string } | null)?.digest !== NEXT_DYNAMIC_USAGE_DIGEST) {
+      // eslint-disable-next-line no-console
+      console.error("[layout] current user load failed", err);
+    }
   }
 
   // Fetch both counters in parallel for the nav. On timeout/failure we keep

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Flame, Tag } from "lucide-react";
+import type { VoteType } from "@prisma/client";
 
 import { fetchDealsPage, fetchUserFavoriteSet, fetchUserVoteMap } from "@/lib/deals/queries";
 import {
@@ -42,28 +43,75 @@ type Props = {
 
 export default async function HomePage(props: Props) {
   const searchParams = await props.searchParams;
-  const [{ deals }, { listings }, currentUser] = await Promise.all([
-    fetchDealsPage({ sort: "hot", page: 1, category: null, city: null, q: null }),
-    fetchListingsPage({
-      sort: "new",
-      page: 1,
-      category: null,
-      city: null,
-      type: null,
-      q: null,
-    }),
-    getCurrentUser(),
-  ]);
+  const [dealsResult, listingsResult, currentUserResult] =
+    await Promise.allSettled([
+      fetchDealsPage({
+        sort: "hot",
+        page: 1,
+        category: null,
+        city: null,
+        q: null,
+      }),
+      fetchListingsPage({
+        sort: "new",
+        page: 1,
+        category: null,
+        city: null,
+        type: null,
+        q: null,
+      }),
+      getCurrentUser(),
+    ]);
+
+  const dealsPayload =
+    dealsResult.status === "fulfilled" ? dealsResult.value : { deals: [], total: 0 };
+  const listingsPayload =
+    listingsResult.status === "fulfilled"
+      ? listingsResult.value
+      : { listings: [], total: 0 };
+  const currentUser =
+    currentUserResult.status === "fulfilled" ? currentUserResult.value : null;
+
+  if (
+    dealsResult.status === "rejected" ||
+    listingsResult.status === "rejected" ||
+    currentUserResult.status === "rejected"
+  ) {
+    // eslint-disable-next-line no-console
+    console.error("[home/page] partial data load failure", {
+      deals: dealsResult.status === "rejected" ? dealsResult.reason : undefined,
+      listings:
+        listingsResult.status === "rejected"
+          ? listingsResult.reason
+          : undefined,
+      currentUser:
+        currentUserResult.status === "rejected"
+          ? currentUserResult.reason
+          : undefined,
+    });
+  }
+
+  const deals = dealsPayload.deals;
+  const listings = listingsPayload.listings;
 
   const topDeals = deals.slice(0, HOME_DEALS_COUNT);
   const topListings = listings.slice(0, HOME_LISTINGS_COUNT);
   const dealIds = topDeals.map((d) => d.id);
   const listingIds = topListings.map((l) => l.id);
-  const [voteMap, favoriteSet, listingFavoriteSet] = await Promise.all([
-    fetchUserVoteMap(currentUser?.id ?? null, dealIds),
-    fetchUserFavoriteSet(currentUser?.id ?? null, dealIds),
-    fetchUserFavoriteListingSet(currentUser?.id ?? null, listingIds),
-  ]);
+
+  let voteMap = new Map<string, VoteType>();
+  let favoriteSet = new Set<string>();
+  let listingFavoriteSet = new Set<string>();
+  try {
+    [voteMap, favoriteSet, listingFavoriteSet] = await Promise.all([
+      fetchUserVoteMap(currentUser?.id ?? null, dealIds),
+      fetchUserFavoriteSet(currentUser?.id ?? null, dealIds),
+      fetchUserFavoriteListingSet(currentUser?.id ?? null, listingIds),
+    ]);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[home/page] social state load failed", err);
+  }
 
   return (
     <main className="mx-auto w-full max-w-md overflow-x-clip pb-14 animate-in fade-in duration-300 sm:max-w-2xl lg:max-w-5xl xl:max-w-6xl">
