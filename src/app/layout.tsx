@@ -14,6 +14,7 @@ import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { fetchUnreadCount } from "@/lib/messages/queries";
 import { fetchUnreadNotificationsCount } from "@/lib/notifications/queries";
+import { rethrowIfNextInternal } from "@/lib/next-errors";
 import {
   buildOrganizationJsonLd,
   buildWebSiteJsonLd,
@@ -125,6 +126,14 @@ export default async function RootLayout({
   try {
     user = await getCurrentUser();
   } catch (err) {
+    // `getCurrentUser` lit les cookies via Supabase ; Next jette une
+    // erreur sentinelle `DYNAMIC_SERVER_USAGE` quand cette lecture se
+    // produit pendant un prerender statique (ex. /_not-found au build),
+    // pour basculer la route en dynamic. Il faut la relever, sinon le
+    // build échoue avec "couldn't be rendered statically because it
+    // used cookies". Pareil pour redirect()/notFound() qui passent par
+    // cette même mécanique. Cf. `lib/next-errors.ts`.
+    rethrowIfNextInternal(err);
     // eslint-disable-next-line no-console
     console.error("[layout/root] getCurrentUser failed", err);
   }
@@ -138,6 +147,7 @@ export default async function RootLayout({
         fetchUnreadNotificationsCount(user.id),
       ]);
     } catch (err) {
+      rethrowIfNextInternal(err);
       // eslint-disable-next-line no-console
       console.error("[layout/root] badge counts failed", {
         userId: user.id,

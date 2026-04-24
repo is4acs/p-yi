@@ -371,14 +371,25 @@ export async function getStaticPagesEntries(): Promise<SitemapUrlEntry[]> {
 export async function getDealsEntries(): Promise<SitemapUrlEntry[]> {
   const base = getSiteUrl();
   const now = new Date();
-  const deals = await prisma.deal.findMany({
-    where: {
-      status: "PUBLISHED",
-      OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-    },
-    select: { slug: true, updatedAt: true },
-    orderBy: { updatedAt: "desc" },
-  });
+  // Si Prisma est injoignable au build (DB pas encore migrée, secret
+  // Vercel manquant en preview, etc.), on retourne un sitemap vide
+  // plutôt que de faire échouer l'export Next. ISR (`revalidate=3600`
+  // côté route) refera la requête au premier hit runtime et le
+  // sitemap se remplira tout seul.
+  const deals = await prisma.deal
+    .findMany({
+      where: {
+        status: "PUBLISHED",
+        OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+      },
+      select: { slug: true, updatedAt: true },
+      orderBy: { updatedAt: "desc" },
+    })
+    .catch((err) => {
+      // eslint-disable-next-line no-console
+      console.error("[sitemap/deals] query failed", err);
+      return [] as Array<{ slug: string; updatedAt: Date }>;
+    });
 
   return deals.map((deal) => ({
     loc: `${base}/bons-plans/${deal.slug}`,
@@ -390,11 +401,17 @@ export async function getDealsEntries(): Promise<SitemapUrlEntry[]> {
 
 export async function getListingsEntries(): Promise<SitemapUrlEntry[]> {
   const base = getSiteUrl();
-  const listings = await prisma.listing.findMany({
-    where: { status: "PUBLISHED", expiresAt: { gt: new Date() } },
-    select: { slug: true, updatedAt: true },
-    orderBy: { updatedAt: "desc" },
-  });
+  const listings = await prisma.listing
+    .findMany({
+      where: { status: "PUBLISHED", expiresAt: { gt: new Date() } },
+      select: { slug: true, updatedAt: true },
+      orderBy: { updatedAt: "desc" },
+    })
+    .catch((err) => {
+      // eslint-disable-next-line no-console
+      console.error("[sitemap/listings] query failed", err);
+      return [] as Array<{ slug: string; updatedAt: Date }>;
+    });
 
   return listings.map((listing) => ({
     loc: `${base}/annonces/${listing.slug}`,
@@ -408,7 +425,19 @@ export async function getImagesEntries(): Promise<SitemapUrlEntry[]> {
   const base = getSiteUrl();
   const now = new Date();
 
-  const [deals, listings] = await Promise.all([
+  type DealRow = {
+    slug: string;
+    updatedAt: Date;
+    coverImageUrl: string | null;
+    images: { url: string }[];
+  };
+  type ListingRow = DealRow;
+
+  // Cf. `getDealsEntries` : on absorbe les erreurs Prisma au build
+  // pour ne pas casser l'export Next. `Promise.allSettled` plutôt
+  // qu'un .catch() global pour qu'un crash sur une seule requête
+  // n'efface pas l'autre.
+  const [dealsResult, listingsResult] = await Promise.allSettled([
     prisma.deal.findMany({
       where: {
         status: "PUBLISHED",
@@ -439,6 +468,22 @@ export async function getImagesEntries(): Promise<SitemapUrlEntry[]> {
       },
     }),
   ]);
+
+  if (dealsResult.status === "rejected") {
+    // eslint-disable-next-line no-console
+    console.error("[sitemap/images] deals query failed", dealsResult.reason);
+  }
+  if (listingsResult.status === "rejected") {
+    // eslint-disable-next-line no-console
+    console.error(
+      "[sitemap/images] listings query failed",
+      listingsResult.reason,
+    );
+  }
+  const deals: DealRow[] =
+    dealsResult.status === "fulfilled" ? dealsResult.value : [];
+  const listings: ListingRow[] =
+    listingsResult.status === "fulfilled" ? listingsResult.value : [];
 
   const dealEntries: SitemapUrlEntry[] = [];
   for (const deal of deals) {
