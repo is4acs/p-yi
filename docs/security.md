@@ -3,7 +3,7 @@
 > Comment on gère les vulnérabilités (`npm audit`), quelles CVE sont
 > actuellement acceptées, et comment elles seront résolues.
 
-Dernier audit : **2026-04-18** (S26).
+Dernier audit : **2026-07-20**.
 
 ---
 
@@ -43,6 +43,25 @@ se bloque inutilement).
 ---
 
 ## 2. CVE actuellement acceptées
+
+### 2.0 postcss vendored par Next.js — acceptée (moderate)
+
+| CVE | Titre | Sévérité | Statut |
+| --- | ----- | -------- | ------ |
+| [GHSA-qx2v-qp2m-jg93](https://github.com/advisories/GHSA-qx2v-qp2m-jg93) | XSS via `</style>` non échappé dans la sortie stringify | moderate | acceptée |
+
+**Contexte** : Next.js embarque sa propre copie de `postcss` (8.4.31,
+pinnée par Next — `node_modules/next/node_modules/postcss`). Notre
+copie racine est déjà en 8.5.10 (patchée). Le "fix" proposé par
+`npm audit fix --force` (downgrade vers next@9) est un faux positif
+de résolution.
+
+**Risque réel** : quasi nul. postcss n'est utilisé par Next qu'au
+build, sur notre propre CSS (input de confiance). L'advisory concerne
+la stringification de CSS non fiable, un scénario qui n'existe pas ici.
+
+**Plan** : disparaîtra au prochain bump de Next qui met à jour sa
+dépendance vendored. Re-check à chaque audit trimestriel.
 
 ### 2.1 Chaîne Next.js — historique
 
@@ -84,6 +103,35 @@ générale :
 ---
 
 ## 3. Historique des audits
+
+### 2026-07-20 — audit trimestriel
+
+**État avant** :
+- 9 vulnérabilités (2 high, 6 moderate, 1 low) :
+  - `next` 15.5.15 — 13 advisories cumulées dont middleware/proxy
+    bypass ([GHSA-267c-6grr-h53f](https://github.com/advisories/GHSA-267c-6grr-h53f),
+    [GHSA-26hh-7cqf-hhc6](https://github.com/advisories/GHSA-26hh-7cqf-hhc6),
+    [GHSA-492v-c6pp-mqqv](https://github.com/advisories/GHSA-492v-c6pp-mqqv)),
+    cache poisoning RSC ([GHSA-wfc6-r584-vfw7](https://github.com/advisories/GHSA-wfc6-r584-vfw7),
+    [GHSA-vfv6-92ff-j949](https://github.com/advisories/GHSA-vfv6-92ff-j949)),
+    XSS CSP nonces ([GHSA-ffhc-5mcf-pf4q](https://github.com/advisories/GHSA-ffhc-5mcf-pf4q)),
+    DoS Server Components / Image Optimization. Particulièrement
+    pertinent ici : le middleware porte le refresh de session Supabase.
+  - `ws` ≤8.20.1 (high, via `web-push`) — memory disclosure + DoS.
+  - `js-yaml`, `brace-expansion`, `uuid` (via `svix`/`resend`),
+    `esbuild` (via `tsx`) — moderate/low, toutes transitives.
+
+**Actions** :
+- ✅ `next` 15.5.15 → **15.5.20** (+ `eslint-config-next` aligné) —
+  résout les 13 advisories Next d'un coup, bump patch sans breaking.
+- ✅ `npm audit fix` — résout `ws`, `js-yaml`, `brace-expansion`,
+  `uuid`/`svix`/`resend`.
+- ✅ `tsx` 4.21.0 → 4.23.1 — tire `esbuild` 0.28.1 (patché).
+- ✅ Documentation de la CVE postcss vendored par Next (voir §2.0).
+
+**État après** :
+- 2 moderate (postcss vendored par Next ×2 entrées npm — acceptée
+  et documentée, risque build-time uniquement).
 
 ### 2026-04-18 — S26 (initial)
 
