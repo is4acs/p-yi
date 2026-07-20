@@ -3,6 +3,7 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ensureUserProfile } from "@/lib/auth/ensure-profile";
+import { safeInternalPath } from "@/lib/safe-redirect";
 
 /**
  * Email confirmation endpoint using Supabase's `token_hash` + `verifyOtp`
@@ -17,7 +18,8 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const next = searchParams.get("next") ?? "/bons-plans";
+  // Contraint à un chemin interne : évite l'open redirect via `?next=`.
+  const next = safeInternalPath(searchParams.get("next"), "/bons-plans");
 
   if (!token_hash || !type) {
     console.error("[auth/confirm] missing token_hash or type", {

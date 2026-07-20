@@ -3,11 +3,14 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ensureUserProfile } from "@/lib/auth/ensure-profile";
+import { safeInternalPath } from "@/lib/safe-redirect";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/bons-plans";
+  // `next` est contrôlé par l'appelant → on le contraint à un chemin
+  // interne pour empêcher un open redirect (`?next=@evil.com` etc.).
+  const next = safeInternalPath(searchParams.get("next"), "/bons-plans");
 
   // Supabase may also redirect here with an explicit error param on
   // invalid/expired links. Surface it rather than silently 302'ing.

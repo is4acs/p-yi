@@ -6,6 +6,7 @@ import {
 } from "@/lib/affiliate/cookies";
 import { isValidCodeFormat } from "@/lib/affiliate/code";
 import { recordAffiliateClick } from "@/lib/affiliate/track";
+import { safeInternalPath } from "@/lib/safe-redirect";
 
 /**
  * Point d'entrée public des liens d'invitation :
@@ -24,9 +25,10 @@ export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest, props: { params: Promise<{ code: string }> }) {
   const params = await props.params;
   const code = params.code;
-  const rawTo = request.nextUrl.searchParams.get("to");
-  const landing =
-    rawTo && rawTo.startsWith("/") && !rawTo.startsWith("//") ? rawTo : "/";
+  // `to` est fourni par l'appelant. `safeInternalPath` bloque les
+  // échappements (`//evil.com`, `/\evil.com`, URLs absolues) qui, résolus
+  // via `new URL(landing, request.url)`, sortiraient du domaine.
+  const landing = safeInternalPath(request.nextUrl.searchParams.get("to"), "/");
 
   // Enregistrement en DB (non bloquant côté UX mais on attend pour avoir
   // l'IP et le User-Agent accessibles via headers()).
