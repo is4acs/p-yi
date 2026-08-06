@@ -12,6 +12,8 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { BonsPlansHero } from "@/components/deals/BonsPlansHero";
 import { DealCard } from "@/components/deals/DealCard";
 import { DealCategoryStrip } from "@/components/deals/DealCategoryStrip";
+import { DealsFeed } from "@/components/deals/DealsFeed";
+import { BackToTop } from "@/components/feed/BackToTop";
 import { DealsSortTabs } from "@/components/deals/DealsSortTabs";
 import { DealsFilterBar } from "@/components/deals/DealsFilterBar";
 import { DealsPagination } from "@/components/deals/DealsPagination";
@@ -390,7 +392,19 @@ export default async function BonsPlansPage(
         {deals.length === 0 ? (
           <EmptyDeals hasFilters={hasFilters} />
         ) : (
-          <ul className="flex flex-col gap-3">
+          /* Feed continu (V2) : « Voir plus » + auto-load au scroll, à
+             la place du pager Précédent/Suivant. La `key` force le
+             remontage quand les filtres changent, sinon les résultats
+             de l'ancien filtre resteraient empilés sous les nouveaux. */
+          (<DealsFeed
+            key={`${sort}|${category ?? ""}|${city ?? ""}|${q ?? ""}|${page}`}
+            initialHasMore={page * PAGE_SIZE < total}
+            initialNextPage={page + 1}
+            sort={sort}
+            category={category}
+            city={city}
+            q={q}
+          >
             {deals.map((d) => (
               <li key={d.id}>
                 <DealCard
@@ -401,23 +415,32 @@ export default async function BonsPlansPage(
                 />
               </li>
             ))}
-          </ul>
+          </DealsFeed>)
         )}
 
-        <DealsPagination
-          page={page}
-          pageCount={pageCount}
-          sort={sort}
-          category={category}
-          city={city}
-          q={q}
-        />
+        {/* Sans JavaScript, le bouton « Voir plus » ne peut rien faire :
+            on sert le pager classique en repli pour que la navigation
+            reste possible (et crawlable par un bot sans JS). */}
+        <noscript>
+          <DealsPagination
+            page={page}
+            pageCount={pageCount}
+            sort={sort}
+            category={category}
+            city={city}
+            q={q}
+          />
+        </noscript>
 
         {!hasFilters && (
           <div className="mt-6">
             <ExplorerAlso links={buildDealsGlobalExploreLinks()} />
           </div>
         )}
+
+        {/* Corollaire du feed continu : de quoi remonter aux filtres
+            sans scroller sur 80 résultats. */}
+        <BackToTop />
       </div>
     </main>
   );

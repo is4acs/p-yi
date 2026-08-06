@@ -21,6 +21,7 @@ import { formatRelativeTime } from "@/lib/format";
 import { isRenderableImageUrl } from "@/lib/images";
 import { rethrowIfNextInternal } from "@/lib/next-errors";
 import { withTimeout } from "@/lib/async/with-timeout";
+import { asDate } from "@/lib/cache/dates";
 import { LEVEL_META } from "@/lib/deals/user-level";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import {
@@ -41,6 +42,7 @@ import { FavoriteButton } from "@/components/deals/FavoriteButton";
 import { CommentList } from "@/components/comments/CommentList";
 import { ReportDialog } from "@/components/reports/ReportDialog";
 import { ShareRow } from "@/components/shared/ShareRow";
+import { StickyActionBar } from "@/components/shared/StickyActionBar";
 import { ListingGallery } from "@/components/listings/ListingGallery";
 import { getSiteUrl } from "@/lib/site-url";
 import {
@@ -111,8 +113,8 @@ const dealDetailSelect = {
   merchant: { select: { name: true, slug: true, domain: true, logoUrl: true } },
 } as const;
 
-function getDeal(slug: string) {
-  return unstable_cache(
+async function getDeal(slug: string) {
+  const deal = await unstable_cache(
     async () =>
       withTimeout(
         prisma.deal.findFirst({
@@ -129,10 +131,22 @@ function getDeal(slug: string) {
     ["deal-detail", slug],
     { tags: [`deal:${slug}`], revalidate: 3600 },
   )();
+
+  if (!deal) return null;
+  // Obligatoire : en cache HIT ces trois champs sont des chaînes ISO,
+  // alors que TypeScript les annonce toujours comme `Date`. Sans cette
+  // réhydratation, `Intl.format()` et `.getTime()` explosent plus bas.
+  // Voir `src/lib/cache/dates.ts` pour le détail du piège.
+  return {
+    ...deal,
+    publishedAt: asDate(deal.publishedAt),
+    updatedAt: asDate(deal.updatedAt),
+    expiresAt: asDate(deal.expiresAt),
+  };
 }
 
-function getDealMeta(slug: string) {
-  return unstable_cache(
+async function getDealMeta(slug: string) {
+  const deal = await unstable_cache(
     async () =>
       withTimeout(
         prisma.deal.findFirst({
@@ -157,6 +171,11 @@ function getDealMeta(slug: string) {
     ["deal-meta", slug],
     { tags: [`deal:${slug}`], revalidate: 3600 },
   )();
+
+  if (!deal) return null;
+  // `expiresAt` sert à une comparaison `<= new Date()` : sur une chaîne
+  // elle serait silencieusement fausse, donc on réhydrate aussi ici.
+  return { ...deal, expiresAt: asDate(deal.expiresAt) };
 }
 
 // ---------- SEO ----------
@@ -388,7 +407,9 @@ export default async function DealDetailPage(
   }
 
   return (
-    <main className="mx-auto max-w-md pb-16 animate-in fade-in duration-300 sm:max-w-2xl">
+    // `pb-36` sur mobile : réserve la hauteur de la barre d'action
+    // sticky + la BottomNav, sinon le dernier commentaire passe dessous.
+    (<main className="mx-auto max-w-md pb-44 animate-in fade-in duration-300 sm:max-w-2xl sm:pb-16">
       {jsonLd ? (
         <script
           type="application/ld+json"
@@ -513,8 +534,9 @@ export default async function DealDetailPage(
         </div>
       </section>
 
-      {/* Price + CTA */}
-      <section className="mt-5 space-y-4 px-4 sm:px-0">
+      {/* Price + CTA — `id` surveillé par la barre sticky mobile : tant
+          que ce bloc est à l'écran, la barre reste masquée. */}
+      <section id="deal-cta" className="mt-5 space-y-4 px-4 sm:px-0">
         <PriceTag
           price={deal.price.toString()}
           originalPrice={deal.originalPrice?.toString() ?? null}
@@ -547,6 +569,28 @@ export default async function DealDetailPage(
           </p>
         )}
       </section>
+
+      {/* Barre d'action mobile (V2) : le prix et le CTA restent joignables
+          quand l'utilisateur descend lire la description ou les
+          commentaires. Pattern Dealabs / Leboncoin. */}
+      {ctaUrl && (
+        <StickyActionBar watchElementId="deal-cta">
+          <div className="min-w-0 flex-1">
+            <PriceTag
+              price={deal.price.toString()}
+              originalPrice={deal.originalPrice?.toString() ?? null}
+              discountPercent={deal.discountPercent ?? null}
+              isFree={deal.isFree}
+            />
+          </div>
+          <Button asChild size="lg" className="shrink-0">
+            <a href={ctaUrl} target="_blank" rel="noopener noreferrer nofollow">
+              Voir l&apos;offre
+              <ExternalLink className="h-4 w-4" aria-hidden />
+            </a>
+          </Button>
+        </StickyActionBar>
+      )}
 
       {/* Stats */}
       <section className="mt-6 grid grid-cols-4 gap-2 px-4 sm:px-0">
@@ -664,7 +708,7 @@ export default async function DealDetailPage(
           />
         </div>
       </section>
-    </main>
+    </main>)
   );
 }
 

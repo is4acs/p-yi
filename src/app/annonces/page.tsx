@@ -10,6 +10,7 @@ import {
 } from "@/lib/listings/queries";
 import {
   countActiveFilters,
+  filtersToParams,
   hasActiveFilters,
   parseFilters,
   parsePage,
@@ -26,6 +27,8 @@ import { HomeCommunesSection } from "@/components/home/HomeCommunesSection";
 import { AnnoncesHero } from "@/components/listings/AnnoncesHero";
 import { PopularSearchChips } from "@/components/listings/PopularSearchChips";
 import { ListingCardTile } from "@/components/listings/ListingCardTile";
+import { ListingsFeed } from "@/components/listings/ListingsFeed";
+import { BackToTop } from "@/components/feed/BackToTop";
 import { ListingsSearchBar } from "@/components/listings/ListingsSearchBar";
 import { ListingsSortTabs } from "@/components/listings/ListingsSortTabs";
 import { ListingsTypePills } from "@/components/listings/ListingsTypePills";
@@ -182,6 +185,9 @@ export default async function AnnoncesPage(
   const city = searchParams.city?.trim() || null;
   const q = parseQuery(searchParams.q);
   const filters = parseFilters(searchParams);
+  // Forme URL des filtres, rejouée telle quelle par le feed continu à
+  // chaque page suivante (le serveur la re-valide via `parseFilters`).
+  const filterParams = filtersToParams(filters);
 
   const [listingsResult, categoriesResult, citiesResult, currentUserResult] =
     await Promise.allSettled([
@@ -458,11 +464,23 @@ export default async function AnnoncesPage(
             clearFiltersHref="/annonces"
           />
         ) : (
-          // Grille photo-first "marketplace" : 2 cols mobile, 3 cols
-          // tablette, 4 cols desktop. Gap 4 (16px) pour que chaque
-          // tuile respire. Hauteur naturelle variable (titre 1-2 lignes
-          // selon longueur).
-          (<ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          /* Grille photo-first "marketplace" : 2 cols mobile, 3 cols
+             tablette, 4 cols desktop (classes portées par le feed).
+             Feed continu V2 : « Voir plus » + auto-load au scroll. La
+             `key` remonte le composant quand les filtres changent. */
+          (<ListingsFeed
+            key={`${sort}|${category ?? ""}|${city ?? ""}|${type ?? ""}|${
+              q ?? ""
+            }|${JSON.stringify(filterParams)}|${page}`}
+            initialHasMore={page * PAGE_SIZE < total}
+            initialNextPage={page + 1}
+            sort={sort}
+            category={category}
+            city={city}
+            type={type}
+            q={q}
+            filterParams={filterParams}
+          >
             {listings.map((l) => (
               <li key={l.id}>
                 <ListingCardTile
@@ -472,25 +490,32 @@ export default async function AnnoncesPage(
                 />
               </li>
             ))}
-          </ul>)
+          </ListingsFeed>)
         )}
 
-        <ListingsPagination
-          page={page}
-          pageCount={pageCount}
-          sort={sort}
-          category={category}
-          city={city}
-          type={type}
-          q={q}
-          filters={filters}
-        />
+        {/* Repli sans JavaScript — cf. justification identique sur
+            `/bons-plans/page.tsx`. */}
+        <noscript>
+          <ListingsPagination
+            page={page}
+            pageCount={pageCount}
+            sort={sort}
+            category={category}
+            city={city}
+            type={type}
+            q={q}
+            filters={filters}
+          />
+        </noscript>
 
         {!hasFilters && (
           <div className="mt-6">
             <ExplorerAlso links={buildListingsGlobalExploreLinks()} />
           </div>
         )}
+
+        {/* Corollaire du feed continu — cf. `/bons-plans/page.tsx`. */}
+        <BackToTop />
       </div>
     </main>
   );

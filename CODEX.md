@@ -57,6 +57,62 @@ Des erreurs intermittentes en production faisaient tomber `error.tsx` sur les pa
 - Smoke-test exécuté sur 30 routes (sitemaps + pages piliers + 2 routes détail) : **30 OK / 0 fail**.
 - Objectif validé : plus de bascule vers la page d'erreur globale sur ces routes, même avec Prisma en échec.
 
+## 2026-08-06 — Cause racine du crash digest des fiches : TROUVÉE
+
+### Ce qui se passait vraiment
+Les deux passes précédentes (timeouts `withTimeout`, durcissement du
+middleware) traitaient des symptômes. La vraie cause est ailleurs, et
+elle n'a rien à voir avec une DB lente :
+
+`getDeal()` / `getListing()` enveloppent leur requête Prisma dans
+`unstable_cache(..., { revalidate: 3600 })`. Or **`unstable_cache`
+sérialise la valeur qu'il stocke** :
+
+- 1er appel (cache MISS) → la fonction renvoie ses objets tels quels,
+  `publishedAt` est un vrai `Date`, la page s'affiche.
+- appels suivants (cache HIT) → la valeur est relue depuis le store et
+  `publishedAt` est revenu en **chaîne ISO**.
+
+Le type TypeScript continue pourtant d'annoncer `Date` (Prisma type le
+`select`, `unstable_cache` propage ce type sans le toucher), donc
+`tsc` ne voit rien. Au runtime :
+
+```
+new Intl.DateTimeFormat("fr-FR").format(deal.publishedAt)
+  → RangeError: Invalid time value
+deal.updatedAt.getTime()
+  → TypeError: getTime is not a function
+```
+
+D'où le comportement observé en production : **une fiche s'affiche pour
+le premier visiteur, puis bascule sur `error.tsx` pour tous les suivants**
+jusqu'à la revalidation (1 h). Vu de l'extérieur ça ressemble à de
+l'intermittence aléatoire ; c'est en fait parfaitement déterministe.
+
+Pourquoi ça n'a jamais été reproduit en local : une seule requête sur une
+page = cache MISS = tout va bien. Il faut recharger deux fois.
+
+### Correctif
+- `src/lib/cache/dates.ts` — helper `asDate()` + explication du piège.
+- `getDeal` / `getDealMeta` / `getListing` / `getListingMeta` réhydratent
+  désormais `publishedAt`, `updatedAt`, `expiresAt` (et `bumpedAt` côté
+  annonce) avant de renvoyer.
+- `expiresAt` était aussi comparé à `new Date()` dans les
+  `generateMetadata` : sur une chaîne la comparaison est silencieusement
+  fausse, d'où réhydratation là aussi.
+
+### Validation
+Build de production, 12 requêtes successives sur une fiche deal et une
+fiche annonce (donc majorité de cache HIT) : **0 erreur serveur**. La
+même séquence avant correctif produisait une `RangeError` à chaque
+requête après la première.
+
+### Règle à retenir pour les prochaines passes
+Ne mettre dans `unstable_cache` que des données **déjà sérialisables**
+(nombres, chaînes, booléens). Si une date ou un `Decimal` doit
+transiter, la convertir explicitement au retour. `src/lib/stats.ts`
+applique cette discipline et documente la contrainte en tête de fichier.
+
 ## 2026-04-24 — Anti-récurrence crash digest (middleware + sections serveur)
 
 ### Pourquoi l'erreur revenait

@@ -22,6 +22,7 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { isRenderableImageUrl } from "@/lib/images";
 import { rethrowIfNextInternal } from "@/lib/next-errors";
 import { withTimeout } from "@/lib/async/with-timeout";
+import { asDate } from "@/lib/cache/dates";
 import {
   CONDITION_LABEL,
   formatPriceType,
@@ -44,6 +45,7 @@ import { ListingAuthorControls } from "@/components/listings/ListingAuthorContro
 import { ContactSellerForm } from "@/components/messages/ContactSellerForm";
 import { ReportDialog } from "@/components/reports/ReportDialog";
 import { ShareRow } from "@/components/shared/ShareRow";
+import { StickyActionBar } from "@/components/shared/StickyActionBar";
 import { getSiteUrl } from "@/lib/site-url";
 import {
   getListingCategoryBySlug,
@@ -105,8 +107,8 @@ const listingDetailSelect = {
   },
 } as const;
 
-function getListing(slug: string) {
-  return unstable_cache(
+async function getListing(slug: string) {
+  const listing = await unstable_cache(
     async () =>
       withTimeout(
         prisma.listing.findFirst({
@@ -123,10 +125,21 @@ function getListing(slug: string) {
     ["listing-detail", slug],
     { tags: [`listing:${slug}`], revalidate: 3600 },
   )();
+
+  if (!listing) return null;
+  // Obligatoire : en cache HIT ces champs sont des chaînes ISO alors que
+  // TypeScript les annonce comme `Date`. Voir `src/lib/cache/dates.ts`.
+  return {
+    ...listing,
+    publishedAt: asDate(listing.publishedAt),
+    updatedAt: asDate(listing.updatedAt),
+    expiresAt: asDate(listing.expiresAt),
+    bumpedAt: asDate(listing.bumpedAt),
+  };
 }
 
-function getListingMeta(slug: string) {
-  return unstable_cache(
+async function getListingMeta(slug: string) {
+  const listing = await unstable_cache(
     async () =>
       withTimeout(
         prisma.listing.findFirst({
@@ -153,6 +166,11 @@ function getListingMeta(slug: string) {
     ["listing-meta", slug],
     { tags: [`listing:${slug}`], revalidate: 3600 },
   )();
+
+  if (!listing) return null;
+  // `expiresAt` sert à une comparaison `<= new Date()` : sur une chaîne
+  // elle serait silencieusement fausse, donc on réhydrate aussi ici.
+  return { ...listing, expiresAt: asDate(listing.expiresAt) };
 }
 
 export async function generateMetadata(
@@ -400,7 +418,9 @@ export default async function ListingDetailPage(
   }
 
   return (
-    <main className="mx-auto max-w-md pb-16 animate-in fade-in duration-300 sm:max-w-2xl">
+    // `pb-36` sur mobile : réserve la hauteur de la barre de contact
+    // sticky + la BottomNav, sinon le bas de page passe dessous.
+    (<main className="mx-auto max-w-md pb-44 animate-in fade-in duration-300 sm:max-w-2xl sm:pb-16">
       {jsonLd ? (
         <script
           type="application/ld+json"
@@ -536,9 +556,10 @@ export default async function ListingDetailPage(
         />
       </section>
 
-      {/* Contact */}
+      {/* Contact — `id` surveillé par la barre sticky mobile : tant que
+          ce bloc est à l'écran, la barre reste masquée. */}
       {!isAuthor && (
-        <section className="mt-5 space-y-2 px-4 sm:px-0">
+        <section id="listing-contact" className="mt-5 space-y-2 px-4 sm:px-0">
           {listing.showPhone && listing.contactPhone && (
             <a
               href={`tel:${listing.contactPhone}`}
@@ -574,6 +595,48 @@ export default async function ListingDetailPage(
             </div>
           )}
         </section>
+      )}
+
+      {/* Barre de contact mobile (V2) : prix + action principale
+          toujours joignables pendant la lecture de la description et des
+          caractéristiques. Pattern Leboncoin.
+
+          Le bouton « Contacter » est une ancre vers le bloc contact
+          plutôt qu'un duplicata du formulaire : on ne peut pas cloner un
+          champ de saisie sans casser le focus et l'autofill. Cliquer
+          ramène au formulaire — qui, en revenant à l'écran, fait
+          disparaître la barre. */}
+      {!isAuthor && (
+        <StickyActionBar watchElementId="listing-contact">
+          <span className="min-w-0 flex-1 truncate font-display text-lg font-extrabold text-peyi-orange-700">
+            {priceLabel}
+          </span>
+          {listing.showPhone && listing.contactPhone ? (
+            <a
+              href={`tel:${listing.contactPhone}`}
+              className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-peyi-green-500 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-peyi-green-600"
+            >
+              <Phone className="h-4 w-4" aria-hidden />
+              Appeler
+            </a>
+          ) : listing.allowMessages && currentUser ? (
+            <a
+              href="#listing-contact"
+              className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-peyi-orange-500 px-5 text-sm font-semibold text-white shadow-brand transition hover:bg-peyi-orange-600"
+            >
+              <MessageSquare className="h-4 w-4" aria-hidden />
+              Contacter
+            </a>
+          ) : listing.allowMessages ? (
+            <Link
+              href={`/connexion?next=/annonces/${listing.slug}`}
+              className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-peyi-orange-500 px-5 text-sm font-semibold text-white shadow-brand transition hover:bg-peyi-orange-600"
+            >
+              <MessageSquare className="h-4 w-4" aria-hidden />
+              Se connecter
+            </Link>
+          ) : null}
+        </StickyActionBar>
       )}
 
       {/* Stats */}
@@ -674,7 +737,7 @@ export default async function ListingDetailPage(
       <p className="mt-6 px-4 text-center text-xs text-muted-foreground sm:px-0">
         Cette annonce expire {formatRelativeTime(listing.expiresAt)}.
       </p>
-    </main>
+    </main>)
   );
 }
 

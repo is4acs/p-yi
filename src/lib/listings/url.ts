@@ -215,6 +215,29 @@ type Params = Partial<{
   filters: Partial<ListingsFilters> | null;
 }>;
 
+/**
+ * Sérialise les filtres attributaires vers leurs clés d'URL. C'est la
+ * réciproque exacte de `parseFilters` — les deux doivent rester en
+ * miroir, d'où le partage de cette table par `buildListingsUrl` et par
+ * le feed continu (qui rejoue les filtres à chaque page suivante).
+ */
+export function filtersToParams(
+  f: Partial<ListingsFilters> | null | undefined,
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (!f) return out;
+  if (f.priceMin != null) out.prixMin = String(f.priceMin);
+  if (f.priceMax != null) out.prixMax = String(f.priceMax);
+  if (f.yearMin != null) out.anneeMin = String(f.yearMin);
+  if (f.kmMax != null) out.kmMax = String(f.kmMax);
+  if (f.surfaceMin != null) out.surfaceMin = String(f.surfaceMin);
+  if (f.rooms != null) out.pieces = String(f.rooms);
+  if (f.fuel) out.carburant = f.fuel;
+  if (f.brand) out.marque = f.brand;
+  if (f.contract) out.contrat = f.contract;
+  return out;
+}
+
 export function buildListingsUrl(params: Params): string {
   const sp = new URLSearchParams();
   if (params.sort && params.sort !== DEFAULT_SORT) sp.set("sort", params.sort);
@@ -224,17 +247,8 @@ export function buildListingsUrl(params: Params): string {
   if (params.page && params.page > 1) sp.set("page", String(params.page));
   if (params.q) sp.set("q", params.q);
 
-  const f = params.filters;
-  if (f) {
-    if (f.priceMin != null) sp.set("prixMin", String(f.priceMin));
-    if (f.priceMax != null) sp.set("prixMax", String(f.priceMax));
-    if (f.yearMin != null) sp.set("anneeMin", String(f.yearMin));
-    if (f.kmMax != null) sp.set("kmMax", String(f.kmMax));
-    if (f.surfaceMin != null) sp.set("surfaceMin", String(f.surfaceMin));
-    if (f.rooms != null) sp.set("pieces", String(f.rooms));
-    if (f.fuel) sp.set("carburant", f.fuel);
-    if (f.brand) sp.set("marque", f.brand);
-    if (f.contract) sp.set("contrat", f.contract);
+  for (const [key, value] of Object.entries(filtersToParams(params.filters))) {
+    sp.set(key, value);
   }
 
   const qs = sp.toString();
