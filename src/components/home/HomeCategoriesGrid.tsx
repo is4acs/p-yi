@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { fetchListingCategoriesWithCounts } from "@/lib/stats";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { buildListingsUrl } from "@/lib/listings/url";
 
@@ -61,6 +61,10 @@ function formatCount(n: number): string {
 }
 
 export async function HomeCategoriesGrid() {
+  // Catégories + compteurs cachés 5 min (cf. `src/lib/stats.ts`) —
+  // données globales, une requête par fenêtre de cache au lieu d'une
+  // par page vue. Pas de `take: 8` côté DB : on trie par volume avant
+  // de slicer, et le seed n'a qu'une douzaine de catégories éligibles.
   let categories: Array<{
     id: string;
     slug: string;
@@ -68,34 +72,14 @@ export async function HomeCategoriesGrid() {
     icon: string | null;
     sortOrder: number;
   }> = [];
-  let counts: Array<{ categoryId: string; _count: { _all: number } }> = [];
+  let counts: Array<{ categoryId: string; count: number }> = [];
 
   try {
-    [categories, counts] = await withTimeout(
-      Promise.all([
-        // Pas de `take: 8` ici : on fetch toutes les catégories éligibles
-        // pour pouvoir les trier par volume avant de slicer. Le seed n'a
-        // qu'une douzaine de catégories LISTING/BOTH actives — pas de
-        // souci de perf.
-        prisma.category.findMany({
-          where: { type: { in: ["LISTING", "BOTH"] }, isActive: true },
-          select: {
-            id: true,
-            slug: true,
-            name: true,
-            icon: true,
-            sortOrder: true,
-          },
-        }),
-        prisma.listing.groupBy({
-          by: ["categoryId"],
-          where: { status: "PUBLISHED", expiresAt: { gt: new Date() } },
-          _count: { _all: true },
-        }),
-      ]),
+    ({ categories, counts } = await withTimeout(
+      fetchListingCategoriesWithCounts(),
       GRID_QUERY_TIMEOUT_MS,
       "home/categories-grid",
-    );
+    ));
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error("[home/categories] query failed", err);
@@ -105,7 +89,7 @@ export async function HomeCategoriesGrid() {
   if (categories.length === 0) return null;
 
   const countByCategoryId = new Map<string, number>(
-    counts.map((c) => [c.categoryId, c._count._all]),
+    counts.map((c) => [c.categoryId, c.count]),
   );
 
   // Tri data-driven : volume d'annonces actives décroissant,

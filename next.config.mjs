@@ -122,7 +122,19 @@ const securityHeaders = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Pas de header `X-Powered-By: Next.js` en prod — inutile pour les
+  // clients, et un peu moins d'info gratuite pour le fingerprinting.
+  poweredByHeader: false,
   images: {
+    // AVIF d'abord (20-30% plus léger que WebP sur photos), WebP en
+    // fallback pour les navigateurs sans support AVIF. Next négocie
+    // via l'header `Accept`.
+    formats: ["image/avif", "image/webp"],
+    // TTL du cache de l'optimiseur d'images. Les uploads Supabase ont
+    // des noms uniques (`userId/timestamp-random.ext` — cf.
+    // `src/lib/storage/signed-upload.ts`), donc une URL donnée est
+    // immuable : 31 jours de cache sans risque de servir du stale.
+    minimumCacheTTL: 2678400,
     remotePatterns: [
       {
         protocol: "https",
@@ -136,6 +148,42 @@ const nextConfig = {
       {
         source: "/:path*",
         headers: securityHeaders,
+      },
+      {
+        // Le service worker doit être revalidé à chaque chargement :
+        // c'est LUI qui contrôle l'invalidation des caches applicatifs
+        // (CACHE_VERSION). Un sw.js servi depuis un cache HTTP périmé
+        // retarderait tous les déploiements côté clients installés.
+        source: "/sw.js",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=0, must-revalidate",
+          },
+        ],
+      },
+      {
+        // Assets statiques versionnés à la main (logos magasins, sprite
+        // d'icônes, illustrations). Pas fingerprintés par le build, donc
+        // on reste sur 1 jour + SWR 7 jours : si on remplace un fichier,
+        // les clients convergent en 24h max sans re-télécharger à
+        // chaque navigation entre-temps.
+        source: "/:prefix(logos|images)/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=86400, stale-while-revalidate=604800",
+          },
+        ],
+      },
+      {
+        source: "/icons.svg",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=86400, stale-while-revalidate=604800",
+          },
+        ],
       },
     ];
   },

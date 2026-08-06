@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
-import { prisma } from "@/lib/prisma";
+import { fetchDealCategoriesWithCounts } from "@/lib/stats";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { buildDealsUrl } from "@/lib/deals/url";
 
@@ -50,6 +50,9 @@ type Props = {
 };
 
 export async function DealCategoryStrip({ selectedCategory = null }: Props) {
+  // Catégories + compteurs cachés 5 min (cf. `src/lib/stats.ts`) —
+  // données globales, une requête par fenêtre de cache au lieu d'une
+  // par page vue de `/bons-plans`.
   let categories: Array<{
     id: string;
     slug: string;
@@ -57,35 +60,14 @@ export async function DealCategoryStrip({ selectedCategory = null }: Props) {
     icon: string | null;
     sortOrder: number;
   }> = [];
-  let counts: Array<{ categoryId: string; _count: { _all: number } }> = [];
+  let counts: Array<{ categoryId: string; count: number }> = [];
 
   try {
-    [categories, counts] = await withTimeout(
-      Promise.all([
-        prisma.category.findMany({
-          where: { type: { in: ["DEAL", "BOTH"] }, isActive: true },
-          select: {
-            id: true,
-            slug: true,
-            name: true,
-            icon: true,
-            sortOrder: true,
-          },
-        }),
-        prisma.deal.groupBy({
-          by: ["categoryId"],
-          where: {
-            status: "PUBLISHED",
-            // Deal expiré = plus "un plan actif" → exclu du compteur.
-            // `expiresAt: null` (event-like sans date fin) reste compté.
-            OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-          },
-          _count: { _all: true },
-        }),
-      ]),
+    ({ categories, counts } = await withTimeout(
+      fetchDealCategoriesWithCounts(),
       STRIP_QUERY_TIMEOUT_MS,
       "deals/category-strip",
-    );
+    ));
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error("[deals/category-strip] query failed", err);
@@ -114,9 +96,9 @@ export async function DealCategoryStrip({ selectedCategory = null }: Props) {
   }
 
   const countByCategoryId = new Map<string, number>(
-    counts.map((c) => [c.categoryId, c._count._all]),
+    counts.map((c) => [c.categoryId, c.count]),
   );
-  const total = counts.reduce((sum, c) => sum + c._count._all, 0);
+  const total = counts.reduce((sum, c) => sum + c.count, 0);
 
   // Tri volume desc, tiebreak sortOrder (cohérent avec HomeCategoriesGrid).
   const sorted = [...categories].sort((a, b) => {

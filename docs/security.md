@@ -3,7 +3,7 @@
 > Comment on gère les vulnérabilités (`npm audit`), quelles CVE sont
 > actuellement acceptées, et comment elles seront résolues.
 
-Dernier audit : **2026-07-20**.
+Dernier audit : **2026-08-06**.
 
 ---
 
@@ -12,8 +12,8 @@ Dernier audit : **2026-07-20**.
 ### 1.1 Quand on audit
 
 - **À chaque PR** : le script `preflight` fait tourner
-  `npm audit --audit-level=critical` (bloque le push si une CVE critical
-  est détectée).
+  `npm audit --audit-level=high` (bloque le push si une CVE high ou
+  critical est détectée).
 - **Une fois par trimestre** : audit complet manuel (`npm audit` +
   `npm outdated` + check des packages deprecated).
 - **Sur incident** : si une CVE critique est publiée sur une dep
@@ -28,9 +28,10 @@ Dernier audit : **2026-07-20**.
 | `moderate`   | Évalué au cas par cas (risque réel vs coût fix).     |
 | `low` / `info` | Fix en batch au prochain audit trimestriel.        |
 
-On refuse de faire `--audit-level=high` dans le preflight tant que
-les CVE Next.js listées ci-dessous ne sont pas résolues (sinon on
-se bloque inutilement).
+Depuis l'audit 2026-08-06 (0 vulnérabilité), le preflight tourne en
+`--audit-level=high` : toute nouvelle high bloque le push. Si une high
+transitive sans fix apparaît un jour, la documenter ici PUIS l'accepter
+temporairement en repassant le seuil à `critical` dans le même commit.
 
 ### 1.3 Durcissement possible (pas encore fait)
 
@@ -44,24 +45,23 @@ se bloque inutilement).
 
 ## 2. CVE actuellement acceptées
 
-### 2.0 postcss vendored par Next.js — acceptée (moderate)
+**Aucune** depuis l'audit 2026-08-06 — `npm audit` retourne
+0 vulnérabilité.
 
-| CVE | Titre | Sévérité | Statut |
-| --- | ----- | -------- | ------ |
-| [GHSA-qx2v-qp2m-jg93](https://github.com/advisories/GHSA-qx2v-qp2m-jg93) | XSS via `</style>` non échappé dans la sortie stringify | moderate | acceptée |
+### 2.0 Overrides npm en place (à surveiller aux bumps de Next)
 
-**Contexte** : Next.js embarque sa propre copie de `postcss` (8.4.31,
-pinnée par Next — `node_modules/next/node_modules/postcss`). Notre
-copie racine est déjà en 8.5.10 (patchée). Le "fix" proposé par
-`npm audit fix --force` (downgrade vers next@9) est un faux positif
-de résolution.
+Les deux dépendances que Next 15 pinne en version vulnérable sont
+forcées via le bloc `overrides` de `package.json` :
 
-**Risque réel** : quasi nul. postcss n'est utilisé par Next qu'au
-build, sur notre propre CSS (input de confiance). L'advisory concerne
-la stringification de CSS non fiable, un scénario qui n'existe pas ici.
+| Package | Pinnée par Next | Forcée à | Pourquoi |
+| ------- | --------------- | -------- | -------- |
+| `postcss` (vendored) | 8.4.31 | ^8.5.26 | 4 advisories (XSS stringify, path traversal sourceMappingURL) — bump mineur compatible |
+| `sharp` | 0.34.5 | ^0.35.3 | CVE libvips héritées (CVE-2026-33327/33328/35590/35591) — sharp est utilisé AU RUNTIME par l'optimiseur d'images |
 
-**Plan** : disparaîtra au prochain bump de Next qui met à jour sa
-dépendance vendored. Re-check à chaque audit trimestriel.
+Validation faite au moment de l'override : pipeline sharp identique à
+celui de `next/image` (rotate + resize + webp + avif) testé OK, build
+complet OK. **Au prochain bump majeur de Next (16+), vérifier si ces
+overrides sont devenus inutiles et les retirer.**
 
 ### 2.1 Chaîne Next.js — historique
 
@@ -103,6 +103,44 @@ générale :
 ---
 
 ## 3. Historique des audits
+
+### 2026-08-06 — passe production-ready
+
+**État avant** :
+- 4 vulnérabilités high :
+  - `next` 15.5.20 — 5 advisories (cache confusion
+    [GHSA-4633-3j49-mh5q](https://github.com/advisories/GHSA-4633-3j49-mh5q),
+    Server Action payload non borné en Edge
+    [GHSA-4c39-4ccg-62r3](https://github.com/advisories/GHSA-4c39-4ccg-62r3),
+    SSRF via rewrites
+    [GHSA-p9j2-gv94-2wf4](https://github.com/advisories/GHSA-p9j2-gv94-2wf4),
+    DoS image SVG
+    [GHSA-q8wf-6r8g-63ch](https://github.com/advisories/GHSA-q8wf-6r8g-63ch),
+    disclosure d'endpoints Server Functions
+    [GHSA-955p-x3mx-jcvp](https://github.com/advisories/GHSA-955p-x3mx-jcvp)).
+  - `postcss` ≤8.5.22 (racine + vendored Next) — sévérité relevée à
+    high par les advisories sourceMappingURL
+    ([GHSA-6g55-p6wh-862q](https://github.com/advisories/GHSA-6g55-p6wh-862q),
+    [GHSA-r28c-9q8g-f849](https://github.com/advisories/GHSA-r28c-9q8g-f849),
+    [GHSA-fxqj-rqcc-2cmp](https://github.com/advisories/GHSA-fxqj-rqcc-2cmp)).
+  - `sharp` <0.35.0 (dep runtime de Next) — CVE libvips
+    ([GHSA-f88m-g3jw-g9cj](https://github.com/advisories/GHSA-f88m-g3jw-g9cj)).
+
+**Actions** :
+- ✅ `npm audit fix` — `next` 15.5.20 → **15.5.23** (patch), `postcss`
+  racine → 8.5.26.
+- ✅ Bloc `overrides` dans `package.json` pour forcer les deps pinnées
+  par Next : `postcss` vendored → 8.5.26, `sharp` → 0.35.3 (voir §2.0).
+  Le "fix" proposé par `npm audit fix --force` (next@16, breaking) a
+  été écarté — l'override couvre les mêmes CVE sans migration majeure.
+- ✅ Validation : pipeline sharp (rotate/resize/webp/avif) testé,
+  type-check + lint + build + smoke test complet en mode dégradé.
+- ✅ Preflight durci : `npm audit --audit-level=high` (avant :
+  `critical` seulement) — possible maintenant que la liste des CVE
+  acceptées est vide.
+
+**État après** :
+- **0 vulnérabilité** (`npm audit` clean).
 
 ### 2026-07-20 — audit trimestriel
 

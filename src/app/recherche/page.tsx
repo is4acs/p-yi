@@ -63,13 +63,18 @@ export default async function RecherchePage(props: {
 
   const currentUser = await getCurrentUser();
 
-  const [{ deals }, { listings }] = await Promise.all([
+  // `pageSize: TOP_N` + `includeTotal: false` : la page n'affiche que
+  // 6 résultats par pôle et aucune pagination — inutile de fetch 20
+  // cartes et 2 counts pour les jeter.
+  const [{ deals: topDeals }, { listings: topListings }] = await Promise.all([
     fetchDealsPage({
       sort: "hot",
       page: 1,
       category: null,
       city: null,
       q,
+      pageSize: TOP_N,
+      includeTotal: false,
     }),
     fetchListingsPage({
       sort: "new",
@@ -78,11 +83,10 @@ export default async function RecherchePage(props: {
       city: null,
       type: null,
       q,
+      pageSize: TOP_N,
+      includeTotal: false,
     }),
   ]);
-
-  const topDeals = deals.slice(0, TOP_N);
-  const topListings = listings.slice(0, TOP_N);
   const dealIds = topDeals.map((d) => d.id);
   const listingIds = topListings.map((l) => l.id);
 

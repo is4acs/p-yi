@@ -144,6 +144,8 @@ export async function fetchListingsPage({
   type,
   q,
   filters,
+  pageSize = PAGE_SIZE,
+  includeTotal = true,
 }: {
   sort: ListingsSort;
   page: number;
@@ -152,9 +154,16 @@ export async function fetchListingsPage({
   type: ListingTypeSlug | null;
   q: string | null;
   filters?: Partial<ListingsFilters>;
+  /** Nombre de cartes par page. La home passe 6 (elle n'affiche que
+   *  6 cartes) au lieu de fetch 20 puis slicer côté JS. */
+  pageSize?: number;
+  /** `false` pour sauter le `count()` quand l'appelant n'affiche pas
+   *  de pagination (home) — `total` vaut alors le nombre de cartes
+   *  retournées, pas le total réel. */
+  includeTotal?: boolean;
 }) {
   const where = buildWhere({ category, city, type, q, attrs: filters });
-  const skip = (page - 1) * PAGE_SIZE;
+  const skip = (page - 1) * pageSize;
 
   // Boosted / urgent listings always on top; then the chosen sort.
   const orderBy: Prisma.ListingOrderByWithRelationInput[] =
@@ -173,13 +182,13 @@ export async function fetchListingsPage({
       where,
       orderBy,
       skip,
-      take: PAGE_SIZE,
+      take: pageSize,
       select: listingCardSelect,
     }),
-    prisma.listing.count({ where }),
+    includeTotal ? prisma.listing.count({ where }) : Promise.resolve(0),
   ]);
 
-  return { listings, total };
+  return { listings, total: includeTotal ? total : listings.length };
 }
 
 export function formatPriceType(

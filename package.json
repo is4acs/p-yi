@@ -9,7 +9,7 @@
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "preflight": "npm run type-check && npm run lint && npm run build && npm run audit:ci",
-    "audit:ci": "npm audit --audit-level=critical",
+    "audit:ci": "npm audit --audit-level=high",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
@@ -28,6 +28,12 @@
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "^8.5.26",
+      "sharp": "^0.35.3"
+    }
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

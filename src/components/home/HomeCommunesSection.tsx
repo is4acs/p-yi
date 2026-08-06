@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { prisma } from "@/lib/prisma";
+import { fetchTopCommunes } from "@/lib/stats";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { buildListingsUrl } from "@/lib/listings/url";
 import { Icon } from "@/components/ui/Icon";
@@ -23,54 +23,20 @@ import { Icon } from "@/components/ui/Icon";
  */
 
 export async function HomeCommunesSection() {
-  // Top 6 communes par volume d'annonces actives. On fait un groupBy
-  // direct sur Listing : c'est plus simple que de passer par la
-  // relation City.listings, et ça profite de l'index cityId+status.
-  const counts = await withTimeout(
-    prisma.listing.groupBy({
-      by: ["cityId"],
-      where: { status: "PUBLISHED", expiresAt: { gt: new Date() } },
-      _count: { _all: true },
-      orderBy: { _count: { cityId: "desc" } },
-      take: 6,
-    }),
+  // Top 6 communes par volume d'annonces actives — groupBy + lookup
+  // cachés 5 min (cf. `src/lib/stats.ts`) : données globales, une
+  // requête par fenêtre de cache au lieu de deux par page vue.
+  const rows = await withTimeout(
+    fetchTopCommunes(),
     3_500,
     "home/communes-counts",
-  )
-    .catch((err) => {
-      // eslint-disable-next-line no-console
-      console.error("[home/communes] query failed", err);
-      return null;
-    });
+  ).catch((err) => {
+    // eslint-disable-next-line no-console
+    console.error("[home/communes] query failed", err);
+    return null;
+  });
 
-  if (!counts || counts.length === 0) return null;
-
-  const cityIds = counts.map((c) => c.cityId);
-  const cities = await withTimeout(
-    prisma.city.findMany({
-      where: { id: { in: cityIds } },
-      select: { id: true, slug: true, name: true },
-    }),
-    3_500,
-    "home/communes-cities",
-  )
-    .catch((err) => {
-      // eslint-disable-next-line no-console
-      console.error("[home/communes] city lookup failed", err);
-      return null;
-    });
-
-  if (!cities) return null;
-  const cityById = new Map(cities.map((c) => [c.id, c]));
-
-  // On préserve l'ordre de `counts` (desc par volume) en le mappant.
-  const rows = counts
-    .map((c) => ({ city: cityById.get(c.cityId), count: c._count._all }))
-    .filter((r): r is { city: { id: string; slug: string; name: string }; count: number } =>
-      Boolean(r.city),
-    );
-
-  if (rows.length === 0) return null;
+  if (!rows || rows.length === 0) return null;
 
   return (
     <section className="mt-10 px-4 sm:px-0">

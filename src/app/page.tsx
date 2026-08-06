@@ -42,21 +42,32 @@ type Props = {
 
 export default async function HomePage(props: Props) {
   const searchParams = await props.searchParams;
-  const [{ deals }, { listings }, currentUser] = await Promise.all([
-    fetchDealsPage({ sort: "hot", page: 1, category: null, city: null, q: null }),
-    fetchListingsPage({
-      sort: "new",
-      page: 1,
-      category: null,
-      city: null,
-      type: null,
-      q: null,
-    }),
-    getCurrentUser(),
-  ]);
-
-  const topDeals = deals.slice(0, HOME_DEALS_COUNT);
-  const topListings = listings.slice(0, HOME_LISTINGS_COUNT);
+  // `pageSize` limité au nombre de cartes réellement affichées et
+  // `includeTotal: false` (pas de pagination sur la home) — on ne paie
+  // ni les 14 cartes jetées par l'ancien `.slice(0, 6)`, ni les counts.
+  const [{ deals: topDeals }, { listings: topListings }, currentUser] =
+    await Promise.all([
+      fetchDealsPage({
+        sort: "hot",
+        page: 1,
+        category: null,
+        city: null,
+        q: null,
+        pageSize: HOME_DEALS_COUNT,
+        includeTotal: false,
+      }),
+      fetchListingsPage({
+        sort: "new",
+        page: 1,
+        category: null,
+        city: null,
+        type: null,
+        q: null,
+        pageSize: HOME_LISTINGS_COUNT,
+        includeTotal: false,
+      }),
+      getCurrentUser(),
+    ]);
   const dealIds = topDeals.map((d) => d.id);
   const listingIds = topListings.map((l) => l.id);
   const [voteMap, favoriteSet, listingFavoriteSet] = await Promise.all([

@@ -122,15 +122,24 @@ export async function fetchDealsPage({
   category,
   city,
   q,
+  pageSize = PAGE_SIZE,
+  includeTotal = true,
 }: {
   sort: DealsSort;
   page: number;
   category: string | null;
   city: string | null;
   q: string | null;
+  /** Nombre de cartes par page. La home passe 6 (elle n'affiche que
+   *  6 cartes) au lieu de fetch 20 puis slicer côté JS. */
+  pageSize?: number;
+  /** `false` pour sauter le `count()` quand l'appelant n'affiche pas
+   *  de pagination (home) — `total` vaut alors le nombre de cartes
+   *  retournées, pas le total réel. */
+  includeTotal?: boolean;
 }) {
   const where = buildWhere({ category, city, q });
-  const skip = (page - 1) * PAGE_SIZE;
+  const skip = (page - 1) * pageSize;
 
   if (sort === "new") {
     const [deals, total] = await Promise.all([
@@ -138,12 +147,12 @@ export async function fetchDealsPage({
         where,
         orderBy: [{ isPinned: "desc" }, { publishedAt: "desc" }],
         skip,
-        take: PAGE_SIZE,
+        take: pageSize,
         select: dealCardSelect,
       }),
-      prisma.deal.count({ where }),
+      includeTotal ? prisma.deal.count({ where }) : Promise.resolve(0),
     ]);
-    return { deals, total };
+    return { deals, total: includeTotal ? total : deals.length };
   }
 
   if (sort === "top-week") {
@@ -154,32 +163,52 @@ export async function fetchDealsPage({
         where: weekWhere,
         orderBy: [{ isPinned: "desc" }, { temperature: "desc" }],
         skip,
-        take: PAGE_SIZE,
+        take: pageSize,
         select: dealCardSelect,
       }),
-      prisma.deal.count({ where: weekWhere }),
+      includeTotal ? prisma.deal.count({ where: weekWhere }) : Promise.resolve(0),
     ]);
-    return { deals, total };
+    return { deals, total: includeTotal ? total : deals.length };
   }
 
-  // sort === "hot"
+  // sort === "hot" — ranking en deux phases pour ne pas payer le
+  // payload complet (jointures author/city/category/store/merchant)
+  // sur les 500 deals du pool à CHAQUE page vue :
+  //   1. On fetch uniquement les colonnes de scoring (id, temperature,
+  //      publishedAt) sur tout le pool — quelques Ko au lieu de
+  //      plusieurs centaines.
+  //   2. On score/trie en JS, on slice la page demandée, et on ne
+  //      fetch les cartes complètes QUE pour ces ids-là.
   const windowStart = new Date(Date.now() - HOT_WINDOW_DAYS * 86_400_000);
   const pool = await prisma.deal.findMany({
     where: { ...where, publishedAt: { gte: windowStart } },
     orderBy: { publishedAt: "desc" },
     take: HOT_POOL_CAP,
-    select: dealCardSelect,
+    select: { id: true, temperature: true, publishedAt: true },
   });
 
   const now = Date.now();
   const ranked = pool
-    .map((d) => ({ d, score: hotScore(d.temperature, d.publishedAt, now) }))
+    .map((d) => ({ id: d.id, score: hotScore(d.temperature, d.publishedAt, now) }))
     // pinned deals always on top regardless of score (not selected here,
     // so we approximate by keeping the DB's order stability)
     .sort((a, b) => b.score - a.score);
 
-  return {
-    deals: ranked.slice(skip, skip + PAGE_SIZE).map((x) => x.d),
-    total: ranked.length,
-  };
+  const pageIds = ranked.slice(skip, skip + pageSize).map((x) => x.id);
+  if (pageIds.length === 0) {
+    return { deals: [], total: ranked.length };
+  }
+
+  const pageDeals = await prisma.deal.findMany({
+    where: { id: { in: pageIds } },
+    select: dealCardSelect,
+  });
+
+  // `IN (…)` ne préserve pas l'ordre — on remet celui du ranking.
+  const byId = new Map(pageDeals.map((d) => [d.id, d]));
+  const deals = pageIds
+    .map((id) => byId.get(id))
+    .filter((d): d is NonNullable<typeof d> => Boolean(d));
+
+  return { deals, total: ranked.length };
 }

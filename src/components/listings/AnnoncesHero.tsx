@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 
-import { prisma } from "@/lib/prisma";
+import { fetchListingsHeroKpis } from "@/lib/stats";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { Button } from "@/components/ui/button";
 import { HighlightJaune } from "@/components/ui/highlight-jaune";
-import { ListingStatus } from "@prisma/client";
 
 /**
  * AnnoncesHero — section éditoriale en tête de `/annonces`.
@@ -40,30 +39,17 @@ type Props = {
 const HERO_QUERY_TIMEOUT_MS = 3_500;
 
 export async function AnnoncesHero({ total }: Props) {
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-
+  // KPIs globaux cachés 5 min (cf. `src/lib/stats.ts`) — pas de
+  // requête Prisma par page vue, une seule par fenêtre de cache.
   let freshThisWeek = 0;
   let activeMembers = 0;
 
   try {
-    const [fresh, active] = await withTimeout(
-      Promise.all([
-        prisma.listing.count({
-          where: {
-            status: ListingStatus.PUBLISHED,
-            publishedAt: { gte: sevenDaysAgo },
-          },
-        }),
-        prisma.user.count({
-          where: { lastActiveAt: { gte: thirtyDaysAgo } },
-        }),
-      ]),
+    ({ freshThisWeek, activeMembers } = await withTimeout(
+      fetchListingsHeroKpis(),
       HERO_QUERY_TIMEOUT_MS,
       "listings/hero-kpis",
-    );
-    freshThisWeek = fresh;
-    activeMembers = active;
+    ));
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error("[annonces/hero] KPI query failed", err);

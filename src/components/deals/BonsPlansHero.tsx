@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { fetchDealsHeroKpis } from "@/lib/stats";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { HighlightJaune } from "@/components/ui/highlight-jaune";
 
@@ -36,38 +36,18 @@ function formatKpi(n: number): string {
 const HERO_QUERY_TIMEOUT_MS = 3_500;
 
 export async function BonsPlansHero() {
-  const now = new Date();
-  const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-
+  // KPIs globaux cachés 5 min (cf. `src/lib/stats.ts`) — pas de
+  // requête Prisma par page vue, une seule par fenêtre de cache.
   let dealsThisMonth = 0;
   let hotThisWeek = 0;
   let activeMembers = 0;
 
   try {
-    [dealsThisMonth, hotThisWeek, activeMembers] = await withTimeout(
-      Promise.all([
-        prisma.deal.count({
-          where: {
-            status: "PUBLISHED",
-            publishedAt: { gte: firstOfMonth },
-          },
-        }),
-        prisma.deal.count({
-          where: {
-            status: "PUBLISHED",
-            temperature: { gte: 100 },
-            publishedAt: { gte: sevenDaysAgo },
-          },
-        }),
-        prisma.user.count({
-          where: { lastActiveAt: { gte: thirtyDaysAgo } },
-        }),
-      ]),
+    ({ dealsThisMonth, hotThisWeek, activeMembers } = await withTimeout(
+      fetchDealsHeroKpis(),
       HERO_QUERY_TIMEOUT_MS,
       "deals/hero-kpis",
-    );
+    ));
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error("[deals/hero] KPI query failed", err);
