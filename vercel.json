@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "crons": [
     {
-      "path": "/api/cron/expire-listings",
+      "path": "/api/cron/expire-content",
       "schedule": "0 3 * * *"
     },
     {

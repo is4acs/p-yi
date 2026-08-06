@@ -23,6 +23,7 @@
     "ingest:backfill": "tsx scripts/ingest/index.ts --spread 45",
     "promote-super-admin": "tsx scripts/promote-super-admin.ts",
     "delete-user": "tsx scripts/delete-user.ts",
+    "purge-expired-deals": "tsx scripts/purge-expired-deals.ts",
     "favicon:generate": "tsx scripts/generate-favicon.ts",
     "postinstall": "prisma generate"
   },

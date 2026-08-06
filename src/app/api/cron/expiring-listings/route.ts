@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/log";
-import { env } from "@/lib/env";
+import { isCronAuthorized } from "@/lib/cron/auth";
 import { dispatchNotification } from "@/lib/notifications/dispatch";
 import { NotificationType } from "@prisma/client";
 
@@ -31,17 +31,8 @@ export const dynamic = "force-dynamic";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function isAuthorized(req: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) {
-    if (env.NODE_ENV !== "production") return true;
-    return false;
-  }
-  return req.headers.get("authorization") === `Bearer ${secret}`;
-}
-
 export async function GET(req: Request) {
-  if (!isAuthorized(req)) {
+  if (!isCronAuthorized(req)) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 

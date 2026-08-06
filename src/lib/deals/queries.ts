@@ -90,21 +90,28 @@ type Filters = {
 };
 
 function buildWhere({ category, city, q }: Filters): Prisma.DealWhereInput {
-  const search = q
-    ? ({
+  // Les deux conditions ci-dessous portent un `OR` chacune. Elles
+  // DOIVENT passer par `AND` : en les posant à plat dans le même objet,
+  // le `OR` de la recherche écrasait celui de l'expiration (une clé JS
+  // ne peut exister qu'une fois) et les bons plans dépassés
+  // ressortaient dès qu'on tapait une requête — cf. /recherche.
+  const notExpired: Prisma.DealWhereInput = {
+    OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+  };
+  const search: Prisma.DealWhereInput | null = q
+    ? {
         OR: [
           { title: { contains: q, mode: "insensitive" } },
           { description: { contains: q, mode: "insensitive" } },
         ],
-      } satisfies Prisma.DealWhereInput)
+      }
     : null;
 
   return {
     status: DealStatus.PUBLISHED,
-    OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+    AND: search ? [notExpired, search] : [notExpired],
     ...(category ? { category: { slug: category } } : {}),
     ...(city ? { city: { slug: city } } : {}),
-    ...(search ?? {}),
   };
 }
 

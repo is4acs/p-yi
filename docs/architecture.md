@@ -385,7 +385,60 @@ le volume justifie le coût.
 - **Stockage images CDN** → Cloudflare R2 en alternative à Supabase
   Storage (env vars réservées)
 - **Affiliation** → Amazon Partners + Awin (env vars réservées)
-- **Jobs cron** → Vercel Cron pour expirer les bons plans, rappels
-  de messagerie inactifs, etc. (`CRON_SECRET` env var réservée)
+- **Jobs cron** → rappels de messagerie inactifs, relance des paniers
+  d'alertes (le cycle de vie expiration/purge est lui déjà en place,
+  cf. § 13)
 - **Monitoring erreurs** → Sentry quand le volume justifie
 - **A/B testing** → pas prévu avant 10k MAU
+
+---
+
+## 13. Jobs cron (Vercel Cron)
+
+Déclarés dans `vercel.json`, tous protégés par le header
+`Authorization: Bearer <CRON_SECRET>` — vérification unique dans
+`src/lib/cron/auth.ts` (fail-closed en production, permissif en dev
+pour tester au `curl`).
+
+| Handler | Schedule (UTC) | Rôle |
+| --- | --- | --- |
+| `/api/cron/expire-content` | `0 3 * * *` | Annonces + bons plans dépassés → `status=EXPIRED`, puis purge des bons plans au-delà de la rétention |
+| `/api/cron/expiring-listings` | `10 3 * * *` | Notifie le vendeur 3 jours avant expiration |
+
+Deux jobs et pas trois : **le plan Vercel Hobby limite un projet à 2
+crons**. C'est pour ça que l'expiration des annonces et celle des bons
+plans partagent le même handler (`expire-content`, qui remplace
+l'ancien `expire-listings`). En passant sur un plan payant, on peut les
+resplitter sans toucher à la logique — elle vit dans les libs.
+
+### Cycle de vie d'un bon plan dépassé
+
+Les listes filtrent `expiresAt > now()`, mais tant que `status` reste
+`PUBLISHED`, un bon plan périmé continue d'exister partout où l'on
+filtre sur le statut seul : compteurs du hero, chips catégories,
+favoris, badges de gamification, admin. D'où l'impression d'offres
+« masquées mais encore là ».
+
+`expire-content` règle ça en deux temps (logique partagée dans
+`src/lib/deals/expiry.ts`) :
+
+1. **Marquage** — `PUBLISHED` + `expiresAt` passé → `EXPIRED`. Le bon
+   plan sort immédiatement de tous les code-paths.
+2. **Purge** — après `EXPIRED_DEAL_RETENTION_DAYS` jours (7 par
+   défaut), suppression définitive de la ligne (cascade Prisma sur
+   images, votes, commentaires, favoris, clics, signalements) et
+   nettoyage des fichiers du bucket `deals`. La fenêtre de rétention
+   laisse à l'auteur le temps de reposter, et couvre une date
+   d'expiration saisie par erreur.
+
+Le même travail est disponible en CLI pour rattraper un backlog ou
+prévisualiser ce qui va disparaître :
+
+```bash
+npm run purge-expired-deals                # dry-run, n'écrit rien
+npm run purge-expired-deals -- --apply     # exécute
+npm run purge-expired-deals -- --apply --retention=0   # purge tout l'historique
+```
+
+Les annonces (`Listing`) ne sont PAS purgées : elles passent en
+`EXPIRED` et restent consultables dans le profil du vendeur.
