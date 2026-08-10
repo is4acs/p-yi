@@ -1,0 +1,36 @@
+# CI minimale Péyi : typecheck + lint + build sur chaque push/PR.
+#
+# Le build utilise des variables factices : `src/lib/env.ts` exige leur
+# présence (fail-fast), mais aucune page ne requiert une vraie DB au build
+# — les pages sont durcies (withTimeout + fallbacks, cf. CODEX.md) et les
+# generateStaticParams absorbent l'absence de base. On appelle `next build`
+# directement pour ne pas déclencher le `prisma migrate deploy` du script
+# npm `build` (réservé au déploiement réel).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://ci:ci@127.0.0.1:5432/ci"
+      DIRECT_URL: "postgresql://ci:ci@127.0.0.1:5432/ci"
+      SUPABASE_SERVICE_ROLE_KEY: "ci-dummy"
+      NEXT_PUBLIC_SUPABASE_URL: "https://ci-dummy.supabase.co"
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "ci-dummy"
+      NEXT_PUBLIC_SITE_URL: "https://www.peyi.gf"
+      ALLOW_NO_RATE_LIMIT: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx next lint
+      - run: npx next build
