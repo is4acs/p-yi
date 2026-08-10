@@ -5,6 +5,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { useCallback, useEffect, useRef } from "react";
 import {
   GeolocateControl,
+  Layer,
   Map as MapGL,
   NavigationControl,
   Source,
@@ -117,7 +118,32 @@ export default function ActivityMap({
           cluster
           clusterRadius={50}
           clusterMaxZoom={13}
-        />
+        >
+          {/*
+            Couche technique, volontairement invisible.
+
+            MapLibre ne découpe une source GeoJSON en tuiles que si AU MOINS
+            UNE couche la référence. Sans cette couche, la source existe mais
+            n'est jamais tuilée : `querySourceFeatures()` renvoie un tableau
+            vide et aucun marqueur n'apparaît — la carte s'affiche, mais nue.
+
+            Les marqueurs et les compteurs de clusters visibles restent rendus
+            en DOM par ActivityMapMarkers (zone de tap 44px, emoji, halo en
+            tokens Tailwind, zéro dépendance à un serveur de glyphs). Cette
+            couche ne sert donc qu'à déclencher le tuilage : rayon et opacité
+            à zéro. Ne pas la passer en `visibility: "none"` — une couche
+            masquée ne charge pas ses tuiles et le bug reviendrait.
+          */}
+          <Layer
+            id="activities-tiling-anchor"
+            type="circle"
+            paint={{
+              "circle-radius": 0,
+              "circle-opacity": 0,
+              "circle-stroke-width": 0,
+            }}
+          />
+        </Source>
         <NavigationControl position="top-right" showCompass={false} />
         <GeolocateControl
           position="top-right"
