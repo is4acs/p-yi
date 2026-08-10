@@ -10,6 +10,11 @@
 
 @layer base {
   :root {
+    /* Hauteur du header sticky (h-14 mobile / h-16 sm+). Sert au
+       scroll-padding-top des ancres et à tout calcul de position sous
+       header. À mettre à jour si la hauteur du header change. */
+    --header-h: 3.5rem;
+
     /* Base (light) */
     --background: 0 0% 100%;
     --foreground: 0 0% 10%;
@@ -144,4 +149,16 @@
   textarea {
     font-size: 16px !important;
   }
+}
+
+@media (min-width: 640px) {
+  :root {
+    --header-h: 4rem;
+  }
+}
+
+/* Les cibles d'ancres ne doivent jamais finir cachées sous le header
+   sticky — marge de 8px de respiration. */
+html {
+  scroll-padding-top: calc(var(--header-h) + 8px);
 }
