@@ -822,6 +822,10 @@ enum AdminActionType {
   RESOLVE_REPORT
   DISMISS_REPORT
   BROADCAST_NOTIFICATION
+  CREATE_ACTIVITY
+  UPDATE_ACTIVITY
+  DELETE_ACTIVITY
+  SET_ACTIVITY_STATUS
 }
 
 enum AdminTargetType {
@@ -832,6 +836,7 @@ enum AdminTargetType {
   USER
   REPORT
   SYSTEM
+  ACTIVITY
 }
 
 // =============================================================================

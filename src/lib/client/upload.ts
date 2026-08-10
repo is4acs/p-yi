@@ -2,7 +2,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 import { compressImage } from "./image-compress";
 
-export type UploadKind = "deal" | "listing" | "avatar";
+export type UploadKind = "deal" | "listing" | "avatar" | "activity";
 
 type SignedUrl = {
   path: string;
@@ -14,6 +14,7 @@ const BUCKETS: Record<UploadKind, string> = {
   deal: "deals",
   listing: "listings",
   avatar: "avatars",
+  activity: "activities",
 };
 
 async function requestSignedUrls(

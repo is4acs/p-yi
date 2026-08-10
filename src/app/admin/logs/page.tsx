@@ -39,6 +39,10 @@ const ACTION_LABEL: Record<AdminActionType, string> = {
   RESOLVE_REPORT: "Résout signalement",
   DISMISS_REPORT: "Rejette signalement",
   BROADCAST_NOTIFICATION: "Broadcast notif",
+  CREATE_ACTIVITY: "Crée activité",
+  UPDATE_ACTIVITY: "Modifie activité",
+  DELETE_ACTIVITY: "Supprime activité",
+  SET_ACTIVITY_STATUS: "Statut activité",
 };
 
 const TARGET_LABEL: Record<AdminTargetType, string> = {
@@ -49,6 +53,7 @@ const TARGET_LABEL: Record<AdminTargetType, string> = {
   USER: "Utilisateur",
   REPORT: "Signalement",
   SYSTEM: "Système",
+  ACTIVITY: "Activité",
 };
 
 const ACTION_COLORS: Record<AdminActionType, string> = {
@@ -64,6 +69,10 @@ const ACTION_COLORS: Record<AdminActionType, string> = {
   RESOLVE_REPORT: "text-peyi-green-800 bg-peyi-green-50 border-peyi-green-200",
   DISMISS_REPORT: "text-muted-foreground bg-muted border-border",
   BROADCAST_NOTIFICATION: "text-peyi-orange-800 bg-peyi-orange-50 border-peyi-orange-200",
+  CREATE_ACTIVITY: "text-peyi-green-800 bg-peyi-green-50 border-peyi-green-200",
+  UPDATE_ACTIVITY: "text-peyi-orange-800 bg-peyi-orange-50 border-peyi-orange-200",
+  DELETE_ACTIVITY: "text-red-700 bg-red-50 border-red-200",
+  SET_ACTIVITY_STATUS: "text-peyi-orange-800 bg-peyi-orange-50 border-peyi-orange-200",
 };
 
 export default async function AdminLogsPage(
