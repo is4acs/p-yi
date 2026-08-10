@@ -17,6 +17,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { DealStatus, type VoteType } from "@prisma/client";
 import { cn } from "@/lib/utils";
+import { reviveDates } from "@/lib/cache-dates";
 import { formatRelativeTime } from "@/lib/format";
 import { isRenderableImageUrl } from "@/lib/images";
 import { rethrowIfNextInternal } from "@/lib/next-errors";
@@ -111,8 +112,12 @@ const dealDetailSelect = {
   merchant: { select: { name: true, slug: true, domain: true, logoUrl: true } },
 } as const;
 
-function getDeal(slug: string) {
-  return unstable_cache(
+// Cf. src/lib/cache-dates.ts : le Data Cache rend les `Date` en chaînes ISO
+// dès le 2e appel, ce qui cassait la fiche à toutes les visites suivantes.
+const DEAL_DATE_FIELDS = ["publishedAt", "updatedAt", "expiresAt"] as const;
+
+async function getDeal(slug: string) {
+  const deal = await unstable_cache(
     async () =>
       withTimeout(
         prisma.deal.findFirst({
@@ -129,10 +134,11 @@ function getDeal(slug: string) {
     ["deal-detail", slug],
     { tags: [`deal:${slug}`], revalidate: 3600 },
   )();
+  return reviveDates(deal, DEAL_DATE_FIELDS);
 }
 
-function getDealMeta(slug: string) {
-  return unstable_cache(
+async function getDealMeta(slug: string) {
+  const deal = await unstable_cache(
     async () =>
       withTimeout(
         prisma.deal.findFirst({
@@ -157,6 +163,7 @@ function getDealMeta(slug: string) {
     ["deal-meta", slug],
     { tags: [`deal:${slug}`], revalidate: 3600 },
   )();
+  return reviveDates(deal, ["expiresAt"]);
 }
 
 // ---------- SEO ----------

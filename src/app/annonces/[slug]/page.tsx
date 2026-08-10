@@ -16,6 +16,7 @@ import {
 
 import { prisma } from "@/lib/prisma";
 import { ListingStatus } from "@prisma/client";
+import { reviveDates } from "@/lib/cache-dates";
 import { formatRelativeTime } from "@/lib/format";
 import { LEVEL_META } from "@/lib/deals/user-level";
 import { getCurrentUser } from "@/lib/auth/current-user";
@@ -105,8 +106,18 @@ const listingDetailSelect = {
   },
 } as const;
 
-function getListing(slug: string) {
-  return unstable_cache(
+// Champs date des `select` ci-dessus. Le Data Cache les rend en chaînes ISO
+// dès le 2e appel : sans `reviveDates`, la fiche plante au premier
+// `Intl.DateTimeFormat().format(...)`. Cf. src/lib/cache-dates.ts.
+const LISTING_DATE_FIELDS = [
+  "publishedAt",
+  "updatedAt",
+  "bumpedAt",
+  "expiresAt",
+] as const;
+
+async function getListing(slug: string) {
+  const listing = await unstable_cache(
     async () =>
       withTimeout(
         prisma.listing.findFirst({
@@ -123,10 +134,11 @@ function getListing(slug: string) {
     ["listing-detail", slug],
     { tags: [`listing:${slug}`], revalidate: 3600 },
   )();
+  return reviveDates(listing, LISTING_DATE_FIELDS);
 }
 
-function getListingMeta(slug: string) {
-  return unstable_cache(
+async function getListingMeta(slug: string) {
+  const listing = await unstable_cache(
     async () =>
       withTimeout(
         prisma.listing.findFirst({
@@ -153,6 +165,7 @@ function getListingMeta(slug: string) {
     ["listing-meta", slug],
     { tags: [`listing:${slug}`], revalidate: 3600 },
   )();
+  return reviveDates(listing, ["expiresAt"]);
 }
 
 export async function generateMetadata(
