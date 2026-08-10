@@ -2,8 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Drawer } from "vaul";
+import { ArrowLeft } from "lucide-react";
 
 import { ActivityCard } from "@/components/activities/ActivityCard";
+import { ActivityDetailContent } from "@/components/activities/ActivityDetailContent";
+import { DetailSkeleton } from "@/components/activities/ActivityDetailPanel";
+import type { ActivityDetailState } from "@/components/activities/use-activity-detail";
 import type { ActivityFeature } from "@/lib/activities/geojson";
 
 /**
@@ -36,6 +40,8 @@ type Props = {
   /** false tant que le GeoJSON n'est pas chargé (affiche « Chargement… »). */
   isReady: boolean;
   selectedSlug: string | null;
+  /** Détail chargé à la demande (hook useActivityDetail, tenu par l'Explorer). */
+  detail: ActivityDetailState | null;
   onSelect: (slug: string | null) => void;
 };
 
@@ -43,6 +49,7 @@ export function ActivitiesMobileSheet({
   features,
   isReady,
   selectedSlug,
+  detail,
   onSelect,
 }: Props) {
   const [snap, setSnap] = useState<number | string | null>(SNAP_COLLAPSED);
@@ -72,6 +79,7 @@ export function ActivitiesMobileSheet({
 
   const isFull = snap === SNAP_FULL;
   const isMid = snap === SNAP_MID;
+  const showDetail = selectedSlug !== null && detail !== null;
 
   return (
     <div className="lg:hidden">
@@ -95,7 +103,18 @@ export function ActivitiesMobileSheet({
             </Drawer.Title>
 
             <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-2">
-              <p className="text-sm font-semibold">{countLabel}</p>
+              {showDetail ? (
+                <button
+                  type="button"
+                  onClick={() => onSelect(null)}
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-peyi-orange-700"
+                >
+                  <ArrowLeft className="h-4 w-4" aria-hidden />
+                  Retour à la liste
+                </button>
+              ) : (
+                <p className="text-sm font-semibold">{countLabel}</p>
+              )}
               {isFull && (
                 <button
                   type="button"
@@ -107,8 +126,24 @@ export function ActivitiesMobileSheet({
               )}
             </div>
 
+            {/* Fiche de l'activité sélectionnée (tap sur un marqueur). */}
+            {showDetail && (isMid || isFull) && (
+              <div className="flex-1 overflow-y-auto px-4 pb-24 pt-4">
+                {detail.status === "loading" && <DetailSkeleton />}
+                {detail.status === "error" && (
+                  <p className="py-6 text-center text-sm text-muted-foreground">
+                    Impossible de charger cette activité — réessaie en la
+                    sélectionnant à nouveau.
+                  </p>
+                )}
+                {detail.status === "ready" && (
+                  <ActivityDetailContent detail={detail.detail} />
+                )}
+              </div>
+            )}
+
             {/* Position moyenne : rail horizontal. */}
-            {isMid && (
+            {!showDetail && isMid && (
               <div className="flex gap-2.5 overflow-x-auto px-3 pb-24 pt-1">
                 {features.map((feature) => {
                   const slug = feature.properties.slug;
@@ -140,7 +175,7 @@ export function ActivitiesMobileSheet({
             )}
 
             {/* Position pleine : liste verticale scrollable. */}
-            {isFull && (
+            {!showDetail && isFull && (
               <div className="flex-1 space-y-2.5 overflow-y-auto px-3 pb-24 pt-1">
                 {features.map((feature) => {
                   const slug = feature.properties.slug;

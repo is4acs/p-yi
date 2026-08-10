@@ -5,8 +5,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ActivitiesMobileSheet } from "@/components/activities/ActivitiesMobileSheet";
 import { ActivityCard } from "@/components/activities/ActivityCard";
+import { ActivityDetailPanel } from "@/components/activities/ActivityDetailPanel";
 import { ActivityMapSkeleton } from "@/components/activities/ActivityMapSkeleton";
 import type { MapBounds } from "@/components/activities/ActivityMap";
+import { useActivityDetail } from "@/components/activities/use-activity-detail";
 import {
   EMPTY_ACTIVITY_COLLECTION,
   type ActivityFeatureCollection,
@@ -42,6 +44,7 @@ export function ActivitiesExplorer() {
   const [bounds, setBounds] = useState<MapBounds | null>(null);
   const [searchOnMove, setSearchOnMove] = useState(true);
   const cardRefs = useRef(new Map<string, HTMLDivElement>());
+  const detailState = useActivityDetail(selectedSlug);
 
   const load = useCallback(async () => {
     setLoadFailed(false);
@@ -174,6 +177,14 @@ export function ActivitiesExplorer() {
           onBoundsChange={setBounds}
         />
 
+        {/* Panneau détail desktop, flottant sur la carte. */}
+        {selectedSlug && detailState && (
+          <ActivityDetailPanel
+            state={detailState}
+            onClose={() => handleSelect(null)}
+          />
+        )}
+
         {/* Bandeau d'état par-dessus la carte (erreur / chargement). */}
         {(loadFailed || collection === null) && (
           <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center">
@@ -198,6 +209,7 @@ export function ActivitiesExplorer() {
         features={visibleFeatures}
         isReady={collection !== null}
         selectedSlug={selectedSlug}
+        detail={detailState}
         onSelect={handleSelect}
       />
     </div>
