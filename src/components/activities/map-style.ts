@@ -3,12 +3,25 @@ import type { StyleSpecification } from "maplibre-gl";
 import { env } from "@/lib/env";
 
 /**
- * Cadrage et style de la carte des activités.
+ * Cadrage et fond de carte des activités.
  *
- * Le style vient de `NEXT_PUBLIC_MAP_STYLE_URL` (style vectoriel MapLibre,
- * fournisseur au choix) avec un fallback raster OpenStreetMap : la carte
- * fonctionne donc sans aucune clé ni compte tiers. Changer de fournisseur
- * = changer la variable d'env, zéro code.
+ * Par défaut on utilise un style VECTORIEL sans clé ni compte (OpenFreeMap) :
+ * rendu net, labels lisibles, zoom fluide, et surtout beaucoup plus sobre que
+ * des tuiles raster OSM brutes — c'est le rendu attendu par les utilisateurs
+ * d'applications locales.
+ *
+ * Trois niveaux, dans l'ordre de priorité :
+ *   1. `NEXT_PUBLIC_MAP_STYLE_URL` si elle est définie (MapTiler, Stadia,
+ *      Protomaps auto-hébergé…) — permet de changer de fournisseur sans
+ *      toucher au code ;
+ *   2. OpenFreeMap « liberty », le défaut ;
+ *   3. tuiles raster OSM, utilisées automatiquement par `ActivityMap` si le
+ *      style vectoriel ne se charge pas (fournisseur injoignable, réseau
+ *      d'entreprise filtrant…). Mieux vaut une carte moche qu'un écran vide.
+ *
+ * Toute origine ajoutée ici doit l'être aussi dans la CSP `connect-src`
+ * (cf. `mapHosts()` dans next.config.mjs), sinon le navigateur bloque le
+ * chargement du style, des tuiles et des glyphes.
  */
 
 /** Bbox Guyane entière [ouest, sud, est, nord]. */
@@ -20,14 +33,18 @@ export const GUYANE_BOUNDS: [[number, number], [number, number]] = [
 export const GUYANE_CENTER = { longitude: -52.9, latitude: 4.2 } as const;
 export const GUYANE_DEFAULT_ZOOM = 7;
 
+/** Style vectoriel par défaut — gratuit, sans clé ni inscription. */
+export const DEFAULT_VECTOR_STYLE_URL =
+  "https://tiles.openfreemap.org/styles/liberty";
+
 /**
- * Fallback sans clé : tuiles raster OSM. Pas de couche texte → pas de
- * glyphs à charger (les compteurs de clusters sont rendus en DOM, cf.
- * ActivityMapMarkers), donc aucune dépendance à un serveur de fonts.
+ * Repli raster sans dépendance à un serveur de styles ou de glyphes. Pas de
+ * couche texte : les libellés de la carte disparaissent, mais les marqueurs
+ * (rendus en DOM) et la navigation restent parfaitement utilisables.
  */
-const OSM_RASTER_STYLE: StyleSpecification = {
+export const OSM_RASTER_STYLE: StyleSpecification = {
   version: 8,
-  name: "Péyi fallback OSM",
+  name: "Péyi — repli OSM",
   sources: {
     osm: {
       type: "raster",
@@ -39,13 +56,17 @@ const OSM_RASTER_STYLE: StyleSpecification = {
     },
   },
   layers: [
-    // Fond neutre visible pendant le chargement des tuiles — teinte
-    // "paper" du design system pour éviter un flash blanc/gris froid.
-    { id: "background", type: "background", paint: { "background-color": "#FFFBF5" } },
+    // Fond neutre visible pendant le chargement des tuiles — teinte "paper"
+    // du design system, pour éviter un flash blanc/gris froid.
+    {
+      id: "background",
+      type: "background",
+      paint: { "background-color": "#FFFBF5" },
+    },
     { id: "osm", type: "raster", source: "osm" },
   ],
 };
 
-export function getActivityMapStyle(): string | StyleSpecification {
-  return env.NEXT_PUBLIC_MAP_STYLE_URL ?? OSM_RASTER_STYLE;
+export function getActivityMapStyle(): string {
+  return env.NEXT_PUBLIC_MAP_STYLE_URL ?? DEFAULT_VECTOR_STYLE_URL;
 }

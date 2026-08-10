@@ -45,7 +45,12 @@ function supabaseHosts() {
  *    l'origine des tuiles ici.
  */
 function mapHosts() {
-  const hosts = ["https://tile.openstreetmap.org"];
+  const hosts = [
+    // Style vectoriel par défaut (sans clé) + repli raster OSM.
+    // Cf. src/components/activities/map-style.ts
+    "https://tiles.openfreemap.org",
+    "https://tile.openstreetmap.org",
+  ];
   const styleUrl = process.env.NEXT_PUBLIC_MAP_STYLE_URL;
   if (styleUrl) {
     try {
