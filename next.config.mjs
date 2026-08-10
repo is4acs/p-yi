@@ -32,9 +32,37 @@ function supabaseHosts() {
   }
 }
 
+/**
+ * Origines nécessaires à la carte MapLibre (/activites). MapLibre charge
+ * style, tuiles, sprites et glyphs via fetch → elles doivent être dans
+ * `connect-src` (l'`img-src https:` existant ne suffit pas).
+ *
+ *  - `tile.openstreetmap.org` : fond raster de secours quand
+ *    NEXT_PUBLIC_MAP_STYLE_URL n'est pas fournie.
+ *  - L'origine de NEXT_PUBLIC_MAP_STYLE_URL quand elle est définie. La
+ *    plupart des fournisseurs (MapTiler, Stadia…) servent style + tuiles
+ *    + glyphs depuis la même origine ; si le tien les sépare, ajoute
+ *    l'origine des tuiles ici.
+ */
+function mapHosts() {
+  const hosts = ["https://tile.openstreetmap.org"];
+  const styleUrl = process.env.NEXT_PUBLIC_MAP_STYLE_URL;
+  if (styleUrl) {
+    try {
+      const { origin } = new URL(styleUrl);
+      if (!hosts.includes(origin)) hosts.push(origin);
+    } catch {
+      // URL invalide : la validation zod de src/lib/env.ts la signalera
+      // au boot — inutile de casser le build ici.
+    }
+  }
+  return hosts.join(" ");
+}
+
 const isDev = process.env.NODE_ENV !== "production";
 
 const SB = supabaseHosts();
+const MAP = mapHosts();
 
 /**
  * Content-Security-Policy.
@@ -65,7 +93,7 @@ const csp = [
   `style-src 'self' 'unsafe-inline'`,
   `img-src 'self' data: blob: https: ${SB.http}`,
   `font-src 'self' data:`,
-  `connect-src 'self' ${SB.http} ${SB.ws}`,
+  `connect-src 'self' ${SB.http} ${SB.ws} ${MAP}`,
   `manifest-src 'self'`,
   `worker-src 'self' blob:`,
   `media-src 'self' blob: data: ${SB.http}`,
@@ -104,13 +132,16 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "X-DNS-Prefetch-Control", value: "on" },
   {
-    // On désactive explicitement les APIs qu'on n'utilise pas. Si on ajoute
-    // la géolocalisation (city picker par GPS) il faudra mettre `self`.
+    // On désactive explicitement les APIs qu'on n'utilise pas.
+    // `geolocation=(self)` : nécessaire au bouton « Ma position » de la
+    // carte /activites (le navigateur demande quand même son consentement
+    // à l'utilisateur — ceci n'autorise que notre propre origine à poser
+    // la question).
     key: "Permissions-Policy",
     value: [
       "camera=()",
       "microphone=()",
-      "geolocation=()",
+      "geolocation=(self)",
       "payment=()",
       "usb=()",
       "magnetometer=()",

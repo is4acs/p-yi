@@ -102,6 +102,16 @@ const publicSchema = z.object({
     .string()
     .url("NEXT_PUBLIC_SITE_URL doit être une URL complète (ex. https://peyi.com)")
     .optional(),
+
+  // Style vectoriel MapLibre (carte des activités). Optionnelle : sans
+  // elle, la carte tombe sur un fond raster OSM (cf.
+  // `src/components/activities/map-style.ts`) — on peut donc changer de
+  // fournisseur de tuiles sans toucher au code. L'origine de cette URL
+  // est ajoutée automatiquement à la CSP `connect-src` (next.config.mjs).
+  NEXT_PUBLIC_MAP_STYLE_URL: z
+    .string()
+    .url("NEXT_PUBLIC_MAP_STYLE_URL doit être l'URL d'un style MapLibre (style.json)")
+    .optional(),
 });
 
 type ServerEnv = z.infer<typeof serverSchema>;
@@ -118,6 +128,7 @@ function parseEnv(): ServerEnv & PublicEnv {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+    NEXT_PUBLIC_MAP_STYLE_URL: process.env.NEXT_PUBLIC_MAP_STYLE_URL,
   });
 
   if (!publicParsed.success) {
