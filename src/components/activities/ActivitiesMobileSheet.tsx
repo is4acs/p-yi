@@ -98,7 +98,12 @@ export function ActivitiesMobileSheet({
         <Drawer.Portal>
           <Drawer.Content
             aria-describedby={undefined}
-            className="fixed inset-x-0 bottom-0 z-30 flex h-[94dvh] flex-col rounded-t-lg border-t border-border bg-background shadow-lg outline-none"
+            // `lg:hidden` doit être posé ICI, pas seulement sur le conteneur
+            // parent : vaul rend son contenu dans un PORTAIL (attaché au
+            // <body>), qui échappe donc à toute classe utilitaire de
+            // l'arborescence React. Sans ça, le sheet mobile réapparaît en
+            // bas de l'écran par-dessus le split view desktop.
+            className="fixed inset-x-0 bottom-0 z-30 flex h-[94dvh] flex-col rounded-t-lg border-t border-border bg-background shadow-lg outline-none lg:hidden"
           >
             <Drawer.Handle className="mx-auto mt-2.5 h-1.5 w-12 shrink-0 cursor-grab rounded-full bg-ink-200" />
             <Drawer.Title className="sr-only">

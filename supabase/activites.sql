@@ -210,8 +210,8 @@ Compte une journée complète : tour de Royale (1h30 de marche), traversée en s
   'EASY'::"Difficulty",
   ARRAY['ALL_YEAR']::"Season"[], 'Traversée ~1h, mer parfois agitée en début de journée — réserve la navette la veille, départs le matin.',
   4500, 6900,
-  false, true, NULL,
-  NULL, NULL, NULL, NULL,
+  false, true, 'https://www.promaritimeguyane.fr/billetterie',
+  '05 94 28 42 36', NULL, 'https://www.promaritimeguyane.fr', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'kourou'
@@ -262,7 +262,7 @@ Le site est classé réserve biologique depuis 2022. Bivouac possible sur la zon
   ARRAY['MAIN_DRY_SEASON', 'SHORT_DRY_SEASON']::"Season"[], 'Sentier boueux et glissant en saison des pluies. Pars tôt : la roche est brûlante à la mi-journée, emporte 2 L d''eau par personne.',
   NULL, NULL,
   true, false, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.guyane-amazonie.fr', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'regina'
@@ -313,7 +313,7 @@ La ponte s''observe de nuit, à marée haute, d''avril à juillet ; les éclosio
   ARRAY['RAINY_SEASON', 'MAIN_DRY_SEASON']::"Season"[], 'Ponte d''avril à juillet, de nuit à marée haute ; éclosions jusqu''en septembre. 3h30 de route depuis Cayenne — prévois de dormir sur place.',
   NULL, NULL,
   true, false, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.guyane-amazonie.fr', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'awala-yalimapo'
@@ -364,7 +364,7 @@ Les jours de lancement, les visites sont suspendues — mais des sites d''observ
   ARRAY['ALL_YEAR']::"Season"[], 'Visites du CSG gratuites sur réservation (pièce d''identité obligatoire, enfants 8 ans et +). Planning suspendu les jours de lancement.',
   400, 700,
   false, true, NULL,
-  NULL, NULL, NULL, NULL,
+  '05 94 33 77 77', NULL, 'https://centrespatialguyanais.cnes.fr', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'kourou'
@@ -415,7 +415,7 @@ Prolonge avec les rues coloniales du quartier officiel et les bords du Maroni, f
   ARRAY['ALL_YEAR']::"Season"[], 'Accès libre à la cour ; l''intérieur (réclusion, cellules) se visite uniquement en visite guidée, plusieurs départs par jour.',
   500, 850,
   false, false, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.saintlaurentdumaroni.fr/centre-interpretation-art-patrimoine/', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'saint-laurent-du-maroni'
@@ -466,7 +466,7 @@ Complète la sortie avec le musée « Le Planeur bleu » (insectes et papillons)
   ARRAY['ALL_YEAR']::"Season"[], 'Route de montagne sinueuse après la RN2 — compte ~1h15 depuis Cayenne et arrive avant 9h pour les soupes.',
   NULL, NULL,
   true, false, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.guyane-amazonie.fr', NULL,
   '{"sunday":[["08:00","13:00"]]}'::jsonb,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'roura'
@@ -517,7 +517,7 @@ Plusieurs opérateurs proposent aussi la nuit en carbet flottant au milieu du ma
   ARRAY['ALL_YEAR']::"Season"[], 'Route de la montagne de Kaw par endroits dégradée — prudence de nuit et par temps de pluie. Sorties uniquement avec un piroguier agréé.',
   4500, 6500,
   false, true, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.guyane-amazonie.fr/experience/nature/marais-kaw/', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'roura'
@@ -568,7 +568,7 @@ C''est LA rando d''initiation de l''île de Cayenne, faisable avec des enfants h
   ARRAY['ALL_YEAR']::"Season"[], 'Passages glissants après la pluie — bonnes chaussures et eau. Départ avant 9h pour la fraîcheur et les animaux.',
   NULL, NULL,
   true, false, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.guyane-amazonie.fr', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'remire-montjoly'
@@ -619,7 +619,7 @@ Traversée en navette depuis la marina du Dégrad-des-Cannes, journée pique-niq
   ARRAY['ALL_YEAR']::"Season"[], 'Ni eau potable ni vente sur place : emporte pique-nique et eau. Ne nourris pas les saïmiris, ils se servent tout seuls dans les sacs ouverts.',
   3000, 4000,
   false, true, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://iletlamere.tropicalizes.fr', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'remire-montjoly'
@@ -670,7 +670,7 @@ L''aventure, c''est la piste elle-même : 73 km de latérite depuis Saint-Lauren
   ARRAY['MAIN_DRY_SEASON', 'SHORT_DRY_SEASON']::"Season"[], 'Piste Paul-Isnard : 4x4 obligatoire, souvent impraticable après de fortes pluies. Fais le plein à Saint-Laurent et préviens quelqu''un de ton itinéraire.',
   NULL, NULL,
   true, false, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.guyane-amazonie.fr', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'saint-laurent-du-maroni'
@@ -721,7 +721,7 @@ On y reste deux jours minimum : gîtes et carbets au village, ravitaillement lim
   ARRAY['MAIN_DRY_SEASON', 'SHORT_DRY_SEASON']::"Season"[], 'Vol ~50 min depuis Cayenne (petits porteurs vite complets, réserve tôt). Aucune route n''arrive à Saül — pas de distributeur ni de réseau fiable.',
   NULL, NULL,
   true, false, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.guyane-amazonie.fr', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'saul'
@@ -772,7 +772,7 @@ Visites et journées découvertes sur réservation, souvent couplées à une bai
   ARRAY['ALL_YEAR']::"Season"[], NULL,
   1500, 4500,
   false, true, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.facebook.com/centreamerindienkalawachi/', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'kourou'
@@ -823,7 +823,7 @@ La balade se termine à la crique Anguille, parfaite pour se rafraîchir avant l
   ARRAY['ALL_YEAR']::"Season"[], 'Caillebotis glissants après la pluie, anti-moustiques indispensable. Maillot conseillé pour la crique Anguille.',
   NULL, NULL,
   true, false, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'http://www.montsinery-tonnegrande.fr/culture-sport-et-loisirs/activites-culturelles-et-patrimoine/bagne-des-annamites/', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'montsinery-tonnegrande'
@@ -925,7 +925,7 @@ Une immersion amazonienne accessible à tous, sans marche d''approche — parfai
   ARRAY['ALL_YEAR']::"Season"[], 'Courant et niveau d''eau hauts en pleine saison des pluies — les sorties partent surtout le matin.',
   2900, 4400,
   false, true, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.t-airnatureguyane.com/excursion/crique-gabriel/', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'roura'
@@ -976,7 +976,7 @@ C''est le spot familial du week-end : rochers plats pour poser les affaires, vas
   ARRAY['ALL_YEAR']::"Season"[], 'Les 3 derniers kilomètres se font sur une piste en bon état, praticable en voiture de tourisme par temps sec. Rochers glissants.',
   NULL, NULL,
   true, false, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.guyane-amazonie.fr', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'roura'
@@ -1027,7 +1027,7 @@ L''un des rares endroits où l''on comprend concrètement ce qu''est la biodiver
   ARRAY['ALL_YEAR']::"Season"[], 'Caillebotis glissants après la pluie. Route de Kaw sinueuse — prudence, surtout au retour de nuit.',
   NULL, NULL,
   true, false, NULL,
-  NULL, NULL, NULL, NULL,
+  '05 94 38 12 89', NULL, 'https://reserves-naturelles.org/reserves/tresor/', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'roura'
@@ -1078,7 +1078,7 @@ Sapajous et singes hurleurs se font entendre tôt le matin, et la vue depuis la 
   ARRAY['ALL_YEAR']::"Season"[], 'Site privé du CNES géré par l''ONF : accès piéton libre, mais reste sur les sentiers balisés. Pars tôt pour la faune et la fraîcheur.',
   NULL, NULL,
   true, false, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.guyane-amazonie.fr', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'kourou'
@@ -1129,7 +1129,7 @@ Un sentier botanique aménagé longe la rive gauche — la rive droite, c''est d
   ARRAY['MAIN_DRY_SEASON', 'SHORT_DRY_SEASON']::"Season"[], 'Saut réputé dangereux : ne t''approche pas des rapides et pars avec un piroguier du coin. La piste d''accès (20 km) demande un 4x4, surtout en saison des pluies.',
   3500, 6000,
   false, true, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.guyane-amazonie.fr', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'saint-georges'
@@ -1180,7 +1180,7 @@ Le débarquement est interdit, mais les sorties encadrées longent l''île au pl
   ARRAY['ALL_YEAR']::"Season"[], 'Débarquement interdit (réserve naturelle nationale). Sorties uniquement avec un opérateur agréé et selon l''état de la mer — prévois de quoi lutter contre le mal de mer.',
   9000, 15000,
   false, true, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.reserve-connetable.com', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'regina'
@@ -1231,7 +1231,7 @@ Le grondement arrive plusieurs secondes après la lumière, et la trajectoire re
   ARRAY['ALL_YEAR']::"Season"[], 'Calendrier des lancements souvent décalé à la dernière minute (météo, technique) : garde de la souplesse. Les sites CNES demandent une inscription préalable et une pièce d''identité ; les points publics de Kourou restent libres d''accès.',
   NULL, NULL,
   true, true, NULL,
-  NULL, NULL, NULL, NULL,
+  '05 94 33 77 77', NULL, 'https://centrespatialguyanais.cnes.fr', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'kourou'
@@ -1282,7 +1282,7 @@ Il reste des pans de murs, un phare et surtout un panorama à 180° : le port, l
   ARRAY['ALL_YEAR']::"Season"[], 'Montée à pied depuis la place du Coq ou le port. Évite le site à la nuit tombée.',
   NULL, NULL,
   true, false, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.guyane-amazonie.fr', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'cayenne'
@@ -1333,7 +1333,7 @@ Idéal pour une demi-journée quand on n''a pas le temps de descendre sur Kaw ou
   ARRAY['ALL_YEAR']::"Season"[], 'Montée raide et glissante après la pluie. Emporte 2 L d’eau : il n’y a aucun point d’eau sur le parcours.',
   NULL, NULL,
   true, false, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.guyane-amazonie.fr', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'matoury'
@@ -1384,7 +1384,7 @@ Viens tôt et le ventre vide. C''est le meilleur endroit pour repartir avec du c
   ARRAY['ALL_YEAR']::"Season"[], NULL,
   NULL, NULL,
   true, false, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.guyane-amazonie.fr', NULL,
   '{"wednesday":[["06:00","13:00"]],"friday":[["06:00","13:00"]],"saturday":[["06:00","13:00"]],"exceptions":["Horaires indicatifs — le marché est surtout animé les mercredi, vendredi et samedi matin."]}'::jsonb,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'cayenne'
@@ -1435,7 +1435,7 @@ Une boucle d''une heure suffit pour en faire le tour — à combiner avec le mar
   ARRAY['ALL_YEAR']::"Season"[], NULL,
   NULL, NULL,
   true, false, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.guyane-amazonie.fr', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'cayenne'
@@ -1486,7 +1486,7 @@ Classée monument historique, elle se visite gratuitement et vaut largement l''a
   ARRAY['ALL_YEAR']::"Season"[], 'Ouverture parfois irrégulière : demande la clé à la mairie ou au presbytère si l''église est fermée.',
   NULL, NULL,
   true, false, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.guyane-amazonie.fr', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'iracoubo'
@@ -1537,7 +1537,7 @@ Point de départ des remontées vers le saut Maripa et les villages du haut Oyap
   ARRAY['ALL_YEAR']::"Season"[], '190 km de RN2 goudronnée depuis Cayenne (~3h). Passeport ou CNI obligatoire pour passer côté brésilien, et contrôles fréquents sur la route.',
   NULL, NULL,
   true, false, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.guyane-amazonie.fr', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'saint-georges'
@@ -1588,7 +1588,7 @@ Sur place : orpaillage légal, artisanat wayana et aluku, remontée vers les vil
   ARRAY['ALL_YEAR']::"Season"[], 'Aucune route n''arrive à Maripasoula. Vols vite complets, distributeur unique et réseau capricieux : prévois du liquide et de la marge sur ton retour.',
   NULL, NULL,
   true, false, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.guyane-amazonie.fr', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'maripasoula'
@@ -1639,7 +1639,7 @@ Les sorties à la journée combinent en général passage de sauts, arrêt baign
   ARRAY['ALL_YEAR']::"Season"[], 'Niveau du fleuve très variable : en saison sèche, certains sauts se franchissent à pied à côté de la pirogue. Passage côté Suriname = sortie de territoire, prends une pièce d''identité.',
   3000, 8000,
   false, true, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.guyane-amazonie.fr', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'saint-laurent-du-maroni'
@@ -1690,7 +1690,7 @@ SELECT
   ARRAY['ALL_YEAR']::"Season"[], 'Anti-moustiques indispensable, surtout en fin de journée. Le sentier est praticable toute l’année mais glissant après la pluie.',
   NULL, NULL,
   true, false, NULL,
-  NULL, NULL, NULL, NULL,
+  '06 94 26 88 76', NULL, 'https://www.ville-sinnamary.fr/mes-loisirs/maison-de-la-nature/', NULL,
   '{"wednesday":[["09:00","12:00"],["13:30","17:30"]],"saturday":[["09:00","12:00"],["13:30","17:30"]],"sunday":[["09:00","12:00"],["13:30","17:30"]],"exceptions":["Horaires de la Maison de la Nature — le sentier reste accessible en dehors."]}'::jsonb,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'sinnamary'
@@ -1741,7 +1741,7 @@ Les fouilles ont dégagé la maison de maître, la chapelle et son cimetière, l
   ARRAY['ALL_YEAR']::"Season"[], 'Sentier en accès libre toute l''année. Visites guidées ponctuelles (Journées du patrimoine, campagnes de fouilles) — vérifie les dates avant de venir pour ça.',
   NULL, NULL,
   true, false, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://habitationloyola.org', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'remire-montjoly'
@@ -1792,7 +1792,7 @@ Faisable en une journée si tu marches bien, mais la version deux jours avec nui
   ARRAY['MAIN_DRY_SEASON', 'SHORT_DRY_SEASON']::"Season"[], 'Itinéraire engagé : préviens quelqu''un, emporte hamac, moustiquaire et 3 L d''eau. Boueux et glissant en saison des pluies. Organise ta récupération à l''autre bout.',
   NULL, NULL,
   true, false, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.guyane-amazonie.fr', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'roura'
@@ -1843,7 +1843,7 @@ D''avril à juillet, des tortues vertes et olivâtres viennent y pondre — les 
   ARRAY['ALL_YEAR']::"Season"[], 'Baignade sans surveillance et eau turbide (limon de l''Amazone, c''est normal). En saison de ponte, pas de lampe blanche ni de flash sur la plage la nuit.',
   NULL, NULL,
   true, false, NULL,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, 'https://www.guyane-amazonie.fr', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'remire-montjoly'

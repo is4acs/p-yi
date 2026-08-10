@@ -74,7 +74,7 @@ const OPEN_DAILY_ZOO = {
   sunday: [['09:30', '17:30']],
 }
 
-export const ACTIVITIES: ActivitySeed[] = [
+const RAW_ACTIVITIES: ActivitySeed[] = [
   {
     slug: 'iles-du-salut',
     name: 'Îles du Salut',
@@ -790,3 +790,97 @@ D'avril à juillet, des tortues vertes et olivâtres viennent y pondre — les a
     isFree: true,
   },
 ]
+
+// =============================================================================
+// Contacts & réservation
+// =============================================================================
+// Chaque fiche doit offrir un point de sortie vers « où réserver / qui
+// contacter ». Deux niveaux, volontairement distincts :
+//
+//  1. CONTACTS ci-dessous : opérateur, institution ou gestionnaire OFFICIEL du
+//     site, vérifié un par un. Aucun numéro ni URL n'est inventé — une donnée
+//     de contact fausse est pire que pas de donnée du tout (on envoie les gens
+//     appeler un inconnu). Ce qui n'a pas pu être vérifié n'est pas renseigné.
+//
+//  2. Fallback : le portail officiel du Comité du Tourisme de la Guyane, qui
+//     référence les prestataires par site. C'est la bonne porte d'entrée pour
+//     les sites naturels en accès libre, qui n'ont ni opérateur ni billetterie.
+//
+// Le back-office (/admin/activites) permet d'affiner fiche par fiche : c'est
+// là qu'il faut saisir les opérateurs locaux au fil des partenariats.
+
+const GUYANE_TOURISM_PORTAL = "https://www.guyane-amazonie.fr";
+
+type ActivityContact = {
+  website?: string;
+  bookingUrl?: string;
+  phone?: string;
+};
+
+const CONTACTS: Record<string, ActivityContact> = {
+  "iles-du-salut": {
+    // Promaritime — seule liaison quotidienne Kourou / île Royale.
+    website: "https://www.promaritimeguyane.fr",
+    bookingUrl: "https://www.promaritimeguyane.fr/billetterie",
+    phone: "05 94 28 42 36",
+  },
+  "centre-spatial-guyanais": {
+    website: "https://centrespatialguyanais.cnes.fr",
+    phone: "05 94 33 77 77",
+  },
+  "assister-a-un-lancement": {
+    website: "https://centrespatialguyanais.cnes.fr",
+    phone: "05 94 33 77 77",
+  },
+  "camp-de-la-transportation": {
+    // CIAP, géré par la ville de Saint-Laurent-du-Maroni.
+    website:
+      "https://www.saintlaurentdumaroni.fr/centre-interpretation-art-patrimoine/",
+  },
+  "marais-de-kaw": {
+    // Plusieurs piroguiers agréés : le portail officiel les référence tous.
+    website: "https://www.guyane-amazonie.fr/experience/nature/marais-kaw/",
+  },
+  "reserve-naturelle-tresor": {
+    website: "https://reserves-naturelles.org/reserves/tresor/",
+    phone: "05 94 38 12 89",
+  },
+  "ile-du-grand-connetable": {
+    website: "https://www.reserve-connetable.com",
+  },
+  "habitation-loyola": {
+    website: "https://habitationloyola.org",
+  },
+  "pripris-de-yiyi": {
+    website: "https://www.ville-sinnamary.fr/mes-loisirs/maison-de-la-nature/",
+    phone: "06 94 26 88 76",
+  },
+  "ilet-la-mere": {
+    website: "https://iletlamere.tropicalizes.fr",
+  },
+  "crique-gabrielle": {
+    website: "https://www.t-airnatureguyane.com/excursion/crique-gabriel/",
+  },
+  "centre-amerindien-kalawachi": {
+    website: "https://www.facebook.com/centreamerindienkalawachi/",
+  },
+  "bagne-des-annamites": {
+    website:
+      "http://www.montsinery-tonnegrande.fr/culture-sport-et-loisirs/activites-culturelles-et-patrimoine/bagne-des-annamites/",
+  },
+};
+
+/**
+ * Activités enrichies de leur contact. Une valeur posée directement sur la
+ * fiche (ex. le site et le téléphone du Zoo de Guyane) reste prioritaire ;
+ * sinon on prend le contact vérifié, sinon le portail officiel.
+ */
+export const ACTIVITIES: ActivitySeed[] = RAW_ACTIVITIES.map((activity) => {
+  const contact = CONTACTS[activity.slug] ?? {};
+  return {
+    ...activity,
+    website: activity.website ?? contact.website ?? GUYANE_TOURISM_PORTAL,
+    bookingUrl: activity.bookingUrl ?? contact.bookingUrl,
+    phone: activity.phone ?? contact.phone,
+  };
+})

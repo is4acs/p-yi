@@ -83,6 +83,11 @@ export function ActivityDetailContent({
   const images = detail.images.filter((image) =>
     isRenderableImageUrl(image.url),
   );
+  // Cible du CTA principal : la billetterie si elle existe, sinon le site de
+  // l'opérateur quand la réservation est obligatoire — sans quoi la fiche
+  // annonce « réservation obligatoire » sans dire où réserver.
+  const bookingHref =
+    detail.bookingUrl ?? (detail.bookingRequired ? detail.website : null);
 
   return (
     <div className="flex flex-col gap-4">
@@ -299,10 +304,11 @@ export function ActivityDetailContent({
 
       {/* 8. CTA. */}
       <div className="flex flex-wrap gap-2">
-        {detail.bookingUrl && (
+        {bookingHref && (
           <Button asChild variant="peyi" size="sm">
-            <a href={detail.bookingUrl} target="_blank" rel="noopener noreferrer">
-              <Ticket aria-hidden /> Réserver
+            <a href={bookingHref} target="_blank" rel="noopener noreferrer">
+              <Ticket aria-hidden />
+              {detail.bookingUrl ? "Réserver" : "Réserver / contacter"}
             </a>
           </Button>
         )}
@@ -333,7 +339,9 @@ export function ActivityDetailContent({
             </a>
           </Button>
         )}
-        {detail.website && (
+        {/* Le site n'est proposé en lien secondaire que s'il ne sert pas déjà
+            de cible au bouton « Réserver / contacter ». */}
+        {detail.website && bookingHref !== detail.website && (
           <Button asChild variant="ghost" size="sm">
             <a href={detail.website} target="_blank" rel="noopener noreferrer">
               <ExternalLink aria-hidden /> Site web
@@ -344,7 +352,8 @@ export function ActivityDetailContent({
 
       {detail.bookingRequired && !detail.bookingUrl && (
         <p className="text-xs text-muted-foreground">
-          Réservation obligatoire — contacte l&apos;opérateur avant d&apos;y aller.
+          Réservation obligatoire — passe par l&apos;opérateur avant d&apos;y
+          aller.
         </p>
       )}
 
