@@ -3,6 +3,7 @@ import { Bell, LogIn } from "lucide-react";
 import type { User } from "@prisma/client";
 
 import { cn } from "@/lib/utils";
+import { DESKTOP_NAV } from "@/config/nav";
 
 import { GlobalSearchBar } from "./GlobalSearchBar";
 import { UserAvatar } from "./UserAvatar";
@@ -18,7 +19,7 @@ type Props = {
 export function Header({ user, unreadCount, unreadNotifications }: Props) {
   return (
     <header className="sticky top-0 z-30 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 px-4 sm:h-16">
+      <div className="mx-auto flex min-h-14 max-w-5xl items-center justify-between gap-3 px-4 sm:min-h-16">
         <Link
           href="/"
           className="flex shrink-0 items-center gap-1.5 font-display text-xl font-bold tracking-tight"
@@ -35,13 +36,15 @@ export function Header({ user, unreadCount, unreadNotifications }: Props) {
           aria-label="Navigation principale"
           className="hidden gap-1 text-sm font-medium lg:flex"
         >
-          <NavLink href="/bons-plans">Bons plans</NavLink>
-          <NavLink href="/annonces">Annonces</NavLink>
-          <NavLink href="/activites">Activités</NavLink>
-          <NavLink href="/poster">Poster</NavLink>
-          <NavLink href="/messages" badge={unreadCount}>
-            Messages
-          </NavLink>
+          {DESKTOP_NAV.map((item) => (
+            <NavLink
+              key={item.key}
+              href={item.href}
+              badge={item.badgeKey === "unread" ? unreadCount : undefined}
+            >
+              {item.label}
+            </NavLink>
+          ))}
         </nav>
 
         <div className="flex items-center gap-2">

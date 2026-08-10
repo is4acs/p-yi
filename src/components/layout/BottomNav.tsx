@@ -2,57 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Compass, Flame, Plus, Tag, User } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+// Source unique de navigation, partagée avec le Header desktop — les deux
+// surfaces ne peuvent plus diverger. 5 onglets symétriques (2/2 autour du
+// bouton Poster central) : ~75px par onglet sur iPhone SE, au-dessus de la
+// cible tactile 44×44. « Activités » y remplace « Messages » (choix
+// produit) : la messagerie reste accessible via Header et Profil.
+import { MOBILE_NAV } from "@/config/nav";
 
-type Tab = {
-  href: string;
-  label: string;
-  icon: typeof Flame;
-  match: (pathname: string) => boolean;
-  primary?: boolean;
-  badgeKey?: "unread";
-};
-
-// 5 onglets symétriques (2/2 autour du bouton Poster central). Sur iPhone
-// SE (375px) ça donne ~75px par onglet, largement au-dessus de la cible
-// tactile 44×44 recommandée par Apple. Depuis la verticale activités,
-// « Activités » remplace « Messages » ici (choix produit) : la messagerie
-// reste accessible via le Header et le Profil, avec son badge non-lus.
-const TABS: Tab[] = [
-  {
-    href: "/activites",
-    label: "Activités",
-    icon: Compass,
-    match: (p) => p === "/activites" || p.startsWith("/activites/"),
-  },
-  {
-    href: "/bons-plans",
-    label: "Deals",
-    icon: Flame,
-    match: (p) => p === "/bons-plans" || p.startsWith("/bons-plans/"),
-  },
-  {
-    href: "/poster",
-    label: "Poster",
-    icon: Plus,
-    match: (p) => p.startsWith("/poster"),
-    primary: true,
-  },
-  {
-    href: "/annonces",
-    label: "Annonces",
-    icon: Tag,
-    match: (p) => p === "/annonces" || p.startsWith("/annonces/"),
-  },
-  {
-    href: "/profil",
-    label: "Profil",
-    icon: User,
-    match: (p) => p.startsWith("/profil"),
-  },
-];
+const TABS = MOBILE_NAV;
 
 type Props = {
   unreadCount: number;
@@ -116,7 +75,7 @@ export function BottomNav({ unreadCount }: Props) {
                     )}
                   </span>
                 )}
-                <span>{tab.label}</span>
+                <span>{tab.mobileLabel}</span>
               </Link>
             </li>
           );
