@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Plus } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
+import { CommunityStats } from "@/components/shared/CommunityStats";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { Button } from "@/components/ui/button";
 import { HighlightJaune } from "@/components/ui/highlight-jaune";
@@ -42,11 +43,6 @@ import { HomeSearchBar } from "@/components/home/HomeSearchBar";
  *     pour offrir une 2e entrée (explorer vs publier)
  */
 
-function formatKpi(n: number): string {
-  // Séparateur milliers espace insécable, pas de décimales. Même
-  // formatage qu'ailleurs dans l'app (fr-FR partout).
-  return new Intl.NumberFormat("fr-FR").format(n);
-}
 const HERO_QUERY_TIMEOUT_MS = 3_500;
 
 export async function HomeHero() {
@@ -160,19 +156,10 @@ export async function HomeHero() {
             peyi-orange-700 + label mono ink-500. Masqués sur mobile où
             le viewport vertical est précieux (le user veut du contenu,
             pas du brand), réaffichés sm:+ où l'espace le permet. */}
-        <ul className="mt-5 hidden flex-wrap items-baseline gap-x-5 gap-y-2 sm:mt-7 sm:flex">
-          {kpis.map(({ value, label }) => (
-            <li
-              key={label}
-              className="flex items-baseline gap-2 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-500 sm:text-xs"
-            >
-              <b className="font-display text-[15px] font-extrabold tracking-normal text-peyi-orange-700">
-                {formatKpi(value)}
-              </b>
-              <span>{label}</span>
-            </li>
-          ))}
-        </ul>
+        <CommunityStats
+          kpis={kpis}
+          emptyHint="Ouvre le bal — poste le premier bon plan du peyi"
+        />
       </div>
     </section>
   );

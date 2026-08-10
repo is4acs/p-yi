@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
+import { CommunityStats } from "@/components/shared/CommunityStats";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { Button } from "@/components/ui/button";
 import { HighlightJaune } from "@/components/ui/highlight-jaune";
@@ -30,9 +31,6 @@ import { ListingStatus } from "@prisma/client";
  * la page (même nombre affiché).
  */
 
-function formatKpi(n: number): string {
-  return new Intl.NumberFormat("fr-FR").format(n);
-}
 
 type Props = {
   total: number;
@@ -130,19 +128,10 @@ export async function AnnoncesHero({ total }: Props) {
           </Button>
         </div>
 
-        <ul className="mt-6 hidden flex-wrap items-baseline gap-x-5 gap-y-2 sm:flex">
-          {kpis.map(({ value, label }) => (
-            <li
-              key={label}
-              className="flex items-baseline gap-2 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-500 sm:text-xs"
-            >
-              <b className="font-display text-[15px] font-extrabold tracking-normal text-peyi-green-700">
-                {formatKpi(value)}
-              </b>
-              <span>{label}</span>
-            </li>
-          ))}
-        </ul>
+        <CommunityStats
+          kpis={kpis}
+          emptyHint="Ouvre le bal — poste la première annonce"
+        />
       </div>
     </section>
   );

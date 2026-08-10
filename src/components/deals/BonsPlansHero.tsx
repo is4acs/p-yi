@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { CommunityStats } from "@/components/shared/CommunityStats";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { HighlightJaune } from "@/components/ui/highlight-jaune";
 
@@ -27,12 +28,6 @@ import { HighlightJaune } from "@/components/ui/highlight-jaune";
  * bloc KPI qui disparaît et désaligne la composition.
  */
 
-function formatKpi(n: number): string {
-  // Formatage français : séparateur de milliers espace insécable, pas
-  // de décimales. `2841` → `2 841`. Conserve l'alignement typographique
-  // avec le reste de l'app (qui utilise `fr-FR` partout).
-  return new Intl.NumberFormat("fr-FR").format(n);
-}
 const HERO_QUERY_TIMEOUT_MS = 3_500;
 
 export async function BonsPlansHero() {
@@ -122,19 +117,10 @@ export async function BonsPlansHero() {
         {/* KPIs — masqués sur mobile (le viewport vertical est précieux,
             on laisse la vedette au strip catégories + liste de deals qui
             suivent). Réaffichés sm:+ où l'espace le permet. */}
-        <ul className="mt-6 hidden flex-wrap items-baseline gap-x-5 gap-y-2 sm:flex">
-          {kpis.map(({ value, label }) => (
-            <li
-              key={label}
-              className="flex items-baseline gap-2 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-500 sm:text-xs"
-            >
-              <b className="font-display text-[15px] font-extrabold tracking-normal text-peyi-orange-700">
-                {formatKpi(value)}
-              </b>
-              <span>{label}</span>
-            </li>
-          ))}
-        </ul>
+        <CommunityStats
+          kpis={kpis}
+          emptyHint="Ouvre le bal — poste le premier bon plan du peyi"
+        />
       </div>
     </section>
   );
