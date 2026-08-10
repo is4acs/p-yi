@@ -1,8 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { ActivitiesFilterBar } from "@/components/activities/ActivitiesFilterBar";
 import { ActivitiesMobileSheet } from "@/components/activities/ActivitiesMobileSheet";
 import { ActivityCard } from "@/components/activities/ActivityCard";
 import { ActivityDetailPanel } from "@/components/activities/ActivityDetailPanel";
@@ -10,9 +12,13 @@ import { ActivityMapSkeleton } from "@/components/activities/ActivityMapSkeleton
 import type { MapBounds } from "@/components/activities/ActivityMap";
 import { useActivityDetail } from "@/components/activities/use-activity-detail";
 import {
-  EMPTY_ACTIVITY_COLLECTION,
-  type ActivityFeatureCollection,
-} from "@/lib/activities/geojson";
+  countActiveFilters,
+  matchesActivityFilters,
+  parseActivityFilters,
+  writeActivityFilters,
+  type ActivityFilters,
+} from "@/lib/activities/filters";
+import type { ActivityFeatureCollection } from "@/lib/activities/geojson";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -25,26 +31,71 @@ const ActivityMap = dynamic(
 );
 
 /**
- * Orchestrateur client de /activites : un seul fetch du GeoJSON minimal
- * (servi par le CDN, cache 5 min), puis tout — filtre par vue, sélection,
- * synchronisation liste ↔ carte — se joue côté client, sans re-requête.
+ * Orchestrateur client de /activites. Un seul fetch du GeoJSON minimal
+ * (cache CDN 5 min), puis tout se joue côté client sans re-requête :
+ * filtres, bornes de la carte, sélection, synchronisation liste ↔ carte.
  *
- * Desktop (≥ lg) : split view — liste 40 % scrollable à gauche, carte
- * 60 % pleine hauteur à droite. Synchronisation bidirectionnelle :
- * hover d'une card → marqueur surélevé ; clic sur un marqueur → scroll
- * de la liste vers la card. Le toggle « Rechercher quand je déplace la
- * carte » (actif par défaut) borne la liste aux limites visibles.
+ * L'état partageable vit dans l'URL (filtres + `lieu` sélectionné) :
+ * coller l'URL dans un autre navigateur reproduit la même vue. Les
+ * mises à jour passent par `history.replaceState` — synchronisé avec
+ * `useSearchParams` par Next — pour ne déclencher AUCUN aller-retour
+ * serveur au clic (précieux en 3G).
  */
 export function ActivitiesExplorer() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [collection, setCollection] =
     useState<ActivityFeatureCollection | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
-  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [hoveredSlug, setHoveredSlug] = useState<string | null>(null);
   const [bounds, setBounds] = useState<MapBounds | null>(null);
   const [searchOnMove, setSearchOnMove] = useState(true);
   const cardRefs = useRef(new Map<string, HTMLDivElement>());
+
+  const filters = useMemo(
+    () => parseActivityFilters(new URLSearchParams(searchParams.toString())),
+    [searchParams],
+  );
+  const selectedSlug = searchParams.get("lieu");
   const detailState = useActivityDetail(selectedSlug);
+  const activeFilterCount = countActiveFilters(filters);
+
+  const replaceUrl = useCallback(
+    (mutate: (params: URLSearchParams) => void) => {
+      const params = new URLSearchParams(searchParams.toString());
+      mutate(params);
+      const query = params.toString();
+      window.history.replaceState(
+        null,
+        "",
+        query ? `${pathname}?${query}` : pathname,
+      );
+    },
+    [pathname, searchParams],
+  );
+
+  const applyFilters = useCallback(
+    (next: ActivityFilters) => {
+      replaceUrl((params) => writeActivityFilters(params, next));
+    },
+    [replaceUrl],
+  );
+
+  const handleSelect = useCallback(
+    (slug: string | null) => {
+      replaceUrl((params) => {
+        if (slug) params.set("lieu", slug);
+        else params.delete("lieu");
+      });
+      if (slug) {
+        cardRefs.current
+          .get(slug)
+          ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    },
+    [replaceUrl],
+  );
 
   const load = useCallback(async () => {
     setLoadFailed(false);
@@ -63,10 +114,24 @@ export function ActivitiesExplorer() {
     void load();
   }, [load]);
 
-  const visibleFeatures = useMemo(() => {
+  // Features après filtres URL (Guyane entière) — alimente la carte.
+  const filteredFeatures = useMemo(() => {
     const all = collection?.features ?? [];
-    if (!searchOnMove || !bounds) return all;
-    return all.filter((feature) => {
+    if (activeFilterCount === 0) return all;
+    return all.filter((feature) =>
+      matchesActivityFilters(feature.properties, filters),
+    );
+  }, [collection, filters, activeFilterCount]);
+
+  const mapData = useMemo<ActivityFeatureCollection>(
+    () => ({ type: "FeatureCollection", features: filteredFeatures }),
+    [filteredFeatures],
+  );
+
+  // Puis restriction aux bornes visibles de la carte — alimente la liste.
+  const visibleFeatures = useMemo(() => {
+    if (!searchOnMove || !bounds) return filteredFeatures;
+    return filteredFeatures.filter((feature) => {
       const [lng, lat] = feature.geometry.coordinates;
       return (
         lng >= bounds.west &&
@@ -75,32 +140,94 @@ export function ActivitiesExplorer() {
         lat <= bounds.north
       );
     });
-  }, [collection, searchOnMove, bounds]);
+  }, [filteredFeatures, searchOnMove, bounds]);
 
-  const handleSelect = useCallback((slug: string | null) => {
-    setSelectedSlug(slug);
-    if (slug) {
-      cardRefs.current
-        .get(slug)
-        ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  // Communes proposées dans le filtre = celles présentes dans les données.
+  const cities = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const feature of collection?.features ?? []) {
+      map.set(feature.properties.citySlug, feature.properties.cityName);
     }
-  }, []);
+    return [...map.entries()]
+      .map(([slug, name]) => ({ slug, name }))
+      .sort((a, b) => a.name.localeCompare(b.name, "fr"));
+  }, [collection]);
+
+  // Si un filtre exclut l'activité sélectionnée, on la désélectionne pour
+  // ne pas garder un panneau ouvert sur un marqueur disparu.
+  useEffect(() => {
+    if (!selectedSlug || collection === null) return;
+    const stillVisible = filteredFeatures.some(
+      (feature) => feature.properties.slug === selectedSlug,
+    );
+    if (!stillVisible) handleSelect(null);
+  }, [selectedSlug, collection, filteredFeatures, handleSelect]);
 
   const count = visibleFeatures.length;
   const countLabel = `${count} activité${count > 1 ? "s" : ""}`;
+
+  const filterBar = (
+    <ActivitiesFilterBar
+      filters={filters}
+      onChange={applyFilters}
+      resultCount={filteredFeatures.length}
+      cities={cities}
+    />
+  );
+
+  const emptyState =
+    activeFilterCount > 0 ? (
+      <div className="flex flex-col items-center gap-3 rounded-md border border-dashed border-border px-4 py-10 text-center">
+        <p className="text-sm text-muted-foreground">
+          Aucune activité ne correspond à ces filtres — essaie d&apos;en
+          retirer un.
+        </p>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            applyFilters({
+              categories: [],
+              citySlug: null,
+              accessModes: [],
+              price: null,
+              duration: null,
+              difficulty: null,
+              inSeasonNow: false,
+            })
+          }
+        >
+          Tout effacer
+        </Button>
+      </div>
+    ) : (
+      <div className="flex flex-col items-center gap-3 rounded-md border border-dashed border-border px-4 py-10 text-center">
+        <p className="text-sm text-muted-foreground">
+          Aucune activité dans cette zone de la carte.
+        </p>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setSearchOnMove(false)}
+        >
+          Afficher toute la Guyane
+        </Button>
+      </div>
+    );
 
   return (
     <div className="flex h-full w-full">
       {/* ------------------------------------------------------------------
           Liste (desktop ≥ lg) — 40 % de la largeur, scroll indépendant.
-          Sur mobile la liste vit dans le bottom sheet (palier suivant).
+          Sur mobile la liste vit dans le bottom sheet.
       ------------------------------------------------------------------ */}
       <section
         aria-label="Liste des activités"
         className="hidden h-full w-2/5 flex-col border-r border-border bg-background lg:flex"
       >
+        <div className="border-b border-border">{filterBar}</div>
         <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5">
-          <p className="shrink-0 text-sm font-semibold">
+          <p className="shrink-0 text-sm font-semibold" aria-live="polite">
             {collection ? countLabel : "Chargement…"}
           </p>
           <label className="flex cursor-pointer select-none items-center gap-2 text-xs text-muted-foreground">
@@ -127,18 +254,7 @@ export function ActivitiesExplorer() {
               </div>
             ))
           ) : count === 0 ? (
-            <div className="flex flex-col items-center gap-3 rounded-md border border-dashed border-border px-4 py-10 text-center">
-              <p className="text-sm text-muted-foreground">
-                Aucune activité dans cette zone de la carte.
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSearchOnMove(false)}
-              >
-                Afficher toute la Guyane
-              </Button>
-            </div>
+            emptyState
           ) : (
             visibleFeatures.map((feature) => {
               const slug = feature.properties.slug;
@@ -170,7 +286,7 @@ export function ActivitiesExplorer() {
       ------------------------------------------------------------------ */}
       <div className="relative h-full min-w-0 flex-1">
         <ActivityMap
-          data={collection ?? EMPTY_ACTIVITY_COLLECTION}
+          data={mapData}
           selectedSlug={selectedSlug}
           hoveredSlug={hoveredSlug}
           onSelect={handleSelect}
@@ -211,6 +327,7 @@ export function ActivitiesExplorer() {
         selectedSlug={selectedSlug}
         detail={detailState}
         onSelect={handleSelect}
+        filterBar={filterBar}
       />
     </div>
   );

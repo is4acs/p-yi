@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 
 import { ActivitiesExplorer } from "@/components/activities/ActivitiesExplorer";
+import { ActivityMapSkeleton } from "@/components/activities/ActivityMapSkeleton";
 import { buildSeoMetadata } from "@/lib/seo/metadata";
 
 /**
@@ -22,7 +24,11 @@ export default function ActivitesPage() {
       <h1 className="sr-only">
         Activités et lieux à découvrir en Guyane — carte interactive
       </h1>
-      <ActivitiesExplorer />
+      {/* Suspense requis : l'Explorer lit useSearchParams (filtres URL)
+          alors que le shell de la page est rendu statiquement. */}
+      <Suspense fallback={<ActivityMapSkeleton />}>
+        <ActivitiesExplorer />
+      </Suspense>
     </main>
   );
 }

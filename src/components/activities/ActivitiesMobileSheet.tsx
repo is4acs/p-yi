@@ -30,7 +30,7 @@ import type { ActivityFeature } from "@/lib/activities/geojson";
  * rester accessible.
  */
 
-const SNAP_COLLAPSED = 0.15;
+const SNAP_COLLAPSED = 0.18;
 const SNAP_MID = 0.5;
 const SNAP_FULL = 0.94;
 const SNAP_POINTS: number[] = [SNAP_COLLAPSED, SNAP_MID, SNAP_FULL];
@@ -43,6 +43,8 @@ type Props = {
   /** Détail chargé à la demande (hook useActivityDetail, tenu par l'Explorer). */
   detail: ActivityDetailState | null;
   onSelect: (slug: string | null) => void;
+  /** Barre de filtres (état URL global) — affichée sous le header. */
+  filterBar?: React.ReactNode;
 };
 
 export function ActivitiesMobileSheet({
@@ -51,6 +53,7 @@ export function ActivitiesMobileSheet({
   selectedSlug,
   detail,
   onSelect,
+  filterBar,
 }: Props) {
   const [snap, setSnap] = useState<number | string | null>(SNAP_COLLAPSED);
   const railRefs = useRef(new Map<string, HTMLDivElement>());
@@ -125,6 +128,11 @@ export function ActivitiesMobileSheet({
                 </button>
               )}
             </div>
+
+            {/* Barre de filtres — visible dès la position réduite. */}
+            {!showDetail && filterBar && (
+              <div className="shrink-0 border-b border-border">{filterBar}</div>
+            )}
 
             {/* Fiche de l'activité sélectionnée (tap sur un marqueur). */}
             {showDetail && (isMid || isFull) && (
