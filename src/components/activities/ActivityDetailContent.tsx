@@ -63,8 +63,11 @@ function directionsHref(detail: ActivityDetailPayload): string {
 
 export function ActivityDetailContent({
   detail,
+  showFullPageLink = true,
 }: {
   detail: ActivityDetailPayload;
+  /** false sur /activites/[slug] : la fiche complète, c'est déjà ici. */
+  showFullPageLink?: boolean;
 }) {
   const category = ACTIVITY_CATEGORIES[detail.category];
   const practicable = isPracticableNow(detail.seasons);
@@ -346,13 +349,15 @@ export function ActivityDetailContent({
       )}
 
       {/* 9. Fiche complète (page SEO). */}
-      <Link
-        href={`/activites/${detail.slug}`}
-        className="inline-flex items-center gap-1.5 text-sm font-semibold text-peyi-orange-700 hover:text-peyi-orange-800"
-      >
-        Voir la fiche complète
-        <ArrowRight className="h-4 w-4" aria-hidden />
-      </Link>
+      {showFullPageLink && (
+        <Link
+          href={`/activites/${detail.slug}`}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-peyi-orange-700 hover:text-peyi-orange-800"
+        >
+          Voir la fiche complète
+          <ArrowRight className="h-4 w-4" aria-hidden />
+        </Link>
+      )}
     </div>
   );
 }

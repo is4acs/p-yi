@@ -12,8 +12,9 @@ import { prisma } from "@/lib/prisma";
  */
 
 /** Sélection minimale pour la carte — jamais de description ni d'images
- *  complètes dans ce payload (réseau mobile faible hors littoral). */
-const MAP_SELECT = {
+ *  complètes dans ce payload (réseau mobile faible hors littoral).
+ *  Exportée pour les pages piliers SEO (même shape → mêmes cards). */
+export const activityMapSelect = {
   id: true,
   slug: true,
   name: true,
@@ -35,13 +36,13 @@ const MAP_SELECT = {
 } satisfies Prisma.ActivitySelect;
 
 export type ActivityMapRow = Prisma.ActivityGetPayload<{
-  select: typeof MAP_SELECT;
+  select: typeof activityMapSelect;
 }>;
 
 export function getPublishedActivitiesForMap() {
   return prisma.activity.findMany({
     where: { status: ActivityStatus.PUBLISHED },
-    select: MAP_SELECT,
+    select: activityMapSelect,
     orderBy: { createdAt: Prisma.SortOrder.asc },
   });
 }
@@ -69,6 +70,15 @@ export function getPublishedActivityBySlug(slug: string) {
   return prisma.activity.findFirst({
     where: { slug, status: ActivityStatus.PUBLISHED },
     include: DETAIL_INCLUDE,
+  });
+}
+
+/** Liens fiche (nom + commune) pour le <noscript> SEO de la page carte. */
+export function getPublishedActivityLinks() {
+  return prisma.activity.findMany({
+    where: { status: ActivityStatus.PUBLISHED },
+    select: { slug: true, name: true, city: { select: { name: true } } },
+    orderBy: { name: Prisma.SortOrder.asc },
   });
 }
 

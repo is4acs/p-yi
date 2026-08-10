@@ -1,6 +1,8 @@
 import type { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import { activityMapSelect } from "@/lib/activities/queries";
+import { getActivityCategoryBySlug } from "@/lib/activities/labels";
 import { dealCardSelect } from "@/lib/deals/queries";
 import { listingCardSelect } from "@/lib/listings/queries";
 
@@ -88,6 +90,51 @@ export async function fetchListingsForPillar(filters: ListingPillarFilters) {
   ]);
 
   return { listings, total };
+}
+
+type ActivityPillarFilters = {
+  citySlug?: string | null;
+  categorySlug?: string | null;
+  take?: number;
+};
+
+// Contrairement aux deals/listings, la catégorie activité est un enum
+// Prisma, pas une table : le slug FR de l'URL est converti via labels.ts.
+// Un slug inconnu produit un filtre impossible (aucun résultat) plutôt
+// qu'un crash — le notFound() est géré en amont par les pillar-utils.
+function buildActivitiesPillarWhere(
+  filters: ActivityPillarFilters,
+): Prisma.ActivityWhereInput {
+  const category = filters.categorySlug
+    ? getActivityCategoryBySlug(filters.categorySlug)
+    : null;
+  return {
+    status: "PUBLISHED",
+    ...(filters.citySlug ? { city: { slug: filters.citySlug } } : {}),
+    ...(filters.categorySlug ? { category: category ?? undefined } : {}),
+    ...(filters.categorySlug && !category ? { id: "__aucun__" } : {}),
+  };
+}
+
+export async function countActivitiesForPillar(filters: ActivityPillarFilters) {
+  return prisma.activity.count({ where: buildActivitiesPillarWhere(filters) });
+}
+
+export async function fetchActivitiesForPillar(filters: ActivityPillarFilters) {
+  const where = buildActivitiesPillarWhere(filters);
+  const take = filters.take ?? 24;
+
+  const [activities, total] = await Promise.all([
+    prisma.activity.findMany({
+      where,
+      orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
+      take,
+      select: activityMapSelect,
+    }),
+    prisma.activity.count({ where }),
+  ]);
+
+  return { activities, total };
 }
 
 export async function fetchStoreWithDealCount(storeSlug: string) {

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Clock, MapPin } from "lucide-react";
 
 import {
@@ -30,6 +31,9 @@ type Props = {
   feature: ActivityFeature;
   isSelected?: boolean;
   onClick?: () => void;
+  /** Mode lien (pages piliers SEO) : la card devient un <Link> vers la
+   *  fiche au lieu d'un bouton de sélection carte. Prime sur onClick. */
+  href?: string;
   onHoverChange?: (hovering: boolean) => void;
   className?: string;
 };
@@ -38,6 +42,7 @@ export function ActivityCard({
   feature,
   isSelected = false,
   onClick,
+  href,
   onHoverChange,
   className,
 }: Props) {
@@ -90,7 +95,14 @@ export function ActivityCard({
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex items-start justify-between gap-2">
           <h3 className="line-clamp-2 font-display text-sm font-bold leading-snug">
-            {onClick ? (
+            {href ? (
+              <Link
+                href={href}
+                className="focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring after:absolute after:inset-0 after:content-['']"
+              >
+                {props.name}
+              </Link>
+            ) : onClick ? (
               <button
                 type="button"
                 onClick={onClick}

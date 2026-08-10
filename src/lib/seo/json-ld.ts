@@ -378,6 +378,122 @@ export function buildListingJsonLd(listing: ListingJsonLdInput): JsonLd | null {
 // -----------------------------------------------------------------------------
 // Helper d'injection
 // -----------------------------------------------------------------------------
+// TouristAttraction (fiches activités)
+// -----------------------------------------------------------------------------
+
+type TouristAttractionInput = {
+  slug: string;
+  name: string;
+  description: string;
+  latitude: number;
+  longitude: number;
+  cityName: string;
+  address: string | null;
+  /** URLs absolues des images, déjà ordonnées. */
+  images: string[];
+  isFree: boolean;
+  priceMinCents: number | null;
+  bookingUrl: string | null;
+  phone: string | null;
+  website: string | null;
+  /** Horaires déjà parsés (cf. `parseOpeningHours`), null si accès libre. */
+  openingHours: Record<string, unknown> | null;
+};
+
+const SCHEMA_DAY_BY_KEY: Record<string, string> = {
+  monday: "https://schema.org/Monday",
+  tuesday: "https://schema.org/Tuesday",
+  wednesday: "https://schema.org/Wednesday",
+  thursday: "https://schema.org/Thursday",
+  friday: "https://schema.org/Friday",
+  saturday: "https://schema.org/Saturday",
+  sunday: "https://schema.org/Sunday",
+};
+
+function buildOpeningHoursSpecification(
+  hours: Record<string, unknown>,
+): JsonLd[] {
+  const specs: JsonLd[] = [];
+  for (const [day, schemaDay] of Object.entries(SCHEMA_DAY_BY_KEY)) {
+    const ranges = hours[day];
+    if (!Array.isArray(ranges)) continue;
+    for (const range of ranges) {
+      if (!Array.isArray(range) || range.length !== 2) continue;
+      const [opens, closes] = range;
+      if (typeof opens !== "string" || typeof closes !== "string") continue;
+      specs.push({
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: schemaDay,
+        opens,
+        closes,
+      });
+    }
+  }
+  return specs;
+}
+
+/**
+ * Fiche activité → schema.org TouristAttraction, avec `geo`,
+ * `openingHoursSpecification`, `image` et `offers` (spec verticale
+ * activités). Champs absents omis proprement, URLs absolues.
+ */
+export function buildTouristAttractionJsonLd(
+  input: TouristAttractionInput,
+): JsonLd {
+  const base = getSiteUrl();
+  const url = `${base}/activites/${input.slug}`;
+
+  const jsonLd: JsonLd = {
+    "@context": "https://schema.org",
+    "@type": "TouristAttraction",
+    "@id": `${url}#attraction`,
+    name: input.name,
+    url,
+    description: input.description,
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: input.latitude,
+      longitude: input.longitude,
+    },
+    address: {
+      "@type": "PostalAddress",
+      ...(input.address ? { streetAddress: input.address } : {}),
+      addressLocality: input.cityName,
+      addressRegion: "Guyane",
+      addressCountry: "GF",
+    },
+    isAccessibleForFree: input.isFree,
+  };
+
+  if (input.images.length > 0) {
+    jsonLd.image = input.images;
+  }
+  if (input.phone) {
+    jsonLd.telephone = input.phone;
+  }
+  if (input.website) {
+    jsonLd.sameAs = [input.website];
+  }
+  if (!input.isFree && input.priceMinCents !== null) {
+    jsonLd.offers = {
+      "@type": "Offer",
+      price: (input.priceMinCents / 100).toFixed(2),
+      priceCurrency: "EUR",
+      url: input.bookingUrl ?? url,
+      availability: "https://schema.org/InStock",
+    };
+  }
+  if (input.openingHours) {
+    const specs = buildOpeningHoursSpecification(input.openingHours);
+    if (specs.length > 0) {
+      jsonLd.openingHoursSpecification = specs;
+    }
+  }
+
+  return jsonLd;
+}
+
+// -----------------------------------------------------------------------------
 
 /**
  * Produit la chaîne JSON à injecter dans un `<script type="application/ld+json">`.
