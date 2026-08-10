@@ -11,13 +11,13 @@ import { parsePage, parseQuery, parseSort } from "@/lib/deals/url";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { BonsPlansHero } from "@/components/deals/BonsPlansHero";
 import { DealCard } from "@/components/deals/DealCard";
-import { DealCategoryStrip } from "@/components/deals/DealCategoryStrip";
 import { DealsSortTabs } from "@/components/deals/DealsSortTabs";
 import { DealsFilterBar } from "@/components/deals/DealsFilterBar";
 import { DealsPagination } from "@/components/deals/DealsPagination";
 import { DealsSearchBar } from "@/components/deals/DealsSearchBar";
 import { EmptyDeals } from "@/components/deals/EmptyDeals";
 import { OnboardingNudge } from "@/components/onboarding/OnboardingNudge";
+import { FilterDrawer } from "@/components/shared/FilterDrawer";
 import { ExplorerAlso } from "@/components/seo/SeoBlocks";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { getDealsFacetCanonicalPath } from "@/lib/seo/local-pages";
@@ -168,7 +168,7 @@ export default async function BonsPlansPage(
         prisma.category.findMany({
           where: { type: "DEAL", isActive: true },
           orderBy: { sortOrder: "asc" },
-          select: { slug: true, name: true, icon: true },
+          select: { id: true, slug: true, name: true, icon: true },
         }),
         PAGE_DATA_TIMEOUT_MS,
         "deals/page-categories",
@@ -176,7 +176,7 @@ export default async function BonsPlansPage(
       withTimeout(
         prisma.city.findMany({
           orderBy: { name: "asc" },
-          select: { slug: true, name: true },
+          select: { id: true, slug: true, name: true },
         }),
         PAGE_DATA_TIMEOUT_MS,
         "deals/page-cities",
@@ -247,6 +247,12 @@ export default async function BonsPlansPage(
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const hasFilters = Boolean(category || city || q);
 
+  // Badge du bouton « Filtrer ». La recherche texte n'y compte pas : elle
+  // a son propre champ, visible juste à côté.
+  const activeFilterCount = (category ? 1 : 0) + (city ? 1 : 0);
+  const categoryName = categories.find((c) => c.slug === category)?.name ?? null;
+  const cityName = cities.find((c) => c.slug === city)?.name ?? null;
+
   // Onboarding steps (user connecté uniquement, page non filtrée).
   // Chaque étape est pilotée par un champ que l'utilisateur peut
   // remplir lui-même — pas de logique serveur cachée. Les liens
@@ -313,15 +319,6 @@ export default async function BonsPlansPage(
         <OnboardingNudge steps={onboardingSteps} />
       )}
 
-      {/* Strip catégories : TOUJOURS visible (refonte S34). Avant, elle
-          était masquée sous filtre comme le hero, ce qui donnait une
-          impression de "redirect" sèche quand l'utilisateur cliquait
-          une catégorie (perte du rail de navigation). Maintenant la
-          pill active est mise en avant en orange brand, et l'utilisateur
-          peut sauter d'une catégorie à l'autre sans passer par le
-          select dropdown. */}
-      <DealCategoryStrip selectedCategory={category} />
-
       {/* Sticky ancré SOUS le Header global (`sticky top-0 z-30 h-14
           sm:h-16`) et non à `top-0` comme avant S33 — sinon les deux
           se chevauchent au même offset. `z-20` passe au-dessus des
@@ -339,40 +336,71 @@ export default async function BonsPlansPage(
             <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
               Bons plans
             </h1>
+            {/* Résumé de ce qui est filtré. Depuis que la strip de
+                catégories a quitté la page, c'est ici — et sur le badge du
+                bouton « Filtrer » — que l'utilisateur lit dans quel sous-
+                ensemble il se trouve. Un « (filtré)» sec ne le disait pas. */}
             <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
               {total} bon{total > 1 ? "s" : ""} plan{total > 1 ? "s" : ""}
-              {q ? (
+              {q && (
                 <>
-                  {" "}pour <span className="font-medium text-foreground">“{q}”</span>
+                  {" "}
+                  pour{" "}
+                  <span className="font-medium text-foreground">“{q}”</span>
                 </>
-              ) : (
-                " (filtré)"
+              )}
+              {categoryName && (
+                <>
+                  {" · "}
+                  <span className="font-medium text-foreground">
+                    {categoryName}
+                  </span>
+                </>
+              )}
+              {cityName && (
+                <>
+                  {" · "}
+                  <span className="font-medium text-foreground">{cityName}</span>
+                </>
               )}
             </p>
           </>
         )}
 
-        <div className={hasFilters ? "mt-3 space-y-2" : "space-y-2"}>
-          <DealsSearchBar
-            defaultValue={q ?? ""}
-            sort={sort}
-            category={category}
-            city={city}
-          />
-          <DealsSortTabs
-            currentSort={sort}
-            category={category}
-            city={city}
-            q={q}
-          />
-          <DealsFilterBar
-            sort={sort}
-            categories={categories}
-            cities={cities}
-            selectedCategory={category}
-            selectedCity={city}
-            q={q}
-          />
+        {/* Une seule ligne : chercher, ou ouvrir les filtres. Tout le
+            reste (tri, catégorie, commune) vit dans le drawer — même
+            disposition que /annonces, pour qu'on n'ait pas à réapprendre
+            l'interface en passant d'un onglet à l'autre. */}
+        <div className={hasFilters ? "mt-3 flex items-center gap-2" : "flex items-center gap-2"}>
+          <div className="min-w-0 flex-1">
+            <DealsSearchBar
+              defaultValue={q ?? ""}
+              sort={sort}
+              category={category}
+              city={city}
+            />
+          </div>
+          <FilterDrawer
+            activeCount={activeFilterCount}
+            totalResults={total}
+            resetHref="/bons-plans"
+            resultNoun={{ one: "bon plan", many: "bons plans" }}
+          >
+            <DealsSortTabs
+              currentSort={sort}
+              category={category}
+              city={city}
+              q={q}
+            />
+            <DealsFilterBar
+              sort={sort}
+              categories={categories}
+              cities={cities}
+              selectedCategory={category}
+              selectedCity={city}
+              q={q}
+            />
+          </FilterDrawer>
         </div>
       </div>
 

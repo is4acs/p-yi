@@ -32,7 +32,7 @@ import { ListingsTypePills } from "@/components/listings/ListingsTypePills";
 import { ListingsFilterBar } from "@/components/listings/ListingsFilterBar";
 import { ListingsAttributeFilters } from "@/components/listings/ListingsAttributeFilters";
 import { ListingsActiveFilterChips } from "@/components/listings/ListingsActiveFilterChips";
-import { ListingsFilterDrawer } from "@/components/listings/ListingsFilterDrawer";
+import { FilterDrawer } from "@/components/shared/FilterDrawer";
 import { ListingsPagination } from "@/components/listings/ListingsPagination";
 import { EmptyListings } from "@/components/listings/EmptyListings";
 import { withTimeout } from "@/lib/async/with-timeout";
@@ -194,7 +194,7 @@ export default async function AnnoncesPage(
         prisma.category.findMany({
           where: { type: { in: ["LISTING", "BOTH"] }, isActive: true },
           orderBy: { sortOrder: "asc" },
-          select: { slug: true, name: true, icon: true },
+          select: { id: true, slug: true, name: true, icon: true },
         }),
         PAGE_DATA_TIMEOUT_MS,
         "listings/page-categories",
@@ -202,7 +202,7 @@ export default async function AnnoncesPage(
       withTimeout(
         prisma.city.findMany({
           orderBy: { name: "asc" },
-          select: { slug: true, name: true },
+          select: { id: true, slug: true, name: true },
         }),
         PAGE_DATA_TIMEOUT_MS,
         "listings/page-cities",
@@ -346,52 +346,42 @@ export default async function AnnoncesPage(
               filters={filters}
             />
           </div>
-          <ListingsFilterDrawer activeCount={activeFilterCount} totalResults={total}>
-            {/* Slot du drawer : rendu côté serveur (les composants sont
-                des server components avec des <Link> qui naviguent).
-                L'état `open` du drawer est préservé à travers les
-                re-renders RSC, l'utilisateur peut enchaîner les filtres. */}
-            <section aria-labelledby="drawer-sort">
-              <h3 id="drawer-sort" className="mb-2 font-display text-sm font-semibold text-ink-900">
-                Trier
-              </h3>
-              <ListingsSortTabs
-                currentSort={sort}
-                category={category}
-                city={city}
-                type={type}
-                q={q}
-                filters={filters}
-              />
-            </section>
-            <section aria-labelledby="drawer-type">
-              <h3 id="drawer-type" className="mb-2 font-display text-sm font-semibold text-ink-900">
-                Type d&apos;annonce
-              </h3>
-              <ListingsTypePills
-                sort={sort}
-                category={category}
-                city={city}
-                currentType={type}
-                q={q}
-                filters={filters}
-              />
-            </section>
-            <section aria-labelledby="drawer-where">
-              <h3 id="drawer-where" className="mb-2 font-display text-sm font-semibold text-ink-900">
-                Catégorie &amp; commune
-              </h3>
-              <ListingsFilterBar
-                sort={sort}
-                categories={categories}
-                cities={cities}
-                selectedCategory={category}
-                selectedCity={city}
-                type={type}
-                q={q}
-                filters={filters}
-              />
-            </section>
+          {/* Slot du drawer : chaque bloc est un server component qui
+              porte son propre titre et rend des <Link>. L'état `open` du
+              drawer survit aux re-renders RSC — on enchaîne les filtres
+              sans le rouvrir. */}
+          <FilterDrawer
+            activeCount={activeFilterCount}
+            totalResults={total}
+            resetHref="/annonces"
+            resultNoun={{ one: "annonce", many: "annonces" }}
+          >
+            <ListingsSortTabs
+              currentSort={sort}
+              category={category}
+              city={city}
+              type={type}
+              q={q}
+              filters={filters}
+            />
+            <ListingsTypePills
+              sort={sort}
+              category={category}
+              city={city}
+              currentType={type}
+              q={q}
+              filters={filters}
+            />
+            <ListingsFilterBar
+              sort={sort}
+              categories={categories}
+              cities={cities}
+              selectedCategory={category}
+              selectedCity={city}
+              type={type}
+              q={q}
+              filters={filters}
+            />
             <ListingsAttributeFilters
               sort={sort}
               category={category}
@@ -400,7 +390,7 @@ export default async function AnnoncesPage(
               q={q}
               filters={filters}
             />
-          </ListingsFilterDrawer>
+          </FilterDrawer>
         </div>
 
         {/* Chips des filtres actifs : on les garde EN DEHORS du drawer

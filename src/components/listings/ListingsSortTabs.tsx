@@ -1,5 +1,7 @@
-import Link from "next/link";
-import { cn } from "@/lib/utils";
+import {
+  FilterPillGroup,
+  type FilterPillOption,
+} from "@/components/shared/FilterPillGroup";
 import {
   buildListingsUrl,
   type ListingsFilters,
@@ -16,12 +18,20 @@ type Props = {
   filters?: ListingsFilters;
 };
 
-const TABS: Array<{ id: ListingsSort; label: string }> = [
-  { id: "new", label: "✨ Récents" },
-  { id: "price-asc", label: "💸 Prix ↑" },
-  { id: "price-desc", label: "💰 Prix ↓" },
+const TABS: Array<{ id: ListingsSort; icon: string; label: string }> = [
+  { id: "new", icon: "✨", label: "Récents" },
+  { id: "price-asc", icon: "💸", label: "Prix croissant" },
+  { id: "price-desc", icon: "💰", label: "Prix décroissant" },
 ];
 
+/**
+ * Tri des annonces. Rendu dans le drawer, donc en pastilles qui passent à
+ * la ligne : l'ancien rail `-mx-4 … overflow-x-auto` était calibré pour un
+ * conteneur de page, et dans le panneau il collait aux deux bords tout en
+ * cachant la dernière option derrière un défilement horizontal invisible.
+ * Les libellés sont repassés en clair (« Prix croissant » plutôt que
+ * « Prix ↑ ») maintenant qu'il y a la place de les écrire.
+ */
 export function ListingsSortTabs({
   currentSort,
   category,
@@ -30,37 +40,20 @@ export function ListingsSortTabs({
   q,
   filters,
 }: Props) {
-  return (
-    <nav
-      aria-label="Tri des annonces"
-      className="-mx-4 flex gap-1 overflow-x-auto px-4 py-1 sm:mx-0 sm:px-0"
-    >
-      {TABS.map((tab) => {
-        const isActive = tab.id === currentSort;
-        return (
-          <Link
-            key={tab.id}
-            href={buildListingsUrl({
-              sort: tab.id,
-              category,
-              city,
-              type,
-              q,
-              filters,
-            })}
-            scroll={false}
-            aria-current={isActive ? "page" : undefined}
-            className={cn(
-              "shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition",
-              isActive
-                ? "border-peyi-orange-500 bg-peyi-orange-500 text-white"
-                : "border-border bg-background text-muted-foreground hover:border-peyi-orange-300 hover:text-foreground",
-            )}
-          >
-            {tab.label}
-          </Link>
-        );
-      })}
-    </nav>
-  );
+  const options: FilterPillOption[] = TABS.map((tab) => ({
+    key: tab.id,
+    label: tab.label,
+    icon: tab.icon,
+    href: buildListingsUrl({
+      sort: tab.id,
+      category,
+      city,
+      type,
+      q,
+      filters,
+    }),
+    isActive: tab.id === currentSort,
+  }));
+
+  return <FilterPillGroup id="drawer-listing-sort" title="Trier" options={options} />;
 }

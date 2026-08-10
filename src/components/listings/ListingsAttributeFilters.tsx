@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { SlidersHorizontal } from "lucide-react";
 
 import {
   CARBURANT_OPTIONS,
@@ -26,10 +25,22 @@ type Props = {
 };
 
 /**
- * Bloc de filtres facettés. Ne s'affiche que si la catégorie courante
- * expose au moins un critère pertinent (au-delà du simple prix). Sur
- * mobile, on garde le panel replié par défaut via `<details>` pour ne
- * pas saturer le haut de page.
+ * Bloc de filtres facettés (prix, année, km, surface, pièces, marque,
+ * carburant, contrat) — les seuls filtres qui restent un formulaire :
+ * une fourchette de prix ne se clique pas comme une pastille, elle se
+ * saisit. D'où le bouton « Appliquer », qui est ici le seul submit de
+ * tout le panneau.
+ *
+ * Avant, ce bloc était un `<details>` intitulé « Filtres » avec une icône
+ * de curseurs — donc un troisième niveau de « Filtres » à l'intérieur du
+ * panneau « Filtres », replié par défaut. Il est maintenant déplié, avec
+ * un titre qui dit ce qu'il contient.
+ *
+ * Il est aussi rendu en permanence : auparavant il disparaissait tant
+ * qu'aucune catégorie n'était choisie, ce qui rendait le filtre prix —
+ * le plus universel — inaccessible depuis la vue générale. Le motif
+ * d'alors (« ne pas saturer le haut de page ») a disparu avec le
+ * déménagement dans le drawer.
  *
  * Le submit passe par une `action="/annonces"` method GET : chaque input
  * nommé (`prixMin`, `anneeMin`, …) arrive tel quel dans l'URL, et la
@@ -45,22 +56,12 @@ export function ListingsAttributeFilters({
   filters,
 }: Props) {
   const slots = getFilterSlotsForCategory(category);
-
-  // Toujours afficher au moins le prix. Si la catégorie ne porte QUE le
-  // prix et qu'il n'y a aucun filtre actif, on masque le panel par
-  // défaut mais sans le retirer — il reste disponible via l'expansion.
   const hasAdvancedSlots = slots.some((s) => s !== "priceRange");
   const active = hasActiveFilters(filters);
 
-  // Force l'ouverture du panel si on a au moins un filtre actif : l'user
-  // doit voir ce qui est en cours pour pouvoir ajuster ou effacer.
-  const openByDefault = active;
-
-  if (!hasAdvancedSlots && !active) {
-    // Pas de filtre spécifique pour cette catégorie et rien d'actif :
-    // on ne pollue pas l'UI avec un panel vide contenant juste le prix.
-    return null;
-  }
+  // « Prix » seul quand la catégorie n'expose rien d'autre : annoncer
+  // « critères » pour un unique champ prix serait trompeur.
+  const title = hasAdvancedSlots ? "Prix et critères" : "Prix";
 
   const resetUrl = buildListingsUrl({
     sort,
@@ -72,25 +73,15 @@ export function ListingsAttributeFilters({
   });
 
   return (
-    <details
-      open={openByDefault || undefined}
-      className="rounded-lg border border-border bg-card p-3 text-sm shadow-sm"
-    >
-      <summary className="flex cursor-pointer items-center gap-2 font-semibold text-foreground">
-        <SlidersHorizontal className="h-4 w-4 text-muted-foreground" aria-hidden />
-        Filtres
-        {active && (
-          <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-peyi-orange-500 px-1.5 text-[10px] font-bold text-white">
-            !
-          </span>
-        )}
-      </summary>
-
-      <form
-        action="/annonces"
-        method="get"
-        className="mt-3 space-y-3"
+    <section aria-labelledby="drawer-listing-attrs">
+      <h3
+        id="drawer-listing-attrs"
+        className="mb-2.5 font-display text-sm font-semibold text-ink-900"
       >
+        {title}
+      </h3>
+
+      <form action="/annonces" method="get" className="space-y-3">
         {/* On conserve l'état hors-filtres via des inputs cachés pour
             survivre au submit du form GET. */}
         {sort !== "new" && <input type="hidden" name="sort" value={sort} />}
@@ -112,21 +103,21 @@ export function ListingsAttributeFilters({
         <div className="flex items-center gap-2 pt-1">
           <button
             type="submit"
-            className="h-9 rounded-md bg-peyi-orange-500 px-4 text-sm font-semibold text-white transition hover:bg-peyi-orange-600"
+            className="inline-flex h-11 items-center rounded-full bg-peyi-orange-500 px-5 text-sm font-semibold text-white transition hover:bg-peyi-orange-600"
           >
             Appliquer
           </button>
           {active && (
             <Link
               href={resetUrl}
-              className="h-9 rounded-md border border-border px-3 text-sm font-medium leading-9 text-muted-foreground hover:text-foreground"
+              className="inline-flex h-11 items-center rounded-full border border-border px-4 text-sm font-medium text-muted-foreground transition hover:text-foreground"
             >
-              Tout effacer
+              Effacer ces critères
             </Link>
           )}
         </div>
       </form>
-    </details>
+    </section>
   );
 }
 

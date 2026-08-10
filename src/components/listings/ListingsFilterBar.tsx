@@ -1,17 +1,24 @@
-import Link from "next/link";
+import { FilterPillGroup } from "@/components/shared/FilterPillGroup";
+import {
+  rankFacetOptions,
+  toFilterPills,
+  type FacetOption,
+} from "@/components/shared/filter-options";
 import {
   buildListingsUrl,
   type ListingsFilters,
   type ListingsSort,
   type ListingTypeSlug,
 } from "@/lib/listings/url";
+import { prisma } from "@/lib/prisma";
+import { withTimeout } from "@/lib/async/with-timeout";
 
-type Option = { slug: string; name: string; icon?: string | null };
+const FACET_TIMEOUT_MS = 3_500;
 
 type Props = {
   sort: ListingsSort;
-  categories: Option[];
-  cities: Option[];
+  categories: FacetOption[];
+  cities: FacetOption[];
   selectedCategory: string | null;
   selectedCity: string | null;
   type: ListingTypeSlug | null;
@@ -20,23 +27,21 @@ type Props = {
 };
 
 /**
- * Map des clés `ListingsFilters` vers leur nom URL. Utilisé pour émettre
- * les hidden inputs qui préservent les filtres pendant une soumission
- * catégorie / ville — sinon ils seraient perdus au premier submit.
+ * Catégorie + commune des annonces, en pastilles cliquables.
+ *
+ * Avant : deux `<select>` en `flex-1` plus un bouton submit « Filtrer »,
+ * à l'intérieur du panneau « Filtres ». Les libellés se tronquaient
+ * mutuellement (« Toutes catégo⌄ ») et le bouton faisait doublon avec
+ * « Voir N résultats ». Ici chaque option est un lien qui applique
+ * directement — plus de formulaire, donc plus besoin de réémettre les
+ * autres filtres en `<input type="hidden">` : `buildListingsUrl` les
+ * porte déjà.
+ *
+ * Comptes croisés catégorie ↔ commune ; la recherche texte et les
+ * critères chiffrés ne sont pas pris en compte (repère de volume, pas
+ * pré-visualisation exacte).
  */
-const FILTER_URL_KEYS: Array<[keyof ListingsFilters, string]> = [
-  ["priceMin", "prixMin"],
-  ["priceMax", "prixMax"],
-  ["yearMin", "anneeMin"],
-  ["kmMax", "kmMax"],
-  ["surfaceMin", "surfaceMin"],
-  ["rooms", "pieces"],
-  ["fuel", "carburant"],
-  ["brand", "marque"],
-  ["contract", "contrat"],
-];
-
-export function ListingsFilterBar({
+export async function ListingsFilterBar({
   sort,
   categories,
   cities,
@@ -46,81 +51,90 @@ export function ListingsFilterBar({
   q,
   filters,
 }: Props) {
-  const hasFilter = Boolean(selectedCategory || selectedCity);
+  const base = { sort, type, q, filters };
+  const activeListing = {
+    status: "PUBLISHED" as const,
+    expiresAt: { gt: new Date() },
+  };
+
+  let categoryCounts = new Map<string, number>();
+  let cityCounts = new Map<string, number>();
+  let showCounts = false;
+
+  try {
+    const [byCategory, byCity] = await withTimeout(
+      Promise.all([
+        prisma.listing.groupBy({
+          by: ["categoryId"],
+          where: {
+            ...activeListing,
+            ...(selectedCity ? { city: { slug: selectedCity } } : {}),
+          },
+          _count: { _all: true },
+        }),
+        prisma.listing.groupBy({
+          by: ["cityId"],
+          where: {
+            ...activeListing,
+            ...(selectedCategory
+              ? { category: { slug: selectedCategory } }
+              : {}),
+          },
+          _count: { _all: true },
+        }),
+      ]),
+      FACET_TIMEOUT_MS,
+      "listings/filter-facets",
+    );
+
+    categoryCounts = new Map(
+      byCategory.map((row) => [row.categoryId, row._count._all]),
+    );
+    cityCounts = new Map(byCity.map((row) => [row.cityId, row._count._all]));
+    showCounts = true;
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[listings/filter-bar] facet counts failed", err);
+  }
+
+  const categoryPills = toFilterPills(
+    rankFacetOptions(categories, categoryCounts, selectedCategory),
+    {
+      allLabel: "Toutes",
+      allHref: buildListingsUrl({ ...base, city: selectedCity }),
+      isAllActive: selectedCategory === null,
+      selectedSlug: selectedCategory,
+      hrefFor: (slug) =>
+        buildListingsUrl({ ...base, category: slug, city: selectedCity }),
+      showCounts,
+    },
+  );
+
+  const cityPills = toFilterPills(
+    rankFacetOptions(cities, cityCounts, selectedCity),
+    {
+      allLabel: "Toute la Guyane",
+      allHref: buildListingsUrl({ ...base, category: selectedCategory }),
+      isAllActive: selectedCity === null,
+      selectedSlug: selectedCity,
+      hrefFor: (slug) =>
+        buildListingsUrl({ ...base, category: selectedCategory, city: slug }),
+      showCounts,
+    },
+  );
 
   return (
-    <form
-      action="/annonces"
-      method="get"
-      className="flex flex-wrap items-center gap-2"
-    >
-      {sort !== "new" && <input type="hidden" name="sort" value={sort} />}
-      {type && <input type="hidden" name="type" value={type} />}
-      {q && <input type="hidden" name="q" value={q} />}
-      {filters &&
-        FILTER_URL_KEYS.map(([k, urlKey]) => {
-          const value = filters[k];
-          if (value == null || value === "") return null;
-          return (
-            <input
-              key={urlKey}
-              type="hidden"
-              name={urlKey}
-              value={String(value)}
-            />
-          );
-        })}
-
-      <label className="sr-only" htmlFor="filter-lcategory">
-        Catégorie
-      </label>
-      <select
-        id="filter-lcategory"
-        name="category"
-        defaultValue={selectedCategory ?? ""}
-        className="h-9 min-w-0 flex-1 rounded-md border border-border bg-background px-2 text-sm text-foreground focus:border-peyi-orange-500 focus:outline-none focus:ring-1 focus:ring-peyi-orange-500"
-      >
-        <option value="">Toutes catégories</option>
-        {categories.map((c) => (
-          <option key={c.slug} value={c.slug}>
-            {c.icon ? `${c.icon} ` : ""}
-            {c.name}
-          </option>
-        ))}
-      </select>
-
-      <label className="sr-only" htmlFor="filter-lcity">
-        Commune
-      </label>
-      <select
-        id="filter-lcity"
-        name="city"
-        defaultValue={selectedCity ?? ""}
-        className="h-9 min-w-0 flex-1 rounded-md border border-border bg-background px-2 text-sm text-foreground focus:border-peyi-orange-500 focus:outline-none focus:ring-1 focus:ring-peyi-orange-500"
-      >
-        <option value="">Toutes communes</option>
-        {cities.map((c) => (
-          <option key={c.slug} value={c.slug}>
-            {c.name}
-          </option>
-        ))}
-      </select>
-
-      <button
-        type="submit"
-        className="h-9 rounded-md bg-peyi-orange-500 px-3 text-sm font-semibold text-white transition hover:bg-peyi-orange-600"
-      >
-        Filtrer
-      </button>
-
-      {hasFilter && (
-        <Link
-          href={buildListingsUrl({ sort, type, q, filters })}
-          className="h-9 rounded-md border border-border px-3 text-sm font-medium leading-9 text-muted-foreground hover:text-foreground"
-        >
-          Effacer
-        </Link>
-      )}
-    </form>
+    <>
+      <FilterPillGroup
+        id="drawer-listing-category"
+        title="Catégorie"
+        options={categoryPills}
+      />
+      <FilterPillGroup
+        id="drawer-listing-city"
+        title="Commune"
+        options={cityPills}
+      />
+    </>
   );
 }
