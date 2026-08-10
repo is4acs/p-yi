@@ -12,6 +12,14 @@
 // départ, l'UI affiche un placeholder tant que l'admin n'a pas uploadé.
 // =============================================================================
 
+// Charge `.env` AVANT d'instancier PrismaClient. Contrairement au CLI
+// Prisma (`prisma migrate`, `prisma db seed`), le client ne lit aucun
+// fichier d'environnement tout seul : lancé via `tsx`, ce script ne
+// verrait donc pas DATABASE_URL et échouerait sur « Environment variable
+// not found ». dotenv est silencieux s'il n'y a pas de `.env` (CI, env
+// déjà exporté), donc l'import est sans effet de bord.
+import 'dotenv/config'
+
 import { PrismaClient, Prisma } from '@prisma/client'
 import type { AccessMode, ActivityCategory, Difficulty, Season } from '@prisma/client'
 
