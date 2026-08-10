@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { ActivitiesMobileSheet } from "@/components/activities/ActivitiesMobileSheet";
 import { ActivityCard } from "@/components/activities/ActivityCard";
 import { ActivityMapSkeleton } from "@/components/activities/ActivityMapSkeleton";
 import type { MapBounds } from "@/components/activities/ActivityMap";
@@ -173,39 +174,32 @@ export function ActivitiesExplorer() {
           onBoundsChange={setBounds}
         />
 
-        {/* Compteur / états — mobile uniquement (la liste desktop a son
-            propre header). */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center lg:hidden">
-          {loadFailed ? (
-            <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-border bg-background/95 py-1.5 pl-4 pr-1.5 text-sm shadow-md backdrop-blur">
-              <span>Impossible de charger les activités.</span>
-              <Button size="sm" variant="peyi" onClick={() => void load()}>
-                Réessayer
-              </Button>
-            </div>
-          ) : collection === null ? (
-            <div className="rounded-full border border-border bg-background/95 px-4 py-1.5 text-sm text-muted-foreground shadow-md backdrop-blur">
-              Chargement des activités…
-            </div>
-          ) : (
-            <div className="rounded-full border border-border bg-background/95 px-4 py-1.5 text-sm font-medium shadow-md backdrop-blur">
-              {countLabel}
-            </div>
-          )}
-        </div>
-
-        {/* Erreur de chargement, version desktop (par-dessus la carte). */}
-        {loadFailed && (
-          <div className="pointer-events-none absolute inset-x-0 top-3 hidden justify-center lg:flex">
-            <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-border bg-background/95 py-1.5 pl-4 pr-1.5 text-sm shadow-md backdrop-blur">
-              <span>Impossible de charger les activités.</span>
-              <Button size="sm" variant="peyi" onClick={() => void load()}>
-                Réessayer
-              </Button>
-            </div>
+        {/* Bandeau d'état par-dessus la carte (erreur / chargement). */}
+        {(loadFailed || collection === null) && (
+          <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center">
+            {loadFailed ? (
+              <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-border bg-background/95 py-1.5 pl-4 pr-1.5 text-sm shadow-md backdrop-blur">
+                <span>Impossible de charger les activités.</span>
+                <Button size="sm" variant="peyi" onClick={() => void load()}>
+                  Réessayer
+                </Button>
+              </div>
+            ) : (
+              <div className="rounded-full border border-border bg-background/95 px-4 py-1.5 text-sm text-muted-foreground shadow-md backdrop-blur">
+                Chargement des activités…
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      {/* Bottom sheet mobile — 3 positions, carte interactive derrière. */}
+      <ActivitiesMobileSheet
+        features={visibleFeatures}
+        isReady={collection !== null}
+        selectedSlug={selectedSlug}
+        onSelect={handleSelect}
+      />
     </div>
   );
 }
