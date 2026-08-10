@@ -100,7 +100,31 @@ serveur Next en dev, crawl Chromium headless sur 14 routes × 4 largeurs
   Correctif global = retoucher un usage sémantique dans toute l'app : risque
   de régression visuelle large → décision demandée (voir Reste à faire).
 
-### Phase 6 (robustesse) — vérifié par sondage, pas de faille trouvée
+### Phase 6 (robustesse) — 1 bug P0 trouvé et corrigé, reste sain
+
+**P0 — les fiches d'annonce et de bon plan plantaient dès la 2e visite.**
+Découvert en peuplant la base de contenu bêta : la phase 0 n'avait pas pu le
+voir, faute de deals/annonces en base (0 lignes) — les fiches n'étaient donc
+jamais rendues pendant le crawl.
+
+- Symptôme : `RangeError: Invalid time value` dans `ListingDetailPage`
+  (`page.tsx:337`) et `DealDetailPage` (`page.tsx:341`), page d'erreur générique
+  servie à la place de la fiche. Reproduit 3 fois sur 3, sur les deux types.
+- Cause : `unstable_cache` **sérialise** sa valeur de retour dans le Data
+  Cache. Premier appel (MISS) → objet Prisma intact, vraies `Date`. Appels
+  suivants (HIT) → les dates reviennent en **chaînes ISO**, et
+  `Intl.DateTimeFormat().format("2026-08-06T…")` lève `Invalid time value`
+  (puis `.toISOString()` un `TypeError` juste après).
+- Portée réelle : en prod le cache reste chaud, donc **100 % des fiches
+  cassées** en régime permanent — seule la toute première visite après un
+  déploiement ou une invalidation passait.
+- Correctif : `src/lib/cache-dates.ts` (`reviveDates`) appliqué aux 4 lectures
+  cachées (`getListing`, `getListingMeta`, `getDeal`, `getDealMeta`), avec la
+  liste des champs date déclarée explicitement à côté de chaque `select`.
+- Vérifié : 3 chargements consécutifs × 4 fiches, 0 erreur serveur, dates
+  rendues (`6 août 2026`, `il y a 4 jours`, `expire dans 2 mois`).
+
+Le reste de la phase est sain :
 - Zod sur toutes les server actions et handlers touchés lors des sessions
   (deal, listing, activité, auth, upload) ; `requireActiveUser`/`requireRole`
   systématiques ; propriété vérifiée (constaté sur actions deals/annonces).
@@ -153,6 +177,8 @@ serveur Next en dev, crawl Chromium headless sur 14 routes × 4 largeurs
 | `perf(activites)` | Un seul message de chargement ; skeletons ; debounce 400 ms des bornes carte |
 | `chore(ci)` | Workflow GitHub Actions typecheck + lint + build |
 | `chore(audit)` | Ce fichier |
+| `fix(cache)` | **P0** — `reviveDates` : les fiches annonce/bon plan plantaient dès la 2e visite (dates sérialisées en chaînes par le Data Cache) |
+| `feat(beta)` | `supabase/beta-content.sql` — 12 bons plans + 12 annonces sous le compte éditorial `@peyi_demo`, compteurs à zéro |
 
 Validation après chaque lot : `npx tsc --noEmit` ✅ · `next lint` 0 warning ✅ ·
 `next build` exit 0, 0 warning ✅ · re-crawl navigateur des pages touchées ✅.
