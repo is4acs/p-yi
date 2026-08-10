@@ -138,7 +138,11 @@ export async function HomeCategoriesGrid() {
           return (
             <CategoryTile
               key={c.id}
-              href={buildListingsUrl({ category: c.slug })}
+              // Catégorie vide → tuile inerte « Bientôt » (pas de lien vers
+              // une page vide) ; elle redevient cliquable dès la 1re annonce.
+              {...(count > 0
+                ? { href: buildListingsUrl({ category: c.slug }) }
+                : { disabled: true as const })}
               variant={variant}
             >
               {iconName ? (

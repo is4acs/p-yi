@@ -45,9 +45,19 @@ type LinkProps = BaseProps & {
 type ButtonProps = BaseProps & {
   href?: never;
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  disabled?: never;
 };
 
-type Props = LinkProps | ButtonProps;
+type DisabledProps = BaseProps & {
+  /** Tuile inerte (catégorie encore vide) : rendue en <div>, sans
+   *  affordance de clic — un lien qui affiche « Bientôt » et navigue
+   *  quand même vers une page vide est un faux signal. */
+  disabled: true;
+  href?: never;
+  onClick?: never;
+};
+
+type Props = LinkProps | ButtonProps | DisabledProps;
 
 export function CategoryTile({
   variant = "orange",
@@ -55,12 +65,22 @@ export function CategoryTile({
   children,
   ...rest
 }: Props) {
+  const isDisabled = "disabled" in rest && rest.disabled === true;
   const classes = cn(
     "group flex min-h-[86px] flex-col items-start justify-between rounded-md p-3 transition-transform duration-base",
-    "hover:-translate-y-0.5 hover:shadow-md",
+    !isDisabled && "hover:-translate-y-0.5 hover:shadow-md",
+    isDisabled && "opacity-80",
     VARIANT_STYLES[variant],
     className,
   );
+
+  if (isDisabled) {
+    return (
+      <div aria-disabled="true" className={classes}>
+        {children}
+      </div>
+    );
+  }
 
   if ("href" in rest && rest.href) {
     return (
