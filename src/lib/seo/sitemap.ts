@@ -2,18 +2,23 @@ import { prisma } from "@/lib/prisma";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { getSiteUrl } from "@/lib/site-url";
 import {
+  ACTIVITY_CATEGORY_PILLARS,
+  ACTIVITY_CITY_PILLARS,
   CORE_CITIES,
   DEAL_CATEGORY_PILLARS,
   LISTING_CATEGORY_PILLARS,
   MIN_INDEXABLE_PILLAR_ITEMS,
   MIN_INDEXABLE_STORE_DEALS,
   STORE_PILLARS,
+  getActivitiesCategoryPath,
+  getActivitiesCityPath,
   getDealsCategoryPath,
   getDealsCityPath,
   getListingsCategoryPath,
   getListingsCityPath,
   getStorePath,
 } from "@/lib/seo/local-pages";
+import { ACTIVITY_CATEGORIES } from "@/lib/activities/labels";
 
 type ChangeFreq =
   | "always"
@@ -581,11 +586,142 @@ export async function getImagesEntries(): Promise<SitemapUrlEntry[]> {
   return [...dealEntries, ...listingEntries];
 }
 
+/**
+ * Sitemap de la verticale activités : la carte, le hub Guyane, les pages
+ * piliers ville/catégorie (uniquement celles qui atteignent le seuil
+ * d'indexabilité — les autres sont en noindex, inutile de les proposer)
+ * et toutes les fiches publiées, avec leurs images. Une seule requête
+ * Prisma, dégradation en liste minimale si la DB est indisponible.
+ */
+export async function getActivitiesEntries(): Promise<SitemapUrlEntry[]> {
+  const base = getSiteUrl();
+
+  type ActivityRow = {
+    slug: string;
+    updatedAt: Date;
+    category: string;
+    city: { slug: string };
+    images: Array<{ url: string }>;
+  };
+
+  let activities: ActivityRow[] = [];
+  let loadFailed = false;
+  try {
+    activities = await withTimeout(
+      prisma.activity.findMany({
+        where: { status: "PUBLISHED" },
+        select: {
+          slug: true,
+          updatedAt: true,
+          category: true,
+          city: { select: { slug: true } },
+          images: {
+            orderBy: { sortOrder: "asc" },
+            select: { url: true },
+            take: 4,
+          },
+        },
+        orderBy: { updatedAt: "desc" },
+      }),
+      SITEMAP_QUERY_TIMEOUT_MS,
+      "sitemap/activites",
+    );
+  } catch (err) {
+    loadFailed = true;
+    // eslint-disable-next-line no-console
+    console.error("[sitemap/activites] fetch failed", err);
+  }
+
+  const latest = activities[0]?.updatedAt;
+  const entries: SitemapUrlEntry[] = [
+    {
+      loc: `${base}/activites`,
+      lastmod: latest,
+      changefreq: "daily",
+      priority: 0.8,
+    },
+  ];
+
+  // DB indisponible : on garde au moins la carte, le reste reviendra à
+  // la prochaine revalidation.
+  if (loadFailed) return entries;
+
+  if (activities.length >= MIN_INDEXABLE_PILLAR_ITEMS) {
+    entries.push({
+      loc: `${base}/activites/guyane`,
+      lastmod: latest,
+      changefreq: "weekly",
+      priority: 0.7,
+    });
+  }
+
+  const countByCity = new Map<string, number>();
+  const countByCategorySlug = new Map<string, number>();
+  for (const activity of activities) {
+    countByCity.set(
+      activity.city.slug,
+      (countByCity.get(activity.city.slug) ?? 0) + 1,
+    );
+    const categoryMeta =
+      ACTIVITY_CATEGORIES[
+        activity.category as keyof typeof ACTIVITY_CATEGORIES
+      ];
+    if (categoryMeta) {
+      countByCategorySlug.set(
+        categoryMeta.slug,
+        (countByCategorySlug.get(categoryMeta.slug) ?? 0) + 1,
+      );
+    }
+  }
+
+  for (const city of ACTIVITY_CITY_PILLARS) {
+    if ((countByCity.get(city.slug) ?? 0) >= MIN_INDEXABLE_PILLAR_ITEMS) {
+      entries.push({
+        loc: `${base}${getActivitiesCityPath(city.slug)}`,
+        changefreq: "weekly",
+        priority: 0.6,
+      });
+    }
+  }
+
+  for (const category of ACTIVITY_CATEGORY_PILLARS) {
+    if (
+      (countByCategorySlug.get(category.slug) ?? 0) >=
+      MIN_INDEXABLE_PILLAR_ITEMS
+    ) {
+      entries.push({
+        loc: `${base}${getActivitiesCategoryPath(category.slug)}`,
+        changefreq: "weekly",
+        priority: 0.6,
+      });
+    }
+  }
+
+  for (const activity of activities) {
+    entries.push({
+      loc: `${base}/activites/${activity.slug}`,
+      lastmod: activity.updatedAt,
+      changefreq: "weekly",
+      priority: 0.7,
+      ...(activity.images.length > 0
+        ? {
+            images: activity.images.map((image) =>
+              toAbsoluteUrl(image.url, base),
+            ),
+          }
+        : {}),
+    });
+  }
+
+  return entries;
+}
+
 export function buildSitemapIndexEntries(base: string): SitemapIndexEntry[] {
   return [
     { loc: `${base}/sitemap-pages.xml` },
     { loc: `${base}/sitemap-deals.xml` },
     { loc: `${base}/sitemap-annonces.xml` },
+    { loc: `${base}/sitemap-activites.xml` },
     { loc: `${base}/sitemap-images.xml` },
   ];
 }

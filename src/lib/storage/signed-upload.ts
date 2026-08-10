@@ -8,6 +8,7 @@ import { env } from "@/lib/env";
 export const DEAL_BUCKET = "deals";
 export const LISTING_BUCKET = "listings";
 export const AVATAR_BUCKET = "avatars";
+export const ACTIVITY_BUCKET = "activities";
 
 export const ALLOWED_MIME = [
   "image/jpeg",
@@ -24,6 +25,7 @@ const BUCKET_FILE_SIZE_LIMIT: Record<string, number> = {
   [DEAL_BUCKET]: 5 * 1024 * 1024,
   [LISTING_BUCKET]: 5 * 1024 * 1024,
   [AVATAR_BUCKET]: 2 * 1024 * 1024,
+  [ACTIVITY_BUCKET]: 5 * 1024 * 1024,
 };
 
 // Une fois qu'un bucket a été confirmé sur une instance warm, on évite le
@@ -156,6 +158,42 @@ export async function signAvatarUpload(
   mime: AllowedMime,
 ): Promise<SignedUpload> {
   return signOne(AVATAR_BUCKET, userId, mime);
+}
+
+export async function signActivityUploads(
+  userId: string,
+  mimes: AllowedMime[],
+): Promise<SignedUpload[]> {
+  return Promise.all(mimes.map((m) => signOne(ACTIVITY_BUCKET, userId, m)));
+}
+
+/**
+ * Variante de `parseOwnedStorageUrl` sans contrainte de dossier userId :
+ * les fiches activités sont éditoriales et co-gérées par plusieurs admins
+ * — une image uploadée par l'admin A doit rester valide quand l'admin B
+ * réédite la fiche. On vérifie quand même origine Supabase + bucket.
+ */
+export function parseStorageUrlInBucket(
+  url: string,
+  bucket: string,
+): { path: string } | null {
+  if (typeof url !== "string" || url.length === 0) return null;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+
+  const expectedOrigin = new URL(env.NEXT_PUBLIC_SUPABASE_URL).origin;
+  if (parsed.origin !== expectedOrigin) return null;
+
+  const prefix = `/storage/v1/object/public/${bucket}/`;
+  if (!parsed.pathname.startsWith(prefix)) return null;
+
+  const path = parsed.pathname.slice(prefix.length);
+  return path ? { path } : null;
 }
 
 /**

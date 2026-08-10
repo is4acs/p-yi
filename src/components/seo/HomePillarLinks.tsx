@@ -2,9 +2,13 @@ import Link from "next/link";
 import { ArrowRight, MapPin, Tag } from "lucide-react";
 
 import {
+  ACTIVITY_CATEGORY_PILLARS,
+  ACTIVITY_CITY_PILLARS,
   CORE_CITIES,
   DEAL_CATEGORY_PILLARS,
   LISTING_CATEGORY_PILLARS,
+  getActivitiesCategoryPath,
+  getActivitiesCityPath,
   getDealsCategoryPath,
   getDealsCityPath,
   getListingsCategoryPath,
@@ -54,6 +58,25 @@ function buildListingChips(): {
     label: category.name,
     srPrefix: "Voir les annonces ",
     title: `Annonces ${category.name.toLowerCase()} en Guyane`,
+  }));
+  return { cityChips, categoryChips };
+}
+
+function buildActivityChips(): {
+  cityChips: PillarChip[];
+  categoryChips: PillarChip[];
+} {
+  const cityChips = ACTIVITY_CITY_PILLARS.map((city) => ({
+    href: getActivitiesCityPath(city.slug),
+    label: city.name,
+    srPrefix: "Voir les activités à ",
+    title: `Activités à ${city.name}`,
+  }));
+  const categoryChips = ACTIVITY_CATEGORY_PILLARS.map((category) => ({
+    href: getActivitiesCategoryPath(category.slug),
+    label: category.name,
+    srPrefix: "Voir les activités ",
+    title: `Activités ${category.name.toLowerCase()} en Guyane`,
   }));
   return { cityChips, categoryChips };
 }
@@ -130,6 +153,7 @@ function PillarColumn({
 export function HomePillarLinks() {
   const deals = buildDealChips();
   const listings = buildListingChips();
+  const activities = buildActivityChips();
 
   return (
     <section className="mt-8 px-4 sm:px-0" aria-labelledby="home-seo-explore">
@@ -141,11 +165,11 @@ export function HomePillarLinks() {
           Explorer la Guyane par ville et catégorie
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Accès rapide aux pages locales pour trouver bons plans et annonces
-          par commune ou thématique.
+          Accès rapide aux pages locales pour trouver bons plans, annonces et
+          activités par commune ou thématique.
         </p>
 
-        <div className="mt-4 grid gap-5 sm:grid-cols-2 sm:gap-6">
+        <div className="mt-4 grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
           <PillarColumn
             title="Bons plans"
             hubHref="/bons-plans/guyane"
@@ -161,6 +185,14 @@ export function HomePillarLinks() {
             hubSrSuffix="les annonces en Guyane"
             cityChips={listings.cityChips}
             categoryChips={listings.categoryChips}
+          />
+          <PillarColumn
+            title="Activités"
+            hubHref="/activites/guyane"
+            hubLabel="Tout voir"
+            hubSrSuffix="les activités en Guyane"
+            cityChips={activities.cityChips}
+            categoryChips={activities.categoryChips}
           />
         </div>
       </div>

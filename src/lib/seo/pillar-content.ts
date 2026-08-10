@@ -1,4 +1,6 @@
 import {
+  ACTIVITY_CATEGORY_PILLARS,
+  ACTIVITY_CITY_PILLARS,
   CORE_CITIES,
   DEAL_CATEGORY_PILLARS,
   GUIDE_SLUGS,
@@ -9,6 +11,8 @@ import {
   type GuideSlug,
   type SeoCategory,
   type SeoCity,
+  getActivitiesCategoryPath,
+  getActivitiesCityPath,
   getDealsCategoryPath,
   getDealsCityPath,
   getListingsCategoryPath,
@@ -292,6 +296,81 @@ export function buildStoreExploreLinks(storeSlug: string): ExploreLink[] {
       label: "Voir les promos supermarché en Guyane",
     },
     { href: "/bons-plans/guyane", label: "Voir tous les bons plans en Guyane" },
+  ];
+}
+
+// --- Activités (verticale voyage / tourisme) ---------------------------------
+
+export function buildActivitiesGlobalIntro(): string {
+  return "Cette page rassemble les activités et lieux à découvrir en Guyane: sentiers et cascades, îles et criques, sites du bagne, villages et marchés, observation de la faune et sorties en pirogue. Chaque fiche précise deux informations qu'on ne trouve nulle part ailleurs regroupées: le mode d'accès réel (route, piste, 4x4, pirogue, avion) et la saisonnalité — praticable ou non selon la saison sèche ou la saison des pluies. Utilise la carte interactive pour explorer visuellement le territoire, ou les pages par commune et par catégorie pour préparer une sortie précise, de l'île de Cayenne au Maroni.";
+}
+
+export function buildActivitiesCityIntro(city: SeoCity): string {
+  return `Tu consultes les activités et lieux à découvrir autour de ${city.name}. Chaque fiche indique le mode d'accès (route, piste, pirogue…), la durée moyenne, le tarif et la meilleure saison pour y aller — l'essentiel pour organiser une sortie sans mauvaise surprise, en famille ou entre amis. Les sites listés sont géolocalisés sur la carte interactive: ouvre-la pour visualiser ce qui se trouve réellement près de ${city.name} et enchaîner plusieurs découvertes dans la même journée.`;
+}
+
+export function buildActivitiesCategoryIntro(category: SeoCategory): string {
+  return `Cette page regroupe les activités ${category.name.toLowerCase()} en Guyane, avec pour chaque lieu les informations pratiques qui comptent vraiment ici: comment y accéder (route goudronnée, piste 4x4, pirogue ou avion), combien de temps prévoir, le tarif et la période de l'année où c'est praticable. C'est la bonne entrée pour préparer une sortie thématique — complète avec la carte interactive pour situer chaque site et repérer ce qui se combine dans un même secteur.`;
+}
+
+export function buildActivitiesFaq(label: string): FaqItem[] {
+  return [
+    {
+      question: `Comment savoir si une activité ${label} est praticable en ce moment ?`,
+      answer:
+        "Chaque fiche affiche un bandeau saison calculé sur la date du jour: praticable ou déconseillé selon la grande saison sèche (juillet–novembre), le petit été de mars et la saison des pluies. Sur la carte, le filtre « Praticable en ce moment » ne garde que les sites accessibles aujourd'hui.",
+    },
+    {
+      question: "Comment connaître le mode d'accès d'un site ?",
+      answer:
+        "Le mode d'accès (route, piste carrossable, 4x4 obligatoire, pirogue, bateau, avion ou marche d'approche) est affiché sur chaque fiche et chaque carte de résultat, avec le point de départ exact (parking, dégrad, embarcadère) et une note d'accès quand la piste se dégrade en saison des pluies.",
+    },
+  ];
+}
+
+export function buildActivitiesGlobalExploreLinks(): ExploreLink[] {
+  return [
+    { href: "/activites", label: "Ouvrir la carte interactive des activités" },
+    ...ACTIVITY_CITY_PILLARS.map((city) => ({
+      href: getActivitiesCityPath(city.slug),
+      label: `Voir les activités autour de ${city.name}`,
+    })),
+    ...ACTIVITY_CATEGORY_PILLARS.map((category) => ({
+      href: getActivitiesCategoryPath(category.slug),
+      label: `Voir les activités ${category.name.toLowerCase()} en Guyane`,
+    })),
+  ];
+}
+
+export function buildActivitiesCityExploreLinks(city: SeoCity): ExploreLink[] {
+  return [
+    {
+      href: `/activites?commune=${city.slug}`,
+      label: `Voir ${city.name} sur la carte interactive`,
+    },
+    { href: "/activites/guyane", label: "Voir toutes les activités en Guyane" },
+    ...ACTIVITY_CATEGORY_PILLARS.slice(0, 6).map((category) => ({
+      href: getActivitiesCategoryPath(category.slug),
+      label: `Voir les activités ${category.name.toLowerCase()} en Guyane`,
+      description: `À combiner avec les sorties autour de ${city.name}`,
+    })),
+  ];
+}
+
+export function buildActivitiesCategoryExploreLinks(
+  category: SeoCategory,
+): ExploreLink[] {
+  return [
+    {
+      href: `/activites?categorie=${category.slug}`,
+      label: `Voir les activités ${category.name.toLowerCase()} sur la carte`,
+    },
+    { href: "/activites/guyane", label: "Voir toutes les activités en Guyane" },
+    ...ACTIVITY_CITY_PILLARS.map((city) => ({
+      href: getActivitiesCityPath(city.slug),
+      label: `Voir les activités autour de ${city.name}`,
+      description: `${category.name} et autres découvertes locales`,
+    })),
   ];
 }
 

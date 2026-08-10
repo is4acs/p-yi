@@ -37,6 +37,7 @@ export function Header({ user, unreadCount, unreadNotifications }: Props) {
         >
           <NavLink href="/bons-plans">Bons plans</NavLink>
           <NavLink href="/annonces">Annonces</NavLink>
+          <NavLink href="/activites">Activités</NavLink>
           <NavLink href="/poster">Poster</NavLink>
           <NavLink href="/messages" badge={unreadCount}>
             Messages

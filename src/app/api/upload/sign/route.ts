@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { requireActiveUser } from "@/lib/auth/current-user";
+import { UserRole } from "@prisma/client";
+
+import { hasRole, requireActiveUser } from "@/lib/auth/current-user";
 import { writeLimiter } from "@/lib/rate-limit";
 import {
   ALLOWED_MIME,
+  signActivityUploads,
   signDealUpload,
   signListingUploads,
   signAvatarUpload,
@@ -40,7 +43,7 @@ export const runtime = "nodejs";
 const MAX_LISTING_BATCH = 20;
 
 const schema = z.object({
-  kind: z.enum(["deal", "listing", "avatar"]),
+  kind: z.enum(["deal", "listing", "avatar", "activity"]),
   mimes: z
     .array(z.enum(ALLOWED_MIME))
     .min(1, "Au moins un fichier.")
@@ -77,7 +80,16 @@ export async function POST(req: Request) {
 
   try {
     let urls: SignedUpload[];
-    if (kind === "listing") {
+    if (kind === "activity") {
+      // Bucket éditorial : réservé au back-office (fiches activités).
+      if (!hasRole(user, UserRole.ADMIN)) {
+        return NextResponse.json(
+          { error: "Réservé aux administrateurs." },
+          { status: 403 },
+        );
+      }
+      urls = await signActivityUploads(user.id, mimes as AllowedMime[]);
+    } else if (kind === "listing") {
       urls = await signListingUploads(user.id, mimes as AllowedMime[]);
     } else if (kind === "deal") {
       if (mimes.length !== 1) {

@@ -138,11 +138,12 @@ model City {
   latitude  Float?
   longitude Float?
   
-  users     User[]
-  listings  Listing[]
-  deals     Deal[]
-  stores    Store[]
-  
+  users      User[]
+  listings   Listing[]
+  deals      Deal[]
+  stores     Store[]
+  activities Activity[]
+
   @@map("cities")
 }
 
@@ -821,6 +822,10 @@ enum AdminActionType {
   RESOLVE_REPORT
   DISMISS_REPORT
   BROADCAST_NOTIFICATION
+  CREATE_ACTIVITY
+  UPDATE_ACTIVITY
+  DELETE_ACTIVITY
+  SET_ACTIVITY_STATUS
 }
 
 enum AdminTargetType {
@@ -831,6 +836,7 @@ enum AdminTargetType {
   USER
   REPORT
   SYSTEM
+  ACTIVITY
 }
 
 // =============================================================================
@@ -1111,6 +1117,163 @@ enum AffiliatePayoutStatus {
   PROCESSING  // en cours de traitement admin
   PAID        // versé
   REJECTED    // rejeté (fraude / compte fermé)
+}
+
+// =============================================================================
+// ACTIVITÉS & DÉCOUVERTE (verticale voyage / tourisme)
+// =============================================================================
+// Carte interactive des activités et lieux à découvrir en Guyane. Les deux
+// dimensions différenciantes vs. les guides généralistes : le MODE D'ACCÈS
+// (route, piste, 4x4, pirogue, avion…) et la SAISONNALITÉ (praticable ou
+// non selon saison sèche / saison des pluies).
+//
+// Conventions (alignées sur le reste du schéma) : noms de modèles/champs en
+// anglais + `@@map` snake_case, ids `uuid()`, enums anglais. Les libellés
+// français vivent dans `src/lib/activities/labels.ts`. Les prix sont en
+// CENTIMES (précédent : module affiliation) — `priceMinCents` null +
+// `isFree` false = tarif non communiqué, `isFree` true = gratuit.
+
+model Activity {
+  id          String            @id @default(uuid())
+  slug        String            @unique
+  name        String
+  tagline     String            // 1 phrase, affichée dans le popup carte
+  description String            @db.Text // markdown
+  category    ActivityCategory
+  tags        String[]          // "famille", "gratuit", "sportif", "insolite"…
+
+  // Géo — Float + index suffit pour < 5 000 points (requêtes par bounding
+  // box). Pas de PostGIS tant que le volume ne le justifie pas.
+  latitude   Float
+  longitude  Float
+  cityId     String
+  city       City    @relation(fields: [cityId], references: [id])
+  address    String?
+  startPoint String? // "Parking PK12 RN2" — souvent ≠ du lieu lui-même
+
+  // Spécifique Guyane — le cœur du différenciant
+  accessModes     AccessMode[] // plusieurs possibles (ex. voiture PUIS pirogue)
+  durationMinutes Int?         // durée moyenne de l'activité
+  difficulty      Difficulty?
+  seasons         Season[]     // périodes où c'est praticable
+  accessNote      String?      // "piste dégradée après fortes pluies, 4x4 conseillé"
+
+  // Commercial
+  priceMinCents   Int?
+  priceMaxCents   Int?
+  isFree          Boolean @default(false)
+  bookingRequired Boolean @default(false)
+  bookingUrl      String?
+
+  // Contact
+  phone     String?
+  whatsapp  String?
+  website   String?
+  instagram String?
+
+  // { monday: [["08:00","17:00"]], …, exceptions: [] } — cf.
+  // `src/lib/activities/opening-hours.ts` pour le schéma zod et le calcul
+  // ouvert/fermé. Null = pas d'horaires (site naturel en accès libre).
+  openingHours Json?
+
+  images ActivityImage[]
+
+  // Éditorial / modération — workflow DRAFT → PENDING_REVIEW → PUBLISHED
+  operatorId String?
+  operator   Operator?      @relation(fields: [operatorId], references: [id])
+  status     ActivityStatus @default(DRAFT)
+  isFeatured Boolean        @default(false)
+  viewCount  Int            @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, category])
+  @@index([latitude, longitude])
+  @@index([cityId, status])
+  @@index([operatorId])
+  @@map("activities")
+}
+
+enum ActivityCategory {
+  NATURE     // sentiers, cascades, savanes
+  WILDLIFE   // observation tortues, caïmans, oiseaux
+  CULTURE    // sites amérindiens, bushinengué, créole
+  HERITAGE   // bagne, îles du Salut, vestiges
+  SPACE      // CSG, musée de l'espace
+  NAUTICAL   // pirogue, kayak, plage, îlets
+  ADVENTURE  // canopée, bivouac, orpaillage
+  GASTRONOMY // marchés, dégustation, producteurs
+  WELLNESS
+  FAMILY
+}
+
+enum AccessMode {
+  CAR              // route goudronnée
+  TRACK            // piste carrossable
+  FOUR_WHEEL_DRIVE // 4x4 obligatoire
+  PIROGUE
+  BOAT
+  PLANE            // Saül, Maripasoula…
+  WALK             // accès uniquement à pied
+}
+
+enum Difficulty {
+  EASY
+  MODERATE
+  HARD
+  EXPERT
+}
+
+// Saisons guyanaises. Le mapping mois → saison (pour le badge « praticable
+// en ce moment ») vit dans `src/lib/activities/seasons.ts`.
+enum Season {
+  MAIN_DRY_SEASON  // grande saison sèche (juil–nov)
+  SHORT_DRY_SEASON // petit été de mars
+  RAINY_SEASON     // saison des pluies (déc–juin)
+  ALL_YEAR
+}
+
+enum ActivityStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  HIDDEN
+}
+
+model ActivityImage {
+  id         String   @id @default(uuid())
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  url        String   // chemin Supabase Storage (bucket `activities`)
+  altText    String
+  sortOrder  Int      @default(0)
+  width      Int?
+  height     Int?
+  createdAt  DateTime @default(now())
+
+  @@index([activityId, sortOrder])
+  @@map("activity_images")
+}
+
+// Opérateur touristique (piroguier, guide, association…) — distinct de
+// `Store` (enseigne commerciale liée aux bons plans) et sans compte User
+// associé pour l'instant : c'est une fiche éditoriale gérée par l'admin.
+model Operator {
+  id         String  @id @default(uuid())
+  name       String
+  slug       String  @unique
+  email      String?
+  phone      String?
+  website    String?
+  isVerified Boolean @default(false)
+
+  activities Activity[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("operators")
 }
 
 model AffiliateClick {

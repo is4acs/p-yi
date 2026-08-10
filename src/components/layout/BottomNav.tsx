@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Flame, MessageSquare, Plus, Tag, User } from "lucide-react";
+import { Compass, Flame, Plus, Tag, User } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -17,14 +17,15 @@ type Tab = {
 
 // 5 onglets symétriques (2/2 autour du bouton Poster central). Sur iPhone
 // SE (375px) ça donne ~75px par onglet, largement au-dessus de la cible
-// tactile 44×44 recommandée par Apple. Favoris reste accessible via Profil.
+// tactile 44×44 recommandée par Apple. Depuis la verticale activités,
+// « Activités » remplace « Messages » ici (choix produit) : la messagerie
+// reste accessible via le Header et le Profil, avec son badge non-lus.
 const TABS: Tab[] = [
   {
-    href: "/messages",
-    label: "Messages",
-    icon: MessageSquare,
-    match: (p) => p === "/messages" || p.startsWith("/messages/"),
-    badgeKey: "unread",
+    href: "/activites",
+    label: "Activités",
+    icon: Compass,
+    match: (p) => p === "/activites" || p.startsWith("/activites/"),
   },
   {
     href: "/bons-plans",

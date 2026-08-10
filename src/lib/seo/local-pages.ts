@@ -52,6 +52,32 @@ export const LISTING_CATEGORY_PILLARS: SeoCategory[] = [
   { slug: "multimedia-tech", name: "Multimédia & Tech" },
 ];
 
+// Pages piliers Activités. Les villes diffèrent volontairement des
+// CORE_CITIES : le tourisme se joue à Roura (Kaw, Cacao, crique Gabrielle)
+// ou Macouria (zoo), pas à Matoury. Les slugs catégories doivent matcher
+// `ACTIVITY_CATEGORIES` (src/lib/activities/labels.ts) — le garde-fou
+// noindex (MIN_INDEXABLE_PILLAR_ITEMS) protège les pages encore vides.
+export const ACTIVITY_CITY_PILLARS: SeoCity[] = [
+  { slug: "cayenne", name: "Cayenne" },
+  { slug: "remire-montjoly", name: "Rémire-Montjoly" },
+  { slug: "kourou", name: "Kourou" },
+  { slug: "roura", name: "Roura" },
+  { slug: "macouria", name: "Macouria" },
+  { slug: "saint-laurent-du-maroni", name: "Saint-Laurent-du-Maroni" },
+];
+
+export const ACTIVITY_CATEGORY_PILLARS: SeoCategory[] = [
+  { slug: "nature", name: "Nature" },
+  { slug: "faune", name: "Faune" },
+  { slug: "culture", name: "Culture" },
+  { slug: "patrimoine", name: "Patrimoine" },
+  { slug: "spatial", name: "Spatial" },
+  { slug: "nautique", name: "Nautique" },
+  { slug: "aventure", name: "Aventure" },
+  { slug: "gastronomie", name: "Gastronomie" },
+  { slug: "famille", name: "Famille" },
+];
+
 export const STORE_PILLARS: SeoStore[] = [
   { slug: "hyper-u-cayenne", name: "Hyper U Cayenne", citySlug: "cayenne" },
   {
@@ -93,6 +119,19 @@ export function getStoreBySlug(slug: string): SeoStore | null {
   return STORE_PILLARS.find((store) => store.slug === slug) ?? null;
 }
 
+export function getActivityCityBySlug(slug: string): SeoCity | null {
+  return ACTIVITY_CITY_PILLARS.find((city) => city.slug === slug) ?? null;
+}
+
+export function getActivityCategoryPillarBySlug(
+  slug: string,
+): SeoCategory | null {
+  return (
+    ACTIVITY_CATEGORY_PILLARS.find((category) => category.slug === slug) ??
+    null
+  );
+}
+
 export function getDealsCityPath(citySlug: string): string {
   return `/bons-plans/${citySlug}`;
 }
@@ -111,6 +150,14 @@ export function getListingsCategoryPath(categorySlug: string): string {
 
 export function getStorePath(storeSlug: string): string {
   return `/magasins/${storeSlug}`;
+}
+
+export function getActivitiesCityPath(citySlug: string): string {
+  return `/activites/${citySlug}`;
+}
+
+export function getActivitiesCategoryPath(categorySlug: string): string {
+  return `/activites/${categorySlug}/${GUYANE_SLUG}`;
 }
 
 export function getDealsFacetCanonicalPath(input: {

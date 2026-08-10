@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  Compass,
   FileText,
   Flag,
   Gift,
@@ -57,6 +58,11 @@ export default async function AdminLayout({
     { href: "/admin/affiliation", label: "Affiliation", icon: Gift },
     ...(admin
       ? [
+          {
+            href: "/admin/activites",
+            label: "Activités",
+            icon: Compass,
+          },
           {
             href: "/admin/notifications",
             label: "Broadcasts",
