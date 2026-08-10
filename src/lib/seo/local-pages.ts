@@ -16,7 +16,20 @@ export type SeoStore = {
 
 export type ExploreLink = {
   href: string;
+  /**
+   * Texte d'ancrage complet et descriptif (« Voir les annonces à Cayenne »).
+   * C'est ce que lit Google : on ne le raccourcit JAMAIS. Quand `short` est
+   * fourni, il n'est plus affiché mais reste dans le DOM en `sr-only`.
+   */
   label: string;
+  /**
+   * Libellé court réellement affiché (« Cayenne »). Sans lui, une page
+   * pilier devient un mur de douze phrases identiques à 90 % — illisible,
+   * surtout sur mobile.
+   */
+  short?: string;
+  /** Regroupe les chips sous un intertitre (« Par ville », « Par catégorie »). */
+  group?: "city" | "category" | "other";
   description?: string;
 };
 
