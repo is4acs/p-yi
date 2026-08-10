@@ -193,6 +193,9 @@ export const activityFormSchema = z
                 .trim()
                 .min(3, "Chaque image doit avoir un texte alternatif")
                 .max(200),
+              // Facultatif : rempli automatiquement pour les photos
+              // importées de Wikimedia Commons.
+              credit: z.string().trim().max(200).optional().nullable(),
             }),
           )
           .max(12, "12 images maximum"),

@@ -37,7 +37,7 @@ export default async function AdminEditActivityPage(props: {
         city: { select: { slug: true } },
         images: {
           orderBy: { sortOrder: "asc" },
-          select: { url: true, altText: true },
+          select: { url: true, altText: true, credit: true },
         },
       },
     }),

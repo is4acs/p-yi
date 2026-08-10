@@ -78,19 +78,19 @@ function computeDiscount(
 }
 
 export async function createDealAction(formData: FormData): Promise<void> {
-  const user = await requireActiveUser("/poster");
+  const user = await requireActiveUser("/poster/bon-plan");
 
   // Rate limit par userId — 10 créations/min = largement suffisant pour un
   // humain, bloque un bot qui tenterait de spammer.
   const { success, reset } = await writeLimiter.limit(`deal:create:${user.id}`);
   if (!success) {
-    redirectWithError("/poster", formatRateLimitMessage(reset));
+    redirectWithError("/poster/bon-plan", formatRateLimitMessage(reset));
   }
 
   const parsed = parseDealForm(formData);
   if (!parsed.success) {
     redirectWithError(
-      "/poster",
+      "/poster/bon-plan",
       parsed.error.issues[0]?.message ?? "Formulaire invalide.",
     );
   }
@@ -100,7 +100,7 @@ export async function createDealAction(formData: FormData): Promise<void> {
     where: { slug: data.categorySlug },
     select: { id: true },
   });
-  if (!category) redirectWithError("/poster", "Catégorie invalide.");
+  if (!category) redirectWithError("/poster/bon-plan", "Catégorie invalide.");
 
   const city = data.citySlug
     ? await prisma.city.findUnique({
@@ -129,7 +129,7 @@ export async function createDealAction(formData: FormData): Promise<void> {
   const rawCoverUrl = formData.get("coverImageUrl");
   if (typeof rawCoverUrl === "string" && rawCoverUrl.trim().length > 0) {
     const ok = parseOwnedStorageUrl(rawCoverUrl, DEAL_BUCKET, user.id);
-    if (!ok) redirectWithError("/poster", "Image de couverture invalide.");
+    if (!ok) redirectWithError("/poster/bon-plan", "Image de couverture invalide.");
     coverImageUrl = rawCoverUrl;
   }
 

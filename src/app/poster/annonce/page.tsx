@@ -181,11 +181,11 @@ export default async function PosterAnnoncePage(
   return (
     <main className="mx-auto max-w-md px-4 pb-16 pt-6 animate-in fade-in duration-300 sm:max-w-2xl sm:pt-10">
       <Link
-        href="/annonces"
+        href="/poster"
         className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden />
-        Annuler
+        Changer de type
       </Link>
 
       <div className="mt-4">

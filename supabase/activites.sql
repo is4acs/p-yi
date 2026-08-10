@@ -138,6 +138,11 @@ ALTER TYPE "AdminActionType" ADD VALUE IF NOT EXISTS 'DELETE_ACTIVITY';
 ALTER TYPE "AdminActionType" ADD VALUE IF NOT EXISTS 'SET_ACTIVITY_STATUS';
 ALTER TYPE "AdminTargetType" ADD VALUE IF NOT EXISTS 'ACTIVITY';
 
+-- -----------------------------------------------------------------------------
+-- Migration 20260811000000_activity_image_credit
+-- -----------------------------------------------------------------------------
+ALTER TABLE "activity_images" ADD COLUMN IF NOT EXISTS "credit" TEXT;
+
 
 -- -----------------------------------------------------------------------------
 -- Communes référencées par les activités (créées si absentes)
@@ -517,7 +522,7 @@ Plusieurs opérateurs proposent aussi la nuit en carbet flottant au milieu du ma
   ARRAY['ALL_YEAR']::"Season"[], 'Route de la montagne de Kaw par endroits dégradée — prudence de nuit et par temps de pluie. Sorties uniquement avec un piroguier agréé.',
   4500, 6500,
   false, true, NULL,
-  NULL, NULL, 'https://www.guyane-amazonie.fr/experience/nature/marais-kaw/', NULL,
+  '0694 25 58 82', '0694255882', 'https://www.ms-evasion.fr', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'roura'
@@ -619,7 +624,7 @@ Traversée en navette depuis la marina du Dégrad-des-Cannes, journée pique-niq
   ARRAY['ALL_YEAR']::"Season"[], 'Ni eau potable ni vente sur place : emporte pique-nique et eau. Ne nourris pas les saïmiris, ils se servent tout seuls dans les sacs ouverts.',
   3000, 4000,
   false, true, NULL,
-  NULL, NULL, 'https://iletlamere.tropicalizes.fr', NULL,
+  '0694 41 05 20', '0694410520', 'https://www.t-airnatureguyane.com/excursion/ilet-la-mere/', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'remire-montjoly'
@@ -925,7 +930,7 @@ Une immersion amazonienne accessible à tous, sans marche d''approche — parfai
   ARRAY['ALL_YEAR']::"Season"[], 'Courant et niveau d''eau hauts en pleine saison des pluies — les sorties partent surtout le matin.',
   2900, 4400,
   false, true, NULL,
-  NULL, NULL, 'https://www.t-airnatureguyane.com/excursion/crique-gabriel/', NULL,
+  '0694 41 05 20', '0694410520', 'https://www.t-airnatureguyane.com/excursion/crique-gabriel/', NULL,
   NULL,
   'PUBLISHED'::"ActivityStatus", false, 0, NOW(), NOW()
 FROM "cities" c WHERE c."slug" = 'roura'
@@ -1897,6 +1902,15 @@ INSERT INTO "_prisma_migrations" (
 )
 VALUES (
   gen_random_uuid()::text, '959df8a7a40966371624dbf5a0bcbfde0d5a70f7b139cd1219a2fcf536a158d4', NOW(), '20260810120000_admin_activity_audit', NULL,
+  NULL, NOW(), 1
+)
+ON CONFLICT ("id") DO NOTHING;
+INSERT INTO "_prisma_migrations" (
+  "id", "checksum", "finished_at", "migration_name", "logs",
+  "rolled_back_at", "started_at", "applied_steps_count"
+)
+VALUES (
+  gen_random_uuid()::text, '4126dfbf3fdc2186a62a88039e5b536361720e716c9381094cdf9f34315c97ea', NOW(), '20260811000000_activity_image_credit', NULL,
   NULL, NOW(), 1
 )
 ON CONFLICT ("id") DO NOTHING;

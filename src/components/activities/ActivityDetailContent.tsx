@@ -118,6 +118,13 @@ export function ActivityDetailContent({
               {images.length} photos
             </span>
           )}
+          {/* Crédit photo : condition des licences Creative Commons, pas
+              une politesse. Discret mais toujours lisible. */}
+          {images[0]?.credit && (
+            <p className="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-ink-900/70 to-transparent px-3 pb-1 pt-6 text-[10px] text-white/90">
+              {images[0].credit}
+            </p>
+          )}
         </div>
       ) : (
         <div

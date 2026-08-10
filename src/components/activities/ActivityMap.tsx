@@ -2,7 +2,7 @@
 
 import "maplibre-gl/dist/maplibre-gl.css";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   GeolocateControl,
   Layer,
@@ -20,6 +20,7 @@ import {
 import {
   getActivityMapStyle,
   GUYANE_BOUNDS,
+  OSM_RASTER_STYLE,
 } from "@/components/activities/map-style";
 import type { ActivityFeatureCollection } from "@/lib/activities/geojson";
 import { cn } from "@/lib/utils";
@@ -61,6 +62,9 @@ export default function ActivityMap({
   className,
 }: Props) {
   const mapRef = useRef<MapRef | null>(null);
+  // Repli raster si le style vectoriel ne se charge pas (fournisseur
+  // injoignable, réseau filtrant). Un fond dégradé vaut mieux qu'un vide.
+  const [styleFailed, setStyleFailed] = useState(false);
 
   const emitBounds = useCallback(() => {
     if (!onBoundsChange) return;
@@ -99,7 +103,18 @@ export default function ActivityMap({
     <div className={cn("relative h-full w-full overflow-hidden", className)}>
       <MapGL
         ref={mapRef}
-        mapStyle={getActivityMapStyle()}
+        mapStyle={styleFailed ? OSM_RASTER_STYLE : getActivityMapStyle()}
+        onError={(event) => {
+          // MapLibre émet `error` pour tout : tuile manquante, glyphe, style.
+          // On ne bascule que si c'est le STYLE lui-même qui n'a pas pu être
+          // chargé — sinon une tuile absente ferait perdre le fond vectoriel.
+          const message = event?.error?.message ?? "";
+          if (!styleFailed && /style|sprite|glyph/i.test(message)) {
+            // eslint-disable-next-line no-console
+            console.warn("[carte] style vectoriel indisponible, repli OSM", message);
+            setStyleFailed(true);
+          }
+        }}
         initialViewState={{
           bounds: GUYANE_BOUNDS,
           fitBoundsOptions: { padding: 40 },

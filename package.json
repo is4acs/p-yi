@@ -16,6 +16,7 @@
     "db:seed-dev": "tsx prisma/seed-dev.ts",
     "db:seed-activites": "tsx prisma/seed-activites.ts",
     "sql:activites": "tsx scripts/generate-activities-sql.ts",
+    "activites:images": "tsx scripts/import-activity-images.ts",
     "db:seed-listings:vehicules": "tsx prisma/seed-listings-vehicules.ts",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset",
@@ -54,7 +55,6 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "tailwindcss-animate": "^1.0.7",
-    "vaul": "^1.1.2",
     "web-push": "^3.6.7",
     "zod": "^4.3.6"
   },
