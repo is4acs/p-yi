@@ -2,7 +2,7 @@
 
 import "maplibre-gl/dist/maplibre-gl.css";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import {
   GeolocateControl,
   Map as MapGL,
@@ -72,6 +72,20 @@ export default function ActivityMap({
       north: bounds.getNorth(),
     });
   }, [onBoundsChange]);
+
+  // Sélection (depuis la liste OU un marqueur) → on recadre doucement sur
+  // le point pour que la synchro liste → carte soit visible.
+  useEffect(() => {
+    if (!selectedSlug) return;
+    const feature = data.features.find(
+      (f) => f.properties.slug === selectedSlug,
+    );
+    if (!feature) return;
+    mapRef.current?.getMap().easeTo({
+      center: feature.geometry.coordinates,
+      duration: 500,
+    });
+  }, [selectedSlug, data]);
 
   const recenter = useCallback(() => {
     mapRef.current?.getMap().fitBounds(GUYANE_BOUNDS, {
