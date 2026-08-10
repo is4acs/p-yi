@@ -52,6 +52,23 @@ export function ActivitiesExplorer() {
   const [bounds, setBounds] = useState<MapBounds | null>(null);
   const [searchOnMove, setSearchOnMove] = useState(true);
   const cardRefs = useRef(new Map<string, HTMLDivElement>());
+  const boundsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Débounce du recalcul de liste pendant les déplacements de carte
+  // (l'inertie de MapLibre émet des moveend rapprochés). Le filtrage est
+  // purement client — le GeoJSON est déjà en mémoire, aucune requête ne
+  // part au déplacement, il n'y a donc rien à annuler côté réseau.
+  const handleBoundsChange = useCallback((next: MapBounds) => {
+    if (boundsTimer.current) clearTimeout(boundsTimer.current);
+    boundsTimer.current = setTimeout(() => setBounds(next), 400);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (boundsTimer.current) clearTimeout(boundsTimer.current);
+    },
+    [],
+  );
 
   const filters = useMemo(
     () => parseActivityFilters(new URLSearchParams(searchParams.toString())),
@@ -227,9 +244,15 @@ export function ActivitiesExplorer() {
       >
         <div className="border-b border-border">{filterBar}</div>
         <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5">
-          <p className="shrink-0 text-sm font-semibold" aria-live="polite">
-            {collection ? countLabel : "Chargement…"}
-          </p>
+          {collection ? (
+            <p className="shrink-0 text-sm font-semibold" aria-live="polite">
+              {countLabel}
+            </p>
+          ) : (
+            // Un SEUL message de chargement sur la page (celui de la
+            // carte) — ici, un simple skeleton.
+            <Skeleton className="h-4 w-24 shrink-0" />
+          )}
           <label className="flex cursor-pointer select-none items-center gap-2 text-xs text-muted-foreground">
             <input
               type="checkbox"
@@ -290,7 +313,7 @@ export function ActivitiesExplorer() {
           selectedSlug={selectedSlug}
           hoveredSlug={hoveredSlug}
           onSelect={handleSelect}
-          onBoundsChange={setBounds}
+          onBoundsChange={handleBoundsChange}
         />
 
         {/* Panneau détail desktop, flottant sur la carte. */}
@@ -301,21 +324,18 @@ export function ActivitiesExplorer() {
           />
         )}
 
-        {/* Bandeau d'état par-dessus la carte (erreur / chargement). */}
-        {(loadFailed || collection === null) && (
+        {/* Bandeau d'erreur par-dessus la carte. Pas de pastille de
+            chargement ici : le skeleton de la carte et ceux de la liste
+            portent déjà l'état — trois messages empilés au premier
+            rendu, c'était du bruit. */}
+        {loadFailed && (
           <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center">
-            {loadFailed ? (
-              <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-border bg-background/95 py-1.5 pl-4 pr-1.5 text-sm shadow-md backdrop-blur">
-                <span>Impossible de charger les activités.</span>
-                <Button size="sm" variant="peyi" onClick={() => void load()}>
-                  Réessayer
-                </Button>
-              </div>
-            ) : (
-              <div className="rounded-full border border-border bg-background/95 px-4 py-1.5 text-sm text-muted-foreground shadow-md backdrop-blur">
-                Chargement des activités…
-              </div>
-            )}
+            <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-border bg-background/95 py-1.5 pl-4 pr-1.5 text-sm shadow-md backdrop-blur">
+              <span>Impossible de charger les activités.</span>
+              <Button size="sm" variant="peyi" onClick={() => void load()}>
+                Réessayer
+              </Button>
+            </div>
           </div>
         )}
       </div>

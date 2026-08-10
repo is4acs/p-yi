@@ -8,6 +8,7 @@ import { ActivityDetailContent } from "@/components/activities/ActivityDetailCon
 import { DetailSkeleton } from "@/components/activities/ActivityDetailPanel";
 import type { ActivityDetailState } from "@/components/activities/use-activity-detail";
 import type { ActivityFeature } from "@/lib/activities/geojson";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 /**
@@ -191,9 +192,7 @@ export function ActivitiesMobileSheet({
   if (!isMobile) return null;
 
   const count = features.length;
-  const countLabel = isReady
-    ? `${count} activité${count > 1 ? "s" : ""} dans cette zone`
-    : "Chargement des activités…";
+  const countLabel = `${count} activité${count > 1 ? "s" : ""} dans cette zone`;
 
   return (
     <section
@@ -237,9 +236,15 @@ export function ActivitiesMobileSheet({
             Retour à la liste
           </button>
         ) : (
+          isReady ? (
           <p className="text-sm font-semibold" aria-live="polite">
             {countLabel}
           </p>
+          ) : (
+          // Pas de second texte « Chargement… » : le skeleton suffit, la
+          // carte annonce déjà son propre état.
+          <Skeleton className="h-4 w-44" />
+          )
         )}
         <button
           type="button"
