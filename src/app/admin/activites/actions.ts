@@ -161,6 +161,7 @@ export async function adminSaveActivityAction(formData: FormData) {
   const imagesCreate = values.images.map((image, index) => ({
     url: image.url,
     altText: image.altText,
+    credit: image.credit ?? null,
     sortOrder: index,
   }));
 

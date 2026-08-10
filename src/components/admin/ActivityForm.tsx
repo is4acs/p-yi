@@ -78,10 +78,10 @@ export type ActivityFormInitial = {
   instagram: string | null;
   isFeatured: boolean;
   openingHours: unknown;
-  images: { url: string; altText: string }[];
+  images: { url: string; altText: string; credit: string | null }[];
 };
 
-type FormImage = { url: string; altText: string };
+type FormImage = { url: string; altText: string; credit?: string | null };
 
 type Props = {
   cities: { slug: string; name: string }[];
@@ -141,7 +141,7 @@ export function ActivityForm({ cities, activity, action }: Props) {
       setImages((current) =>
         [
           ...current,
-          ...urls.map((url) => ({ url, altText: "" })),
+          ...urls.map((url) => ({ url, altText: "", credit: null })),
         ].slice(0, 12),
       );
     } catch (err) {

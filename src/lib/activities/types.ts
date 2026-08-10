@@ -21,6 +21,9 @@ export type ActivityImagePayload = {
   sortOrder: number;
   width: number | null;
   height: number | null;
+  /** « Auteur / Licence — source ». Affiché sous le carrousel, exigé par
+   *  les licences Creative Commons. */
+  credit: string | null;
 };
 
 export type ActivityOperatorPayload = {
@@ -103,6 +106,7 @@ export function serializeActivityDetail(
       sortOrder: image.sortOrder,
       width: image.width,
       height: image.height,
+      credit: image.credit,
     })),
     operator: row.operator
       ? {

@@ -39,16 +39,22 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
  * on `await` pour laisser React flusher son tick (et donc le setAll),
  * puis on fait la navigation manuellement — le cookie est garanti écrit.
  */
-export function GoogleSignInButton() {
+export function GoogleSignInButton({ next }: { next?: string }) {
   const [loading, setLoading] = useState(false);
 
   async function handleClick() {
     setLoading(true);
     const supabase = createSupabaseBrowserClient();
+    // `next` est repassé au callback pour que l'utilisateur revienne là d'où
+    // il venait. `/auth/callback` le revalide via `safeInternalPath` — on ne
+    // fait donc jamais confiance à cette valeur côté serveur.
+    const callback = new URL("/auth/callback", window.location.origin);
+    if (next) callback.searchParams.set("next", next);
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: callback.toString(),
         skipBrowserRedirect: true,
       },
     });
@@ -76,7 +82,7 @@ export function GoogleSignInButton() {
       type="button"
       variant="outline"
       size="lg"
-      className="mt-6 w-full gap-2.5"
+      className="mt-5 w-full gap-2.5"
       onClick={handleClick}
       disabled={loading}
       aria-busy={loading}

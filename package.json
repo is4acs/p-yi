@@ -16,6 +16,7 @@
     "db:seed-dev": "tsx prisma/seed-dev.ts",
     "db:seed-activites": "tsx prisma/seed-activites.ts",
     "sql:activites": "tsx scripts/generate-activities-sql.ts",
+    "activites:images": "tsx scripts/import-activity-images.ts",
     "db:seed-listings:vehicules": "tsx prisma/seed-listings-vehicules.ts",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset",

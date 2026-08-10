@@ -1250,6 +1250,11 @@ model ActivityImage {
   sortOrder  Int      @default(0)
   width      Int?
   height     Int?
+  // Crédit photo — « © Auteur / CC BY-SA 4.0 ». OBLIGATOIRE pour toute image
+  // sous licence Creative Commons : l'attribution est une condition de la
+  // licence, pas une politesse. Rempli automatiquement par
+  // `scripts/import-activity-images.ts`, saisissable à la main sinon.
+  credit     String?
   createdAt  DateTime @default(now())
 
   @@index([activityId, sortOrder])

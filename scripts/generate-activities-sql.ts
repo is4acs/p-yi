@@ -28,6 +28,7 @@ const ROOT = join(__dirname, "..");
 const MIGRATIONS = [
   "20260810000000_add_activities",
   "20260810120000_admin_activity_audit",
+  "20260811000000_activity_image_credit",
 ];
 
 // --- Helpers de littéraux SQL ------------------------------------------------

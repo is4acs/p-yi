@@ -815,6 +815,12 @@ type ActivityContact = {
   website?: string;
   bookingUrl?: string;
   phone?: string;
+  /**
+   * Uniquement quand la source indique EXPLICITEMENT que le numéro reçoit
+   * WhatsApp. On ne déduit jamais « 0694 donc mobile donc WhatsApp » : un
+   * mauvais numéro, c'est un inconnu qui reçoit les messages des visiteurs.
+   */
+  whatsapp?: string;
 };
 
 const CONTACTS: Record<string, ActivityContact> = {
@@ -838,8 +844,12 @@ const CONTACTS: Record<string, ActivityContact> = {
       "https://www.saintlaurentdumaroni.fr/centre-interpretation-art-patrimoine/",
   },
   "marais-de-kaw": {
-    // Plusieurs piroguiers agréés : le portail officiel les référence tous.
-    website: "https://www.guyane-amazonie.fr/experience/nature/marais-kaw/",
+    // MS Évasion, piroguier sur la réserve de Kaw-Roura. D'autres opérateurs
+    // existent (Tig Dilo, Le Morpho, Ecolodge Caïman…) : à arbitrer au fil
+    // des partenariats depuis le back-office.
+    website: "https://www.ms-evasion.fr",
+    phone: "0694 25 58 82",
+    whatsapp: "0694255882",
   },
   "reserve-naturelle-tresor": {
     website: "https://reserves-naturelles.org/reserves/tresor/",
@@ -856,10 +866,15 @@ const CONTACTS: Record<string, ActivityContact> = {
     phone: "06 94 26 88 76",
   },
   "ilet-la-mere": {
-    website: "https://iletlamere.tropicalizes.fr",
+    // T'Air Nature Guyane — réservation confirmée par téléphone/WhatsApp.
+    website: "https://www.t-airnatureguyane.com/excursion/ilet-la-mere/",
+    phone: "0694 41 05 20",
+    whatsapp: "0694410520",
   },
   "crique-gabrielle": {
     website: "https://www.t-airnatureguyane.com/excursion/crique-gabriel/",
+    phone: "0694 41 05 20",
+    whatsapp: "0694410520",
   },
   "centre-amerindien-kalawachi": {
     website: "https://www.facebook.com/centreamerindienkalawachi/",
@@ -868,6 +883,52 @@ const CONTACTS: Record<string, ActivityContact> = {
     website:
       "http://www.montsinery-tonnegrande.fr/culture-sport-et-loisirs/activites-culturelles-et-patrimoine/bagne-des-annamites/",
   },
+};
+
+/**
+ * Termes de recherche Wikimedia Commons, un par fiche, utilisés par
+ * `npm run activites:images` pour retrouver une photo librement
+ * réutilisable du site. Ils sont volontairement précis : « Kourou » seul
+ * ramènerait des photos de ville, pas de l'archipel.
+ *
+ * Un terme absent = pas d'import automatique pour cette fiche (les sites
+ * confidentiels n'ont souvent aucune photo libre) : on passe alors par
+ * l'upload manuel du back-office.
+ */
+export const IMAGE_QUERIES: Record<string, string> = {
+  "iles-du-salut": "Îles du Salut French Guiana",
+  "savane-roche-virginie": "Savane Roche Virginie inselberg",
+  "plage-des-hattes": "Dermochelys coriacea Awala-Yalimapo plage",
+  "centre-spatial-guyanais": "Centre spatial guyanais Kourou",
+  "assister-a-un-lancement": "Ariane launch Kourou liftoff",
+  "camp-de-la-transportation": "Camp de la Transportation Saint-Laurent-du-Maroni",
+  "marche-de-cacao": "Cacao Guyane village hmong marché",
+  "marais-de-kaw": "Marais de Kaw Guyane",
+  "sentier-du-rorota": "Rorota Rémire-Montjoly sentier",
+  "ilet-la-mere": "Îlet la Mère Guyane",
+  "chutes-voltaire": "Chutes Voltaire Guyane",
+  saul: "Saül Guyane village",
+  "centre-amerindien-kalawachi": "Kali'na carbet Guyane",
+  "bagne-des-annamites": "Bagne des Annamites Montsinéry",
+  "zoo-de-guyane": "Zoo de Guyane Macouria",
+  "crique-gabrielle": "Crique Gabrielle Roura pirogue",
+  "cascades-de-fourgassie": "Fourgassié cascade Guyane",
+  "reserve-naturelle-tresor": "Réserve naturelle Trésor Guyane",
+  "montagne-des-singes": "Montagne des Singes Kourou",
+  "saut-maripa": "Saut Maripa Oyapock",
+  "ile-du-grand-connetable": "Île du Grand Connétable réserve",
+  "fort-ceperou": "Fort Cépérou Cayenne",
+  "mont-grand-matoury": "Mont Grand Matoury réserve naturelle",
+  "marche-de-cayenne": "Marché de Cayenne halles",
+  "place-des-palmistes": "Place des Palmistes Cayenne",
+  "eglise-saint-joseph-iracoubo": "Église Saint-Joseph Iracoubo",
+  "saint-georges-de-l-oyapock": "Saint-Georges-de-l'Oyapock",
+  "maripasoula-haut-maroni": "Maripasoula Maroni",
+  "descente-du-maroni-en-pirogue": "Maroni pirogue Guyane",
+  "pripris-de-yiyi": "Pripris de Yiyi Sinnamary marais",
+  "habitation-loyola": "Habitation Loyola Rémire-Montjoly",
+  "sentier-molokoi": "Forêt tropicale Guyane sentier",
+  "plage-de-montjoly": "Plage de Montjoly Guyane",
 };
 
 /**
@@ -882,5 +943,6 @@ export const ACTIVITIES: ActivitySeed[] = RAW_ACTIVITIES.map((activity) => {
     website: activity.website ?? contact.website ?? GUYANE_TOURISM_PORTAL,
     bookingUrl: activity.bookingUrl ?? contact.bookingUrl,
     phone: activity.phone ?? contact.phone,
+    whatsapp: activity.whatsapp ?? contact.whatsapp,
   };
 })
