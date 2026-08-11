@@ -6,6 +6,8 @@ type Props = {
   /** Route cible du formulaire GET (le champ s'appelle `q`). */
   action: string;
   defaultValue?: string;
+  /** Paramètres à préserver à la soumission (tri, filtres actifs…). */
+  hidden?: Record<string, string>;
   className?: string;
 };
 
@@ -17,6 +19,7 @@ export function SearchField({
   placeholder,
   action,
   defaultValue,
+  hidden,
   className,
 }: Props) {
   return (
@@ -28,6 +31,12 @@ export function SearchField({
         className,
       )}
     >
+      {hidden &&
+        Object.entries(hidden)
+          .filter(([, value]) => value !== "")
+          .map(([name, value]) => (
+            <input key={name} type="hidden" name={name} value={value} />
+          ))}
       <Icon name="search" size={14} className="flex-none" />
       <input
         type="search"

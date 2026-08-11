@@ -11,6 +11,8 @@ import {
 } from "@/lib/listings/queries";
 import { Badge } from "@/components/ui/badge";
 import { DealImagePlaceholder } from "@/components/deals/DealImagePlaceholder";
+import { Ph } from "@/components/soleil/Ph";
+import { PriceTag as SoleilPriceTag } from "@/components/soleil/PriceTag";
 import { ListingFavoriteButton } from "./ListingFavoriteButton";
 import { ListingTypeChip } from "./ListingTypeChip";
 
@@ -50,6 +52,9 @@ type Props = {
   listing: ListingCardData;
   currentUserId?: string | null;
   isFavorited?: boolean;
+  // `soleil` : tuile de la grille /annonces refondue (T4) — photo 118px
+  //   arrondie 14px + PriceTag posé sur la photo, titre 12.5px, ville·ago.
+  variant?: "default" | "soleil";
   className?: string;
 };
 
@@ -72,6 +77,7 @@ export function ListingCardTile({
   listing,
   currentUserId,
   isFavorited = false,
+  variant = "default",
   className,
 }: Props) {
   const isAuthenticated = Boolean(currentUserId);
@@ -94,6 +100,54 @@ export function ListingCardTile({
   // URGENT bat NOUVEAU : même si c'est <72h, le signal d'urgence
   // prime. Un seul badge en haut-gauche pour garder la tile lisible.
   const showNewBadge = !listing.isUrgent && isRecentlyPublished(listing.publishedAt);
+
+  if (variant === "soleil") {
+    return (
+      <article
+        className={cn(
+          "relative text-soleil-forest dark:text-soleil-cream",
+          className,
+        )}
+      >
+        <Link
+          href={`/annonces/${listing.slug}`}
+          className="block transition active:scale-[0.99]"
+        >
+          <div className="relative h-[118px] overflow-hidden rounded-[14px]">
+            {isRenderableImageUrl(listing.coverImageUrl) ? (
+              <Image
+                src={listing.coverImageUrl}
+                alt={listing.title}
+                fill
+                sizes="(max-width: 1024px) 50vw, 25vw"
+                unoptimized
+                className="object-cover"
+              />
+            ) : (
+              <Ph label={listing.category.name} className="h-full w-full" />
+            )}
+            <SoleilPriceTag>{priceLabel}</SoleilPriceTag>
+          </div>
+          <h3 className="mt-1.5 line-clamp-2 text-[12.5px] font-bold leading-[1.3]">
+            {listing.title}
+          </h3>
+          <p className="mt-0.5 truncate text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
+            {locationLabel} ·{" "}
+            {formatRelativeTime(listing.bumpedAt ?? listing.publishedAt)}
+          </p>
+        </Link>
+        <div className="absolute right-2 top-2">
+          <ListingFavoriteButton
+            listingId={listing.id}
+            initialFavorited={isFavorited}
+            canFavorite={canFavorite}
+            disabledHint={favoriteHint}
+            size="sm"
+          />
+        </div>
+      </article>
+    );
+  }
 
   return (
     <article

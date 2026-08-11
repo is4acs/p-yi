@@ -331,6 +331,11 @@ export default async function BonsPlansPage(
           placeholder="Chercher un bon plan…"
           action="/bons-plans"
           defaultValue={q ?? ""}
+          hidden={{
+            ...(sort !== "hot" ? { sort } : {}),
+            ...(category ? { category } : {}),
+            ...(city ? { city } : {}),
+          }}
           className="mt-3.5"
         />
 
