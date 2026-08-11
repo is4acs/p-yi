@@ -9,7 +9,7 @@ import { LEVEL_META } from "@/lib/deals/user-level";
 import type { UserLevel } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { deleteCommentAction } from "@/app/bons-plans/comments/actions";
-import { useMessages } from "@/components/soleil/I18nProvider";
+import { useLocale, useMessages } from "@/components/soleil/I18nProvider";
 
 import { CommentForm } from "./CommentForm";
 import { ReportDialog } from "@/components/reports/ReportDialog";
@@ -50,6 +50,7 @@ export function CommentItem({
   tone = "orange",
 }: Props) {
   const t = useMessages();
+  const locale = useLocale();
   const [showReply, setShowReply] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -101,7 +102,7 @@ export function CommentItem({
               {comment.author.username}
             </b>
             <span className="text-soleil-muted dark:text-soleil-muted-d">
-              · {level.label} · {formatRelativeTime(comment.createdAt)}
+              · {level.label} · {formatRelativeTime(comment.createdAt, locale)}
             </span>
           </div>
 

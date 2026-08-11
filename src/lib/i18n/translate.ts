@@ -8,15 +8,19 @@ import type { Locale } from "./config";
  * un acheteur brésilien se comprennent sans copier-coller dans un
  * traducteur externe.
  *
- * Couche volontairement *pluggable* : le site fonctionne sans aucun
- * fournisseur configuré (les textes passent alors tels quels). Deux
- * back-ends supportés, choisis via variables d'environnement :
+ * Couche volontairement *pluggable*. Ordre de résolution du fournisseur :
  *
- *  - `TRANSLATE_API_URL` (+ `TRANSLATE_API_KEY` optionnel) : endpoint
- *    compatible LibreTranslate (POST { q, source: "auto", target }).
- *    Ex. instance auto-hébergée : https://libretranslate.exemple.com/translate
- *  - `GOOGLE_TRANSLATE_API_KEY` : Google Cloud Translation v2 (seul grand
- *    fournisseur à couvrir le créole haïtien `ht`).
+ *  1. `TRANSLATE_API_URL` (+ `TRANSLATE_API_KEY` optionnel) : endpoint
+ *     compatible LibreTranslate (POST { q, source: "auto", target }).
+ *     Ex. instance auto-hébergée : https://libretranslate.exemple.com/translate
+ *  2. `GOOGLE_TRANSLATE_API_KEY` : Google Cloud Translation v2 (couvre le
+ *     créole haïtien `ht`, quotas officiels).
+ *  3. **Par défaut, sans aucune clé** : l'endpoint web public de Google
+ *     Translate (translate.googleapis.com, client=gtx) — gratuit et sans
+ *     clé, couvre fr/pt/ht. Non contractuel : si Google le limite, le
+ *     garde-fou d'échec fait retomber sur le texte original sans casser
+ *     la page. Pour du volume, configurer 1) ou 2). Désactivable avec
+ *     `TRANSLATE_DISABLE=1`.
  *
  * Garde-fous :
  *  - échec réseau / timeout (4 s) → texte original, jamais d'erreur page ;
@@ -39,9 +43,7 @@ const PROVIDER_LANG: Record<Locale, string> = {
 };
 
 export function translationEnabled(): boolean {
-  return Boolean(
-    process.env.TRANSLATE_API_URL || process.env.GOOGLE_TRANSLATE_API_KEY,
-  );
+  return process.env.TRANSLATE_DISABLE !== "1";
 }
 
 type RawResult = {
@@ -114,10 +116,56 @@ async function callGoogleTranslate(
   };
 }
 
+/**
+ * Endpoint web public de Google Translate (celui du widget web,
+ * `client=gtx`) : gratuit, sans clé, couvre fr/pt/ht. POST en
+ * form-urlencoded pour ne pas exploser la limite d'URL sur les longues
+ * descriptions. Réponse : [[[trad, orig, …], …], null, "langue_source", …].
+ */
+async function callGoogleWebTranslate(
+  text: string,
+  target: string,
+): Promise<RawResult> {
+  const params = new URLSearchParams({
+    client: "gtx",
+    sl: "auto",
+    tl: target,
+    dt: "t",
+    q: text,
+  });
+  const res = await fetch(
+    "https://translate.googleapis.com/translate_a/single",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params.toString(),
+      signal: AbortSignal.timeout(4000),
+    },
+  );
+  if (!res.ok) throw new Error(`Google web translate HTTP ${res.status}`);
+  const json = (await res.json()) as unknown;
+  if (!Array.isArray(json) || !Array.isArray(json[0])) {
+    throw new Error("Google web translate : réponse inattendue");
+  }
+  const segments = (json[0] as unknown[])
+    .map((seg) => (Array.isArray(seg) ? seg[0] : null))
+    .filter((part): part is string => typeof part === "string");
+  if (segments.length === 0) {
+    throw new Error("Google web translate : aucun segment traduit");
+  }
+  return {
+    text: segments.join(""),
+    detectedSource: typeof json[2] === "string" ? json[2] : null,
+  };
+}
+
 /** Lève en cas d'échec — pour que unstable_cache ne mette pas l'échec en cache. */
 async function rawTranslate(text: string, target: string): Promise<RawResult> {
   if (process.env.TRANSLATE_API_URL) return callLibreTranslate(text, target);
-  return callGoogleTranslate(text, target);
+  if (process.env.GOOGLE_TRANSLATE_API_KEY) {
+    return callGoogleTranslate(text, target);
+  }
+  return callGoogleWebTranslate(text, target);
 }
 
 // Le cache est keyé automatiquement par les arguments (texte + cible).

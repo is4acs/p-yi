@@ -35,12 +35,4 @@ export async function getMessages(): Promise<Messages> {
   return getDictionary(await getLocale());
 }
 
-/** Remplit les gabarits `{clé}` d'une chaîne du dictionnaire. */
-export function tFormat(
-  template: string,
-  vars: Record<string, string | number>,
-): string {
-  return template.replace(/\{(\w+)\}/g, (match, key) =>
-    key in vars ? String(vars[key]) : match,
-  );
-}
+export { tFormat } from "./tformat";

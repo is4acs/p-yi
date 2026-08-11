@@ -17,6 +17,7 @@ import {
   type ThreadListing,
 } from "@/lib/messages/queries";
 import { getLocale, getMessages, tFormat, type Messages } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n/config";
 import {
   translateUserTexts,
   type TranslatedText,
@@ -91,7 +92,7 @@ export default async function ThreadPage(props: Props) {
         <ThreadHeader other={thread.other} />
 
         {thread.listing && (
-          <ListingContextCard listing={thread.listing} t={t} />
+          <ListingContextCard listing={thread.listing} t={t} locale={locale} />
         )}
 
         {searchParams.error && (
@@ -121,6 +122,7 @@ export default async function ThreadPage(props: Props) {
                 isFromMe={m.senderId === user.id}
                 mt={mtById.get(m.id)}
                 t={t}
+                locale={locale}
               />
             ))
           )}
@@ -159,11 +161,13 @@ function ThreadHeader({ other }: { other: ThreadOther }) {
 function ListingContextCard({
   listing,
   t,
+  locale,
 }: {
   listing: ThreadListing;
   t: Messages;
+  locale: Locale;
 }) {
-  const price = formatPriceType(listing.priceType, listing.price);
+  const price = formatPriceType(listing.priceType, listing.price, locale);
   return (
     <Link
       href={`/annonces/${listing.slug}`}
@@ -206,11 +210,13 @@ function MessageBubble({
   isFromMe,
   mt,
   t,
+  locale,
 }: {
   message: ThreadMessage;
   isFromMe: boolean;
   mt?: TranslatedText;
   t: Messages;
+  locale: Locale;
 }) {
   const content = mt?.translated ? mt.text : message.content;
   return (
@@ -237,7 +243,7 @@ function MessageBubble({
           </details>
         )}
         <p className="mt-1 text-[10px] opacity-70">
-          {formatRelativeTime(message.createdAt)}
+          {formatRelativeTime(message.createdAt, locale)}
         </p>
       </div>
     </div>

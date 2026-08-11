@@ -9,7 +9,7 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { formatPrice, formatRelativeTime } from "@/lib/format";
 import { isRenderableImageUrl } from "@/lib/images";
 import { withTimeout } from "@/lib/async/with-timeout";
-import { getMessages, tFormat, type Messages } from "@/lib/i18n";
+import { getLocale, getMessages, tFormat, type Messages } from "@/lib/i18n";
 
 import { CountLine } from "@/components/soleil/CountLine";
 import { FilterChips } from "@/components/soleil/FilterChips";
@@ -67,6 +67,7 @@ function activityPriceLabel(
 export default async function HomePage(props: Props) {
   const searchParams = await props.searchParams;
   const t = await getMessages();
+  const locale = await getLocale();
   const [dealsPayload, listingsPayload, currentUser] = await Promise.all([
     fetchDealsPage({ sort: "hot", page: 1, category: null, city: null, q: null }),
     fetchListingsPage({
@@ -260,7 +261,7 @@ export default async function HomePage(props: Props) {
                     ? t.common.free
                     : formatPrice(dealOfTheDay.price.toString())}
                   {" · "}
-                  {formatRelativeTime(dealOfTheDay.publishedAt)}
+                  {formatRelativeTime(dealOfTheDay.publishedAt, locale)}
                 </div>
                 {isRenderableImageUrl(dealOfTheDay.coverImageUrl) ? (
                   <div className="relative mt-3 h-[84px] overflow-hidden rounded-xl">
@@ -330,7 +331,7 @@ export default async function HomePage(props: Props) {
                           {[
                             deal.store?.name ?? deal.merchant?.name,
                             deal.city?.name,
-                            formatRelativeTime(deal.publishedAt),
+                            formatRelativeTime(deal.publishedAt, locale),
                           ]
                             .filter(Boolean)
                             .join(" · ")}
@@ -415,7 +416,7 @@ export default async function HomePage(props: Props) {
                       />
                     )}
                     <PriceTag>
-                      {formatPriceType(listing.priceType, listing.price)}
+                      {formatPriceType(listing.priceType, listing.price, locale)}
                     </PriceTag>
                   </div>
                   <div className="mt-1.5 line-clamp-1 text-[12.5px] font-bold">

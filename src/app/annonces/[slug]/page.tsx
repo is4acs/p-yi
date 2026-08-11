@@ -317,12 +317,12 @@ export default async function ListingDetailPage(
 
   const canFavorite = Boolean(currentUser) && !isAuthor;
   const favoriteHint = !currentUser
-    ? "Connecte-toi pour sauvegarder."
+    ? t.listingDetail.loginToSave
     : isAuthor
-    ? "C'est ton annonce."
+    ? t.listingDetail.ownListing
     : undefined;
 
-  const priceLabel = formatPriceType(listing.priceType, listing.price);
+  const priceLabel = formatPriceType(listing.priceType, listing.price, locale);
   // Fallback BEGINNER si la DB a un niveau supprimé du code (migration
   // d'enum partielle).
   const level = LEVEL_META[listing.author.level] ?? LEVEL_META.BEGINNER;
@@ -469,7 +469,8 @@ export default async function ListingDetailPage(
               <h1 className="mt-1.5 text-base font-bold">{mtTitle.text}</h1>
               <p className="mt-1 text-[11.5px] text-soleil-muted dark:text-soleil-muted-d">
                 {locationLabel} ·{" "}
-                {formatRelativeTime(listing.bumpedAt ?? listing.publishedAt)} ·{" "}
+                {formatRelativeTime(listing.bumpedAt ?? listing.publishedAt, locale)}{" "}
+                ·{" "}
                 {tFormat(t.listingDetail.views, {
                   n: listing.viewCount.toLocaleString("fr-FR"),
                 })}
@@ -521,7 +522,7 @@ export default async function ListingDetailPage(
                   </>
                 )}{" "}
                 · {tFormat(t.listingDetail.expires, {
-                  ago: formatRelativeTime(listing.expiresAt),
+                  ago: formatRelativeTime(listing.expiresAt, locale),
                 })}
               </p>
             </div>

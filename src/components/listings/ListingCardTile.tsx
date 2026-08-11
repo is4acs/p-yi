@@ -10,7 +10,7 @@ import {
   formatPriceType,
 } from "@/lib/listings/queries";
 import { Badge } from "@/components/ui/badge";
-import { getLocale } from "@/lib/i18n";
+import { getLocale, getMessages } from "@/lib/i18n";
 import { translateUserText } from "@/lib/i18n/translate";
 import { DealImagePlaceholder } from "@/components/deals/DealImagePlaceholder";
 import { Ph } from "@/components/soleil/Ph";
@@ -82,21 +82,19 @@ export async function ListingCardTile({
   variant = "default",
   className,
 }: Props) {
-  // Titre traduit vers la langue de l'interface (passthrough sans
-  // fournisseur configuré — cf. lib/i18n/translate.ts).
-  const { text: displayTitle } = await translateUserText(
-    listing.title,
-    await getLocale(),
-  );
+  const locale = await getLocale();
+  // Titre traduit vers la langue de l'interface (cf. lib/i18n/translate.ts).
+  const { text: displayTitle } = await translateUserText(listing.title, locale);
+  const t = await getMessages();
   const isAuthenticated = Boolean(currentUserId);
   const canFavorite = isAuthenticated && currentUserId !== listing.authorId;
   const favoriteHint = !isAuthenticated
-    ? "Connecte-toi pour sauvegarder."
+    ? t.listingDetail.loginToSave
     : currentUserId === listing.authorId
-    ? "C'est ton annonce."
+    ? t.listingDetail.ownListing
     : undefined;
 
-  const priceLabel = formatPriceType(listing.priceType, listing.price);
+  const priceLabel = formatPriceType(listing.priceType, listing.price, locale);
   const locationLabel = listing.neighborhood
     ? `${listing.city.name} · ${listing.neighborhood}`
     : listing.city.name;
@@ -141,7 +139,7 @@ export async function ListingCardTile({
           </h2>
           <p className="mt-0.5 truncate text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
             {locationLabel} ·{" "}
-            {formatRelativeTime(listing.bumpedAt ?? listing.publishedAt)}
+            {formatRelativeTime(listing.bumpedAt ?? listing.publishedAt, locale)}
           </p>
         </Link>
         <div className="absolute right-2 top-2">
@@ -236,7 +234,7 @@ export async function ListingCardTile({
             <span aria-hidden>·</span>
             <Clock className="h-3 w-3 shrink-0" aria-hidden />
             <span className="shrink-0">
-              {formatRelativeTime(listing.bumpedAt ?? listing.publishedAt)}
+              {formatRelativeTime(listing.bumpedAt ?? listing.publishedAt, locale)}
             </span>
           </p>
         </div>

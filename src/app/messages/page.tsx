@@ -7,6 +7,7 @@ import { fetchInbox, type InboxConversation } from "@/lib/messages/queries";
 import { Icon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
 import { getLocale, getMessages, type Messages } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n/config";
 import { translateUserTexts } from "@/lib/i18n/translate";
 
 export const dynamic = "force-dynamic";
@@ -83,6 +84,7 @@ export default async function MessagesInboxPage() {
                     conversation={c}
                     index={i}
                     t={t}
+                    locale={locale}
                     preview={
                       c.lastMessage.isFromMe
                         ? c.lastMessage.content
@@ -106,11 +108,13 @@ function ConversationRow({
   conversation: c,
   index,
   t,
+  locale,
   preview,
 }: {
   conversation: InboxConversation;
   index: number;
   t: Messages;
+  locale: Locale;
   preview: string;
 }) {
   const href = c.listing
@@ -164,7 +168,7 @@ function ConversationRow({
             {isTeam ? t.messagesPage.team : c.otherParty.username}
           </span>
           <span className="flex-none text-[10.5px] tabular-nums text-soleil-muted dark:text-soleil-muted-d">
-            {formatRelativeTime(c.lastMessage.createdAt)}
+            {formatRelativeTime(c.lastMessage.createdAt, locale)}
           </span>
         </div>
 

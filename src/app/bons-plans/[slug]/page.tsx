@@ -302,13 +302,13 @@ export default async function DealDetailPage(
   }
   const canVote = Boolean(currentUser) && !isAuthor;
   const voteDisabledHint = !currentUser
-    ? "Connecte-toi pour voter."
+    ? t.dealDetail.loginToVote
     : isAuthor
-    ? "Tu ne peux pas voter sur ton propre bon plan."
+    ? t.dealDetail.ownDealVote
     : undefined;
   const canFavorite = Boolean(currentUser);
   const favoriteDisabledHint = !currentUser
-    ? "Connecte-toi pour sauvegarder."
+    ? t.dealDetail.loginToSave
     : undefined;
 
   const ctaUrl = deal.affiliateUrl ?? deal.externalUrl ?? deal.store?.website ?? null;
@@ -446,7 +446,7 @@ export default async function DealDetailPage(
               <p className="mt-[5px] text-xs text-soleil-muted dark:text-soleil-muted-d">
                 {tFormat(t.dealDetail.postedMeta, {
                   seller: sellerName,
-                  ago: formatRelativeTime(deal.publishedAt),
+                  ago: formatRelativeTime(deal.publishedAt, locale),
                   author: deal.author.username,
                 })}
               </p>
@@ -539,7 +539,7 @@ export default async function DealDetailPage(
                 )}
                 <span className="rounded-full border-[1.5px] border-soleil-border px-2.5 py-1 text-[11px] font-bold dark:border-soleil-border-d">
                   {tFormat(t.dealDetail.verifiedAgo, {
-                    ago: formatRelativeTime(deal.updatedAt),
+                    ago: formatRelativeTime(deal.updatedAt, locale),
                   })}
                 </span>
                 {currentUser && !isAuthor && (

@@ -110,12 +110,9 @@ export async function DealCard({
   className,
 }: Props) {
   const t = await getMessages();
-  // Titre traduit vers la langue de l'interface (passthrough sans
-  // fournisseur configuré — cf. lib/i18n/translate.ts).
-  const { text: displayTitle } = await translateUserText(
-    deal.title,
-    await getLocale(),
-  );
+  const locale = await getLocale();
+  // Titre traduit vers la langue de l'interface (cf. lib/i18n/translate.ts).
+  const { text: displayTitle } = await translateUserText(deal.title, locale);
   const sellerName = deal.store?.name ?? deal.merchant?.name ?? null;
   const isLocalStore = Boolean(deal.store);
   const sellerLogoUrl = deal.store?.logoUrl ?? deal.merchant?.logoUrl ?? null;
@@ -126,13 +123,13 @@ export async function DealCard({
   const isAuthenticated = Boolean(currentUserId);
   const canVote = isAuthenticated && !isAuthor;
   const voteHint = !isAuthenticated
-    ? "Connecte-toi pour voter."
+    ? t.dealDetail.loginToVote
     : isAuthor
-    ? "Tu ne peux pas voter sur ton propre bon plan."
+    ? t.dealDetail.ownDealVote
     : undefined;
   const canFavorite = isAuthenticated;
   const favoriteHint = !isAuthenticated
-    ? "Connecte-toi pour sauvegarder."
+    ? t.dealDetail.loginToSave
     : undefined;
 
   // ───────── variant = "soleil" (rangée liste, refonte T4) ─────────
@@ -140,7 +137,7 @@ export async function DealCard({
     const meta = [
       sellerName,
       deal.city?.name,
-      formatRelativeTime(deal.publishedAt),
+      formatRelativeTime(deal.publishedAt, locale),
     ]
       .filter(Boolean)
       .join(" · ");
@@ -275,7 +272,7 @@ export async function DealCard({
               </span>
               <span className="inline-flex items-center gap-0.5">
                 <Clock className="h-3 w-3" aria-hidden />
-                {formatRelativeTime(deal.publishedAt)}
+                {formatRelativeTime(deal.publishedAt, locale)}
               </span>
             </div>
           </div>
@@ -433,7 +430,7 @@ export async function DealCard({
         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground sm:text-xs">
           <span className="inline-flex items-center gap-1">
             <Clock className="h-3 w-3" aria-hidden />
-            {formatRelativeTime(deal.publishedAt)}
+            {formatRelativeTime(deal.publishedAt, locale)}
           </span>
           <span className="inline-flex items-center gap-1">
             <MessageSquare className="h-3 w-3" aria-hidden />
