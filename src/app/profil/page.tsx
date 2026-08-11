@@ -1,30 +1,13 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
-import {
-  BadgeCheck,
-  Bell,
-  BellRing,
-  Bookmark,
-  ChevronRight,
-  Gift,
-  LogOut,
-  Mail,
-  MapPin,
-  MessageSquare,
-  Pencil,
-  Phone,
-  ShieldCheck,
-  Trophy,
-} from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/current-user";
-import { fetchUnreadCount } from "@/lib/messages/queries";
 import { fetchUnreadNotificationsCount } from "@/lib/notifications/queries";
-import { Button } from "@/components/ui/button";
+import { isRenderableImageUrl } from "@/lib/images";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { UserAvatar } from "@/components/layout/UserAvatar";
-import { LevelProgress } from "@/components/gamification/LevelProgress";
+import { NightModeToggle } from "@/components/soleil/NightModeToggle";
 
 import { signOutAction } from "../connexion/actions";
 
@@ -38,14 +21,23 @@ type Props = {
   searchParams: Promise<{ success?: string; error?: string }>;
 };
 
+function initialsFrom(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length >= 2) {
+    return `${words[0][0]}${words[1][0]}`.toUpperCase();
+  }
+  return name.trim().slice(0, 2).toUpperCase();
+}
+
 export default async function ProfilPage(props: Props) {
   const searchParams = await props.searchParams;
   const user = await requireUser("/profil");
   const [
     city,
+    dealCount,
+    listingCount,
     dealFavoriteCount,
     listingFavoriteCount,
-    unreadCount,
     unreadNotifications,
     activeAlertsCount,
   ] = await Promise.all([
@@ -55,308 +47,231 @@ export default async function ProfilPage(props: Props) {
           select: { name: true },
         })
       : Promise.resolve(null),
+    prisma.deal.count({
+      where: { authorId: user.id, status: "PUBLISHED" },
+    }),
+    prisma.listing.count({
+      where: { authorId: user.id, status: "PUBLISHED" },
+    }),
     prisma.favorite.count({
       where: { userId: user.id, dealId: { not: null } },
     }),
     prisma.favorite.count({
       where: { userId: user.id, listingId: { not: null } },
     }),
-    fetchUnreadCount(user.id),
     fetchUnreadNotificationsCount(user.id),
     prisma.alert.count({ where: { userId: user.id, isActive: true } }),
   ]);
   const favoriteCount = dealFavoriteCount + listingFavoriteCount;
 
+  const displayName = user.fullName ?? user.username;
+  const memberSince = user.createdAt.getFullYear();
+
   return (
-    <main className="mx-auto max-w-md px-4 pb-16 pt-6 animate-in fade-in duration-300 sm:max-w-2xl sm:pt-10">
-      <section className="flex flex-col items-center text-center">
-        <UserAvatar
-          username={user.username}
-          avatarUrl={user.avatarUrl}
-          size="lg"
-        />
-        <h1 className="mt-3 font-display text-2xl font-bold tracking-tight">
-          @{user.username}
-        </h1>
-        {user.fullName && (
-          <p className="text-sm text-muted-foreground">{user.fullName}</p>
+    <main className="bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
+      <div className="mx-auto w-full max-w-md px-5 lg:max-w-2xl">
+        {/* En-tête centré : avatar, nom, meta. */}
+        <section className="flex flex-col items-center pt-6 text-center">
+          {isRenderableImageUrl(user.avatarUrl) ? (
+            <Image
+              src={user.avatarUrl}
+              alt=""
+              width={64}
+              height={64}
+              unoptimized
+              className="h-16 w-16 rounded-full object-cover"
+            />
+          ) : (
+            <span
+              aria-hidden
+              className="flex h-16 w-16 items-center justify-center rounded-full bg-soleil-forest font-display text-xl font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
+            >
+              {initialsFrom(displayName)}
+            </span>
+          )}
+          <h1 className="mt-2.5 font-display text-[22px] font-extrabold">
+            {displayName}
+          </h1>
+          <p className="mt-[3px] text-[11.5px] text-soleil-muted dark:text-soleil-muted-d">
+            {city?.name ? `${city.name} · ` : ""}membre depuis {memberSince}
+          </p>
+        </section>
+
+        {searchParams.success && (
+          <div
+            role="status"
+            className="mt-4 rounded-[14px] bg-soleil-valid p-3 text-sm font-semibold text-soleil-forest dark:bg-soleil-valid-d"
+          >
+            {searchParams.success}
+          </div>
         )}
-      </section>
+        {searchParams.error && (
+          <div
+            role="alert"
+            className="mt-4 rounded-[14px] border-[1.5px] border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+          >
+            {searchParams.error}
+          </div>
+        )}
 
-      <LevelProgress
-        karma={user.karma}
-        level={user.level}
-        className="mt-5"
-      />
-      <Link
-        href="/profil/recompenses"
-        className="mt-2 flex items-center justify-between rounded-md border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition hover:border-peyi-orange-300 hover:bg-peyi-orange-50/40"
-      >
-        <span className="inline-flex items-center gap-1.5">
-          <Trophy className="h-3.5 w-3.5 text-peyi-orange-600" aria-hidden />
-          Voir mes récompenses et badges
-        </span>
-        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
-      </Link>
+        {/* Stats 3 colonnes : deals postés / annonces / mercis (karma). */}
+        <section className="mt-4 grid grid-cols-3 overflow-hidden rounded-2xl border-[1.5px] border-soleil-border dark:border-soleil-border-d">
+          <div className="py-3 text-center">
+            <div className="font-display text-[19px] font-extrabold">
+              {dealCount}
+            </div>
+            <div className="mt-0.5 text-[10px] font-bold uppercase text-soleil-muted dark:text-soleil-muted-d">
+              Deals postés
+            </div>
+          </div>
+          <div className="border-x-[1.5px] border-soleil-border py-3 text-center dark:border-soleil-border-d">
+            <div className="font-display text-[19px] font-extrabold">
+              {listingCount}
+            </div>
+            <div className="mt-0.5 text-[10px] font-bold uppercase text-soleil-muted dark:text-soleil-muted-d">
+              Annonces
+            </div>
+          </div>
+          <div className="py-3 text-center">
+            <div className="font-display text-[19px] font-extrabold text-soleil-otext dark:text-soleil-otext-d">
+              {user.karma.toLocaleString("fr-FR")}
+            </div>
+            <div className="mt-0.5 text-[10px] font-bold uppercase text-soleil-muted dark:text-soleil-muted-d">
+              Mercis reçus
+            </div>
+          </div>
+        </section>
 
-      {searchParams.success && (
-        <div
-          role="status"
-          className="mt-5 rounded-lg border border-peyi-green-200 bg-peyi-green-50 p-3 text-sm text-peyi-green-800"
-        >
-          {searchParams.success}
-        </div>
-      )}
-      {searchParams.error && (
-        <div
-          role="alert"
-          className="mt-5 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
-        >
-          {searchParams.error}
-        </div>
-      )}
+        {/* Menu */}
+        <nav className="mt-2.5">
+          <MenuRow
+            href="/profil/favoris"
+            label="Favoris"
+            sub={
+              favoriteCount === 0
+                ? "Aucun favori"
+                : `${dealFavoriteCount} bon${dealFavoriteCount > 1 ? "s" : ""} plan${dealFavoriteCount > 1 ? "s" : ""} · ${listingFavoriteCount} annonce${listingFavoriteCount > 1 ? "s" : ""}`
+            }
+          />
+          <MenuRow
+            href="/profil/alertes"
+            label="Alertes deals"
+            sub={
+              activeAlertsCount === 0
+                ? "Aucune alerte active"
+                : `${activeAlertsCount} alerte${activeAlertsCount > 1 ? "s" : ""} active${activeAlertsCount > 1 ? "s" : ""}`
+            }
+          />
+          <MenuRow
+            href="/notifications"
+            label="Notifications"
+            sub={
+              unreadNotifications === 0
+                ? "Tout est lu"
+                : `${unreadNotifications} non lue${unreadNotifications > 1 ? "s" : ""}`
+            }
+            badge={unreadNotifications}
+          />
 
-      <section className="mt-6 space-y-2 rounded-lg border border-border bg-card p-4 text-sm">
-        <Row
-          icon={<Mail className="h-4 w-4" />}
-          label="E-mail"
-          value={user.email}
-        />
-        <Row
-          icon={<Phone className="h-4 w-4" />}
-          label="Téléphone"
-          value={
-            user.phone ? (
-              <span className="flex items-center gap-1.5">
-                <span className="truncate">{user.phone}</span>
-                {user.phoneVerified ? (
-                  <span className="inline-flex items-center gap-0.5 rounded-full bg-peyi-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-peyi-green-700">
-                    <BadgeCheck className="h-3 w-3" aria-hidden />
-                    Vérifié
-                  </span>
-                ) : (
-                  <Link
-                    href={`/profil/verifier-telephone?phone=${encodeURIComponent(user.phone)}`}
-                    className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 hover:bg-amber-200"
-                  >
-                    Vérifier
-                  </Link>
-                )}
-              </span>
-            ) : (
-              "Non renseigné"
-            )
-          }
-        />
-        <Row
-          icon={<MapPin className="h-4 w-4" />}
-          label="Commune"
-          value={city?.name ?? "Non renseignée"}
-        />
-      </section>
+          {/* Mode nuit — toggle branché sur next-themes. */}
+          <div className="flex items-center justify-between gap-3 border-b border-soleil-line py-3.5 dark:border-soleil-line-d">
+            <div className="min-w-0">
+              <div className="text-sm font-bold">Mode nuit</div>
+              <div className="mt-0.5 text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
+                Auto au coucher du soleil — 18 h 45 à Cayenne
+              </div>
+            </div>
+            <NightModeToggle />
+          </div>
 
-      <Button asChild variant="outline" size="sm" className="mt-3 w-full">
-        <Link href="/profil/edit">
-          <Pencil className="h-3.5 w-3.5" aria-hidden />
-          Modifier mon profil
-        </Link>
-      </Button>
+          <MenuRow
+            href="/profil/recompenses"
+            label="Récompenses & badges"
+            sub={`${user.karma.toLocaleString("fr-FR")} karma`}
+          />
+          <MenuRow
+            href="/profil/affiliation"
+            label="Parrainage & affiliation"
+            sub="Invite tes amis et gagne jusqu'à 800 €"
+          />
+          <MenuRow
+            href="/profil/edit"
+            label="Paramètres"
+            sub="Profil, e-mail, téléphone, commune"
+          />
+          <MenuRow
+            href="/profil/confidentialite"
+            label="Confidentialité & données"
+          />
+          <MenuRow
+            href="mailto:contact@peyi.gf"
+            label="Aide & contact"
+            last
+          />
+        </nav>
 
-      <nav className="mt-6 flex flex-col gap-2">
-        <Link
-          href="/messages"
-          className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 text-sm transition hover:border-peyi-orange-300 hover:bg-peyi-orange-50/40"
-        >
-          <span className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-peyi-orange-100 text-peyi-orange-600">
-              <MessageSquare className="h-4 w-4" aria-hidden />
-            </span>
-            <span className="min-w-0">
-              <span className="block font-semibold text-foreground">
-                Messagerie
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {unreadCount === 0
-                  ? "Aucun message non lu"
-                  : `${unreadCount} message${unreadCount > 1 ? "s" : ""} non lu${unreadCount > 1 ? "s" : ""}`}
-              </span>
-            </span>
-          </span>
-          <span className="flex items-center gap-2">
-            {unreadCount > 0 && (
-              <span
-                aria-hidden
-                className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-peyi-orange-500 px-1.5 text-[11px] font-bold text-white"
-              >
-                {unreadCount > 99 ? "99+" : unreadCount}
-              </span>
-            )}
-            <ChevronRight
-              className="h-4 w-4 text-muted-foreground"
-              aria-hidden
-            />
-          </span>
-        </Link>
-
-        <Link
-          href="/notifications"
-          className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 text-sm transition hover:border-peyi-orange-300 hover:bg-peyi-orange-50/40"
-        >
-          <span className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-peyi-orange-100 text-peyi-orange-600">
-              <Bell className="h-4 w-4" aria-hidden />
-            </span>
-            <span className="min-w-0">
-              <span className="block font-semibold text-foreground">
-                Notifications
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {unreadNotifications === 0
-                  ? "Tout est lu"
-                  : `${unreadNotifications} non lue${unreadNotifications > 1 ? "s" : ""}`}
-              </span>
-            </span>
-          </span>
-          <span className="flex items-center gap-2">
-            {unreadNotifications > 0 && (
-              <span
-                aria-hidden
-                className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-peyi-orange-500 px-1.5 text-[11px] font-bold text-white"
-              >
-                {unreadNotifications > 99 ? "99+" : unreadNotifications}
-              </span>
-            )}
-            <ChevronRight
-              className="h-4 w-4 text-muted-foreground"
-              aria-hidden
-            />
-          </span>
-        </Link>
-
-        <Link
-          href="/profil/favoris"
-          className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 text-sm transition hover:border-peyi-orange-300 hover:bg-peyi-orange-50/40"
-        >
-          <span className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-peyi-orange-100 text-peyi-orange-600">
-              <Bookmark className="h-4 w-4" aria-hidden />
-            </span>
-            <span className="min-w-0">
-              <span className="block font-semibold text-foreground">
-                Mes favoris
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {favoriteCount === 0
-                  ? "Aucun favori"
-                  : `${dealFavoriteCount} bon${dealFavoriteCount > 1 ? "s" : ""} plan${dealFavoriteCount > 1 ? "s" : ""} · ${listingFavoriteCount} annonce${listingFavoriteCount > 1 ? "s" : ""}`}
-              </span>
-            </span>
-          </span>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden />
-        </Link>
-
-        <Link
-          href="/profil/alertes"
-          className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 text-sm transition hover:border-peyi-orange-300 hover:bg-peyi-orange-50/40"
-        >
-          <span className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-peyi-orange-100 text-peyi-orange-600">
-              <BellRing className="h-4 w-4" aria-hidden />
-            </span>
-            <span className="min-w-0">
-              <span className="block font-semibold text-foreground">
-                Mes alertes
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {activeAlertsCount === 0
-                  ? "Aucune alerte active"
-                  : `${activeAlertsCount} alerte${activeAlertsCount > 1 ? "s" : ""} active${activeAlertsCount > 1 ? "s" : ""}`}
-              </span>
-            </span>
-          </span>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden />
-        </Link>
-
-        <Link
-          href="/profil/affiliation"
-          className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 text-sm transition hover:border-peyi-orange-300 hover:bg-peyi-orange-50/40"
-        >
-          <span className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-peyi-orange-100 text-peyi-orange-600">
-              <Gift className="h-4 w-4" aria-hidden />
-            </span>
-            <span className="min-w-0">
-              <span className="block font-semibold text-foreground">
-                Parrainage & affiliation
-              </span>
-              <span className="text-xs text-muted-foreground">
-                Invite tes amis et gagne jusqu&apos;à 800 €
-              </span>
-            </span>
-          </span>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden />
-        </Link>
-
-        <Link
-          href="/profil/confidentialite"
-          className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 text-sm transition hover:border-peyi-orange-300 hover:bg-peyi-orange-50/40"
-        >
-          <span className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-peyi-orange-100 text-peyi-orange-600">
-              <ShieldCheck className="h-4 w-4" aria-hidden />
-            </span>
-            <span className="min-w-0">
-              <span className="block font-semibold text-foreground">
-                Confidentialité & données
-              </span>
-              <span className="text-xs text-muted-foreground">
-                Télécharger mes données, supprimer mon compte
-              </span>
-            </span>
-          </span>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden />
-        </Link>
-      </nav>
-
-      <form action={signOutAction} className="mt-8">
-        <SubmitButton
-          variant="outline"
-          size="lg"
-          pendingLabel="Déconnexion…"
-          className="w-full gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
-        >
-          <LogOut className="h-4 w-4" aria-hidden />
-          Se déconnecter
-        </SubmitButton>
-      </form>
+        <form action={signOutAction} className="mt-3 text-center">
+          <SubmitButton
+            variant="ghost"
+            size="sm"
+            pendingLabel="Déconnexion…"
+            className="text-xs font-bold text-soleil-muted hover:bg-transparent hover:text-soleil-forest dark:text-soleil-muted-d dark:hover:text-soleil-cream"
+          >
+            Se déconnecter
+          </SubmitButton>
+        </form>
+      </div>
     </main>
   );
 }
 
-function Row({
-  icon,
+function MenuRow({
+  href,
   label,
-  value,
+  sub,
+  badge = 0,
+  last = false,
 }: {
-  icon: React.ReactNode;
+  href: string;
   label: string;
-  value: React.ReactNode;
+  sub?: string;
+  badge?: number;
+  last?: boolean;
 }) {
   return (
-    <div className="flex items-start gap-2.5">
-      <span className="mt-0.5 text-muted-foreground" aria-hidden>
-        {icon}
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-          {label}
-        </p>
-        {typeof value === "string" ? (
-          <p className="truncate">{value}</p>
-        ) : (
-          <div className="truncate">{value}</div>
+    <Link
+      href={href}
+      className={
+        "flex min-h-[52px] items-center justify-between gap-3 py-3.5 transition active:scale-[0.99] " +
+        (last
+          ? ""
+          : "border-b border-soleil-line dark:border-soleil-line-d")
+      }
+    >
+      <span className="min-w-0">
+        <span className="block text-sm font-bold">{label}</span>
+        {sub && (
+          <span className="mt-0.5 block text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
+            {sub}
+          </span>
         )}
-      </div>
-    </div>
+      </span>
+      <span className="flex flex-none items-center gap-2">
+        {badge > 0 && (
+          <span
+            aria-hidden
+            className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-soleil-orange px-1.5 text-[10.5px] font-extrabold text-soleil-forest"
+          >
+            {badge > 99 ? "99+" : badge}
+          </span>
+        )}
+        <span
+          aria-hidden
+          className="text-soleil-muted dark:text-soleil-muted-d"
+        >
+          ›
+        </span>
+      </span>
+    </Link>
   );
 }
