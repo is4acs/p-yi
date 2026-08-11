@@ -9,6 +9,8 @@ import { DetailSkeleton } from "@/components/activities/ActivityDetailPanel";
 import type { ActivityDetailState } from "@/components/activities/use-activity-detail";
 import type { ActivityFeature } from "@/lib/activities/geojson";
 import { cn } from "@/lib/utils";
+import { useMessages } from "@/components/soleil/I18nProvider";
+import { tFormat } from "@/lib/i18n/tformat";
 
 /**
  * Bottom sheet mobile de la carte des activités — implémentation maison,
@@ -40,9 +42,10 @@ import { cn } from "@/lib/utils";
  *  - `half` : moitié d'écran, atteint automatiquement au tap sur un marqueur
  *    (on garde le marqueur visible en même temps que la fiche) ;
  *  - `full` : lecture confortable de la fiche ou de la liste.
- * `RESERVED` correspond au header du site, pour ne jamais le recouvrir.
+ * `RESERVED` : marge haute conservée au palier plein (le Header global est
+ * masqué sur /activites en mobile — il ne reste que la zone de statut iOS).
  */
-const RESERVED = 120;
+const RESERVED = 88;
 
 function snapPoints(viewportHeight: number): number[] {
   return [
@@ -77,6 +80,7 @@ export function ActivitiesMobileSheet({
   onSelect,
   filterBar,
 }: Props) {
+  const t = useMessages();
   const [isMobile, setIsMobile] = useState(false);
   const [points, setPoints] = useState<number[]>(() => snapPoints(800));
   const [height, setHeight] = useState(136);
@@ -192,12 +196,12 @@ export function ActivitiesMobileSheet({
 
   const count = features.length;
   const countLabel = isReady
-    ? `${count} activité${count > 1 ? "s" : ""} dans cette zone`
-    : "Chargement des activités…";
+    ? tFormat(t.act.countZone, { n: count })
+    : t.act.loadingActivities;
 
   return (
     <section
-      aria-label="Liste des activités"
+      aria-label={t.act.listAria}
       style={{ height }}
       className={cn(
         "fixed inset-x-0 bottom-20 z-30 flex flex-col rounded-t-[20px] border-t border-soleil-line bg-soleil-cream text-soleil-forest shadow-lg dark:border-soleil-line-d dark:bg-soleil-night dark:text-soleil-cream lg:bottom-0",
@@ -217,7 +221,7 @@ export function ActivitiesMobileSheet({
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
         onClick={onHandleClick}
-        aria-label={expanded ? "Réduire la liste" : "Agrandir la liste"}
+        aria-label={expanded ? t.act.collapseList : t.act.expandList}
         className="flex w-full shrink-0 touch-none items-center justify-center px-4 pb-1.5 pt-3 text-soleil-muted dark:text-soleil-muted-d"
       >
         <span
@@ -234,7 +238,7 @@ export function ActivitiesMobileSheet({
             className="inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-soleil-otext dark:text-soleil-otext-d"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden />
-            Retour à la liste
+            {t.act.backToList}
           </button>
         ) : (
           <p className="text-sm font-bold" aria-live="polite">
@@ -245,7 +249,7 @@ export function ActivitiesMobileSheet({
           type="button"
           onClick={toggle}
           className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-soleil-muted transition hover:bg-soleil-sand dark:text-soleil-muted-d dark:hover:bg-soleil-forest"
-          aria-label={expanded ? "Voir la carte" : "Agrandir la liste"}
+          aria-label={expanded ? t.act.seeMap : t.act.expandList}
         >
           {expanded ? (
             <ChevronDown className="h-5 w-5" aria-hidden />
@@ -276,8 +280,7 @@ export function ActivitiesMobileSheet({
             {detail.status === "loading" && <DetailSkeleton />}
             {detail.status === "error" && (
               <p className="py-6 text-center text-sm text-soleil-muted2 dark:text-soleil-muted-d">
-                Impossible de charger cette activité — sélectionne-la à
-                nouveau.
+                {t.act.detailLoadFailed}
               </p>
             )}
             {detail.status === "ready" && (
@@ -286,7 +289,7 @@ export function ActivitiesMobileSheet({
           </>
         ) : count === 0 && isReady ? (
           <p className="px-4 py-8 text-center text-sm text-soleil-muted2 dark:text-soleil-muted-d">
-            Aucune activité dans cette zone — déplace la carte ou dézoome.
+            {t.act.emptyZoneSheet}
           </p>
         ) : (
           <div className="space-y-2.5">

@@ -5,11 +5,9 @@ import type { AccessMode, ActivityCategory, Difficulty } from "@prisma/client";
 
 import {
   ACCESS_MODE_VALUES,
-  ACCESS_MODES,
   ACTIVITY_CATEGORIES,
   ACTIVITY_CATEGORY_VALUES,
   countActiveFilters,
-  DIFFICULTIES,
   DIFFICULTY_VALUES,
   DURATION_FILTERS,
   EMPTY_FILTERS,
@@ -18,6 +16,8 @@ import {
 } from "@/lib/activities/filters";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
+import { useMessages } from "@/components/soleil/I18nProvider";
+import { tFormat } from "@/lib/i18n/tformat";
 import {
   Dialog,
   DialogClose,
@@ -54,6 +54,7 @@ export function ActivitiesFilterBar({
   cities,
   className,
 }: Props) {
+  const t = useMessages();
   const activeCount = countActiveFilters(filters);
 
   const toggleCategory = (category: ActivityCategory) => {
@@ -96,7 +97,7 @@ export function ActivitiesFilterBar({
         <DialogTrigger asChild>
           <Chip className="shrink-0">
             <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
-            Filtres
+            {t.act.filters}
             {activeCount > 0 && (
               <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-soleil-orange px-1 text-[10px] font-extrabold text-soleil-forest">
                 {activeCount}
@@ -106,12 +107,12 @@ export function ActivitiesFilterBar({
         </DialogTrigger>
         <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Filtrer les activités</DialogTitle>
+            <DialogTitle>{t.act.filterTitle}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-5">
             <section>
-              <h3 className="mb-2 text-sm font-semibold">Commune</h3>
+              <h3 className="mb-2 text-sm font-semibold">{t.act.commune}</h3>
               <select
                 value={filters.citySlug ?? ""}
                 onChange={(event) =>
@@ -122,7 +123,7 @@ export function ActivitiesFilterBar({
                 }
                 className="h-10 w-full rounded-sm border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
-                <option value="">Toutes les communes</option>
+                <option value="">{t.act.allCommunes}</option>
                 {cities.map((city) => (
                   <option key={city.slug} value={city.slug}>
                     {city.name}
@@ -132,7 +133,7 @@ export function ActivitiesFilterBar({
             </section>
 
             <section>
-              <h3 className="mb-2 text-sm font-semibold">Mode d&apos;accès</h3>
+              <h3 className="mb-2 text-sm font-semibold">{t.act.accessMode}</h3>
               <div className="flex flex-wrap gap-1.5">
                 {ACCESS_MODE_VALUES.map((mode) => (
                   <Chip
@@ -140,14 +141,14 @@ export function ActivitiesFilterBar({
                     active={filters.accessModes.includes(mode)}
                     onClick={() => toggleAccessMode(mode)}
                   >
-                    {ACCESS_MODES[mode].label}
+                    {t.act.access[mode]}
                   </Chip>
                 ))}
               </div>
             </section>
 
             <section>
-              <h3 className="mb-2 text-sm font-semibold">Prix</h3>
+              <h3 className="mb-2 text-sm font-semibold">{t.common.price}</h3>
               <div className="flex flex-wrap gap-1.5">
                 {PRICE_FILTERS.map((option) => (
                   <Chip
@@ -161,14 +162,14 @@ export function ActivitiesFilterBar({
                       })
                     }
                   >
-                    {option.label}
+                    {t.act.priceFilters[option.slug]}
                   </Chip>
                 ))}
               </div>
             </section>
 
             <section>
-              <h3 className="mb-2 text-sm font-semibold">Durée</h3>
+              <h3 className="mb-2 text-sm font-semibold">{t.act.duration}</h3>
               <div className="flex flex-wrap gap-1.5">
                 {DURATION_FILTERS.map((option) => (
                   <Chip
@@ -184,14 +185,14 @@ export function ActivitiesFilterBar({
                       })
                     }
                   >
-                    {option.label}
+                    {t.act.durationFilters[option.slug]}
                   </Chip>
                 ))}
               </div>
             </section>
 
             <section>
-              <h3 className="mb-2 text-sm font-semibold">Difficulté</h3>
+              <h3 className="mb-2 text-sm font-semibold">{t.act.difficulty}</h3>
               <div className="flex flex-wrap gap-1.5">
                 {DIFFICULTY_VALUES.map((value) => (
                   <Chip
@@ -199,7 +200,7 @@ export function ActivitiesFilterBar({
                     active={filters.difficulty === value}
                     onClick={() => setDifficulty(value)}
                   >
-                    {DIFFICULTIES[value].label}
+                    {t.act.difficulties[value]}
                   </Chip>
                 ))}
               </div>
@@ -213,11 +214,11 @@ export function ActivitiesFilterBar({
               onClick={clearAll}
               disabled={activeCount === 0}
             >
-              <X aria-hidden /> Tout effacer
+              <X aria-hidden /> {t.act.clearAll}
             </Button>
             <DialogClose asChild>
               <Button variant="peyi" size="sm">
-                Voir {resultCount} résultat{resultCount > 1 ? "s" : ""}
+                {tFormat(t.act.seeResults, { n: resultCount })}
               </Button>
             </DialogClose>
           </DialogFooter>
@@ -230,10 +231,10 @@ export function ActivitiesFilterBar({
           onChange({ ...filters, inSeasonNow: !filters.inSeasonNow })
         }
         className="shrink-0"
-        title="Ne montrer que les activités praticables à la saison actuelle"
+        title={t.act.inSeasonHint}
       >
         <Sparkles className="h-3.5 w-3.5" aria-hidden />
-        Praticable en ce moment
+        {t.act.inSeason}
       </Chip>
 
       {ACTIVITY_CATEGORY_VALUES.map((category) => {
@@ -250,7 +251,7 @@ export function ActivitiesFilterBar({
               className="inline-block h-2 w-2 rounded-full"
               style={{ backgroundColor: meta.color }}
             />
-            {meta.label}
+            {t.act.categories[category]}
           </Chip>
         );
       })}
@@ -261,7 +262,7 @@ export function ActivitiesFilterBar({
           onClick={clearAll}
           className="shrink-0 whitespace-nowrap text-xs font-bold text-soleil-otext hover:underline dark:text-soleil-otext-d"
         >
-          Tout effacer
+          {t.act.clearAll}
         </button>
       )}
     </div>
