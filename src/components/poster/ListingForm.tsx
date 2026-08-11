@@ -11,6 +11,7 @@ import type {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { useMessages } from "@/components/soleil/I18nProvider";
 import { cn } from "@/lib/utils";
 import { CONDITION_LABEL, TYPE_LABEL } from "@/lib/listings/queries";
 import { maxPhotosForCategory } from "@/lib/listings/photo-limits";
@@ -88,6 +89,7 @@ export function ListingForm({
   profilePhone,
   profilePhoneVerified,
 }: Props) {
+  const t = useMessages();
   const v = defaults ?? {};
   const [priceType, setPriceType] = useState<PriceType>(v.priceType ?? "FIXED");
   const [categorySlug, setCategorySlug] = useState<string>(
@@ -117,7 +119,7 @@ export function ListingForm({
       )}
 
       <div className="space-y-1.5">
-        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="title">Titre *</Label>
+        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="title">{t.form.title} *</Label>
         <Input
           id="title"
           name="title"
@@ -133,12 +135,21 @@ export function ListingForm({
       <PhotosUploader initialUrls={v.photoUrls ?? []} max={maxPhotos} />
 
       <div className="space-y-1.5">
-        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="type">Type d&apos;annonce *</Label>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <p
+          id="listing-type-label"
+          className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d"
+        >
+          {t.form.typeLabel} *
+        </p>
+        <div
+          role="radiogroup"
+          aria-labelledby="listing-type-label"
+          className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+        >
           {TYPES.map((t) => (
             <label
               key={t}
-              className="flex min-h-[38px] cursor-pointer items-center justify-center gap-1 rounded-full border-[1.5px] border-soleil-border px-2 py-2 text-xs font-semibold transition has-[:checked]:border-soleil-forest has-[:checked]:bg-soleil-forest has-[:checked]:font-bold has-[:checked]:text-soleil-cream dark:border-soleil-border-d dark:has-[:checked]:border-soleil-cream dark:has-[:checked]:bg-soleil-cream dark:has-[:checked]:text-soleil-forest"
+              className="flex min-h-[38px] cursor-pointer items-center justify-center gap-1 rounded-full border-[1.5px] border-soleil-border px-2 py-2 text-xs font-semibold transition has-[:checked]:border-soleil-forest has-[:checked]:bg-soleil-forest has-[:checked]:font-bold has-[:checked]:text-soleil-cream has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-soleil-orange dark:border-soleil-border-d dark:has-[:checked]:border-soleil-cream dark:has-[:checked]:bg-soleil-cream dark:has-[:checked]:text-soleil-forest"
             >
               <input
                 type="radio"
@@ -155,7 +166,7 @@ export function ListingForm({
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="priceType">Tarif *</Label>
+          <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="priceType">{t.form.priceKind} *</Label>
           <select
             id="priceType"
             name="priceType"
@@ -173,7 +184,7 @@ export function ListingForm({
         </div>
 
         <div className={cn("space-y-1.5", !priceRequired && "opacity-60")}>
-          <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="price">Prix (€){priceRequired ? " *" : ""}</Label>
+          <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="price">{t.form.price}{priceRequired ? " *" : ""}</Label>
           <Input
             id="price"
             name="price"
@@ -189,14 +200,14 @@ export function ListingForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="condition">État (pour les objets)</Label>
+        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="condition">{t.form.condition}</Label>
         <select
           id="condition"
           name="condition"
           defaultValue={v.condition ?? ""}
           className="flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-peyi-orange-300"
         >
-          <option value="">Non applicable</option>
+          <option value="">{t.form.notApplicable}</option>
           {CONDITIONS.map((c) => (
             <option key={c} value={c}>
               {CONDITION_LABEL[c]}
@@ -206,7 +217,7 @@ export function ListingForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="categorySlug">Catégorie *</Label>
+        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="categorySlug">{t.form.category} *</Label>
         <select
           id="categorySlug"
           name="categorySlug"
@@ -216,7 +227,7 @@ export function ListingForm({
           onChange={(e) => setCategorySlug(e.target.value)}
         >
           <option value="" disabled>
-            Choisis une catégorie
+            {t.form.chooseCategory}
           </option>
           {categories.map((c) => (
             <option key={c.slug} value={c.slug}>
@@ -233,7 +244,7 @@ export function ListingForm({
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="citySlug">Commune *</Label>
+          <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="citySlug">{t.form.cityField} *</Label>
           <select
             id="citySlug"
             name="citySlug"
@@ -242,7 +253,7 @@ export function ListingForm({
             className="flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-peyi-orange-300"
           >
             <option value="" disabled>
-              Choisis une commune
+              {t.form.chooseCity}
             </option>
             {cities.map((c) => (
               <option key={c.slug} value={c.slug}>
@@ -253,7 +264,7 @@ export function ListingForm({
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="neighborhood">Quartier</Label>
+          <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="neighborhood">{t.form.neighborhood}</Label>
           <Input
             id="neighborhood"
             name="neighborhood"
@@ -266,7 +277,7 @@ export function ListingForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="description">Description *</Label>
+        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="description">{t.form.description} *</Label>
         <textarea
           id="description"
           name="description"
@@ -282,11 +293,11 @@ export function ListingForm({
 
       <fieldset className="space-y-3 rounded-[14px] border-[1.5px] border-soleil-border p-3 dark:border-soleil-border-d">
         <legend className="px-1 text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d">
-          Contact
+          {t.form.contact}
         </legend>
 
         <div className="space-y-1.5">
-          <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="contactPhone">Téléphone</Label>
+          <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="contactPhone">{t.form.phone}</Label>
           <Input
             id="contactPhone"
             name="contactPhone"
@@ -310,7 +321,7 @@ export function ListingForm({
             className="h-4 w-4 rounded border-soleil-border accent-soleil-orange dark:border-soleil-border-d"
           />
           <input type="hidden" name="showPhone" value="off" />
-          Afficher mon téléphone publiquement
+          {t.form.showPhone}
         </label>
 
         <label className="flex cursor-pointer items-center gap-2 text-sm">
@@ -322,20 +333,20 @@ export function ListingForm({
             className="h-4 w-4 rounded border-soleil-border accent-soleil-orange dark:border-soleil-border-d"
           />
           <input type="hidden" name="allowMessages" value="off" />
-          Autoriser les messages privés
+          {t.form.allowMessages}
         </label>
       </fieldset>
 
       <SubmitButton
         size="lg"
         className="w-full rounded-full bg-soleil-forest py-3.5 text-sm font-extrabold text-soleil-cream hover:bg-soleil-forest dark:bg-soleil-cream dark:text-soleil-forest dark:hover:bg-soleil-cream"
-        pendingLabel="Publication…"
+        pendingLabel={t.poster.publishing}
       >
         <Send className="h-4 w-4" aria-hidden />
         {submitLabel}
       </SubmitButton>
       <p className="!mt-2 text-center text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
-        En ligne immédiatement — l&apos;équipe Péyi veille sur les contenus
+        {t.poster.publishNote}
       </p>
     </form>
   );

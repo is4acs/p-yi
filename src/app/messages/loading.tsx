@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function MessagesLoading() {
   return (
-    <main className="mx-auto max-w-md px-4 pb-16 pt-6 sm:max-w-2xl sm:pt-10">
+    <main className="min-h-screen bg-soleil-cream dark:bg-soleil-night mx-auto max-w-md px-4 pb-16 pt-6 sm:max-w-2xl sm:pt-10">
       <div className="space-y-2">
         <Skeleton className="h-8 w-40" />
         <Skeleton className="h-4 w-56" />

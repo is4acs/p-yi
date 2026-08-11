@@ -13,8 +13,15 @@ import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { RouteProgress } from "@/components/layout/RouteProgress";
 import { SkipLink } from "@/components/layout/SkipLink";
-import { ChromeVisibility } from "@/components/soleil/ChromeVisibility";
+import {
+  ChromeVisibility,
+  SoleilSurface,
+} from "@/components/soleil/ChromeVisibility";
+import { I18nProvider } from "@/components/soleil/I18nProvider";
 import { MobileNav } from "@/components/soleil/MobileNav";
+import { AutoNightTheme } from "@/components/soleil/NightModeToggle";
+import { getDictionary, getLocale } from "@/lib/i18n";
+import { HTML_LANG } from "@/lib/i18n/config";
 import { InstallBanner } from "@/components/pwa/InstallBanner";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { getCurrentUser } from "@/lib/auth/current-user";
@@ -207,9 +214,14 @@ export default async function RootLayout({
     buildWebSiteJsonLd(),
   ]);
 
+  // Langue de l'interface (cookie `peyi-locale`, fr par défaut). Le
+  // contenu publié par les utilisateurs reste dans sa langue d'origine.
+  const locale = await getLocale();
+  const messages = getDictionary(locale);
+
   return (
     <html
-      lang="fr"
+      lang={HTML_LANG[locale]}
       className={cn(
         schibsted.variable,
         bricolage.variable,
@@ -222,12 +234,14 @@ export default async function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: rootJsonLd }}
         />
+        <I18nProvider locale={locale} messages={messages}>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
           enableSystem={false}
           disableTransitionOnChange
         >
+        <AutoNightTheme />
         <SkipLink />
         <ServiceWorkerRegister />
         <WebVitals />
@@ -272,10 +286,13 @@ export default async function RootLayout({
         >
           {children}
         </div>
-        <Footer />
+        <SoleilSurface>
+          <Footer />
+        </SoleilSurface>
         <MobileNav unreadCount={unreadCount} />
         <InstallBanner />
         </ThemeProvider>
+        </I18nProvider>
       </body>
     </html>
   );

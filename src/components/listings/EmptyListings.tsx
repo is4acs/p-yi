@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getMessages } from "@/lib/i18n";
 import { PackageSearch, SlidersHorizontal } from "lucide-react";
 
 type Props = {
@@ -17,50 +18,51 @@ type Props = {
   clearFiltersHref?: string;
 };
 
-export function EmptyListings({
+export async function EmptyListings({
   mode,
   clearFiltersHref = "/annonces",
 }: Props) {
+  const t = await getMessages();
   if (mode === "filtered") {
     return (
-      <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-muted/40 px-4 py-12 text-center">
+      <div className="flex flex-col items-center rounded-[14px] bg-soleil-sand px-4 py-12 text-center text-soleil-forest dark:bg-soleil-forest dark:text-soleil-cream">
         <SlidersHorizontal
-          className="mb-3 h-8 w-8 text-peyi-orange-500"
+          className="mb-3 h-8 w-8 text-soleil-orange"
           aria-hidden
         />
-        <h2 className="font-display text-lg font-semibold">
-          Aucun résultat avec ces filtres
+        <h2 className="font-display text-lg font-extrabold">
+          {t.listings.emptyTitleFiltered}
         </h2>
-        <p className="mt-1 max-w-xs text-sm text-muted-foreground">
-          Essaie d&apos;élargir la fourchette ou retire un critère.
+        <p className="mt-1 max-w-xs text-sm text-soleil-body dark:text-soleil-body-d">
+          {t.deals.emptySubFiltered}
         </p>
         <Link
           href={clearFiltersHref}
-          className="mt-4 inline-flex h-10 items-center rounded-md bg-peyi-orange-500 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-peyi-orange-600"
+          className="mt-4 inline-flex min-h-[44px] items-center rounded-full bg-soleil-forest px-4 text-sm font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
         >
-          Effacer les filtres
+          {t.deals.clearFilters}
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-muted/40 px-4 py-12 text-center">
+    <div className="flex flex-col items-center rounded-[14px] bg-soleil-sand px-4 py-12 text-center text-soleil-forest dark:bg-soleil-forest dark:text-soleil-cream">
       <PackageSearch
-        className="mb-3 h-8 w-8 text-peyi-green-500"
+        className="mb-3 h-8 w-8 text-soleil-orange"
         aria-hidden
       />
-      <h2 className="font-display text-lg font-semibold">
-        Aucune annonce pour le moment
+      <h2 className="font-display text-lg font-extrabold">
+        {t.listings.emptyTitle}
       </h2>
-      <p className="mt-1 max-w-xs text-sm text-muted-foreground">
-        Sois le premier à publier une annonce en Guyane.
+      <p className="mt-1 max-w-xs text-sm text-soleil-body dark:text-soleil-body-d">
+        {t.deals.emptySub}
       </p>
       <Link
         href="/poster/annonce"
-        className="mt-4 inline-flex h-10 items-center rounded-md bg-peyi-orange-500 px-4 text-sm font-semibold text-white hover:bg-peyi-orange-600"
+        className="mt-4 inline-flex min-h-[44px] items-center rounded-full bg-soleil-forest px-4 text-sm font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
       >
-        Poster une annonce
+        {t.listings.emptyCta}
       </Link>
     </div>
   );

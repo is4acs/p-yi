@@ -4,6 +4,8 @@ import { useState, useTransition } from "react";
 import type { VoteType } from "@prisma/client";
 import { voteDealAction, type VoteInput } from "@/app/bons-plans/actions";
 import { cn } from "@/lib/utils";
+import type { Messages } from "@/lib/i18n/dictionaries/fr";
+import { useMessages } from "./I18nProvider";
 
 type Props = {
   dealId: string;
@@ -14,11 +16,11 @@ type Props = {
   className?: string;
 };
 
-function tempQualifier(temperature: number): string {
-  if (temperature >= 100) return "deal brûlant";
-  if (temperature >= 50) return "deal chaud";
-  if (temperature >= 0) return "deal tiède";
-  return "deal froid";
+function tempQualifier(temperature: number, t: Messages): string {
+  if (temperature >= 100) return t.dealDetail.tempBlazing;
+  if (temperature >= 50) return t.dealDetail.tempHot;
+  if (temperature >= 0) return t.dealDetail.tempWarm;
+  return t.dealDetail.tempCold;
 }
 
 /**
@@ -34,16 +36,40 @@ export function VotePill({
   disabledHint,
   className,
 }: Props) {
+  const t = useMessages();
   const [temp, setTemp] = useState(temperature);
   const [vote, setVote] = useState<VoteType | null>(myVote);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
+  // Miroir de la sémantique serveur (HOT = +10°, COLD = −5°, re-clic =
+  // retrait du vote, clic opposé = bascule) pour que l'optimiste ne
+  // saute pas quand la réponse arrive.
+  function optimisticDelta(input: VoteInput, current: VoteType | null): number {
+    const HOT = 10;
+    const COLD = -5;
+    if (input === "HOT") {
+      if (current === "HOT") return -HOT;
+      if (current === "COLD") return HOT - COLD;
+      return HOT;
+    }
+    if (current === "COLD") return -COLD;
+    if (current === "HOT") return COLD - HOT;
+    return COLD;
+  }
+
+  function nextVote(input: VoteInput, current: VoteType | null): VoteType | null {
+    if (input === "HOT") return current === "HOT" ? null : "HOT";
+    return current === "COLD" ? null : "COLD";
+  }
+
   function cast(input: VoteInput) {
     if (!canVote || pending) return;
     setError(null);
-    const delta = input === "HOT" ? 10 : -10;
+    const previousVote = vote;
+    const delta = optimisticDelta(input, previousVote);
     setTemp((t) => t + delta);
+    setVote(nextVote(input, previousVote));
     startTransition(async () => {
       const result = await voteDealAction(dealId, input);
       if (result.ok && typeof result.temperature === "number") {
@@ -51,6 +77,7 @@ export function VotePill({
         setVote(result.myVote ?? null);
       } else {
         setTemp((t) => t - delta);
+        setVote(previousVote);
         if (result.error) setError(result.error);
       }
     });
@@ -66,7 +93,7 @@ export function VotePill({
           onClick={() => cast("COLD")}
           disabled={!canVote || pending}
           title={!canVote ? disabledHint : undefined}
-          aria-label="Voter froid"
+          aria-label={t.dealDetail.voteCold}
           aria-pressed={vote === "COLD"}
           className={cn(
             "flex h-[38px] w-[38px] items-center justify-center rounded-full bg-soleil-sand text-[15px] text-soleil-muted2 transition active:scale-95 dark:bg-soleil-forest dark:text-soleil-muted-d",
@@ -80,14 +107,14 @@ export function VotePill({
           aria-live="polite"
           className="font-display font-extrabold text-soleil-otext dark:text-soleil-otext-d"
         >
-          {label} · {tempQualifier(temp)}
+          {label} · {tempQualifier(temp, t)}
         </span>
         <button
           type="button"
           onClick={() => cast("HOT")}
           disabled={!canVote || pending}
           title={!canVote ? disabledHint : undefined}
-          aria-label="Voter chaud"
+          aria-label={t.dealDetail.voteHot}
           aria-pressed={vote === "HOT"}
           className={cn(
             "flex h-[38px] w-[38px] items-center justify-center rounded-full bg-soleil-orange text-[15px] text-soleil-forest transition active:scale-95",

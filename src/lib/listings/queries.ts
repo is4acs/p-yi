@@ -6,6 +6,7 @@ import {
   ItemCondition,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import type { Locale } from "@/lib/i18n/config";
 
 import type { ListingsFilters, ListingsSort, ListingTypeSlug } from "./url";
 
@@ -182,11 +183,63 @@ export async function fetchListingsPage({
   return { listings, total };
 }
 
+/**
+ * Libellés de type de prix par langue — « par mois » sur un appartement
+ * doit être en portugais pour un lecteur PT, en créole pour un lecteur HT.
+ * Les montants restent formatés en EUR (fr-FR) : c'est la devise locale.
+ */
+const PRICE_TYPE_WORDS: Record<
+  Locale,
+  {
+    free: string;
+    onRequest: string;
+    perMonth: string;
+    perMonthNoAmount: string;
+    perDay: string;
+    perDayNoAmount: string;
+    negotiable: string;
+    negotiableNoAmount: string;
+  }
+> = {
+  fr: {
+    free: "Gratuit",
+    onRequest: "Sur demande",
+    perMonth: "/ mois",
+    perMonthNoAmount: "Prix mensuel",
+    perDay: "/ jour",
+    perDayNoAmount: "Prix par jour",
+    negotiable: "à débattre",
+    negotiableNoAmount: "À débattre",
+  },
+  pt: {
+    free: "Grátis",
+    onRequest: "Sob consulta",
+    perMonth: "/ mês",
+    perMonthNoAmount: "Preço mensal",
+    perDay: "/ dia",
+    perDayNoAmount: "Preço por dia",
+    negotiable: "negociável",
+    negotiableNoAmount: "Negociável",
+  },
+  ht: {
+    free: "Gratis",
+    onRequest: "Sou demann",
+    perMonth: "/ mwa",
+    perMonthNoAmount: "Pri pa mwa",
+    perDay: "/ jou",
+    perDayNoAmount: "Pri pa jou",
+    negotiable: "pou negosye",
+    negotiableNoAmount: "Pou negosye",
+  },
+};
+
 export function formatPriceType(
   priceType: PriceType,
   price: Prisma.Decimal | null,
+  locale: Locale = "fr",
 ): string {
   const amount = price ? Number(price.toString()) : null;
+  const words = PRICE_TYPE_WORDS[locale];
   const fmt = (n: number) =>
     new Intl.NumberFormat("fr-FR", {
       style: "currency",
@@ -196,15 +249,21 @@ export function formatPriceType(
 
   switch (priceType) {
     case "FREE":
-      return "Gratuit";
+      return words.free;
     case "ON_REQUEST":
-      return "Sur demande";
+      return words.onRequest;
     case "PER_MONTH":
-      return amount !== null ? `${fmt(amount)} / mois` : "Prix mensuel";
+      return amount !== null
+        ? `${fmt(amount)} ${words.perMonth}`
+        : words.perMonthNoAmount;
     case "PER_DAY":
-      return amount !== null ? `${fmt(amount)} / jour` : "Prix par jour";
+      return amount !== null
+        ? `${fmt(amount)} ${words.perDay}`
+        : words.perDayNoAmount;
     case "NEGOTIABLE":
-      return amount !== null ? `${fmt(amount)} à débattre` : "À débattre";
+      return amount !== null
+        ? `${fmt(amount)} ${words.negotiable}`
+        : words.negotiableNoAmount;
     case "FIXED":
     default:
       return amount !== null ? fmt(amount) : "—";

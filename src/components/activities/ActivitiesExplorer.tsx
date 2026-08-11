@@ -19,8 +19,9 @@ import {
   type ActivityFilters,
 } from "@/lib/activities/filters";
 import type { ActivityFeatureCollection } from "@/lib/activities/geojson";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useMessages } from "@/components/soleil/I18nProvider";
+import { tFormat } from "@/lib/i18n/tformat";
 
 // MapLibre casse au SSR (accès à window dès l'import) → chargement
 // dynamique client uniquement, avec skeleton pour ne jamais laisser
@@ -42,6 +43,7 @@ const ActivityMap = dynamic(
  * serveur au clic (précieux en 3G).
  */
 export function ActivitiesExplorer() {
+  const t = useMessages();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -164,7 +166,7 @@ export function ActivitiesExplorer() {
   }, [selectedSlug, collection, filteredFeatures, handleSelect]);
 
   const count = visibleFeatures.length;
-  const countLabel = `${count} activité${count > 1 ? "s" : ""}`;
+  const countLabel = tFormat(t.act.count, { n: count });
 
   const filterBar = (
     <ActivitiesFilterBar
@@ -177,14 +179,12 @@ export function ActivitiesExplorer() {
 
   const emptyState =
     activeFilterCount > 0 ? (
-      <div className="flex flex-col items-center gap-3 rounded-md border border-dashed border-border px-4 py-10 text-center">
-        <p className="text-sm text-muted-foreground">
-          Aucune activité ne correspond à ces filtres — essaie d&apos;en
-          retirer un.
+      <div className="flex flex-col items-center gap-3 rounded-[14px] bg-soleil-sand px-4 py-10 text-center dark:bg-soleil-forest">
+        <p className="text-sm text-soleil-body dark:text-soleil-body-d">
+          {t.act.emptyFiltered}
         </p>
-        <Button
-          variant="outline"
-          size="sm"
+        <button
+          type="button"
           onClick={() =>
             applyFilters({
               categories: [],
@@ -196,22 +196,23 @@ export function ActivitiesExplorer() {
               inSeasonNow: false,
             })
           }
+          className="inline-flex min-h-[44px] items-center rounded-full bg-soleil-forest px-4 text-sm font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
         >
-          Tout effacer
-        </Button>
+          {t.act.clearAll}
+        </button>
       </div>
     ) : (
-      <div className="flex flex-col items-center gap-3 rounded-md border border-dashed border-border px-4 py-10 text-center">
-        <p className="text-sm text-muted-foreground">
-          Aucune activité dans cette zone de la carte.
+      <div className="flex flex-col items-center gap-3 rounded-[14px] bg-soleil-sand px-4 py-10 text-center dark:bg-soleil-forest">
+        <p className="text-sm text-soleil-body dark:text-soleil-body-d">
+          {t.act.emptyZone}
         </p>
-        <Button
-          variant="outline"
-          size="sm"
+        <button
+          type="button"
           onClick={() => setSearchOnMove(false)}
+          className="inline-flex min-h-[44px] items-center rounded-full bg-soleil-forest px-4 text-sm font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
         >
-          Afficher toute la Guyane
-        </Button>
+          {t.act.showAllGuyane}
+        </button>
       </div>
     );
 
@@ -222,29 +223,34 @@ export function ActivitiesExplorer() {
           Sur mobile la liste vit dans le bottom sheet.
       ------------------------------------------------------------------ */}
       <section
-        aria-label="Liste des activités"
-        className="hidden h-full w-2/5 flex-col border-r border-border bg-background lg:flex"
+        aria-label={t.act.listAria}
+        className="hidden h-full w-2/5 flex-col border-r border-soleil-line bg-soleil-cream dark:border-soleil-line-d dark:bg-soleil-night lg:flex"
       >
-        <div className="border-b border-border">{filterBar}</div>
-        <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5">
-          <p className="shrink-0 text-sm font-semibold" aria-live="polite">
-            {collection ? countLabel : "Chargement…"}
+        <div className="border-b border-soleil-line dark:border-soleil-line-d">
+          {filterBar}
+        </div>
+        <header className="flex items-center justify-between gap-3 border-b border-soleil-line px-4 py-2.5 dark:border-soleil-line-d">
+          <p className="shrink-0 text-sm font-bold" aria-live="polite">
+            {collection ? countLabel : t.act.loading}
           </p>
-          <label className="flex cursor-pointer select-none items-center gap-2 text-xs text-muted-foreground">
+          <label className="flex cursor-pointer select-none items-center gap-2 text-xs text-soleil-muted2 dark:text-soleil-muted-d">
             <input
               type="checkbox"
               checked={searchOnMove}
               onChange={(event) => setSearchOnMove(event.target.checked)}
-              className="h-4 w-4 accent-peyi-orange-500"
+              className="h-4 w-4 accent-soleil-orange"
             />
-            Rechercher quand je déplace la carte
+            {t.act.searchOnMove}
           </label>
         </header>
 
         <div className="flex-1 space-y-2.5 overflow-y-auto p-3">
           {collection === null && !loadFailed ? (
             Array.from({ length: 6 }, (_, i) => (
-              <div key={i} className="flex gap-3 rounded-md border border-border p-2.5">
+              <div
+                key={i}
+                className="flex gap-3 rounded-[14px] border-[1.5px] border-soleil-border p-2.5 dark:border-soleil-border-d"
+              >
                 <Skeleton className="h-24 w-28 shrink-0 rounded-sm" />
                 <div className="flex-1 space-y-2 py-1">
                   <Skeleton className="h-4 w-3/4" />
@@ -305,15 +311,19 @@ export function ActivitiesExplorer() {
         {(loadFailed || collection === null) && (
           <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center">
             {loadFailed ? (
-              <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-border bg-background/95 py-1.5 pl-4 pr-1.5 text-sm shadow-md backdrop-blur">
-                <span>Impossible de charger les activités.</span>
-                <Button size="sm" variant="peyi" onClick={() => void load()}>
-                  Réessayer
-                </Button>
+              <div className="pointer-events-auto flex items-center gap-2 rounded-full border-[1.5px] border-soleil-border bg-soleil-cream/95 py-1.5 pl-4 pr-1.5 text-sm font-semibold text-soleil-forest shadow-md backdrop-blur dark:border-soleil-border-d dark:bg-soleil-night/95 dark:text-soleil-cream">
+                <span>{t.act.loadFailed}</span>
+                <button
+                  type="button"
+                  onClick={() => void load()}
+                  className="inline-flex min-h-[36px] items-center rounded-full bg-soleil-forest px-3 text-xs font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
+                >
+                  {t.act.retry}
+                </button>
               </div>
             ) : (
-              <div className="rounded-full border border-border bg-background/95 px-4 py-1.5 text-sm text-muted-foreground shadow-md backdrop-blur">
-                Chargement des activités…
+              <div className="rounded-full border-[1.5px] border-soleil-border bg-soleil-cream/95 px-4 py-1.5 text-sm font-semibold text-soleil-muted2 shadow-md backdrop-blur dark:border-soleil-border-d dark:bg-soleil-night/95 dark:text-soleil-muted-d">
+                {t.act.loadingActivities}
               </div>
             )}
           </div>

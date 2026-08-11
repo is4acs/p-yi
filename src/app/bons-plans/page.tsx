@@ -12,6 +12,7 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { DealCard } from "@/components/deals/DealCard";
 import { DealsPagination } from "@/components/deals/DealsPagination";
 import { EmptyDeals } from "@/components/deals/EmptyDeals";
+import { Icon } from "@/components/ui/Icon";
 import { CountLine } from "@/components/soleil/CountLine";
 import { FilterSelect } from "@/components/soleil/FilterSelect";
 import { Ph } from "@/components/soleil/Ph";
@@ -20,11 +21,10 @@ import { Sun } from "@/components/soleil/Sun";
 import { TabsPeyi } from "@/components/soleil/TabsPeyi";
 import { formatPrice, formatRelativeTime } from "@/lib/format";
 import Link from "next/link";
+import { getLocale, getMessages, tFormat } from "@/lib/i18n";
 import { OnboardingNudge } from "@/components/onboarding/OnboardingNudge";
-import { ExplorerAlso } from "@/components/seo/SeoBlocks";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { getDealsFacetCanonicalPath } from "@/lib/seo/local-pages";
-import { buildDealsGlobalExploreLinks } from "@/lib/seo/pillar-content";
 
 export const dynamic = "force-dynamic";
 const METADATA_TIMEOUT_MS = 2_000;
@@ -154,6 +154,8 @@ export default async function BonsPlansPage(
   }
 ) {
   const searchParams = await props.searchParams;
+  const t = await getMessages();
+  const locale = await getLocale();
   const sort = parseSort(searchParams.sort);
   const page = parsePage(searchParams.page);
   const category = searchParams.category?.trim() || null;
@@ -309,26 +311,45 @@ export default async function BonsPlansPage(
   const dealOfTheDay = !hasFilters && page === 1 ? deals[0] ?? null : null;
 
   return (
-    <main className="bg-soleil-cream text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
-      <h1 className="sr-only">Bons plans de Guyane</h1>
+    <main className="min-h-screen bg-soleil-cream text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
+      <h1 className="sr-only">{t.deals.title}</h1>
       <div className="mx-auto w-full max-w-md px-5 pb-12 lg:max-w-6xl lg:px-8">
         {/* Header wordmark + pilule ville (mobile-first, maquette 4a). */}
-        <div className="flex items-end justify-between pt-4">
-          <Link href="/" className="flex items-end gap-2" aria-label="Accueil Péyi">
+        <div className="flex items-end justify-between pt-4 lg:hidden">
+          <Link href="/" className="flex items-end gap-2" aria-label={t.nav.home}>
             <Sun w={20} />
             <span className="font-display text-[23px] font-extrabold leading-[0.9] tracking-[-0.5px]">
               péyi
             </span>
           </Link>
-          <span className="rounded-full border-[1.5px] border-soleil-forest px-3 py-1.5 text-xs font-bold dark:border-soleil-cream">
-            {cityName ?? "Guyane"}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="rounded-full border-[1.5px] border-soleil-forest px-3 py-1.5 text-xs font-bold dark:border-soleil-cream">
+              {cityName ?? "Guyane"}
+            </span>
+            {currentUser ? (
+              <Link
+                href="/profil"
+                aria-label={t.home.myProfile}
+                className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-soleil-forest text-[11.5px] font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
+              >
+                {currentUser.username.trim().slice(0, 2).toUpperCase()}
+              </Link>
+            ) : (
+              <Link
+                href="/connexion"
+                aria-label={t.home.myProfile}
+                className="flex h-[34px] w-[34px] items-center justify-center rounded-full border-[1.5px] border-soleil-forest dark:border-soleil-cream"
+              >
+                <Icon name="user" size={15} />
+              </Link>
+            )}
+          </div>
         </div>
 
         <TabsPeyi active="deals" className="pt-3" />
 
         <SearchField
-          placeholder="Chercher un bon plan…"
+          placeholder={t.deals.searchPlaceholder}
           action="/bons-plans"
           defaultValue={q ?? ""}
           hidden={{
@@ -347,28 +368,28 @@ export default async function BonsPlansPage(
             <FilterSelect
               name="sort"
               options={[
-                { value: "hot", label: "Plus chauds" },
-                { value: "new", label: "Récents" },
-                { value: "top-week", label: "Top semaine" },
+                { value: "hot", label: t.deals.sortHot },
+                { value: "new", label: t.deals.sortNew },
+                { value: "top-week", label: t.deals.sortTopWeek },
               ]}
               defaultValue={sort}
               alwaysActive
             />
             <FilterSelect
               name="category"
-              placeholder="Catégorie"
+              placeholder={t.common.category}
               options={categories.map((c) => ({ value: c.slug, label: c.name }))}
               defaultValue={category ?? ""}
             />
             <FilterSelect
               name="city"
-              placeholder="Ville"
+              placeholder={t.common.city}
               options={cities.map((c) => ({ value: c.slug, label: c.name }))}
               defaultValue={city ?? ""}
             />
           </div>
-          <button type="submit" className="sr-only">
-            Filtrer
+          <button type="submit" className="sr-only focus:not-sr-only focus:mt-2 focus:inline-flex focus:min-h-[36px] focus:items-center focus:rounded-full focus:border-[1.5px] focus:border-soleil-forest focus:px-3 focus:text-xs focus:font-bold dark:focus:border-soleil-cream">
+            {t.common.filter}
           </button>
         </form>
 
@@ -381,15 +402,14 @@ export default async function BonsPlansPage(
             role="status"
             className="mt-3 rounded-[14px] bg-soleil-sand px-3 py-2 text-xs text-soleil-body dark:bg-soleil-forest dark:text-soleil-body-d"
           >
-            Certaines données sont temporairement indisponibles. Tu peux
-            recharger la page dans quelques secondes.
+            {t.common.loadIssue}
           </div>
         )}
 
         <div className="lg:grid lg:grid-cols-12 lg:items-start lg:gap-8">
           <div className="lg:col-span-7">
             <CountLine className="pb-0.5 pt-3.5">
-              {total} deal{total > 1 ? "s" : ""} · {cityName ?? "Guyane"}
+              {tFormat(t.deals.count, { n: total, place: cityName ?? "Guyane" })}
             </CountLine>
 
             {deals.length === 0 ? (
@@ -430,7 +450,7 @@ export default async function BonsPlansPage(
           {dealOfTheDay && (
             <aside className="hidden lg:col-span-5 lg:block">
               <div className="sticky top-24 pt-3.5">
-                <CountLine className="pb-2.5">Le deal du jour</CountLine>
+                <CountLine className="pb-2.5">{t.home.dealOfDay}</CountLine>
                 <div className="rounded-[20px] bg-soleil-forest p-[18px] text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest">
                   <div className="flex items-center justify-between">
                     <span className="rounded-full bg-soleil-orange px-3 py-1 font-display text-sm font-extrabold text-soleil-forest">
@@ -440,7 +460,7 @@ export default async function BonsPlansPage(
                     <span className="text-xs font-semibold text-soleil-muted-d dark:text-soleil-muted">
                       {dealOfTheDay.store?.name ??
                         dealOfTheDay.merchant?.name ??
-                        "Web"}
+                        t.dealDetail.web}
                     </span>
                   </div>
                   <div className="mt-3 font-display text-2xl font-extrabold leading-[1.1]">
@@ -448,17 +468,17 @@ export default async function BonsPlansPage(
                   </div>
                   <div className="mt-1.5 text-xs text-soleil-muted-d dark:text-soleil-muted">
                     {dealOfTheDay.isFree
-                      ? "Gratuit"
+                      ? t.common.free
                       : formatPrice(dealOfTheDay.price.toString())}
                     {" · "}
-                    {formatRelativeTime(dealOfTheDay.publishedAt)}
+                    {formatRelativeTime(dealOfTheDay.publishedAt, locale)}
                   </div>
                   <Ph label="visuel" className="mt-3 h-[84px] rounded-xl" />
                   <Link
                     href={`/bons-plans/${dealOfTheDay.slug}`}
                     className="mt-3 block rounded-full bg-soleil-cream py-3 text-center text-[13px] font-extrabold text-soleil-forest dark:bg-soleil-forest dark:text-soleil-cream"
                   >
-                    Voir le deal →
+                    {t.home.seeDeal}
                   </Link>
                 </div>
               </div>
@@ -466,11 +486,6 @@ export default async function BonsPlansPage(
           )}
         </div>
 
-        {!hasFilters && (
-          <div className="mt-6">
-            <ExplorerAlso links={buildDealsGlobalExploreLinks()} />
-          </div>
-        )}
       </div>
     </main>
   );

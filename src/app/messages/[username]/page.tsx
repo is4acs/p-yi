@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Package } from "lucide-react";
 
 import { requireUser } from "@/lib/auth/current-user";
 import { formatRelativeTime } from "@/lib/format";
@@ -16,6 +16,12 @@ import {
   type ThreadOther,
   type ThreadListing,
 } from "@/lib/messages/queries";
+import { getLocale, getMessages, tFormat, type Messages } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n/config";
+import {
+  translateUserTexts,
+  type TranslatedText,
+} from "@/lib/i18n/translate";
 import { UserAvatar } from "@/components/layout/UserAvatar";
 import { ReplySendButton } from "@/components/messages/ReplySendButton";
 
@@ -40,6 +46,8 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 export default async function ThreadPage(props: Props) {
   const searchParams = await props.searchParams;
   const params = await props.params;
+  const t = await getMessages();
+  const locale = await getLocale();
   const user = await requireUser(
     `/messages/${params.username}${searchParams.listing ? `?listing=${searchParams.listing}` : ""}`,
   );
@@ -59,52 +67,73 @@ export default async function ThreadPage(props: Props) {
     listingId: thread.listing?.id ?? null,
   });
 
+  // Traduction automatique des messages REÇUS vers la langue de
+  // l'interface — c'est ici qu'un vendeur haïtien et un acheteur
+  // brésilien se parlent. Passthrough sans fournisseur configuré.
+  const received = thread.messages.filter((m) => m.senderId !== user.id);
+  const receivedMt = await translateUserTexts(
+    received.map((m) => m.content),
+    locale,
+  );
+  const mtById = new Map<string, TranslatedText>();
+  received.forEach((m, i) => mtById.set(m.id, receivedMt[i]));
+
   return (
-    <main className="mx-auto flex min-h-[calc(100dvh-3.5rem)] max-w-md flex-col px-4 pb-4 pt-6 animate-in fade-in duration-300 sm:max-w-2xl sm:pt-10">
-      <Link
-        href="/messages"
-        className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" aria-hidden />
-        Messagerie
-      </Link>
-
-      <ThreadHeader other={thread.other} />
-
-      {thread.listing && <ListingContextCard listing={thread.listing} />}
-
-      {searchParams.error && (
-        <div
-          role="alert"
-          className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+    <main className="bg-soleil-cream text-soleil-forest dark:bg-soleil-night dark:text-soleil-cream">
+      <div className="mx-auto flex min-h-[calc(100dvh-5rem)] max-w-md flex-col px-4 pb-4 pt-4 sm:max-w-2xl lg:min-h-[calc(100dvh-4rem)] lg:pt-8">
+        <Link
+          href="/messages"
+          className="inline-flex min-h-[44px] items-center gap-2 self-start text-sm font-bold text-soleil-muted2 transition hover:text-soleil-forest dark:text-soleil-muted-d dark:hover:text-soleil-cream"
         >
-          {searchParams.error}
-        </div>
-      )}
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          {t.messagesPage.backToInbox}
+        </Link>
 
-      <section
-        aria-label={`Conversation avec @${thread.other.username}`}
-        className="mt-5 flex flex-1 flex-col gap-2"
-      >
-        {thread.messages.length === 0 ? (
-          <div className="my-8 rounded-lg border border-dashed border-border bg-muted/40 p-4 text-center text-sm text-muted-foreground">
-            Pas encore de message. Dis bonjour !
-          </div>
-        ) : (
-          thread.messages.map((m) => (
-            <MessageBubble
-              key={m.id}
-              message={m}
-              isFromMe={m.senderId === user.id}
-            />
-          ))
+        <ThreadHeader other={thread.other} />
+
+        {thread.listing && (
+          <ListingContextCard listing={thread.listing} t={t} locale={locale} />
         )}
-      </section>
 
-      <ReplyForm
-        recipientUsername={thread.other.username}
-        listingSlug={thread.listing?.slug ?? null}
-      />
+        {searchParams.error && (
+          <div
+            role="alert"
+            className="mt-4 rounded-[14px] border-[1.5px] border-destructive/40 bg-destructive/10 p-3 text-sm font-semibold text-destructive"
+          >
+            {searchParams.error}
+          </div>
+        )}
+
+        <section
+          aria-label={tFormat(t.messagesPage.conversationWith, {
+            username: thread.other.username,
+          })}
+          className="mt-5 flex flex-1 flex-col gap-2"
+        >
+          {thread.messages.length === 0 ? (
+            <div className="my-8 rounded-[14px] bg-soleil-sand p-4 text-center text-sm font-semibold text-soleil-body dark:bg-soleil-forest dark:text-soleil-body-d">
+              {t.messagesPage.noMessagesYet}
+            </div>
+          ) : (
+            thread.messages.map((m) => (
+              <MessageBubble
+                key={m.id}
+                message={m}
+                isFromMe={m.senderId === user.id}
+                mt={mtById.get(m.id)}
+                t={t}
+                locale={locale}
+              />
+            ))
+          )}
+        </section>
+
+        <ReplyForm
+          recipientUsername={thread.other.username}
+          listingSlug={thread.listing?.slug ?? null}
+          t={t}
+        />
+      </div>
     </main>
   );
 }
@@ -112,17 +141,16 @@ export default async function ThreadPage(props: Props) {
 function ThreadHeader({ other }: { other: ThreadOther }) {
   const level = LEVEL_META[other.level] ?? LEVEL_META.BEGINNER;
   return (
-    <div className="mt-3 flex items-center gap-3 rounded-lg border border-border bg-card p-3">
+    <div className="mt-3 flex items-center gap-3 rounded-[14px] bg-soleil-sand p-3 dark:bg-soleil-forest">
       <UserAvatar
         username={other.username}
         avatarUrl={other.avatarUrl}
         size="md"
       />
       <div className="min-w-0 flex-1">
-        <p className="truncate font-semibold">@{other.username}</p>
-        <p className="truncate text-xs text-muted-foreground">
-          <span aria-hidden>{level.emoji}</span> {level.label} ·{" "}
-          {other.karma.toLocaleString("fr-FR")} karma
+        <p className="truncate font-extrabold">@{other.username}</p>
+        <p className="truncate text-xs text-soleil-muted2 dark:text-soleil-muted-d">
+          {level.label} · {other.karma.toLocaleString("fr-FR")} karma
           {other.city?.name ? ` · ${other.city.name}` : ""}
         </p>
       </div>
@@ -130,15 +158,23 @@ function ThreadHeader({ other }: { other: ThreadOther }) {
   );
 }
 
-function ListingContextCard({ listing }: { listing: ThreadListing }) {
-  const price = formatPriceType(listing.priceType, listing.price);
+function ListingContextCard({
+  listing,
+  t,
+  locale,
+}: {
+  listing: ThreadListing;
+  t: Messages;
+  locale: Locale;
+}) {
+  const price = formatPriceType(listing.priceType, listing.price, locale);
   return (
     <Link
       href={`/annonces/${listing.slug}`}
-      className="mt-2 flex items-center gap-3 rounded-lg border border-peyi-orange-200 bg-peyi-orange-50/40 p-2.5 text-sm transition hover:border-peyi-orange-400"
+      className="mt-2 flex items-center gap-3 rounded-[14px] border-[1.5px] border-soleil-border bg-soleil-input p-2.5 text-sm transition hover:border-soleil-forest dark:border-soleil-border-d dark:bg-soleil-forest dark:hover:border-soleil-cream"
     >
       {isRenderableImageUrl(listing.coverImageUrl) ? (
-        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md">
+        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[10px]">
           <Image
             src={listing.coverImageUrl}
             alt=""
@@ -150,20 +186,20 @@ function ListingContextCard({ listing }: { listing: ThreadListing }) {
         </div>
       ) : (
         <div
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-peyi-orange-100 text-lg"
+          className="soleil-ph flex h-12 w-12 shrink-0 items-center justify-center rounded-[10px] text-soleil-muted dark:text-soleil-muted-d"
           aria-hidden
         >
-          {listing.category.icon ?? "📦"}
+          <Package className="h-5 w-5" />
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-peyi-orange-700">
-          À propos de
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.5px] text-soleil-otext dark:text-soleil-otext-d">
+          {t.messagesPage.threadAbout}
         </p>
-        <p className="truncate font-semibold text-foreground">
-          {listing.title}
+        <p className="truncate font-bold">{listing.title}</p>
+        <p className="text-xs text-soleil-muted2 dark:text-soleil-muted-d">
+          {price}
         </p>
-        <p className="text-xs text-muted-foreground">{price}</p>
       </div>
     </Link>
   );
@@ -172,32 +208,42 @@ function ListingContextCard({ listing }: { listing: ThreadListing }) {
 function MessageBubble({
   message,
   isFromMe,
+  mt,
+  t,
+  locale,
 }: {
   message: ThreadMessage;
   isFromMe: boolean;
+  mt?: TranslatedText;
+  t: Messages;
+  locale: Locale;
 }) {
+  const content = mt?.translated ? mt.text : message.content;
   return (
     <div
-      className={
-        "flex w-full " + (isFromMe ? "justify-end" : "justify-start")
-      }
+      className={"flex w-full " + (isFromMe ? "justify-end" : "justify-start")}
     >
       <div
         className={
-          "max-w-[80%] rounded-2xl px-3 py-2 text-sm " +
+          "max-w-[80%] rounded-2xl px-3.5 py-2 text-sm " +
           (isFromMe
-            ? "rounded-br-sm bg-peyi-orange-500 text-white"
-            : "rounded-bl-sm bg-muted text-foreground")
+            ? "rounded-br-sm bg-soleil-forest text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
+            : "rounded-bl-sm bg-soleil-sand text-soleil-forest dark:bg-soleil-forest dark:text-soleil-cream")
         }
       >
-        <p className="whitespace-pre-wrap break-words">{message.content}</p>
-        <p
-          className={
-            "mt-1 text-[10px] " +
-            (isFromMe ? "text-white/75" : "text-muted-foreground")
-          }
-        >
-          {formatRelativeTime(message.createdAt)}
+        <p className="whitespace-pre-wrap break-words font-medium">{content}</p>
+        {mt?.translated && (
+          <details className="mt-1 text-[10.5px] opacity-80">
+            <summary className="cursor-pointer font-semibold">
+              {t.mt.translated} · {t.mt.seeOriginal}
+            </summary>
+            <p className="mt-1 whitespace-pre-wrap break-words">
+              {message.content}
+            </p>
+          </details>
+        )}
+        <p className="mt-1 text-[10px] opacity-70">
+          {formatRelativeTime(message.createdAt, locale)}
         </p>
       </div>
     </div>
@@ -207,21 +253,23 @@ function MessageBubble({
 function ReplyForm({
   recipientUsername,
   listingSlug,
+  t,
 }: {
   recipientUsername: string;
   listingSlug: string | null;
+  t: Messages;
 }) {
   return (
     <form
       action={sendMessageAction}
-      className="sticky bottom-0 mt-4 flex items-end gap-2 border-t border-border bg-background/95 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+      className="sticky bottom-20 z-30 mt-4 flex items-end gap-2 border-t border-soleil-line bg-soleil-cream/95 py-3 backdrop-blur supports-[backdrop-filter]:bg-soleil-cream/80 dark:border-soleil-line-d dark:bg-soleil-night/95 dark:supports-[backdrop-filter]:bg-soleil-night/80 lg:bottom-0"
     >
       <input type="hidden" name="recipientUsername" value={recipientUsername} />
       {listingSlug && (
         <input type="hidden" name="listingSlug" value={listingSlug} />
       )}
       <label htmlFor="reply-content" className="sr-only">
-        Ton message
+        {t.messagesPage.yourMessage}
       </label>
       <textarea
         id="reply-content"
@@ -229,8 +277,10 @@ function ReplyForm({
         required
         maxLength={2000}
         rows={1}
-        placeholder={`Répondre à @${recipientUsername}…`}
-        className="min-h-[40px] max-h-32 w-full resize-y rounded-full border border-border bg-card px-4 py-2 text-sm placeholder:text-muted-foreground focus:border-peyi-orange-400 focus:outline-none focus:ring-2 focus:ring-peyi-orange-200"
+        placeholder={tFormat(t.messagesPage.replyTo, {
+          username: recipientUsername,
+        })}
+        className="min-h-[44px] max-h-32 w-full resize-y rounded-[22px] border-[1.5px] border-soleil-border bg-soleil-input px-4 py-2.5 text-sm font-semibold text-soleil-forest placeholder:font-medium placeholder:text-soleil-muted focus:border-soleil-forest focus:outline-none dark:border-soleil-border-d dark:bg-soleil-forest dark:text-soleil-cream dark:placeholder:text-soleil-muted-d dark:focus:border-soleil-cream"
       />
       <ReplySendButton />
     </form>

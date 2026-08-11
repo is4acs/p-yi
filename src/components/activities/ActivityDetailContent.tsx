@@ -17,15 +17,11 @@ import {
 
 import { ACTIVITY_BLUR_DATA_URL } from "@/components/activities/ActivityCard";
 import {
-  ACCESS_MODES,
   ACTIVITY_CATEGORIES,
-  DIFFICULTIES,
   formatActivityPrice,
   formatDuration,
-  SEASONS,
 } from "@/lib/activities/labels";
 import {
-  DAY_LABELS,
   DAY_KEYS,
   isOpenAt,
   parseOpeningHours,
@@ -34,9 +30,10 @@ import {
 import { isPracticableNow } from "@/lib/activities/seasons";
 import type { ActivityDetailPayload } from "@/lib/activities/types";
 import { isRenderableImageUrl } from "@/lib/images";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useLocale, useMessages } from "@/components/soleil/I18nProvider";
+import { tFormat } from "@/lib/i18n/tformat";
 
 /**
  * Contenu de la fiche activité, partagé entre le panneau desktop (overlay
@@ -69,14 +66,16 @@ export function ActivityDetailContent({
   /** false sur /activites/[slug] : la fiche complète, c'est déjà ici. */
   showFullPageLink?: boolean;
 }) {
+  const t = useMessages();
+  const locale = useLocale();
   const category = ACTIVITY_CATEGORIES[detail.category];
   const practicable = isPracticableNow(detail.seasons);
   const allYear =
     detail.seasons.length === 0 || detail.seasons.includes("ALL_YEAR");
   const seasonLabels = detail.seasons
     .filter((season) => season !== "ALL_YEAR")
-    .map((season) => SEASONS[season].label);
-  const duration = formatDuration(detail.durationMinutes);
+    .map((season) => t.act.seasons[season]);
+  const duration = formatDuration(detail.durationMinutes, locale);
   const hours = parseOpeningHours(detail.openingHours);
   const openNow = hours ? isOpenAt(hours) : null;
   const ranges = hours ? todayRanges(hours) : [];
@@ -114,8 +113,8 @@ export function ActivityDetailContent({
             ))}
           </div>
           {images.length > 1 && (
-            <span className="absolute bottom-2 right-2 rounded-full bg-ink-900/70 px-2 py-0.5 font-mono text-[11px] font-semibold text-white">
-              {images.length} photos
+            <span className="absolute bottom-2 right-2 rounded-full bg-ink-900/70 px-2 py-0.5 text-[11px] font-semibold text-white">
+              {tFormat(t.act.photosCount, { n: images.length })}
             </span>
           )}
           {/* Crédit photo : condition des licences Creative Commons, pas
@@ -129,19 +128,23 @@ export function ActivityDetailContent({
       ) : (
         <div
           aria-hidden
-          className="-mx-4 -mt-4 flex aspect-[4/3] items-center justify-center text-5xl sm:mx-0 sm:mt-0 sm:rounded-md"
+          className="-mx-4 -mt-4 flex aspect-[4/3] items-center justify-center sm:mx-0 sm:mt-0 sm:rounded-[14px]"
           style={{ backgroundColor: `${category.color}22` }}
         >
-          {category.emoji}
+          <MapPin
+            className="h-10 w-10"
+            style={{ color: category.color }}
+            aria-hidden
+          />
         </div>
       )}
 
       {/* 2. Identité. */}
       <div>
-        <h2 className="font-display text-title-sm font-bold leading-tight">
+        <h2 className="font-display text-xl font-extrabold leading-tight">
           {detail.name}
         </h2>
-        <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+        <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-soleil-muted2 dark:text-soleil-muted-d">
           <MapPin className="h-3.5 w-3.5" aria-hidden />
           {detail.city.name}
           <span aria-hidden>·</span>
@@ -151,41 +154,39 @@ export function ActivityDetailContent({
               className="inline-block h-2 w-2 rounded-full"
               style={{ backgroundColor: category.color }}
             />
-            {category.label}
+            {t.act.categories[detail.category]}
           </span>
         </p>
-        <p className="mt-2 text-sm text-foreground">{detail.tagline}</p>
+        <p className="mt-2 text-sm text-soleil-body dark:text-soleil-body-d">
+          {detail.tagline}
+        </p>
       </div>
 
       {/* 3. Bandeau ACCÈS — le différenciant n° 1. */}
       <section
-        aria-label="Mode d'accès"
-        className="rounded-md border border-ink-100 bg-ink-50/60 p-3"
+        aria-label={t.act.accessMode}
+        className="rounded-[14px] bg-soleil-sand p-3 dark:bg-soleil-forest"
       >
         <div className="flex flex-wrap items-center gap-2">
-          {detail.accessModes.map((mode) => {
-            const meta = ACCESS_MODES[mode];
-            return (
-              <span
-                key={mode}
-                className="inline-flex items-center gap-1.5 rounded-sm border border-ink-100 bg-white px-2 py-1 text-xs font-semibold text-ink-700"
-                title={meta.description}
-              >
-                <span aria-hidden className="text-sm">{meta.emoji}</span>
-                {meta.label}
-              </span>
-            );
-          })}
+          {detail.accessModes.map((mode) => (
+            <span
+              key={mode}
+              className="inline-flex items-center rounded-[7px] border-[1.5px] border-soleil-border bg-soleil-input px-2 py-1 text-xs font-bold dark:border-soleil-border-d dark:bg-soleil-night"
+              title={t.act.accessDesc[mode]}
+            >
+              {t.act.access[mode]}
+            </span>
+          ))}
           {detail.startPoint && (
-            <span className="text-xs text-muted-foreground">
-              Départ : {detail.startPoint}
+            <span className="text-xs text-soleil-muted2 dark:text-soleil-muted-d">
+              {tFormat(t.act.start, { name: detail.startPoint })}
             </span>
           )}
         </div>
         {detail.accessNote && (
-          <p className="mt-2 flex items-start gap-1.5 text-xs font-medium text-ink-700">
+          <p className="mt-2 flex items-start gap-1.5 text-xs font-medium text-soleil-body dark:text-soleil-body-d">
             <AlertTriangle
-              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning"
+              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-soleil-otext dark:text-soleil-otext-d"
               aria-hidden
             />
             {detail.accessNote}
@@ -195,25 +196,23 @@ export function ActivityDetailContent({
 
       {/* 4. Bandeau SAISON — calculé sur la date du jour. */}
       <section
-        aria-label="Saisonnalité"
+        aria-label={t.act.seasonAria}
         className={cn(
-          "flex items-start gap-2 rounded-md border p-3 text-sm",
+          "flex items-start gap-2 rounded-[14px] p-3 text-sm",
           practicable
-            ? "border-peyi-green-200 bg-peyi-green-50 text-peyi-green-800"
-            : "border-warning/40 bg-warning/10 text-ink-700",
+            ? "bg-soleil-valid text-soleil-forest dark:bg-soleil-valid-d"
+            : "bg-soleil-promo text-soleil-otext dark:bg-soleil-promo-d dark:text-soleil-otext-d",
         )}
       >
         <CalendarDays className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
         <div>
           <p className="font-semibold">
-            {practicable
-              ? "Praticable en ce moment"
-              : "Déconseillé en ce moment"}
+            {practicable ? t.act.practicableNow : t.act.notAdvisedNow}
           </p>
           <p className="text-xs">
             {allYear
-              ? "Accessible toute l'année."
-              : `Meilleure période : ${seasonLabels.join(", ")}.`}
+              ? t.act.allYearNote
+              : tFormat(t.act.bestPeriod, { seasons: seasonLabels.join(", ") })}
           </p>
         </div>
       </section>
@@ -222,28 +221,36 @@ export function ActivityDetailContent({
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
         {duration && (
           <span className="inline-flex items-center gap-1.5">
-            <Clock className="h-4 w-4 text-muted-foreground" aria-hidden />
+            <Clock
+              className="h-4 w-4 text-soleil-muted dark:text-soleil-muted-d"
+              aria-hidden
+            />
             {duration}
           </span>
         )}
         {detail.difficulty && (
           <span className="inline-flex items-center gap-1.5">
-            <Gauge className="h-4 w-4 text-muted-foreground" aria-hidden />
-            {DIFFICULTIES[detail.difficulty].label}
+            <Gauge
+              className="h-4 w-4 text-soleil-muted dark:text-soleil-muted-d"
+              aria-hidden
+            />
+            {t.act.difficulties[detail.difficulty]}
           </span>
         )}
         {detail.isFree ? (
-          <Badge variant="new">Gratuit</Badge>
+          <span className="rounded-[7px] bg-soleil-valid px-2 py-0.5 text-xs font-extrabold text-soleil-forest dark:bg-soleil-valid-d">
+            {t.common.free}
+          </span>
         ) : (
-          <span className="inline-flex items-center gap-1.5 font-mono font-semibold text-peyi-orange-700">
+          <span className="inline-flex items-center gap-1.5 font-extrabold text-soleil-otext dark:text-soleil-otext-d">
             <Ticket className="h-4 w-4" aria-hidden />
-            {formatActivityPrice(detail)}
+            {formatActivityPrice(detail, locale)}
           </span>
         )}
       </div>
 
       {/* 6. Description (markdown simple : paragraphes). */}
-      <div className="space-y-2.5 text-sm leading-relaxed text-foreground">
+      <div className="space-y-2.5 text-sm leading-relaxed text-soleil-body dark:text-soleil-body-d">
         {detail.description
           .split(/\n{2,}/)
           .filter(Boolean)
@@ -256,52 +263,48 @@ export function ActivityDetailContent({
 
       {/* 7. Horaires du jour + statut temps réel. */}
       {hours && (
-        <section aria-label="Horaires" className="rounded-md border border-border p-3">
+        <section
+          aria-label={t.act.hoursAria}
+          className="rounded-[14px] border-[1.5px] border-soleil-border p-3 dark:border-soleil-border-d"
+        >
           <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold">Aujourd&apos;hui</p>
+            <p className="text-sm font-bold">{t.act.today}</p>
             <span
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-mono text-[11px] font-semibold",
+                "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-extrabold",
                 openNow
-                  ? "bg-peyi-green-50 text-peyi-green-700"
+                  ? "bg-soleil-valid text-soleil-forest dark:bg-soleil-valid-d"
                   : "bg-destructive/10 text-destructive",
               )}
             >
-              <span
-                aria-hidden
-                className={cn(
-                  "inline-block h-1.5 w-1.5 rounded-full",
-                  openNow ? "bg-peyi-green-500" : "bg-destructive",
-                )}
-              />
-              {openNow ? "Ouvert" : "Fermé"}
+              {openNow ? t.act.open : t.act.closed}
             </span>
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-soleil-muted2 dark:text-soleil-muted-d">
             {ranges.length > 0
               ? ranges.map(([start, end]) => `${start} – ${end}`).join(" · ")
-              : "Fermé aujourd'hui"}
+              : t.act.closedToday}
           </p>
           <details className="mt-2">
-            <summary className="cursor-pointer text-xs font-medium text-peyi-orange-700">
-              Tous les horaires
+            <summary className="cursor-pointer text-xs font-bold text-soleil-otext dark:text-soleil-otext-d">
+              {t.act.allHours}
             </summary>
-            <ul className="mt-1.5 space-y-0.5 text-xs text-muted-foreground">
+            <ul className="mt-1.5 space-y-0.5 text-xs text-soleil-muted2 dark:text-soleil-muted-d">
               {DAY_KEYS.map((day) => (
                 <li key={day} className="flex justify-between gap-4">
-                  <span>{DAY_LABELS[day]}</span>
+                  <span>{t.act.days[day]}</span>
                   <span>
                     {(hours[day] ?? []).length > 0
                       ? (hours[day] ?? [])
                           .map(([start, end]) => `${start} – ${end}`)
                           .join(" · ")
-                      : "Fermé"}
+                      : t.act.closed}
                   </span>
                 </li>
               ))}
             </ul>
             {hours.exceptions && hours.exceptions.length > 0 && (
-              <p className="mt-1.5 text-xs italic text-muted-foreground">
+              <p className="mt-1.5 text-xs italic text-soleil-muted dark:text-soleil-muted-d">
                 {hours.exceptions.join(" — ")}
               </p>
             )}
@@ -315,7 +318,7 @@ export function ActivityDetailContent({
           <Button asChild variant="peyi" size="sm">
             <a href={bookingHref} target="_blank" rel="noopener noreferrer">
               <Ticket aria-hidden />
-              {detail.bookingUrl ? "Réserver" : "Réserver / contacter"}
+              {detail.bookingUrl ? t.act.book : t.act.bookContact}
             </a>
           </Button>
         )}
@@ -336,7 +339,7 @@ export function ActivityDetailContent({
             target="_blank"
             rel="noopener noreferrer"
           >
-            <Navigation aria-hidden /> Itinéraire
+            <Navigation aria-hidden /> {t.act.directions}
           </a>
         </Button>
         {detail.phone && (
@@ -351,16 +354,15 @@ export function ActivityDetailContent({
         {detail.website && bookingHref !== detail.website && (
           <Button asChild variant="ghost" size="sm">
             <a href={detail.website} target="_blank" rel="noopener noreferrer">
-              <ExternalLink aria-hidden /> Site web
+              <ExternalLink aria-hidden /> {t.act.website}
             </a>
           </Button>
         )}
       </div>
 
       {detail.bookingRequired && !detail.bookingUrl && (
-        <p className="text-xs text-muted-foreground">
-          Réservation obligatoire — passe par l&apos;opérateur avant d&apos;y
-          aller.
+        <p className="text-xs text-soleil-muted2 dark:text-soleil-muted-d">
+          {t.act.bookingRequired}
         </p>
       )}
 
@@ -368,9 +370,9 @@ export function ActivityDetailContent({
       {showFullPageLink && (
         <Link
           href={`/activites/${detail.slug}`}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-peyi-orange-700 hover:text-peyi-orange-800"
+          className="inline-flex items-center gap-1.5 text-sm font-bold text-soleil-otext hover:underline dark:text-soleil-otext-d"
         >
-          Voir la fiche complète
+          {t.act.fullPage}
           <ArrowRight className="h-4 w-4" aria-hidden />
         </Link>
       )}

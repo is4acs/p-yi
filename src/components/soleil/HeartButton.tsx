@@ -5,6 +5,7 @@ import { toggleFavoriteAction } from "@/app/bons-plans/favorites/actions";
 import { toggleListingFavoriteAction } from "@/app/annonces/favorites/actions";
 import { Icon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
+import { useMessages } from "./I18nProvider";
 
 type Props = {
   kind: "deal" | "listing";
@@ -28,6 +29,7 @@ export function HeartButton({
   disabledHint,
   className,
 }: Props) {
+  const t = useMessages();
   const [favorited, setFavorited] = useState(initialFavorited);
   const [pending, startTransition] = useTransition();
 
@@ -53,7 +55,7 @@ export function HeartButton({
       onClick={onClick}
       disabled={!canFavorite || pending}
       aria-pressed={favorited}
-      aria-label={favorited ? "Retirer des favoris" : "Ajouter aux favoris"}
+      aria-label={favorited ? t.dealDetail.favRemove : t.dealDetail.favAdd}
       title={!canFavorite ? disabledHint : undefined}
       className={cn(
         "flex h-9 w-9 flex-none items-center justify-center rounded-full border-[1.5px] border-soleil-border text-soleil-forest transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 dark:border-soleil-border-d dark:text-soleil-cream",

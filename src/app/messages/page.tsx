@@ -6,6 +6,9 @@ import { formatRelativeTime } from "@/lib/format";
 import { fetchInbox, type InboxConversation } from "@/lib/messages/queries";
 import { Icon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
+import { getLocale, getMessages, type Messages } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n/config";
+import { translateUserTexts } from "@/lib/i18n/translate";
 
 export const dynamic = "force-dynamic";
 
@@ -28,17 +31,28 @@ function isTeamAccount(username: string): boolean {
 }
 
 export default async function MessagesInboxPage() {
+  const t = await getMessages();
+  const locale = await getLocale();
   const user = await requireUser("/messages");
   const conversations = await fetchInbox(user.id);
 
+  // Aperçus : les derniers messages reçus sont traduits vers la langue de
+  // l'interface (comme dans le fil). Passthrough sans fournisseur.
+  const previews = await translateUserTexts(
+    conversations.map((c) =>
+      c.lastMessage.isFromMe ? "" : c.lastMessage.content,
+    ),
+    locale,
+  );
+
   return (
-    <main className="bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
+    <main className="min-h-screen bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
       <div className="mx-auto w-full max-w-md px-5 lg:max-w-2xl">
         <div className="flex items-center justify-between pt-4">
-          <h1 className="font-display text-[22px] font-extrabold">Messages</h1>
+          <h1 className="font-display text-[22px] font-extrabold">{t.messagesPage.title}</h1>
           <Link
             href="/recherche"
-            aria-label="Rechercher"
+            aria-label={t.messagesPage.searchAria}
             className="flex h-9 w-9 items-center justify-center rounded-full border-[1.5px] border-soleil-border dark:border-soleil-border-d"
           >
             <Icon name="search" size={15} />
@@ -47,18 +61,15 @@ export default async function MessagesInboxPage() {
 
         {conversations.length === 0 ? (
           <div className="mt-8 rounded-[14px] bg-soleil-sand p-6 text-center dark:bg-soleil-forest">
-            <p className="text-sm font-bold">
-              Aucun message pour l&apos;instant.
-            </p>
+            <p className="text-sm font-bold">{t.messagesPage.emptyTitle}</p>
             <p className="mt-1 text-xs text-soleil-body dark:text-soleil-body-d">
-              Ouvre une annonce et contacte le vendeur pour démarrer une
-              conversation.
+              {t.messagesPage.emptySub}
             </p>
             <Link
               href="/annonces"
               className="mt-4 inline-flex min-h-[44px] items-center rounded-full bg-soleil-forest px-4 text-sm font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
             >
-              Parcourir les annonces
+              {t.messagesPage.browse}
             </Link>
           </div>
         ) : (
@@ -69,12 +80,22 @@ export default async function MessagesInboxPage() {
                   key={c.key}
                   className="border-b border-soleil-line last:border-0 dark:border-soleil-line-d"
                 >
-                  <ConversationRow conversation={c} index={i} />
+                  <ConversationRow
+                    conversation={c}
+                    index={i}
+                    t={t}
+                    locale={locale}
+                    preview={
+                      c.lastMessage.isFromMe
+                        ? c.lastMessage.content
+                        : previews[i]?.text ?? c.lastMessage.content
+                    }
+                  />
                 </li>
               ))}
             </ul>
             <p className="py-6 text-center text-[11px] text-soleil-muted dark:text-soleil-muted-d">
-              C&apos;est tout pour le moment.
+              {t.messagesPage.allForNow}
             </p>
           </>
         )}
@@ -86,15 +107,21 @@ export default async function MessagesInboxPage() {
 function ConversationRow({
   conversation: c,
   index,
+  t,
+  locale,
+  preview,
 }: {
   conversation: InboxConversation;
   index: number;
+  t: Messages;
+  locale: Locale;
+  preview: string;
 }) {
   const href = c.listing
     ? `/messages/${c.otherParty.username}?listing=${c.listing.slug}`
     : `/messages/${c.otherParty.username}`;
 
-  const previewPrefix = c.lastMessage.isFromMe ? "Toi : " : "";
+  const previewPrefix = c.lastMessage.isFromMe ? t.messagesPage.you : "";
   const isUnread = c.unreadCount > 0;
   const isTeam = isTeamAccount(c.otherParty.username);
 
@@ -138,10 +165,10 @@ function ConversationRow({
               isUnread ? "font-extrabold" : "font-bold",
             )}
           >
-            {isTeam ? "Équipe Péyi" : c.otherParty.username}
+            {isTeam ? t.messagesPage.team : c.otherParty.username}
           </span>
           <span className="flex-none text-[10.5px] tabular-nums text-soleil-muted dark:text-soleil-muted-d">
-            {formatRelativeTime(c.lastMessage.createdAt)}
+            {formatRelativeTime(c.lastMessage.createdAt, locale)}
           </span>
         </div>
 
@@ -154,7 +181,7 @@ function ConversationRow({
           )}
         >
           {previewPrefix}
-          {c.lastMessage.content}
+          {preview}
         </p>
 
         {c.listing && (

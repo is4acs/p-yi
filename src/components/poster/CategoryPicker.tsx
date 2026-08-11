@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 
 import { Icon, type IconName } from "@/components/ui/Icon";
+import { getMessages } from "@/lib/i18n";
 
 export type PickerCategory = {
   slug: string;
@@ -49,7 +50,8 @@ function iconForSlug(slug: string): IconName {
  * Navigation is driven by URL query params (`?parent=…`, `?category=…`)
  * so the picker is fully server-rendered — no client JS needed to pick.
  */
-export function CategoryPicker({ parents, activeParent }: Props) {
+export async function CategoryPicker({ parents, activeParent }: Props) {
+  const t = await getMessages();
   if (activeParent && activeParent.children && activeParent.children.length > 0) {
     return (
       <div className="space-y-4">
@@ -58,7 +60,7 @@ export function CategoryPicker({ parents, activeParent }: Props) {
           className="inline-flex min-h-[44px] items-center gap-1 text-sm font-bold text-soleil-muted transition dark:text-soleil-muted-d"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
-          Toutes les catégories
+          {t.poster.allCategories}
         </Link>
 
         <div className="flex items-center gap-2 rounded-[14px] bg-soleil-sand px-3 py-2 text-sm dark:bg-soleil-forest">
@@ -71,7 +73,7 @@ export function CategoryPicker({ parents, activeParent }: Props) {
             {activeParent.name}
           </span>
           <span className="text-soleil-muted dark:text-soleil-muted-d">
-            · précise ta sous-catégorie
+            {t.poster.refineSub}
           </span>
         </div>
 

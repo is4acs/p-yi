@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProfilLoading() {
   return (
-    <main className="mx-auto max-w-md px-4 pb-16 pt-6 sm:max-w-2xl sm:pt-10">
+    <main className="min-h-screen bg-soleil-cream dark:bg-soleil-night mx-auto max-w-md px-4 pb-16 pt-6 sm:max-w-2xl sm:pt-10">
       <section className="flex flex-col items-center text-center">
         <Skeleton className="h-20 w-20 rounded-full" />
         <Skeleton className="mt-3 h-7 w-32" />

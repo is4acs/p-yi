@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertCircle, Loader2, Star, Trash2 } from "lucide-react";
 
 import { Icon } from "@/components/ui/Icon";
+import { useMessages } from "@/components/soleil/I18nProvider";
 
 import { cn } from "@/lib/utils";
 import { uploadFilesDirect } from "@/lib/client/upload";
@@ -52,6 +53,7 @@ function newId(): string {
  *   - le form ne transporte plus que `photoUrls` (JSON d'URLs publiques)
  */
 export function PhotosUploader({ initialUrls = [], max, className }: Props) {
+  const t = useMessages();
   const initial: PhotoItem[] = useMemo(
     () => initialUrls.map((url) => ({ kind: "existing" as const, url })),
     // Stringify pour ne pas réinitialiser à chaque render si le tableau
@@ -67,14 +69,20 @@ export function PhotosUploader({ initialUrls = [], max, className }: Props) {
 
   /* ------------------------------------------------------------------ *
    * Nettoyage des blob: URLs au unmount pour éviter les fuites mémoire.
+   * Le cleanup lit une ref tenue à jour — une fermeture sur `photos`
+   * figerait la liste du premier render et laisserait fuir les previews
+   * ajoutées ensuite.
    * ------------------------------------------------------------------ */
+  const photosRef = useRef(photos);
+  useEffect(() => {
+    photosRef.current = photos;
+  }, [photos]);
   useEffect(() => {
     return () => {
-      for (const p of photos) {
+      for (const p of photosRef.current) {
         if (p.kind === "new") URL.revokeObjectURL(p.previewUrl);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /* ------------------------------------------------------------------ *
@@ -220,10 +228,10 @@ export function PhotosUploader({ initialUrls = [], max, className }: Props) {
     <div className={cn("space-y-2", className)}>
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d">
-          Photos · {photos.length}/{max}
+          {t.poster.photos} · {photos.length}/{max}
         </span>
         <span className="text-[10px] text-soleil-muted dark:text-soleil-muted-d">
-          JPG · PNG · WebP
+          {t.poster.photoFormats}
         </span>
       </div>
 
@@ -257,7 +265,7 @@ export function PhotosUploader({ initialUrls = [], max, className }: Props) {
               {isCover && !isError && (
                 <span className="absolute left-1 top-1 inline-flex items-center gap-0.5 rounded-full bg-peyi-orange-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow">
                   <Star className="h-2.5 w-2.5" aria-hidden />
-                  Couverture
+                  {t.poster.cover}
                 </span>
               )}
 
@@ -292,7 +300,7 @@ export function PhotosUploader({ initialUrls = [], max, className }: Props) {
                   className="absolute inset-x-1 bottom-1 inline-flex items-center justify-center gap-1 rounded-md bg-black/70 px-1.5 py-1 text-[10px] font-medium text-white transition hover:bg-black/85"
                 >
                   <Star className="h-3 w-3" aria-hidden />
-                  Couverture
+                  {t.poster.cover}
                 </button>
               )}
             </div>
@@ -305,7 +313,7 @@ export function PhotosUploader({ initialUrls = [], max, className }: Props) {
             aria-label="Ajouter une photo"
           >
             <Icon name="camera" size={18} aria-hidden />
-            <span className="text-[9.5px] font-bold">Ajouter</span>
+            <span className="text-[9.5px] font-bold">{t.poster.addPhoto}</span>
             <input
               ref={pickerRef}
               type="file"
@@ -326,7 +334,7 @@ export function PhotosUploader({ initialUrls = [], max, className }: Props) {
 
       {photos.length === 0 && (
         <p className="text-xs text-muted-foreground">
-          Au moins une photo rend ton annonce 5× plus visible.
+          {t.poster.photoHint}
         </p>
       )}
 

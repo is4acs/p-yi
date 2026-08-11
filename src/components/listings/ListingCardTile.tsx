@@ -10,6 +10,8 @@ import {
   formatPriceType,
 } from "@/lib/listings/queries";
 import { Badge } from "@/components/ui/badge";
+import { getLocale, getMessages } from "@/lib/i18n";
+import { translateUserText } from "@/lib/i18n/translate";
 import { DealImagePlaceholder } from "@/components/deals/DealImagePlaceholder";
 import { Ph } from "@/components/soleil/Ph";
 import { PriceTag as SoleilPriceTag } from "@/components/soleil/PriceTag";
@@ -73,22 +75,26 @@ function isRecentlyPublished(publishedAt: Date | string | null): boolean {
   return Date.now() - ts < NEW_BADGE_WINDOW_MS;
 }
 
-export function ListingCardTile({
+export async function ListingCardTile({
   listing,
   currentUserId,
   isFavorited = false,
   variant = "default",
   className,
 }: Props) {
+  const locale = await getLocale();
+  // Titre traduit vers la langue de l'interface (cf. lib/i18n/translate.ts).
+  const { text: displayTitle } = await translateUserText(listing.title, locale);
+  const t = await getMessages();
   const isAuthenticated = Boolean(currentUserId);
   const canFavorite = isAuthenticated && currentUserId !== listing.authorId;
   const favoriteHint = !isAuthenticated
-    ? "Connecte-toi pour sauvegarder."
+    ? t.listingDetail.loginToSave
     : currentUserId === listing.authorId
-    ? "C'est ton annonce."
+    ? t.listingDetail.ownListing
     : undefined;
 
-  const priceLabel = formatPriceType(listing.priceType, listing.price);
+  const priceLabel = formatPriceType(listing.priceType, listing.price, locale);
   const locationLabel = listing.neighborhood
     ? `${listing.city.name} · ${listing.neighborhood}`
     : listing.city.name;
@@ -128,12 +134,12 @@ export function ListingCardTile({
             )}
             <SoleilPriceTag>{priceLabel}</SoleilPriceTag>
           </div>
-          <h3 className="mt-1.5 line-clamp-2 text-[12.5px] font-bold leading-[1.3]">
-            {listing.title}
-          </h3>
+          <h2 className="mt-1.5 line-clamp-2 text-[12.5px] font-bold leading-[1.3]">
+            {displayTitle}
+          </h2>
           <p className="mt-0.5 truncate text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
             {locationLabel} ·{" "}
-            {formatRelativeTime(listing.bumpedAt ?? listing.publishedAt)}
+            {formatRelativeTime(listing.bumpedAt ?? listing.publishedAt, locale)}
           </p>
         </Link>
         <div className="absolute right-2 top-2">
@@ -221,14 +227,14 @@ export function ListingCardTile({
             {priceLabel}
           </p>
           <h3 className="mt-0.5 line-clamp-2 font-display text-[13px] font-bold leading-snug text-ink-900 group-hover:text-peyi-orange-800">
-            {listing.title}
+            {displayTitle}
           </h3>
           <p className="mt-1 flex items-center gap-1 truncate text-[11px] text-ink-500">
             <span className="truncate">{locationLabel}</span>
             <span aria-hidden>·</span>
             <Clock className="h-3 w-3 shrink-0" aria-hidden />
             <span className="shrink-0">
-              {formatRelativeTime(listing.bumpedAt ?? listing.publishedAt)}
+              {formatRelativeTime(listing.bumpedAt ?? listing.publishedAt, locale)}
             </span>
           </p>
         </div>

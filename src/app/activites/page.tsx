@@ -43,7 +43,9 @@ export default async function ActivitesPage() {
   }
 
   return (
-    <main className="h-[calc(100dvh-8.5rem)] sm:h-[calc(100dvh-4rem)]">
+    // Mobile : le Header global est masqué sur /activites (ChromeVisibility),
+    // il ne reste que la MobileNav (5rem, pb-20 du body). Desktop : header 4rem.
+    <main className="h-[calc(100dvh-5rem)] bg-soleil-cream text-soleil-forest dark:bg-soleil-night dark:text-soleil-cream lg:h-[calc(100dvh-4rem)]">
       <h1 className="sr-only">
         Activités et lieux à découvrir en Guyane — carte interactive
       </h1>

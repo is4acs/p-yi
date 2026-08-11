@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Icon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
+import { getMessages } from "@/lib/i18n";
 import { Sun } from "./Sun";
 
 type Props = {
@@ -8,19 +9,9 @@ type Props = {
   className?: string;
 };
 
-const CARDS = [
-  {
-    key: "deal" as const,
-    href: "/poster/bon-plan",
-    title: "Un bon plan",
-    sub: "Une promo repérée en magasin ou en ligne",
-  },
-  {
-    key: "annonce" as const,
-    href: "/poster/annonce",
-    title: "Une annonce",
-    sub: "Quelque chose à vendre près de chez toi",
-  },
+const CARD_LINKS = [
+  { key: "deal" as const, href: "/poster/bon-plan" },
+  { key: "annonce" as const, href: "/poster/annonce" },
 ];
 
 /**
@@ -28,10 +19,15 @@ const CARDS = [
  * sélectionnée passe en aplat forêt (inversion crème en nuit) avec
  * pastille check orange ; l'autre reste bordée avec soleil gris.
  */
-export function PosterFork({ selected = null, className }: Props) {
+export async function PosterFork({ selected = null, className }: Props) {
+  const t = await getMessages();
+  const copy = {
+    deal: { title: t.poster.forkDealTitle, sub: t.poster.forkDealSub },
+    annonce: { title: t.poster.forkListingTitle, sub: t.poster.forkListingSub },
+  };
   return (
     <div className={cn("grid grid-cols-2 gap-2.5", className)}>
-      {CARDS.map((card) => {
+      {CARD_LINKS.map((card) => {
         const isSelected = card.key === selected;
         return (
           <Link
@@ -62,7 +58,7 @@ export function PosterFork({ selected = null, className }: Props) {
               }
             />
             <div className="mt-2 font-display text-[15px] font-extrabold">
-              {card.title}
+              {copy[card.key].title}
             </div>
             <div
               className={cn(
@@ -72,7 +68,7 @@ export function PosterFork({ selected = null, className }: Props) {
                   : "text-soleil-muted dark:text-soleil-muted-d",
               )}
             >
-              {card.sub}
+              {copy[card.key].sub}
             </div>
           </Link>
         );

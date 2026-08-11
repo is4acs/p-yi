@@ -173,7 +173,7 @@ export function VoteButtons({
           </button>
           <span
             className={cn(
-              "font-display text-[15px] font-black leading-none tracking-tight",
+              "font-display text-[15px] font-extrabold leading-none tracking-tight",
               railPalette,
             )}
             aria-live="polite"

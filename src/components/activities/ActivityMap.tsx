@@ -24,6 +24,7 @@ import {
 } from "@/components/activities/map-style";
 import type { ActivityFeatureCollection } from "@/lib/activities/geojson";
 import { cn } from "@/lib/utils";
+import { useMessages } from "@/components/soleil/I18nProvider";
 
 /**
  * Carte MapLibre des activités. Composant à charger exclusivement via
@@ -61,6 +62,7 @@ export default function ActivityMap({
   onBoundsChange,
   className,
 }: Props) {
+  const t = useMessages();
   const mapRef = useRef<MapRef | null>(null);
   // Repli raster si le style vectoriel ne se charge pas (fournisseur
   // injoignable, réseau filtrant). Un fond dégradé vaut mieux qu'un vide.
@@ -178,9 +180,9 @@ export default function ActivityMap({
       <button
         type="button"
         onClick={recenter}
-        title="Recentrer sur la Guyane"
-        aria-label="Recentrer la carte sur la Guyane entière"
-        className="absolute left-2.5 top-2.5 flex h-11 w-11 items-center justify-center rounded-md border border-border bg-background/95 text-foreground shadow-sm backdrop-blur transition hover:bg-accent active:scale-95"
+        title={t.act.recenter}
+        aria-label={t.act.recenterAria}
+        className="absolute left-2.5 top-2.5 flex h-11 w-11 items-center justify-center rounded-[10px] border-[1.5px] border-soleil-border bg-soleil-cream/95 text-soleil-forest shadow-sm backdrop-blur transition hover:border-soleil-forest active:scale-95 dark:border-soleil-border-d dark:bg-soleil-night/95 dark:text-soleil-cream dark:hover:border-soleil-cream"
       >
         <Maximize className="h-5 w-5" aria-hidden />
       </button>

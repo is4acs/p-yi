@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Map } from "lucide-react";
 
 import { ActivityDetailContent } from "@/components/activities/ActivityDetailContent";
-import { ExplorerAlso } from "@/components/seo/SeoBlocks";
 import { withTimeout } from "@/lib/async/with-timeout";
 import {
   bumpActivityViewCount,
@@ -22,13 +21,9 @@ import {
 } from "@/lib/seo/json-ld";
 import {
   getActivitiesCategoryPath,
-  getActivitiesCityPath,
-  getActivityCategoryPillarBySlug,
-  getActivityCityBySlug,
 } from "@/lib/seo/local-pages";
 import { buildSeoMetadata } from "@/lib/seo/metadata";
 import { getSiteUrl } from "@/lib/site-url";
-import type { ExploreLink } from "@/lib/seo/local-pages";
 
 /**
  * /activites/[slug] — fiche activité, entièrement Server Component.
@@ -143,29 +138,6 @@ export default async function ActivityDetailPage(props: {
     ]),
   ]);
 
-  // Maillage interne : carte centrée sur le lieu, pilier catégorie,
-  // pilier ville quand la commune en a un, hub Guyane.
-  const cityPillar = getActivityCityBySlug(activity.city.slug);
-  const categoryPillar = getActivityCategoryPillarBySlug(category.slug);
-  const exploreLinks: ExploreLink[] = [
-    ...(categoryPillar
-      ? [
-          {
-            href: getActivitiesCategoryPath(categoryPillar.slug),
-            label: `Voir les activités ${categoryPillar.name.toLowerCase()} en Guyane`,
-          },
-        ]
-      : []),
-    ...(cityPillar
-      ? [
-          {
-            href: getActivitiesCityPath(cityPillar.slug),
-            label: `Voir les activités autour de ${cityPillar.name}`,
-          },
-        ]
-      : []),
-    { href: "/activites/guyane", label: "Voir toutes les activités en Guyane" },
-  ];
 
   return (
     <main className="mx-auto max-w-2xl px-4 pb-14 pt-4 animate-in fade-in duration-300 sm:pt-8">
@@ -198,9 +170,6 @@ export default async function ActivityDetailPage(props: {
         <ActivityDetailContent detail={detail} showFullPageLink={false} />
       </article>
 
-      <div className="mt-5">
-        <ExplorerAlso links={exploreLinks} />
-      </div>
     </main>
   );
 }

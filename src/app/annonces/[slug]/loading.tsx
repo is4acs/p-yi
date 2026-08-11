@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
  */
 export default function ListingDetailLoading() {
   return (
-    <main className="mx-auto max-w-md pb-16 sm:max-w-2xl">
+    <main className="min-h-screen bg-soleil-cream dark:bg-soleil-night mx-auto max-w-md pb-16 sm:max-w-2xl">
       <div className="px-4 pt-4 sm:px-0 sm:pt-6">
         <Skeleton className="h-4 w-24" />
       </div>

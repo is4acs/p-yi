@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { ExplorerAlso, SeoFaq, SeoIntro } from "@/components/seo/SeoBlocks";
+import { SeoFaq, SeoIntro } from "@/components/seo/SeoBlocks";
 import { buildSeoMetadata } from "@/lib/seo/metadata";
 import {
   getGuideContent,
@@ -99,7 +99,6 @@ export default async function GuidePage(props: {
       </section>
 
       <div className="mt-5 space-y-5">
-        <ExplorerAlso links={guide.links} />
         <SeoFaq items={guide.faq} />
       </div>
     </main>

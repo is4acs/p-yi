@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { AlertCircle, ArrowLeft, Mail } from "lucide-react";
 
 import { safeInternalPath } from "@/lib/safe-redirect";
+import { getMessages } from "@/lib/i18n";
+import { Sun } from "@/components/soleil/Sun";
 
 import { signInAction, signUpAction } from "./actions";
 import { AuthForm } from "./auth-form";
@@ -27,6 +29,7 @@ export default async function ConnexionPage(props: {
   searchParams: Promise<SearchParams>;
 }) {
   const searchParams = await props.searchParams;
+  const t = await getMessages();
   const isSignup = searchParams.mode === "signup";
   const confirmSent = searchParams.confirmSent === "1";
   // `next` vient de l'URL, donc de l'utilisateur : on le contraint à un
@@ -34,69 +37,91 @@ export default async function ConnexionPage(props: {
   // formulaire ou au bouton Google.
   const next = safeInternalPath(searchParams.next, "/bons-plans");
 
-  return (
-    <main className="mx-auto flex min-h-[80vh] max-w-md flex-col px-4 pb-16 pt-6 sm:pt-12">
-      <Link
-        href="/"
-        className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" aria-hidden />
-        Retour
-      </Link>
+  // Le template CGU contient {terms} et {privacy} : on le découpe pour
+  // intercaler les liens sans dangerouslySetInnerHTML.
+  const termsParts = t.auth.terms.split(/(\{terms\}|\{privacy\})/);
 
-      <div className="mt-6 text-center">
-        <h1 className="font-display text-title-md font-bold tracking-tight">
-          Péyi
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Bons plans, annonces et activités — 100&nbsp;% Guyane.
+  return (
+    <main className="min-h-screen bg-soleil-cream px-4 pb-10 text-soleil-forest dark:bg-soleil-night dark:text-soleil-cream">
+      <div className="mx-auto flex w-full max-w-md flex-col pt-4">
+        <Link
+          href="/"
+          aria-label={t.common.back}
+          className="inline-flex h-11 w-11 items-center justify-center self-start rounded-full border-[1.5px] border-soleil-border bg-soleil-input transition active:scale-95 dark:border-soleil-border-d dark:bg-soleil-forest"
+        >
+          <ArrowLeft className="h-5 w-5" aria-hidden />
+        </Link>
+
+        <div className="mt-7 flex flex-col items-center text-center">
+          <span className="flex items-end gap-2">
+            <Sun w={26} />
+            <span className="font-display text-[32px] font-extrabold leading-[0.85] tracking-[-0.5px]">
+              péyi
+            </span>
+          </span>
+          <p className="mt-3 text-[13px] font-semibold text-soleil-muted2 dark:text-soleil-muted-d">
+            {t.auth.tagline}
+          </p>
+        </div>
+
+        {confirmSent && (
+          <div
+            role="status"
+            className="mt-6 flex items-start gap-2.5 rounded-[14px] bg-soleil-valid p-3.5 text-sm text-soleil-forest dark:bg-soleil-valid-d"
+          >
+            <Mail className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            <div>
+              <p className="font-extrabold">{t.auth.checkInbox}</p>
+              <p className="mt-0.5 text-xs font-medium">{t.auth.checkInboxSub}</p>
+            </div>
+          </div>
+        )}
+
+        {searchParams.error && (
+          <div
+            role="alert"
+            className="mt-6 flex items-start gap-2.5 rounded-[14px] border-[1.5px] border-destructive/40 bg-destructive/10 p-3.5 text-sm font-semibold text-destructive"
+          >
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            <span>{searchParams.error}</span>
+          </div>
+        )}
+
+        <AuthForm
+          initialMode={isSignup ? "signup" : "signin"}
+          next={next}
+          signInAction={signInAction}
+          signUpAction={signUpAction}
+        />
+
+        <p className="mt-7 text-center text-xs leading-relaxed text-soleil-muted dark:text-soleil-muted-d">
+          {termsParts.map((part, i) => {
+            if (part === "{terms}") {
+              return (
+                <Link
+                  key={i}
+                  href="/cgu"
+                  className="font-semibold underline hover:text-soleil-forest dark:hover:text-soleil-cream"
+                >
+                  {t.auth.termsLink}
+                </Link>
+              );
+            }
+            if (part === "{privacy}") {
+              return (
+                <Link
+                  key={i}
+                  href="/confidentialite"
+                  className="font-semibold underline hover:text-soleil-forest dark:hover:text-soleil-cream"
+                >
+                  {t.auth.privacyLink}
+                </Link>
+              );
+            }
+            return <span key={i}>{part}</span>;
+          })}
         </p>
       </div>
-
-      {confirmSent && (
-        <div
-          role="status"
-          className="mt-5 flex items-start gap-2 rounded-lg border border-peyi-green-300 bg-peyi-green-50 p-3 text-sm text-peyi-green-800"
-        >
-          <Mail className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-          <div>
-            <p className="font-semibold">Vérifie ta boîte mail</p>
-            <p className="text-xs">
-              Clique sur le lien qu&apos;on vient de t&apos;envoyer pour
-              activer ton compte.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {searchParams.error && (
-        <div
-          role="alert"
-          className="mt-5 flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
-        >
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-          <span>{searchParams.error}</span>
-        </div>
-      )}
-
-      <AuthForm
-        initialMode={isSignup ? "signup" : "signin"}
-        next={next}
-        signInAction={signInAction}
-        signUpAction={signUpAction}
-      />
-
-      <p className="mt-6 text-center text-xs text-muted-foreground">
-        En continuant, tu acceptes nos{" "}
-        <Link href="/cgu" className="underline hover:text-foreground">
-          conditions
-        </Link>{" "}
-        et notre{" "}
-        <Link href="/confidentialite" className="underline hover:text-foreground">
-          politique de confidentialité
-        </Link>
-        .
-      </p>
     </main>
   );
 }

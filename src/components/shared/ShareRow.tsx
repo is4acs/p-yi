@@ -88,7 +88,7 @@ export function ShareRow({ url, text, className }: Props) {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Partager sur WhatsApp"
-        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 font-medium hover:border-peyi-green-400 hover:bg-peyi-green-50 hover:text-peyi-green-800"
+        className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border-[1.5px] border-soleil-border px-3 py-1.5 font-bold text-soleil-forest transition active:scale-95 dark:border-soleil-border-d dark:text-soleil-cream"
       >
         <MessageCircle className="h-3.5 w-3.5" aria-hidden />
         WhatsApp
@@ -99,7 +99,7 @@ export function ShareRow({ url, text, className }: Props) {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Partager via Messenger"
-        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 font-medium hover:border-sky-400 hover:bg-sky-50 hover:text-sky-800"
+        className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border-[1.5px] border-soleil-border px-3 py-1.5 font-bold text-soleil-forest transition active:scale-95 dark:border-soleil-border-d dark:text-soleil-cream"
       >
         <Send className="h-3.5 w-3.5" aria-hidden />
         Messenger
@@ -109,7 +109,7 @@ export function ShareRow({ url, text, className }: Props) {
         type="button"
         onClick={copyLink}
         aria-label={copied ? "Lien copié" : "Copier le lien"}
-        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 font-medium hover:border-peyi-orange-400 hover:bg-peyi-orange-50 hover:text-peyi-orange-800"
+        className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border-[1.5px] border-soleil-border px-3 py-1.5 font-bold text-soleil-forest transition active:scale-95 dark:border-soleil-border-d dark:text-soleil-cream"
       >
         {copied ? (
           <>
@@ -129,7 +129,7 @@ export function ShareRow({ url, text, className }: Props) {
           type="button"
           onClick={nativeShare}
           aria-label="Plus d'options de partage"
-          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 font-medium hover:border-peyi-orange-400"
+          className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border-[1.5px] border-soleil-border px-3 py-1.5 font-bold text-soleil-forest transition active:scale-95 dark:border-soleil-border-d dark:text-soleil-cream"
         >
           <Share2 className="h-3.5 w-3.5" aria-hidden />
           Plus

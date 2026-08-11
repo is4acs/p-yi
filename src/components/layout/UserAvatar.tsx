@@ -29,7 +29,7 @@ export function UserAvatar({
   className,
 }: Props) {
   const base = cn(
-    "relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-peyi-orange-100 font-display font-bold text-peyi-orange-700",
+    "relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-soleil-orange font-extrabold text-soleil-forest",
     SIZE_CLASSES[size],
     className,
   );

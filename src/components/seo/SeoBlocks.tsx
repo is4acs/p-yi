@@ -19,7 +19,7 @@ export function SeoIntro({
           {eyebrow}
         </p>
       )}
-      <h1 className="mt-2 font-display text-3xl font-extrabold leading-tight tracking-tight text-ink-900 sm:text-[38px]">
+      <h1 className="mt-2 font-display text-3xl font-extrabold leading-tight tracking-tight text-foreground sm:text-[38px]">
         {h1}
       </h1>
       <p className="mt-3 whitespace-pre-line text-sm leading-7 text-ink-700 sm:text-[15px]">
@@ -75,7 +75,7 @@ export function ExplorerAlso({
 
   return (
     <section className="rounded-xl border border-border bg-card p-4 sm:p-5">
-      <h2 className="font-display text-lg font-semibold text-ink-900">{title}</h2>
+      <h2 className="font-display text-lg font-semibold text-foreground">{title}</h2>
 
       <div className="mt-3 space-y-4">
         {groups.map(({ group, items }) => (
@@ -98,7 +98,7 @@ export function ExplorerAlso({
                   <Link
                     href={link.href}
                     title={link.label}
-                    className="inline-flex min-h-11 items-center rounded-full border border-border bg-background px-4 text-sm font-medium text-ink-800 transition duration-base hover:border-peyi-orange-300 hover:bg-peyi-orange-50 hover:text-peyi-orange-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    className="inline-flex min-h-11 items-center rounded-full border border-border bg-background px-4 text-sm font-medium text-foreground transition duration-base hover:border-peyi-orange-300 hover:bg-peyi-orange-50 hover:text-peyi-orange-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   >
                     {link.short ? (
                       <>
@@ -132,7 +132,7 @@ export function SeoFaq({
 
   return (
     <section className="rounded-xl border border-border bg-card p-4 sm:p-5">
-      <h2 className="font-display text-lg font-semibold text-ink-900">{title}</h2>
+      <h2 className="font-display text-lg font-semibold text-foreground">{title}</h2>
       <div className="mt-3 space-y-3">
         {items.map((item) => (
           <article key={item.question} className="rounded-lg bg-muted/40 p-3">

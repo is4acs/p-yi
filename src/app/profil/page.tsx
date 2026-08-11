@@ -7,7 +7,9 @@ import { requireUser } from "@/lib/auth/current-user";
 import { fetchUnreadNotificationsCount } from "@/lib/notifications/queries";
 import { isRenderableImageUrl } from "@/lib/images";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { LanguageSwitcher } from "@/components/soleil/LanguageSwitcher";
 import { NightModeToggle } from "@/components/soleil/NightModeToggle";
+import { getMessages, tFormat } from "@/lib/i18n";
 
 import { signOutAction } from "../connexion/actions";
 
@@ -31,6 +33,7 @@ function initialsFrom(name: string): string {
 
 export default async function ProfilPage(props: Props) {
   const searchParams = await props.searchParams;
+  const t = await getMessages();
   const user = await requireUser("/profil");
   const [
     city,
@@ -68,7 +71,7 @@ export default async function ProfilPage(props: Props) {
   const memberSince = user.createdAt.getFullYear();
 
   return (
-    <main className="bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
+    <main className="min-h-screen bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
       <div className="mx-auto w-full max-w-md px-5 lg:max-w-2xl">
         {/* En-tête centré : avatar, nom, meta. */}
         <section className="flex flex-col items-center pt-6 text-center">
@@ -93,7 +96,8 @@ export default async function ProfilPage(props: Props) {
             {displayName}
           </h1>
           <p className="mt-[3px] text-[11.5px] text-soleil-muted dark:text-soleil-muted-d">
-            {city?.name ? `${city.name} · ` : ""}membre depuis {memberSince}
+            {city?.name ? `${city.name} · ` : ""}
+            {tFormat(t.profile.memberSince, { year: memberSince })}
           </p>
         </section>
 
@@ -121,7 +125,7 @@ export default async function ProfilPage(props: Props) {
               {dealCount}
             </div>
             <div className="mt-0.5 text-[10px] font-bold uppercase text-soleil-muted dark:text-soleil-muted-d">
-              Deals postés
+              {t.profile.statsDeals}
             </div>
           </div>
           <div className="border-x-[1.5px] border-soleil-border py-3 text-center dark:border-soleil-border-d">
@@ -129,7 +133,7 @@ export default async function ProfilPage(props: Props) {
               {listingCount}
             </div>
             <div className="mt-0.5 text-[10px] font-bold uppercase text-soleil-muted dark:text-soleil-muted-d">
-              Annonces
+              {t.profile.statsListings}
             </div>
           </div>
           <div className="py-3 text-center">
@@ -137,7 +141,7 @@ export default async function ProfilPage(props: Props) {
               {user.karma.toLocaleString("fr-FR")}
             </div>
             <div className="mt-0.5 text-[10px] font-bold uppercase text-soleil-muted dark:text-soleil-muted-d">
-              Mercis reçus
+              {t.profile.statsThanks}
             </div>
           </div>
         </section>
@@ -146,29 +150,32 @@ export default async function ProfilPage(props: Props) {
         <nav className="mt-2.5">
           <MenuRow
             href="/profil/favoris"
-            label="Favoris"
+            label={t.profile.favorites}
             sub={
               favoriteCount === 0
-                ? "Aucun favori"
-                : `${dealFavoriteCount} bon${dealFavoriteCount > 1 ? "s" : ""} plan${dealFavoriteCount > 1 ? "s" : ""} · ${listingFavoriteCount} annonce${listingFavoriteCount > 1 ? "s" : ""}`
+                ? t.profile.noFavorites
+                : tFormat(t.profile.favoritesCount, {
+                    deals: dealFavoriteCount,
+                    listings: listingFavoriteCount,
+                  })
             }
           />
           <MenuRow
             href="/profil/alertes"
-            label="Alertes deals"
+            label={t.profile.alerts}
             sub={
               activeAlertsCount === 0
-                ? "Aucune alerte active"
-                : `${activeAlertsCount} alerte${activeAlertsCount > 1 ? "s" : ""} active${activeAlertsCount > 1 ? "s" : ""}`
+                ? t.profile.noAlerts
+                : tFormat(t.profile.alertsCount, { n: activeAlertsCount })
             }
           />
           <MenuRow
             href="/notifications"
-            label="Notifications"
+            label={t.profile.notifications}
             sub={
               unreadNotifications === 0
-                ? "Tout est lu"
-                : `${unreadNotifications} non lue${unreadNotifications > 1 ? "s" : ""}`
+                ? t.profile.allRead
+                : tFormat(t.profile.unreadCount, { n: unreadNotifications })
             }
             badge={unreadNotifications}
           />
@@ -176,36 +183,44 @@ export default async function ProfilPage(props: Props) {
           {/* Mode nuit — toggle branché sur next-themes. */}
           <div className="flex items-center justify-between gap-3 border-b border-soleil-line py-3.5 dark:border-soleil-line-d">
             <div className="min-w-0">
-              <div className="text-sm font-bold">Mode nuit</div>
+              <div className="text-sm font-bold">{t.profile.nightMode}</div>
               <div className="mt-0.5 text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
-                Auto au coucher du soleil — 18 h 45 à Cayenne
+                {t.profile.nightModeSub}
               </div>
             </div>
             <NightModeToggle />
           </div>
 
+          {/* Langue de l'interface — FR / PT (Brésil) / Kreyòl. */}
+          <div className="flex items-center justify-between gap-3 border-b border-soleil-line py-3.5 dark:border-soleil-line-d">
+            <div className="min-w-0">
+              <div className="text-sm font-bold">{t.profile.language}</div>
+            </div>
+            <LanguageSwitcher />
+          </div>
+
           <MenuRow
             href="/profil/recompenses"
-            label="Récompenses & badges"
+            label={t.profile.rewards}
             sub={`${user.karma.toLocaleString("fr-FR")} karma`}
           />
           <MenuRow
             href="/profil/affiliation"
-            label="Parrainage & affiliation"
-            sub="Invite tes amis et gagne jusqu'à 800 €"
+            label={t.profile.referral}
+            sub={t.profile.referralSub}
           />
           <MenuRow
             href="/profil/edit"
-            label="Paramètres"
-            sub="Profil, e-mail, téléphone, commune"
+            label={t.profile.settings}
+            sub={t.profile.settingsSub}
           />
           <MenuRow
             href="/profil/confidentialite"
-            label="Confidentialité & données"
+            label={t.profile.privacy}
           />
           <MenuRow
             href="mailto:contact@peyi.gf"
-            label="Aide & contact"
+            label={t.profile.help}
             last
           />
         </nav>
@@ -214,10 +229,10 @@ export default async function ProfilPage(props: Props) {
           <SubmitButton
             variant="ghost"
             size="sm"
-            pendingLabel="Déconnexion…"
+            pendingLabel={t.profile.loggingOut}
             className="text-xs font-bold text-soleil-muted hover:bg-transparent hover:text-soleil-forest dark:text-soleil-muted-d dark:hover:text-soleil-cream"
           >
-            Se déconnecter
+            {t.profile.logout}
           </SubmitButton>
         </form>
       </div>

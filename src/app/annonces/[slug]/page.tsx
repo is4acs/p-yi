@@ -33,6 +33,8 @@ import { ConseilPeyi } from "@/components/soleil/ConseilPeyi";
 import { HeartButton } from "@/components/soleil/HeartButton";
 import { Ph } from "@/components/soleil/Ph";
 import { getSiteUrl } from "@/lib/site-url";
+import { getLocale, getMessages, tFormat } from "@/lib/i18n";
+import { translateUserTexts } from "@/lib/i18n/translate";
 import {
   getListingCategoryBySlug,
   getListingsCategoryPath,
@@ -207,6 +209,8 @@ export default async function ListingDetailPage(
   }
 ) {
   const params = await props.params;
+  const t = await getMessages();
+  const locale = await getLocale();
   // `Promise.allSettled` plutôt que `Promise.all` : si la requête
   // user (Supabase auth) hiccup, on veut quand même afficher
   // l'annonce en mode "déconnecté" plutôt que crasher toute la
@@ -266,6 +270,15 @@ export default async function ListingDetailPage(
 
   if (!listing || listing.expiresAt <= new Date()) notFound();
 
+  // Traduction automatique du contenu de l'annonce vers la langue de
+  // l'interface (passthrough sans fournisseur configuré). Le SEO garde
+  // les textes originaux.
+  const [mtTitle, mtDescription] = await translateUserTexts(
+    [listing.title, listing.description],
+    locale,
+  );
+  const contentTranslated = mtTitle.translated || mtDescription.translated;
+
   if (currentUserResult.status === "rejected") {
     // eslint-disable-next-line no-console
     console.error("[listing/page] current user load failed", {
@@ -304,12 +317,12 @@ export default async function ListingDetailPage(
 
   const canFavorite = Boolean(currentUser) && !isAuthor;
   const favoriteHint = !currentUser
-    ? "Connecte-toi pour sauvegarder."
+    ? t.listingDetail.loginToSave
     : isAuthor
-    ? "C'est ton annonce."
+    ? t.listingDetail.ownListing
     : undefined;
 
-  const priceLabel = formatPriceType(listing.priceType, listing.price);
+  const priceLabel = formatPriceType(listing.priceType, listing.price, locale);
   // Fallback BEGINNER si la DB a un niveau supprimé du code (migration
   // d'enum partielle).
   const level = LEVEL_META[listing.author.level] ?? LEVEL_META.BEGINNER;
@@ -397,7 +410,7 @@ export default async function ListingDetailPage(
   }
 
   return (
-    <main className="bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
+    <main className="min-h-screen bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
       {jsonLd ? (
         <script
           type="application/ld+json"
@@ -407,7 +420,7 @@ export default async function ListingDetailPage(
 
       <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-8">
         <BackHeader
-          title="Annonce"
+          title={t.listingDetail.title}
           backHref="/annonces"
           action={
             <HeartButton
@@ -444,7 +457,7 @@ export default async function ListingDetailPage(
               )}
               {listing.isUrgent && (
                 <span className="absolute left-2.5 top-2.5 rounded-full bg-soleil-orange px-2.5 py-1 font-display text-[11px] font-extrabold uppercase text-soleil-forest">
-                  Urgent
+                  {t.listingDetail.urgent}
                 </span>
               )}
             </div>
@@ -453,11 +466,14 @@ export default async function ListingDetailPage(
               <p className="font-display text-[30px] font-extrabold leading-none">
                 {priceLabel}
               </p>
-              <h1 className="mt-1.5 text-base font-bold">{listing.title}</h1>
+              <h1 className="mt-1.5 text-base font-bold">{mtTitle.text}</h1>
               <p className="mt-1 text-[11.5px] text-soleil-muted dark:text-soleil-muted-d">
                 {locationLabel} ·{" "}
-                {formatRelativeTime(listing.bumpedAt ?? listing.publishedAt)} ·{" "}
-                {listing.viewCount.toLocaleString("fr-FR")} vues
+                {formatRelativeTime(listing.bumpedAt ?? listing.publishedAt, locale)}{" "}
+                ·{" "}
+                {tFormat(t.listingDetail.views, {
+                  n: listing.viewCount.toLocaleString("fr-FR"),
+                })}
               </p>
 
               {attributeChips.length > 0 && (
@@ -474,24 +490,40 @@ export default async function ListingDetailPage(
               )}
 
               <p className="mt-3 whitespace-pre-line text-[13px] leading-relaxed text-soleil-body dark:text-soleil-body-d">
-                {listing.description}
+                {mtDescription.text}
               </p>
 
+              {contentTranslated && (
+                <details className="mt-2 text-xs text-soleil-muted dark:text-soleil-muted-d">
+                  <summary className="cursor-pointer font-semibold">
+                    {t.mt.translated} · {t.mt.seeOriginal}
+                  </summary>
+                  <div className="mt-2 space-y-1.5">
+                    <p className="font-bold">{listing.title}</p>
+                    <p className="whitespace-pre-line leading-relaxed">
+                      {listing.description}
+                    </p>
+                  </div>
+                </details>
+              )}
+
               <p className="mt-3 text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
-                Publiée le{" "}
+                {t.listingDetail.publishedOn}{" "}
                 <time dateTime={listing.publishedAt.toISOString()}>
                   {publishedDateLabel}
                 </time>
                 {showUpdatedAt && (
                   <>
                     {" "}
-                    · mise à jour le{" "}
+                    · {t.listingDetail.updatedOn}{" "}
                     <time dateTime={listing.updatedAt.toISOString()}>
                       {updatedDateLabel}
                     </time>
                   </>
                 )}{" "}
-                · expire {formatRelativeTime(listing.expiresAt)}
+                · {tFormat(t.listingDetail.expires, {
+                  ago: formatRelativeTime(listing.expiresAt, locale),
+                })}
               </p>
             </div>
           </div>
@@ -512,7 +544,8 @@ export default async function ListingDetailPage(
                 </p>
                 <p className="mt-0.5 text-[11px] text-soleil-muted dark:text-soleil-muted-d">
                   {level.label} ·{" "}
-                  {listing.author.karma.toLocaleString("fr-FR")} karma
+                  {listing.author.karma.toLocaleString("fr-FR")}{" "}
+                  {t.listingDetail.karma}
                   {listing.author.city?.name
                     ? ` · ${listing.author.city.name}`
                     : ""}
@@ -537,7 +570,7 @@ export default async function ListingDetailPage(
                       href={`/connexion?next=/annonces/${listing.slug}`}
                       className="flex-1 rounded-full bg-soleil-forest py-3 text-center text-[13.5px] font-extrabold text-soleil-cream transition active:scale-[0.98] dark:bg-soleil-cream dark:text-soleil-forest"
                     >
-                      Message
+                      {t.listingDetail.message}
                     </Link>
                   )}
                   {listing.showPhone && listing.contactPhone && (
@@ -545,7 +578,7 @@ export default async function ListingDetailPage(
                       href={`tel:${listing.contactPhone}`}
                       className="flex-1 rounded-full border-[1.5px] border-soleil-forest py-3 text-center text-[13.5px] font-extrabold transition active:scale-[0.98] dark:border-soleil-cream"
                     >
-                      Appeler
+                      {t.listingDetail.call}
                     </a>
                   )}
                 </div>
@@ -571,10 +604,7 @@ export default async function ListingDetailPage(
               </div>
             )}
 
-            <ConseilPeyi className="mt-4">
-              ne paie jamais d&apos;avance. Rencontre le vendeur dans un lieu
-              public et vérifie le bien avant de payer.
-            </ConseilPeyi>
+            <ConseilPeyi className="mt-4">{t.listingDetail.advice}</ConseilPeyi>
 
             <div className="mt-4">
               <ShareRow
@@ -585,7 +615,7 @@ export default async function ListingDetailPage(
 
             <section className="mt-5">
               <h2 className="font-display text-[17px] font-extrabold">
-                Voir aussi
+                {t.listingDetail.seeAlso}
               </h2>
               <ul className="mt-2 space-y-2 text-[12.5px] font-bold">
                 <li>
@@ -593,7 +623,9 @@ export default async function ListingDetailPage(
                     href={cityPath}
                     className="text-soleil-otext dark:text-soleil-otext-d"
                   >
-                    Voir les annonces à {listing.city.name}
+                    {tFormat(t.listingDetail.seeCityListings, {
+                      city: listing.city.name,
+                    })}
                   </Link>
                 </li>
                 <li>
@@ -601,8 +633,9 @@ export default async function ListingDetailPage(
                     href={categoryPath}
                     className="text-soleil-otext dark:text-soleil-otext-d"
                   >
-                    Voir les annonces {listing.category.name.toLowerCase()} en
-                    Guyane
+                    {tFormat(t.listingDetail.seeCategoryListings, {
+                      category: listing.category.name.toLowerCase(),
+                    })}
                   </Link>
                 </li>
                 <li>
@@ -610,7 +643,7 @@ export default async function ListingDetailPage(
                     href="/annonces/guyane"
                     className="text-soleil-otext dark:text-soleil-otext-d"
                   >
-                    Voir toutes les annonces en Guyane
+                    {t.listingDetail.seeAllListings}
                   </Link>
                 </li>
               </ul>

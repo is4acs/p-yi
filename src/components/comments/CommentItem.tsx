@@ -9,6 +9,7 @@ import { LEVEL_META } from "@/lib/deals/user-level";
 import type { UserLevel } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { deleteCommentAction } from "@/app/bons-plans/comments/actions";
+import { useLocale, useMessages } from "@/components/soleil/I18nProvider";
 
 import { CommentForm } from "./CommentForm";
 import { ReportDialog } from "@/components/reports/ReportDialog";
@@ -48,6 +49,8 @@ export function CommentItem({
   isReply = false,
   tone = "orange",
 }: Props) {
+  const t = useMessages();
+  const locale = useLocale();
   const [showReply, setShowReply] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -99,13 +102,13 @@ export function CommentItem({
               {comment.author.username}
             </b>
             <span className="text-soleil-muted dark:text-soleil-muted-d">
-              · {level.label} · {formatRelativeTime(comment.createdAt)}
+              · {level.label} · {formatRelativeTime(comment.createdAt, locale)}
             </span>
           </div>
 
           {comment.isDeleted ? (
             <p className="text-[12.5px] italic text-soleil-muted dark:text-soleil-muted-d">
-              [commentaire supprimé]
+              {t.dealDetail.deletedComment}
             </p>
           ) : (
             <p className="whitespace-pre-line text-[12.5px] leading-normal text-soleil-body dark:text-soleil-body-d">
@@ -126,7 +129,7 @@ export function CommentItem({
                   title={canReply ? undefined : replyDisabledHint}
                 >
                   <MessageSquare className="h-3 w-3" aria-hidden />
-                  Répondre
+                  {t.dealDetail.reply}
                 </Button>
               )}
               {canDelete && (
@@ -139,7 +142,7 @@ export function CommentItem({
                   disabled={pending}
                 >
                   <Trash2 className="h-3 w-3" aria-hidden />
-                  Supprimer
+                  {t.dealDetail.delete}
                 </Button>
               )}
               {!isAuthor && currentUserId && (

@@ -7,6 +7,7 @@ import type {
 } from "@prisma/client";
 
 import { formatPrice } from "@/lib/format";
+import type { Locale } from "@/lib/i18n/config";
 
 /**
  * Libellés français + métadonnées d'affichage des enums Activité.
@@ -108,17 +109,34 @@ export const ACTIVITY_STATUSES: Record<ActivityStatus, { label: string }> = {
   HIDDEN: { label: "Masqué" },
 };
 
+/** Mots localisés des formats prix/durée (« Gratuit », « jour »…). */
+const PRICE_WORDS: Record<Locale, { free: string; unknown: string }> = {
+  fr: { free: "Gratuit", unknown: "Tarif non communiqué" },
+  pt: { free: "Grátis", unknown: "Preço não informado" },
+  ht: { free: "Gratis", unknown: "Pri a pa disponib" },
+};
+
+const DAY_WORDS: Record<Locale, { one: string; many: string }> = {
+  fr: { one: "1 jour", many: "jours" },
+  pt: { one: "1 dia", many: "dias" },
+  ht: { one: "1 jou", many: "jou" },
+};
+
 /**
  * Prix affiché d'une activité : "Gratuit", "45 €", "45 € – 69 €" ou
  * "Tarif non communiqué" (null). Montants stockés en centimes.
  */
-export function formatActivityPrice(input: {
-  isFree: boolean;
-  priceMinCents: number | null;
-  priceMaxCents: number | null;
-}): string {
-  if (input.isFree) return "Gratuit";
-  if (input.priceMinCents == null) return "Tarif non communiqué";
+export function formatActivityPrice(
+  input: {
+    isFree: boolean;
+    priceMinCents: number | null;
+    priceMaxCents: number | null;
+  },
+  locale: Locale = "fr",
+): string {
+  const words = PRICE_WORDS[locale];
+  if (input.isFree) return words.free;
+  if (input.priceMinCents == null) return words.unknown;
   const min = formatPrice(input.priceMinCents / 100);
   if (input.priceMaxCents == null || input.priceMaxCents === input.priceMinCents) {
     return min;
@@ -127,11 +145,15 @@ export function formatActivityPrice(input: {
 }
 
 /** Durée lisible : 90 → "1h30", 480 → "8h", 2880 → "2 jours". */
-export function formatDuration(minutes: number | null): string | null {
+export function formatDuration(
+  minutes: number | null,
+  locale: Locale = "fr",
+): string | null {
   if (minutes == null || minutes <= 0) return null;
   if (minutes >= 1440) {
     const days = Math.round(minutes / 1440);
-    return days <= 1 ? "1 jour" : `${days} jours`;
+    const words = DAY_WORDS[locale];
+    return days <= 1 ? words.one : `${days} ${words.many}`;
   }
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;

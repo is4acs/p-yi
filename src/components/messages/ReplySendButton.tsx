@@ -17,7 +17,7 @@ export function ReplySendButton() {
       aria-label={pending ? "Envoi en cours" : "Envoyer"}
       aria-busy={pending || undefined}
       disabled={pending}
-      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-peyi-orange-500 text-white shadow transition active:scale-[0.95] hover:bg-peyi-orange-600 disabled:opacity-70"
+      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-soleil-orange text-soleil-forest transition active:scale-[0.95] disabled:opacity-70"
     >
       {pending ? (
         <Spinner className="h-4 w-4" label="Envoi en cours" />

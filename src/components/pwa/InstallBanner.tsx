@@ -96,7 +96,7 @@ export function InstallBanner() {
     <div
       role="dialog"
       aria-labelledby="install-banner-title"
-      className="fixed inset-x-3 bottom-[calc(var(--bottom-nav-height,64px)+12px)] z-40 mx-auto max-w-md rounded-xl border border-peyi-orange-200 bg-white p-4 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-300 sm:inset-x-auto sm:left-4 sm:bottom-4 sm:w-[22rem]"
+      className="fixed inset-x-3 bottom-[calc(var(--bottom-nav-height,64px)+12px)] z-40 mx-auto max-w-md rounded-xl border border-border bg-card p-4 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-300 sm:mx-0 sm:w-[22rem] lg:inset-x-auto lg:left-4 lg:bottom-4"
     >
       <button
         type="button"

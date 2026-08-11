@@ -13,6 +13,7 @@ import { BackHeader } from "@/components/soleil/BackHeader";
 import { PosterFork } from "@/components/soleil/PosterFork";
 
 import { createListingAction } from "./actions";
+import { getMessages, tFormat } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Poster une annonce",
@@ -33,6 +34,7 @@ export default async function PosterAnnoncePage(
   }
 ) {
   const searchParams = await props.searchParams;
+  const t = await getMessages();
   const user = await requireUser("/poster/annonce");
 
   // Pull the full LISTING category tree once — small table, cheap query,
@@ -122,9 +124,9 @@ export default async function PosterAnnoncePage(
       .map((c) => ({ slug: c.slug, name: c.name, icon: c.icon }));
 
     return (
-      <main className="bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
+      <main className="min-h-screen bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
         <div className="mx-auto w-full max-w-md sm:max-w-2xl">
-          <BackHeader title="Poster" backHref="/poster/annonce" />
+          <BackHeader title={t.poster.title} backHref="/poster/annonce" />
 
           <div className="px-5">
             <PosterFork selected="annonce" className="pt-4" />
@@ -134,15 +136,14 @@ export default async function PosterAnnoncePage(
               className="mt-4 inline-flex min-h-[36px] items-center gap-1 text-xs font-bold text-soleil-muted dark:text-soleil-muted-d"
             >
               <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
-              Changer de catégorie
+              {t.poster.changeCategory}
             </Link>
 
             <h1 className="mt-1 font-display text-[22px] font-extrabold leading-[1.12]">
               {selected.name}
             </h1>
             <p className="mt-1 text-xs text-soleil-muted dark:text-soleil-muted-d">
-              Poste ton annonce dans cette catégorie — +3 karma pour toi,
-              @{user.username}.
+              {tFormat(t.poster.listingIntro, { name: user.username })}
             </p>
 
             {searchParams.error && (
@@ -168,7 +169,7 @@ export default async function PosterAnnoncePage(
                 }}
                 profilePhone={user.phone}
                 profilePhoneVerified={user.phoneVerified}
-                submitLabel="Publier — c'est gratuit"
+                submitLabel={t.poster.publishCta}
               />
             </div>
           </div>
@@ -179,19 +180,18 @@ export default async function PosterAnnoncePage(
 
   // ----- Picker branch -------------------------------------------------
   return (
-    <main className="bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
+    <main className="min-h-screen bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
       <div className="mx-auto w-full max-w-md sm:max-w-2xl">
-      <BackHeader title="Poster" backHref="/poster" />
+      <BackHeader title={t.poster.title} backHref="/poster" />
 
       <div className="px-5">
       <PosterFork selected="annonce" className="pt-4" />
 
       <h1 className="mt-5 font-display text-[17px] font-extrabold">
-        Choisis une catégorie
+        {t.poster.chooseCategory}
       </h1>
       <p className="mt-1 text-xs text-soleil-muted dark:text-soleil-muted-d">
-        On te proposera ensuite les bonnes questions pour que ton annonce
-        soit au top.
+        {t.poster.chooseCategoryHelp}
       </p>
 
       <div className="mt-4">

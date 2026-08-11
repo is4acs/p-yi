@@ -97,7 +97,7 @@ export function LivePreview({
             <span className="flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground/70">
               <ChevronUp className="h-3.5 w-3.5" aria-hidden />
             </span>
-            <span className="font-display text-xs font-black leading-none text-peyi-orange-600">
+            <span className="font-display text-xs font-extrabold leading-none text-peyi-orange-600">
               0°
             </span>
             <span className="flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground/70">
@@ -130,7 +130,7 @@ export function LivePreview({
                 "line-clamp-2 font-display text-[13px] font-bold leading-[1.25] tracking-tight",
                 isTitleEmpty
                   ? "italic text-muted-foreground"
-                  : "text-ink-900",
+                  : "text-foreground",
               )}
             >
               {displayTitle}

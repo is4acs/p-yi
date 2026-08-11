@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
+import { useMessages } from "./I18nProvider";
+
 type Props = {
   title: string;
   /** Cible explicite du retour ; sinon `router.back()`. */
@@ -17,6 +19,7 @@ type Props = {
  * forêt, titre display centré, slot actions à droite.
  */
 export function BackHeader({ title, backHref, action }: Props) {
+  const t = useMessages();
   const router = useRouter();
   const backClass =
     "flex h-9 w-9 flex-none items-center justify-center rounded-full border-[1.5px] border-soleil-forest text-soleil-forest dark:border-soleil-cream dark:text-soleil-cream";
@@ -24,14 +27,14 @@ export function BackHeader({ title, backHref, action }: Props) {
   return (
     <div className="flex items-center justify-between px-5 pt-3.5">
       {backHref ? (
-        <Link href={backHref} aria-label="Retour" className={backClass}>
+        <Link href={backHref} aria-label={t.common.back} className={backClass}>
           <ArrowLeft size={16} aria-hidden />
         </Link>
       ) : (
         <button
           type="button"
           onClick={() => router.back()}
-          aria-label="Retour"
+          aria-label={t.common.back}
           className={backClass}
         >
           <ArrowLeft size={16} aria-hidden />
