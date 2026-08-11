@@ -1,22 +1,9 @@
 import {
-  ACTIVITY_CATEGORY_PILLARS,
-  ACTIVITY_CITY_PILLARS,
-  CORE_CITIES,
-  DEAL_CATEGORY_PILLARS,
   GUIDE_SLUGS,
-  LISTING_CATEGORY_PILLARS,
-  STORE_PILLARS,
-  type ExploreLink,
   type FaqItem,
   type GuideSlug,
   type SeoCategory,
   type SeoCity,
-  getActivitiesCategoryPath,
-  getActivitiesCityPath,
-  getDealsCategoryPath,
-  getDealsCityPath,
-  getListingsCategoryPath,
-  getListingsCityPath,
 } from "@/lib/seo/local-pages";
 
 type GuideContent = {
@@ -25,7 +12,6 @@ type GuideContent = {
   description: string;
   intro: string;
   faq: FaqItem[];
-  links: ExploreLink[];
 };
 
 const GUIDE_CONTENT: Record<GuideSlug, GuideContent> = {
@@ -48,14 +34,6 @@ const GUIDE_CONTENT: Record<GuideSlug, GuideContent> = {
           "Commence par la page Bons plans Guyane, puis affine par ville (Cayenne, Matoury, Kourou, Rémire-Montjoly, Saint-Laurent-du-Maroni) ou par catégorie selon ton besoin.",
       },
     ],
-    links: [
-      { href: "/bons-plans/guyane", label: "Voir tous les bons plans en Guyane" },
-      { href: "/bons-plans/cayenne", label: "Voir les bons plans à Cayenne" },
-      {
-        href: "/bons-plans/supermarche-alimentation/guyane",
-        label: "Voir les promos supermarché en Guyane",
-      },
-    ],
   },
   "petites-annonces-guyane": {
     title: "Guide petites annonces Guyane",
@@ -75,11 +53,6 @@ const GUIDE_CONTENT: Record<GuideSlug, GuideContent> = {
         answer:
           "Commence par la page Annonces Guyane, puis filtre par ville et catégorie. Tu trouveras plus rapidement des résultats pertinents que sur une recherche trop large.",
       },
-    ],
-    links: [
-      { href: "/annonces/guyane", label: "Voir toutes les annonces en Guyane" },
-      { href: "/annonces/voitures/guyane", label: "Voir les annonces voiture en Guyane" },
-      { href: "/annonces/immobilier/guyane", label: "Voir les annonces immobilier en Guyane" },
     ],
   },
   "vendre-sa-voiture-en-guyane": {
@@ -101,11 +74,6 @@ const GUIDE_CONTENT: Record<GuideSlug, GuideContent> = {
           "Oui. Des photos nettes et variées inspirent confiance et évitent de perdre du temps avec des demandes basiques. Montre aussi les éventuels défauts de façon honnête.",
       },
     ],
-    links: [
-      { href: "/annonces/voitures/guyane", label: "Voir les annonces voiture en Guyane" },
-      { href: "/annonces/cayenne", label: "Voir les annonces à Cayenne" },
-      { href: "/annonces/kourou", label: "Voir les annonces à Kourou" },
-    ],
   },
   "trouver-un-appartement-en-guyane": {
     title: "Trouver un appartement en Guyane : guide local",
@@ -124,17 +92,6 @@ const GUIDE_CONTENT: Record<GuideSlug, GuideContent> = {
         question: "Comment repérer une annonce de location sérieuse ?",
         answer:
           "Regarde la clarté du descriptif, la cohérence des photos, la présence des caractéristiques principales et la réactivité du contact. Une annonce complète réduit les zones floues.",
-      },
-    ],
-    links: [
-      {
-        href: "/annonces/location-appartement/guyane",
-        label: "Voir les locations d’appartement en Guyane",
-      },
-      { href: "/annonces/remire-montjoly", label: "Voir les annonces à Rémire-Montjoly" },
-      {
-        href: "/annonces/saint-laurent-du-maroni",
-        label: "Voir les annonces à Saint-Laurent-du-Maroni",
       },
     ],
   },
@@ -206,174 +163,6 @@ export function buildListingsFaq(label: string): FaqItem[] {
   ];
 }
 
-export function buildDealsGlobalExploreLinks(): ExploreLink[] {
-  return [
-    ...CORE_CITIES.map((city) => ({
-      href: getDealsCityPath(city.slug),
-      label: `Voir les bons plans à ${city.name}`,
-      short: city.name,
-      group: "city" as const,
-    })),
-    ...DEAL_CATEGORY_PILLARS.map((category) => ({
-      href: getDealsCategoryPath(category.slug),
-      label: `Voir les bons plans ${category.name.toLowerCase()} en Guyane`,
-      short: category.name,
-      group: "category" as const,
-    })),
-  ];
-}
-
-export function buildListingsGlobalExploreLinks(): ExploreLink[] {
-  return [
-    ...CORE_CITIES.map((city) => ({
-      href: getListingsCityPath(city.slug),
-      label: `Voir les annonces à ${city.name}`,
-      short: city.name,
-      group: "city" as const,
-    })),
-    ...LISTING_CATEGORY_PILLARS.map((category) => ({
-      href: getListingsCategoryPath(category.slug),
-      label: `Voir les annonces ${category.name.toLowerCase()} en Guyane`,
-      short: category.name,
-      group: "category" as const,
-    })),
-  ];
-}
-
-export function buildDealsCityExploreLinks(city: SeoCity): ExploreLink[] {
-  return [
-    {
-      href: "/bons-plans/guyane",
-      label: "Voir tous les bons plans en Guyane",
-      short: "Toute la Guyane",
-      group: "other" as const,
-    },
-    // Les autres communes : on saute de Cayenne à Kourou en un tap, sans
-    // repasser par le hub. La commune courante est exclue — un lien vers
-    // soi-même n'aide ni l'utilisateur ni le crawl.
-    ...CORE_CITIES.filter((entry) => entry.slug !== city.slug).map((entry) => ({
-      href: getDealsCityPath(entry.slug),
-      label: `Voir les bons plans à ${entry.name}`,
-      short: entry.name,
-      group: "city" as const,
-    })),
-    ...DEAL_CATEGORY_PILLARS.map((category) => ({
-      href: getDealsCategoryPath(category.slug),
-      label: `Voir les bons plans ${category.name.toLowerCase()} en Guyane`,
-      short: category.name,
-      group: "category" as const,
-    })),
-  ];
-}
-
-export function buildListingsCityExploreLinks(city: SeoCity): ExploreLink[] {
-  return [
-    {
-      href: "/annonces/guyane",
-      label: "Voir toutes les annonces en Guyane",
-      short: "Toute la Guyane",
-      group: "other" as const,
-    },
-    ...CORE_CITIES.filter((entry) => entry.slug !== city.slug).map((entry) => ({
-      href: getListingsCityPath(entry.slug),
-      label: `Voir les annonces à ${entry.name}`,
-      short: entry.name,
-      group: "city" as const,
-    })),
-    ...LISTING_CATEGORY_PILLARS.map((category) => ({
-      href: getListingsCategoryPath(category.slug),
-      label: `Voir les annonces ${category.name.toLowerCase()} en Guyane`,
-      short: category.name,
-      group: "category" as const,
-    })),
-  ];
-}
-
-export function buildDealsCategoryExploreLinks(category: SeoCategory): ExploreLink[] {
-  return [
-    {
-      href: "/bons-plans/guyane",
-      label: "Voir tous les bons plans en Guyane",
-      short: "Toute la Guyane",
-      group: "other" as const,
-    },
-    ...CORE_CITIES.map((city) => ({
-      href: getDealsCityPath(city.slug),
-      label: `Voir les bons plans à ${city.name}`,
-      short: city.name,
-      group: "city" as const,
-    })),
-    // Les autres thématiques, sans lien vers la page courante.
-    ...DEAL_CATEGORY_PILLARS.filter(
-      (entry) => entry.slug !== category.slug,
-    ).map((entry) => ({
-      href: getDealsCategoryPath(entry.slug),
-      label: `Voir les bons plans ${entry.name.toLowerCase()} en Guyane`,
-      short: entry.name,
-      group: "category" as const,
-    })),
-  ];
-}
-
-export function buildListingsCategoryExploreLinks(
-  category: SeoCategory,
-): ExploreLink[] {
-  return [
-    {
-      href: "/annonces/guyane",
-      label: "Voir toutes les annonces en Guyane",
-      short: "Toute la Guyane",
-      group: "other" as const,
-    },
-    ...CORE_CITIES.map((city) => ({
-      href: getListingsCityPath(city.slug),
-      label: `Voir les annonces à ${city.name}`,
-      short: city.name,
-      group: "city" as const,
-    })),
-    ...LISTING_CATEGORY_PILLARS.filter(
-      (entry) => entry.slug !== category.slug,
-    ).map((entry) => ({
-      href: getListingsCategoryPath(entry.slug),
-      label: `Voir les annonces ${entry.name.toLowerCase()} en Guyane`,
-      short: entry.name,
-      group: "category" as const,
-    })),
-  ];
-}
-
-export function buildStoreExploreLinks(storeSlug: string): ExploreLink[] {
-  const store = STORE_PILLARS.find((entry) => entry.slug === storeSlug);
-  if (!store) {
-    return [{ href: "/bons-plans/guyane", label: "Voir les bons plans en Guyane" }];
-  }
-  const city = CORE_CITIES.find((entry) => entry.slug === store.citySlug);
-  const cityName = city?.name ?? "la commune";
-
-  return [
-    {
-      href: getDealsCityPath(store.citySlug),
-      label: `Voir les bons plans à ${cityName}`,
-      short: cityName,
-      group: "city" as const,
-    },
-    {
-      href: "/bons-plans/supermarche-alimentation/guyane",
-      label: "Voir les promos supermarché en Guyane",
-      short: "Supermarché",
-      group: "category" as const,
-    },
-    {
-      href: "/bons-plans/guyane",
-      label: "Voir tous les bons plans en Guyane",
-      short: "Toute la Guyane",
-      group: "other" as const,
-    },
-  ];
-}
-
-// --- Activités (verticale voyage / tourisme) ---------------------------------
-
 export function buildActivitiesGlobalIntro(): string {
   return "Cette page rassemble les activités et lieux à découvrir en Guyane: sentiers et cascades, îles et criques, sites du bagne, villages et marchés, observation de la faune et sorties en pirogue. Chaque fiche précise deux informations qu'on ne trouve nulle part ailleurs regroupées: le mode d'accès réel (route, piste, 4x4, pirogue, avion) et la saisonnalité — praticable ou non selon la saison sèche ou la saison des pluies. Utilise la carte interactive pour explorer visuellement le territoire, ou les pages par commune et par catégorie pour préparer une sortie précise, de l'île de Cayenne au Maroni.";
 }
@@ -398,77 +187,6 @@ export function buildActivitiesFaq(label: string): FaqItem[] {
       answer:
         "Le mode d'accès (route, piste carrossable, 4x4 obligatoire, pirogue, bateau, avion ou marche d'approche) est affiché sur chaque fiche et chaque carte de résultat, avec le point de départ exact (parking, dégrad, embarcadère) et une note d'accès quand la piste se dégrade en saison des pluies.",
     },
-  ];
-}
-
-export function buildActivitiesGlobalExploreLinks(): ExploreLink[] {
-  return [
-    {
-      href: "/activites",
-      label: "Ouvrir la carte interactive des activités",
-      short: "Carte interactive",
-      group: "other" as const,
-    },
-    ...ACTIVITY_CITY_PILLARS.map((city) => ({
-      href: getActivitiesCityPath(city.slug),
-      label: `Voir les activités autour de ${city.name}`,
-      short: city.name,
-      group: "city" as const,
-    })),
-    ...ACTIVITY_CATEGORY_PILLARS.map((category) => ({
-      href: getActivitiesCategoryPath(category.slug),
-      label: `Voir les activités ${category.name.toLowerCase()} en Guyane`,
-      short: category.name,
-      group: "category" as const,
-    })),
-  ];
-}
-
-export function buildActivitiesCityExploreLinks(city: SeoCity): ExploreLink[] {
-  return [
-    {
-      href: `/activites?commune=${city.slug}`,
-      label: `Voir ${city.name} sur la carte interactive`,
-      short: "Sur la carte",
-      group: "other" as const,
-    },
-    {
-      href: "/activites/guyane",
-      label: "Voir toutes les activités en Guyane",
-      short: "Toute la Guyane",
-      group: "other" as const,
-    },
-    ...ACTIVITY_CATEGORY_PILLARS.map((category) => ({
-      href: getActivitiesCategoryPath(category.slug),
-      label: `Voir les activités ${category.name.toLowerCase()} en Guyane`,
-      short: category.name,
-      group: "category" as const,
-    })),
-  ];
-}
-
-export function buildActivitiesCategoryExploreLinks(
-  category: SeoCategory,
-): ExploreLink[] {
-  return [
-    {
-      href: `/activites?categorie=${category.slug}`,
-      label: `Voir les activités ${category.name.toLowerCase()} sur la carte`,
-      short: "Sur la carte",
-      group: "other" as const,
-    },
-    {
-      href: "/activites/guyane",
-      label: "Voir toutes les activités en Guyane",
-      short: "Toute la Guyane",
-      group: "other" as const,
-    },
-    ...ACTIVITY_CITY_PILLARS.map((city) => ({
-      href: getActivitiesCityPath(city.slug),
-      label: `Voir les activités autour de ${city.name}`,
-      short: city.name,
-      group: "city" as const,
-    })),
   ];
 }
 

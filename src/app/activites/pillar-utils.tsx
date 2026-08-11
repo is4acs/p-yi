@@ -5,12 +5,9 @@ import { ActivitiesPillarPage } from "@/components/seo/ActivitiesPillarPage";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { buildSeoMetadata } from "@/lib/seo/metadata";
 import {
-  buildActivitiesCategoryExploreLinks,
   buildActivitiesCategoryIntro,
-  buildActivitiesCityExploreLinks,
   buildActivitiesCityIntro,
   buildActivitiesFaq,
-  buildActivitiesGlobalExploreLinks,
   buildActivitiesGlobalIntro,
 } from "@/lib/seo/pillar-content";
 import {
@@ -117,7 +114,6 @@ export async function renderActivitiesGlobalPage() {
         { name: "Guyane", url: "/activites/guyane" },
       ]}
       faq={buildActivitiesFaq("en Guyane")}
-      exploreLinks={buildActivitiesGlobalExploreLinks()}
     />
   );
 }
@@ -140,7 +136,6 @@ export async function renderActivitiesCityPage(citySlug: string) {
         { name: city.name, url: getActivitiesCityPath(city.slug) },
       ]}
       faq={buildActivitiesFaq(`à ${city.name}`)}
-      exploreLinks={buildActivitiesCityExploreLinks(city)}
     />
   );
 }
@@ -166,7 +161,6 @@ export async function renderActivitiesCategoryPage(categorySlug: string) {
         },
       ]}
       faq={buildActivitiesFaq(`${category.name.toLowerCase()} en Guyane`)}
-      exploreLinks={buildActivitiesCategoryExploreLinks(category)}
     />
   );
 }

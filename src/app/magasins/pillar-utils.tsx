@@ -3,12 +3,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { DealCard } from "@/components/deals/DealCard";
-import { ExplorerAlso, SeoFaq, SeoIntro } from "@/components/seo/SeoBlocks";
+import { SeoFaq, SeoIntro } from "@/components/seo/SeoBlocks";
 import { buildSeoMetadata } from "@/lib/seo/metadata";
 import {
   buildStoreFaq,
   buildStoreIntro,
-  buildStoreExploreLinks,
 } from "@/lib/seo/pillar-content";
 import {
   MIN_INDEXABLE_STORE_DEALS,
@@ -209,8 +208,7 @@ export async function renderStorePage(storeSlug: string) {
         </div>
       </section>
 
-      <div className="mt-5 space-y-5">
-        <ExplorerAlso links={buildStoreExploreLinks(store.slug)} />
+      <div className="mt-5">
         <SeoFaq items={faq} />
       </div>
     </main>

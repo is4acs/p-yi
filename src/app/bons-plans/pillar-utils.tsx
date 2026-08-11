@@ -5,10 +5,7 @@ import { DealsPillarPage } from "@/components/seo/DealsPillarPage";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { buildSeoMetadata } from "@/lib/seo/metadata";
 import {
-  buildDealsCategoryExploreLinks,
-  buildDealsCityExploreLinks,
   buildDealsFaq,
-  buildDealsGlobalExploreLinks,
   buildDealsGlobalIntro,
   buildDealsCityIntro,
   buildDealsCategoryIntro,
@@ -108,7 +105,6 @@ export async function renderDealsGlobalPage() {
       filters={{}}
       breadcrumb={[...ROOT_BREADCRUMB, { name: "Guyane", url: "/bons-plans/guyane" }]}
       faq={buildDealsFaq("en Guyane")}
-      exploreLinks={buildDealsGlobalExploreLinks()}
     />
   );
 }
@@ -130,7 +126,6 @@ export async function renderDealsCityPage(citySlug: string) {
         { name: city.name, url: getDealsCityPath(city.slug) },
       ]}
       faq={buildDealsFaq(`à ${city.name}`)}
-      exploreLinks={buildDealsCityExploreLinks(city)}
     />
   );
 }
@@ -155,7 +150,6 @@ export async function renderDealsCategoryPage(categorySlug: string) {
         },
       ]}
       faq={buildDealsFaq(`${category.name.toLowerCase()} en Guyane`)}
-      exploreLinks={buildDealsCategoryExploreLinks(category)}
     />
   );
 }

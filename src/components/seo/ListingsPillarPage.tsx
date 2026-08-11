@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 import { ListingCardTile } from "@/components/listings/ListingCardTile";
-import { ExplorerAlso, SeoFaq, SeoIntro } from "@/components/seo/SeoBlocks";
+import { SeoFaq, SeoIntro } from "@/components/seo/SeoBlocks";
 import { withTimeout } from "@/lib/async/with-timeout";
-import type { ExploreLink, FaqItem } from "@/lib/seo/local-pages";
+import type { FaqItem } from "@/lib/seo/local-pages";
 import {
   buildBreadcrumbJsonLd,
   buildCollectionPageJsonLd,
@@ -24,7 +24,6 @@ type Props = {
   };
   breadcrumb: Array<{ name: string; url: string }>;
   faq: FaqItem[];
-  exploreLinks: ExploreLink[];
 };
 
 export async function ListingsPillarPage({
@@ -35,7 +34,6 @@ export async function ListingsPillarPage({
   filters,
   breadcrumb,
   faq,
-  exploreLinks,
 }: Props) {
   // Cf. `DealsPillarPage` : on isole le fetch pour qu'un crash Prisma
   // n'efface pas l'intégralité du contenu SEO statique de la page.
@@ -120,8 +118,7 @@ export async function ListingsPillarPage({
         </div>
       </section>
 
-      <div className="mt-5 space-y-5">
-        <ExplorerAlso links={exploreLinks} />
+      <div className="mt-5">
         <SeoFaq items={faq} />
       </div>
     </main>

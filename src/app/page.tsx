@@ -14,7 +14,6 @@ import { HotDealsList } from "@/components/home/soleil/HotDealsList";
 import { PatajBanner } from "@/components/home/soleil/PatajBanner";
 import { SideListings } from "@/components/home/soleil/SideListings";
 import { SoleilSearchField } from "@/components/home/soleil/SoleilSearchField";
-import { HomePillarLinks } from "@/components/seo/HomePillarLinks";
 
 export const dynamic = "force-dynamic";
 
@@ -248,11 +247,6 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {/* Maillage interne des pages piliers — conservé de la version
-          précédente : c'est lui qui porte l'indexation locale. */}
-      <div className="px-5 lg:px-8">
-        <HomePillarLinks />
-      </div>
     </main>
   );
 }

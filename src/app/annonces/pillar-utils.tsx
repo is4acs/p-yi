@@ -5,10 +5,7 @@ import { ListingsPillarPage } from "@/components/seo/ListingsPillarPage";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { buildSeoMetadata } from "@/lib/seo/metadata";
 import {
-  buildListingsCategoryExploreLinks,
-  buildListingsCityExploreLinks,
   buildListingsFaq,
-  buildListingsGlobalExploreLinks,
   buildListingsGlobalIntro,
   buildListingsCityIntro,
   buildListingsCategoryIntro,
@@ -114,7 +111,6 @@ export async function renderListingsGlobalPage() {
       filters={{}}
       breadcrumb={[...ROOT_BREADCRUMB, { name: "Guyane", url: "/annonces/guyane" }]}
       faq={buildListingsFaq("en Guyane")}
-      exploreLinks={buildListingsGlobalExploreLinks()}
     />
   );
 }
@@ -136,7 +132,6 @@ export async function renderListingsCityPage(citySlug: string) {
         { name: city.name, url: getListingsCityPath(city.slug) },
       ]}
       faq={buildListingsFaq(`à ${city.name}`)}
-      exploreLinks={buildListingsCityExploreLinks(city)}
     />
   );
 }
@@ -161,7 +156,6 @@ export async function renderListingsCategoryPage(categorySlug: string) {
         },
       ]}
       faq={buildListingsFaq(`${category.name.toLowerCase()} en Guyane`)}
-      exploreLinks={buildListingsCategoryExploreLinks(category)}
     />
   );
 }

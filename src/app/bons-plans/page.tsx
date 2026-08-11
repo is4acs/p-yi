@@ -18,10 +18,8 @@ import { DealsSearchBar } from "@/components/deals/DealsSearchBar";
 import { EmptyDeals } from "@/components/deals/EmptyDeals";
 import { OnboardingNudge } from "@/components/onboarding/OnboardingNudge";
 import { FilterDrawer } from "@/components/shared/FilterDrawer";
-import { ExplorerAlso } from "@/components/seo/SeoBlocks";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { getDealsFacetCanonicalPath } from "@/lib/seo/local-pages";
-import { buildDealsGlobalExploreLinks } from "@/lib/seo/pillar-content";
 
 export const dynamic = "force-dynamic";
 const METADATA_TIMEOUT_MS = 2_000;
@@ -441,11 +439,6 @@ export default async function BonsPlansPage(
           q={q}
         />
 
-        {!hasFilters && (
-          <div className="mt-6">
-            <ExplorerAlso links={buildDealsGlobalExploreLinks()} />
-          </div>
-        )}
       </div>
     </main>
   );

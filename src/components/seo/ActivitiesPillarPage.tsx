@@ -2,11 +2,11 @@ import Link from "next/link";
 import { Map } from "lucide-react";
 
 import { ActivityCard } from "@/components/activities/ActivityCard";
-import { ExplorerAlso, SeoFaq, SeoIntro } from "@/components/seo/SeoBlocks";
+import { SeoFaq, SeoIntro } from "@/components/seo/SeoBlocks";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { buildActivityFeatureCollection } from "@/lib/activities/geojson";
 import { fetchActivitiesForPillar } from "@/lib/seo/pillar-queries";
-import type { ExploreLink, FaqItem } from "@/lib/seo/local-pages";
+import type { FaqItem } from "@/lib/seo/local-pages";
 import {
   buildBreadcrumbJsonLd,
   buildCollectionPageJsonLd,
@@ -37,7 +37,6 @@ type Props = {
   mapHref: string;
   breadcrumb: Array<{ name: string; url: string }>;
   faq: FaqItem[];
-  exploreLinks: ExploreLink[];
 };
 
 export async function ActivitiesPillarPage({
@@ -49,7 +48,6 @@ export async function ActivitiesPillarPage({
   mapHref,
   breadcrumb,
   faq,
-  exploreLinks,
 }: Props) {
   // Même politique anti-crash que les autres piliers : un hiccup Prisma
   // laisse la page utile (intro, FAQ, maillage) avec un bandeau d'info.
@@ -142,8 +140,7 @@ export async function ActivitiesPillarPage({
         </div>
       </section>
 
-      <div className="mt-5 space-y-5">
-        <ExplorerAlso links={exploreLinks} />
+      <div className="mt-5">
         <SeoFaq items={faq} />
       </div>
     </main>

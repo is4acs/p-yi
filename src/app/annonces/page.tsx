@@ -18,9 +18,7 @@ import {
   parseType,
 } from "@/lib/listings/url";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { ExplorerAlso } from "@/components/seo/SeoBlocks";
 import { getListingsFacetCanonicalPath } from "@/lib/seo/local-pages";
-import { buildListingsGlobalExploreLinks } from "@/lib/seo/pillar-content";
 import { HomeCategoriesGrid } from "@/components/home/HomeCategoriesGrid";
 import { HomeCommunesSection } from "@/components/home/HomeCommunesSection";
 import { AnnoncesHero } from "@/components/listings/AnnoncesHero";
@@ -476,11 +474,6 @@ export default async function AnnoncesPage(
           filters={filters}
         />
 
-        {!hasFilters && (
-          <div className="mt-6">
-            <ExplorerAlso links={buildListingsGlobalExploreLinks()} />
-          </div>
-        )}
       </div>
     </main>
   );
