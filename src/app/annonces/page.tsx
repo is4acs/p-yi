@@ -21,7 +21,6 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { getListingsFacetCanonicalPath } from "@/lib/seo/local-pages";
 import { HomeCategoriesGrid } from "@/components/home/HomeCategoriesGrid";
 import { HomeCommunesSection } from "@/components/home/HomeCommunesSection";
-import { AnnoncesHero } from "@/components/listings/AnnoncesHero";
 import { PopularSearchChips } from "@/components/listings/PopularSearchChips";
 import { ListingCardTile } from "@/components/listings/ListingCardTile";
 import { ListingsSearchBar } from "@/components/listings/ListingsSearchBar";
@@ -274,16 +273,13 @@ export default async function AnnoncesPage(
     // au desktop (avant S27 : max-w-2xl, trop étroit pour une grille
     // photo-first).
     <main className="mx-auto max-w-md overflow-x-clip pb-12 animate-in fade-in duration-300 sm:max-w-2xl lg:max-w-6xl">
-      {/* Mode découverte (aucun filtre) : hero éditorial + chips de
-          recherches populaires. Sous filtre ces blocs disparaissent —
-          pattern hérité de `/bons-plans` (cf. `<BonsPlansHero>` et
-          `<DealCategoryStrip>`). */}
-      {!hasFilters && (
-        <>
-          <AnnoncesHero total={total} />
-          <PopularSearchChips />
-        </>
-      )}
+      {/* Refonte « Soleil péyi » : la maquette #4c n'a pas de héros sur
+          la page de liste. Le titre reste dans le DOM pour les moteurs et
+          les lecteurs d'écran ; à l'écran c'est la ligne de décompte qui
+          situe. Les recherches populaires restent : ce sont des
+          raccourcis, pas de la décoration. */}
+      <h1 className="sr-only">Petites annonces de Guyane</h1>
+      {!hasFilters && <PopularSearchChips />}
       {/* Sticky ancré SOUS le Header global (`sticky top-0 z-30 h-14
           sm:h-16`) et non à `top-0` — cf. justification identique sur
           `/bons-plans/page.tsx`. `z-20` passe au-dessus des z-10
@@ -292,19 +288,13 @@ export default async function AnnoncesPage(
         {/* H1 + count : conservés uniquement en mode filtré. En
             découverte c'est le hero qui porte le titre ; doubler un H1
             casserait la hiérarchie a11y.
-
-            S33 : le bouton "Poster" ne vit plus ici qu'en mode filtré.
-            Avant, il flottait seul aligné à droite en mode découverte
-            (quand hasFilters=false → pas de H1 à gauche → vide). Le CTA
-            a été déplacé dans <AnnoncesHero> qui n'est rendu qu'en
-            mode découverte. Résultat : le bouton Poster est toujours
-            visible, mais à la bonne place selon le contexte. */}
+*/}
         {hasFilters && (
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+              <h2 className="font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
                 Annonces
-              </h1>
+              </h2>
               <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
                 {total} annonce{total > 1 ? "s" : ""}
                 {q ? (
@@ -434,11 +424,13 @@ export default async function AnnoncesPage(
           </div>
         )}
 
-        {!hasFilters && listings.length > 0 && (
-          <h2 className="mb-3 font-display text-lg font-semibold text-ink-900">
-            Dernières annonces
-          </h2>
-        )}
+        {/* Ligne de décompte, à la place du héros (maquette #4c) : elle
+            situe l'utilisateur en une ligne au lieu d'un demi-écran. */}
+        <p className="mb-3 text-[11px] font-extrabold uppercase tracking-[2.2px] text-accent-text">
+          {total} annonce{total > 1 ? "s" : ""}
+          {" · "}
+          {cities.find((c) => c.slug === city)?.name ?? "Guyane"}
+        </p>
 
         {listings.length === 0 ? (
           <EmptyListings

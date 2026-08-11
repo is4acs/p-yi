@@ -90,7 +90,7 @@ export function ListingCard({
           />
         </div>
         {listing.isUrgent && (
-          <span className="absolute left-1 top-1 inline-flex items-center gap-0.5 rounded-full bg-hot/90 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white shadow">
+          <span className="absolute left-1 top-1 inline-flex items-center gap-0.5 rounded-full bg-peyi-orange-500 px-1.5 py-0.5 text-[9px] font-bold uppercase text-peyi-forest-500 shadow">
             <Flame className="h-2.5 w-2.5" aria-hidden />
             Urgent
           </span>

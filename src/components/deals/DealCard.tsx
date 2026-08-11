@@ -59,11 +59,14 @@ function expiryWarning(expiresAt: Date | null): string | null {
 }
 
 /**
- * Tag marchand (Cdiscount, Amazon, Carrefour Matoury, …). La mockup
- * hardcode une couleur par marque — on n'a pas cette donnée côté DB,
- * donc on binarise : store local (Carrefour Matoury, Hyper U Cayenne) =
- * vert Péyi, marchand national (Amazon, Fnac) = ink-900. Ça suffit à
- * signaler visuellement le "local vs national" sans payload custom.
+ * Tag marchand (Cdiscount, Amazon, Carrefour Matoury, …).
+ *
+ * La distinction local / national passait par la couleur du fond : vert
+ * Lawèt contre encre sombre. Le vert Lawèt ne fait plus partie de la
+ * charte UI depuis la refonte, et deux fonds différents pour la même
+ * information — le nom de l'enseigne — n'apportaient rien. L'enseigne
+ * prend donc l'encre du thème dans les deux cas, et c'est la mention
+ * « Local · En magasin » qui porte seule la distinction.
  */
 function MerchantTag({
   name,
@@ -79,16 +82,11 @@ function MerchantTag({
       <StoreLogo name={name} logoUrl={logoUrl} size="sm" />
       {/* L'enseigne ne rétrécit pas : c'est l'information utile. Quand la
           place manque, c'est la mention secondaire qui s'abrège. */}
-      <span
-        className={cn(
-          "shrink-0 rounded-xs px-1.5 py-0.5 font-mono font-semibold text-white",
-          isLocal ? "bg-peyi-green-700" : "bg-ink-900",
-        )}
-      >
+      <span className="shrink-0 rounded-xs bg-foreground px-1.5 py-0.5 font-mono font-semibold text-background">
         {name}
       </span>
       {isLocal && (
-        <span className="truncate font-mono font-semibold text-peyi-green-700">
+        <span className="truncate font-mono font-semibold text-accent-text">
           Local · En magasin
         </span>
       )}
@@ -321,7 +319,7 @@ export function DealCard({
                 pour conserver un rythme horizontal. */}
             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
               {deal.isFree ? (
-                <span className="inline-flex items-center rounded-md bg-peyi-green-100 px-2 py-0.5 font-display text-base font-extrabold text-peyi-green-800 sm:text-xl">
+                <span className="inline-flex items-center rounded-xs bg-valid px-2 py-0.5 font-display text-base font-extrabold text-valid-foreground sm:text-xl">
                   Gratuit
                 </span>
               ) : (
@@ -335,7 +333,7 @@ export function DealCard({
                     </span>
                   )}
                   {deal.discountPercent != null && deal.discountPercent > 0 && (
-                    <span className="rounded-xs bg-hot px-1.5 py-0.5 font-display text-[10px] font-extrabold text-white sm:px-2 sm:py-0.5 sm:text-xs">
+                    <span className="rounded-xs bg-promo px-1.5 py-0.5 font-display text-[10px] font-extrabold text-promo-foreground sm:px-2 sm:py-0.5 sm:text-xs">
                       −{deal.discountPercent}%
                     </span>
                   )}

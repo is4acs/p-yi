@@ -22,7 +22,7 @@ export function PriceTag({
     return (
       <span
         className={cn(
-          "inline-flex items-center rounded-md bg-peyi-green-100 px-2 py-0.5 font-bold text-peyi-green-800",
+          "inline-flex items-center rounded-xs bg-valid px-2 py-0.5 font-display font-extrabold text-valid-foreground",
           size === "lg" ? "text-lg" : size === "sm" ? "text-xs" : "text-base",
           className,
         )}
@@ -41,18 +41,18 @@ export function PriceTag({
 
   return (
     <div className={cn("flex flex-wrap items-baseline gap-x-2 gap-y-1", className)}>
-      <span className={cn("font-bold text-foreground", priceClass)}>
+      <span className={cn("font-display font-extrabold text-accent-text", priceClass)}>
         {formatPrice(price)}
       </span>
       {originalPrice != null && (
-        <span className={cn("text-muted-foreground line-through", originalClass)}>
+        <span className={cn("text-strike line-through", originalClass)}>
           {formatPrice(originalPrice)}
         </span>
       )}
       {discountPercent != null && discountPercent > 0 && (
         <span
           className={cn(
-            "rounded bg-peyi-orange-500 font-bold text-white",
+            "rounded-xs bg-promo font-display font-extrabold text-promo-foreground",
             discountClass,
           )}
         >

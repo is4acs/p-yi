@@ -8,7 +8,7 @@ type Props = {
 };
 
 const TONE: Record<ListingType, string> = {
-  OFFER: "bg-peyi-green-100 text-peyi-green-800",
+  OFFER: "bg-valid text-valid-foreground",
   DEMAND: "bg-peyi-orange-100 text-peyi-orange-800",
   EXCHANGE: "bg-blue-100 text-blue-800",
   DONATION: "bg-violet-100 text-violet-800",

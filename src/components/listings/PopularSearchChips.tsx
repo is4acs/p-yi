@@ -27,10 +27,10 @@ import { buildListingsUrl } from "@/lib/listings/url";
  *
  * Ne s'affiche qu'en mode "découverte" (aucun filtre actif) — sous
  * filtre on laisse la page se concentrer sur les résultats (cf.
- * `<AnnoncesHero>` et `<DealCategoryStrip>`).
+ * de la page.
  *
  * Layout : scroll-snap horizontal mobile (économie vertical), wrap flex
- * desktop (tout visible d'un coup). Pattern identique à `<DealCategoryStrip>`
+ * desktop (tout visible d'un coup).
  * pour la cohérence entre les deux pages.
  */
 

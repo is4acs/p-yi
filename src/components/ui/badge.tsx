@@ -30,14 +30,21 @@ const badgeVariants = cva(
         destructive:
           "border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80",
         outline: "text-foreground",
-        // Peyi v1.0 — accents éditoriaux
+        // Refonte « Soleil péyi » — accents éditoriaux.
+        // La remise n'est plus un aplat orange à texte blanc (illisible en
+        // dessous de 4.5:1) mais la pastille douce du handoff : fond
+        // `#FFE3CD`, texte `#B0651F`, rayon 6-7 px.
         promo:
-          "border-transparent bg-peyi-orange-500 text-white font-display font-extrabold uppercase tracking-[0.08em] px-2 py-[3px] text-[10px] rounded-full",
-        new: "border-transparent bg-peyi-green-500 text-white font-display font-extrabold uppercase tracking-[0.08em] px-2 py-[3px] text-[10px] rounded-full",
+          "border-transparent bg-promo text-promo-foreground font-display font-extrabold px-2 py-[3px] text-[10px] rounded-xs",
+        // « Nouveau » / « Validé » : le vert tendre du badge Validé
+        // remplace le vert Lawèt, hors charte UI depuis la refonte.
+        new: "border-transparent bg-valid text-valid-foreground font-display font-extrabold px-2 py-[3px] text-[10px] rounded-xs",
+        // « Local » : l'encre du thème plutôt que le rouge du drapeau,
+        // qui ne fait pas partie de la palette Soleil.
         local:
-          "border-transparent bg-peyi-rouge text-white font-display font-extrabold uppercase tracking-[0.08em] px-2 py-[3px] text-[10px] rounded-full",
+          "border-transparent bg-foreground text-background font-display font-extrabold uppercase tracking-[0.08em] px-2 py-[3px] text-[10px] rounded-xs",
         bonplan:
-          "border-transparent bg-peyi-jaune text-ink-900 font-display font-extrabold uppercase tracking-[0.08em] px-2 py-[3px] text-[10px] rounded-full",
+          "border-transparent bg-peyi-orange-500 text-peyi-forest-500 font-display font-extrabold uppercase tracking-[0.08em] px-2 py-[3px] text-[10px] rounded-xs",
       },
     },
     defaultVariants: {

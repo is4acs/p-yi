@@ -9,7 +9,6 @@ import {
 } from "@/lib/deals/queries";
 import { parsePage, parseQuery, parseSort } from "@/lib/deals/url";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { BonsPlansHero } from "@/components/deals/BonsPlansHero";
 import { DealCard } from "@/components/deals/DealCard";
 import { DealsSortTabs } from "@/components/deals/DealsSortTabs";
 import { DealsFilterBar } from "@/components/deals/DealsFilterBar";
@@ -306,9 +305,11 @@ export default async function BonsPlansPage(
 
   return (
     <main className="mx-auto max-w-md pb-12 animate-in fade-in duration-300 sm:max-w-2xl">
-      {/* Hero éditorial : mode découverte uniquement (sous filtre, on
-          laisse la vedette aux résultats). */}
-      {!hasFilters && <BonsPlansHero />}
+      {/* Refonte « Soleil péyi » : la maquette #4a ne pose pas de héros
+          sur une page de liste — on entre directement dans les résultats.
+          Le titre reste dans le DOM pour les moteurs et les lecteurs
+          d'écran ; à l'écran, c'est la ligne de décompte qui situe. */}
+      <h1 className="sr-only">Bons plans de Guyane</h1>
 
       {/* Onboarding nudge : profil incomplet / aucun post. Dismiss
           persistant en localStorage. Server-computed steps → pas de
@@ -331,9 +332,9 @@ export default async function BonsPlansPage(
             le hero disparaît, donc le titre reprend sa place ici. */}
         {hasFilters && (
           <>
-            <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+            <h2 className="font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
               Bons plans
-            </h1>
+            </h2>
             {/* Résumé de ce qui est filtré. Depuis que la strip de
                 catégories a quitté la page, c'est ici — et sur le badge du
                 bouton « Filtrer » — que l'utilisateur lit dans quel sous-
@@ -403,6 +404,14 @@ export default async function BonsPlansPage(
       </div>
 
       <div className="px-4 pt-4 sm:px-0">
+        {/* Ligne de décompte, à la place du héros (maquette #4a :
+            « 214 DEALS · GUYANE »). Elle situe l'utilisateur en une
+            ligne, sans lui coûter un demi-écran de défilement. */}
+        <p className="mb-3 text-[11px] font-extrabold uppercase tracking-[2.2px] text-accent-text">
+          {total} deal{total > 1 ? "s" : ""}
+          {" · "}
+          {cityName ?? "Guyane"}
+        </p>
         {hasDataLoadIssue && (
           <div
             role="status"

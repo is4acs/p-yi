@@ -5,50 +5,59 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 /**
- * Button — primitive du design system Peyi.
+ * Button — primitive du design system Péyi.
+ *
+ * Refonte « Soleil péyi » : le CTA dominant n'est plus un aplat orange
+ * mais **un aplat à l'encre du thème** — forêt sur crème le jour, crème
+ * sur forêt la nuit. C'est une règle du handoff : un seul aplat orange
+ * plein par écran, réservé aux bannières d'accroche. Un orange en fond de
+ * bouton à chaque action rendait la page criarde et faisait perdre à
+ * l'orange sa valeur de signal.
+ *
+ * Les boutons sont des pilules (`rounded-full`), comme les chips et les
+ * champs de recherche.
  *
  * Variants :
- *  - `default` : bouton shadcn neutre (bg-primary), historique. Conservé
- *    pour les 10+ usages existants qui ne veulent pas l'ombre de marque.
- *  - `peyi` : **CTA principal Peyi** (orange + shadow-brand + translateY
- *    au hover). À utiliser pour le bouton d'action dominant d'une page
- *    ("Poster une annonce", "Envoyer", "Se connecter"…).
- *  - `brand` : vert Lawèt — accent de marque, second CTA.
+ *  - `peyi` / `default` : **CTA dominant**, aplat à l'encre du thème.
+ *  - `accent` : le rare aplat orange (bannière « Pataj to bon plan ! »).
  *  - `destructive` : actions destructrices (supprimer, rejeter).
- *  - `outline` : bordure discrète, usage secondaire.
- *  - `secondary` : fond secondaire shadcn (gris-vert atténué).
+ *  - `outline` : filet 1,5 px — action secondaire.
+ *  - `secondary` : surface teintée, sans bordure.
  *  - `ghost` : plat, hover légèrement coloré.
  *  - `link` : texte souligné, pas de fond.
  */
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[colors,transform,box-shadow] duration-base active:scale-[0.98] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-semibold transition-[colors,transform,box-shadow] duration-base active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default:
-          "bg-primary text-primary-foreground shadow hover:bg-primary/90",
-        // Peyi primary — spec handoff : orange + shadow-brand + liftoff au
-        // hover (-1px). Usage : CTA dominant de la page.
-        peyi:
-          "bg-peyi-orange-500 text-white shadow-brand hover:bg-peyi-orange-600 hover:-translate-y-px",
-        brand:
-          "bg-peyi-green-500 text-white hover:bg-peyi-green-600 hover:-translate-y-px",
+        default: "bg-primary text-primary-foreground hover:opacity-90",
+        // Conservé sous son ancien nom : ~8 appels le désignent déjà
+        // comme « le bouton principal ». Seule son apparence change.
+        peyi: "bg-primary text-primary-foreground hover:opacity-90",
+        // L'aplat orange, à n'utiliser qu'une fois par écran. Le texte
+        // est à l'encre forêt : du blanc sur `#FF914C` ne passe pas AA.
+        accent:
+          "bg-peyi-orange-500 text-peyi-forest-500 hover:bg-peyi-orange-600",
+        // Alias historique de l'accent vert, redirigé sur l'encre : le
+        // vert Lawèt (#7ED956) ne fait plus partie de la charte UI.
+        brand: "bg-primary text-primary-foreground hover:opacity-90",
         destructive:
           "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
         outline:
-          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+          "border-[1.5px] border-input bg-transparent hover:border-peyi-orange-400 hover:text-accent-text",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
+          "bg-surface text-secondary-foreground hover:bg-surface/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+        link: "text-accent-text underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
-        // Handoff Peyi : pill arrondi 52px, font-display 700 — usage hero.
-        peyi: "h-[52px] rounded-full px-7 font-display text-base font-bold",
-        icon: "h-9 w-9",
+        default: "h-10 px-5 py-2",
+        sm: "h-8 px-3.5 text-xs",
+        lg: "h-11 px-7",
+        // Handoff Péyi : pilule 52 px, display 800 — usage héros.
+        peyi: "h-[52px] px-7 font-display text-base font-extrabold",
+        icon: "h-10 w-10",
       },
     },
     defaultVariants: {

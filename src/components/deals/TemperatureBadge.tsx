@@ -13,11 +13,16 @@ export function TemperatureBadge({ temperature, size = "md", className }: Props)
   const label = temperature >= 0 ? `+${temperature}°` : `${temperature}°`;
   const icon = isCold ? "❄️" : "🔥";
 
+  // Refonte « Soleil péyi » : la température se lit sur un cercle bordé
+  // d'orange, pas sur un aplat rouge ou bleu — ces deux couleurs ne font
+  // pas partie de la palette. Chaud = bordure orange pleine, tiède =
+  // filet neutre, froid = bordure atténuée. Le chiffre reste dans
+  // l'orange lisible.
   const palette = isCold
-    ? "bg-cold/10 text-cold border-cold/30"
+    ? "border-input text-muted-foreground"
     : isHot
-    ? "bg-hot/10 text-hot border-hot/30"
-    : "bg-muted text-muted-foreground border-border";
+    ? "border-peyi-orange-500 text-accent-text"
+    : "border-input text-accent-text";
 
   const sizing =
     size === "sm"
@@ -27,7 +32,7 @@ export function TemperatureBadge({ temperature, size = "md", className }: Props)
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border font-semibold tabular-nums",
+        "inline-flex items-center rounded-full border-2 bg-transparent font-display font-extrabold tabular-nums",
         palette,
         sizing,
         className,

@@ -132,7 +132,7 @@ export function ListingCardTile({
               prime sur NOUVEAU (vert). Pas d'empilement — l'œil doit
               attraper UN signal, pas déchiffrer une pile. */}
           {listing.isUrgent ? (
-            <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-hot/90 px-2 py-[3px] font-display text-[10px] font-extrabold uppercase tracking-[0.08em] text-white shadow">
+            <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-peyi-orange-500 px-2 py-[3px] font-display text-[10px] font-extrabold uppercase tracking-[0.08em] text-peyi-forest-500 shadow">
               <Flame className="h-3 w-3" aria-hidden />
               Urgent
             </span>

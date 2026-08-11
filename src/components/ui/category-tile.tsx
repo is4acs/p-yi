@@ -6,33 +6,28 @@ import { cn } from "@/lib/utils";
 /**
  * CategoryTile — carte catégorie sur la home / page d'entrée.
  *
- * Spec handoff Peyi v1.0 :
- *  - 4 variantes chromatiques pour rythmer visuellement une grille :
- *      orange | green | rouge | jaune
- *  - Background teinté très clair (50), icône en teinte forte (700)
- *  - Padding 12px, radius md (via token tailwind), min-height 86px
- *  - Hover : translateY(-2px) + ombre légère (affordance cliquable)
+ * Refonte « Soleil péyi » : les quatre variantes chromatiques (rose,
+ * vert citron, jaune, orange pâle) disparaissent. Elles introduisaient
+ * six couleurs hors palette dans une grille posée sur crème, et c'est ce
+ * qui sautait le plus aux yeux sur `/annonces`.
+ *
+ * Une tuile est désormais un simple filet de 1,5 px, comme les tuiles
+ * compteurs du héros. Le rythme visuel de la grille est porté par les
+ * icônes et les libellés, pas par des aplats colorés — la prop `variant`
+ * disparaît donc avec eux.
  *
  * Usage :
  * ```tsx
- * <CategoryTile href="/annonces?category=immobilier" variant="orange">
+ * <CategoryTile href="/annonces?category=immobilier">
  *   <HomeIcon />
  *   <span>Immobilier</span>
  *   <span>2 481</span>
  * </CategoryTile>
  * ```
  */
-const VARIANT_STYLES = {
-  orange: "bg-peyi-orange-50 text-peyi-orange-700",
-  green: "bg-peyi-green-50 text-peyi-green-700",
-  rouge: "bg-[#FBE5E8] text-peyi-rouge",
-  jaune: "bg-[#FFF4C9] text-[#B68500]",
-} as const;
-
-type CategoryTileVariant = keyof typeof VARIANT_STYLES;
+const TILE_STYLE = "border-[1.5px] border-input bg-transparent text-foreground";
 
 type BaseProps = {
-  variant?: CategoryTileVariant;
   className?: string;
   children: React.ReactNode;
 };
@@ -60,17 +55,16 @@ type DisabledProps = BaseProps & {
 type Props = LinkProps | ButtonProps | DisabledProps;
 
 export function CategoryTile({
-  variant = "orange",
   className,
   children,
   ...rest
 }: Props) {
   const isDisabled = "disabled" in rest && rest.disabled === true;
   const classes = cn(
-    "group flex min-h-[86px] flex-col items-start justify-between rounded-md p-3 transition-transform duration-base",
-    !isDisabled && "hover:-translate-y-0.5 hover:shadow-md",
-    isDisabled && "opacity-80",
-    VARIANT_STYLES[variant],
+    "group flex min-h-[86px] flex-col items-start justify-between rounded-md p-3 transition-colors duration-base",
+    !isDisabled && "hover:border-peyi-orange-400",
+    isDisabled && "opacity-60",
+    TILE_STYLE,
     className,
   );
 

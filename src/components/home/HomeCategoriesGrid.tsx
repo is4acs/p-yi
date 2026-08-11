@@ -27,9 +27,9 @@ import { Icon, type IconName } from "@/components/ui/Icon";
  *  - Compteur par catégorie : PUBLISHED + non expirées, via groupBy.
  *    C'est 1 query en plus mais très rapide (index sur status +
  *    expiresAt déjà posé) — et cette query sert aussi au tri.
- *  - Rotation chromatique orange / green / rouge / jaune — pattern
- *    `i % 4` pour garantir l'alternance même si l'ordre des
- *    catégories change en DB.
+ *  - Depuis la refonte « Soleil péyi », les tuiles ne sont plus
+ *    colorées : filet de 1,5 px, comme les tuiles compteurs du héros.
+ *    La rotation chromatique introduisait six couleurs hors palette.
  *  - Icône Péyi custom quand une correspondance existe (home, car,
  *    job, tag), sinon fallback sur l'emoji de la DB (📱, 🛋️, etc.).
  *    On évite d'empiler emoji + icône : l'un OU l'autre.
@@ -48,7 +48,6 @@ const SLUG_TO_ICON: Partial<Record<string, IconName>> = {
   "loisirs-sport": "event",
 };
 
-const VARIANTS = ["orange", "green", "rouge", "jaune"] as const;
 const GRID_QUERY_TIMEOUT_MS = 3_500;
 
 function formatCount(n: number): string {
@@ -125,14 +124,13 @@ export async function HomeCategoriesGrid() {
   return (
     <section className="mt-8 px-4 sm:px-0">
       <div className="flex items-end justify-between gap-3">
-        <h2 className="font-display text-lg font-semibold text-ink-900">
+        <h2 className="font-display text-lg font-extrabold">
           Explorer par catégorie
         </h2>
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {ordered.map((c, i) => {
-          const variant = VARIANTS[i % VARIANTS.length];
+        {ordered.map((c) => {
           const iconName = SLUG_TO_ICON[c.slug];
           const count = countByCategoryId.get(c.id) ?? 0;
           return (
@@ -143,7 +141,6 @@ export async function HomeCategoriesGrid() {
               {...(count > 0
                 ? { href: buildListingsUrl({ category: c.slug }) }
                 : { disabled: true as const })}
-              variant={variant}
             >
               {iconName ? (
                 <Icon name={iconName} size={28} />
