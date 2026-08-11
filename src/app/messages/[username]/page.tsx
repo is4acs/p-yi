@@ -214,7 +214,7 @@ function ReplyForm({
   return (
     <form
       action={sendMessageAction}
-      className="sticky bottom-0 mt-4 flex items-end gap-2 border-t border-border bg-background/95 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+      className="sticky bottom-20 z-30 mt-4 flex items-end gap-2 border-t border-border bg-background/95 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 lg:bottom-0"
     >
       <input type="hidden" name="recipientUsername" value={recipientUsername} />
       {listingSlug && (

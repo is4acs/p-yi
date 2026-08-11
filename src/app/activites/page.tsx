@@ -43,7 +43,7 @@ export default async function ActivitesPage() {
   }
 
   return (
-    <main className="h-[calc(100dvh-8.5rem)] sm:h-[calc(100dvh-4rem)]">
+    <main className="h-[calc(100dvh-8.5rem)] lg:h-[calc(100dvh-4rem)]">
       <h1 className="sr-only">
         Activités et lieux à découvrir en Guyane — carte interactive
       </h1>

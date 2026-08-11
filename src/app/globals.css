@@ -159,6 +159,22 @@
     @apply border-soleil-cream;
   }
 
+  /* Filet de sécurité mode nuit pour les pages non refondues : les
+     textes `ink-*` (neutres chauds clairs-only) deviennent illisibles
+     sur les surfaces sombres une fois la classe .dark posée par
+     next-themes. On les remappe sur les tokens thème, le temps que ces
+     écrans passent aux tokens soleil. Spécificité (0,2,0) : bat la
+     classe utilitaire (0,1,0) uniquement sous .dark. */
+  .dark .text-ink-900,
+  .dark .text-ink-700 {
+    color: hsl(var(--foreground));
+  }
+  .dark .text-ink-500,
+  .dark .text-ink-300,
+  .dark .text-ink-200 {
+    color: hsl(var(--muted-foreground));
+  }
+
   /* Highlight éditorial derrière un mot-clé — signature Peyi.
      Utilise le jaune du drapeau guyanais. Usage :
        <span class="hl-jaune">100% Guyane</span>

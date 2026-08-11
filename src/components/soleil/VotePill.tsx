@@ -39,11 +39,34 @@ export function VotePill({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
+  // Miroir de la sémantique serveur (HOT = +10°, COLD = −5°, re-clic =
+  // retrait du vote, clic opposé = bascule) pour que l'optimiste ne
+  // saute pas quand la réponse arrive.
+  function optimisticDelta(input: VoteInput, current: VoteType | null): number {
+    const HOT = 10;
+    const COLD = -5;
+    if (input === "HOT") {
+      if (current === "HOT") return -HOT;
+      if (current === "COLD") return HOT - COLD;
+      return HOT;
+    }
+    if (current === "COLD") return -COLD;
+    if (current === "HOT") return COLD - HOT;
+    return COLD;
+  }
+
+  function nextVote(input: VoteInput, current: VoteType | null): VoteType | null {
+    if (input === "HOT") return current === "HOT" ? null : "HOT";
+    return current === "COLD" ? null : "COLD";
+  }
+
   function cast(input: VoteInput) {
     if (!canVote || pending) return;
     setError(null);
-    const delta = input === "HOT" ? 10 : -10;
+    const previousVote = vote;
+    const delta = optimisticDelta(input, previousVote);
     setTemp((t) => t + delta);
+    setVote(nextVote(input, previousVote));
     startTransition(async () => {
       const result = await voteDealAction(dealId, input);
       if (result.ok && typeof result.temperature === "number") {
@@ -51,6 +74,7 @@ export function VotePill({
         setVote(result.myVote ?? null);
       } else {
         setTemp((t) => t - delta);
+        setVote(previousVote);
         if (result.error) setError(result.error);
       }
     });

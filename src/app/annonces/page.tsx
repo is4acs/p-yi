@@ -284,7 +284,7 @@ export default async function AnnoncesPage(
       <h1 className="sr-only">Petites annonces de Guyane</h1>
       <div className="mx-auto w-full max-w-md px-5 pb-12 lg:max-w-6xl lg:px-8">
         {/* Header wordmark + pilule ville (même squelette que l'écran 1). */}
-        <div className="flex items-end justify-between pt-4">
+        <div className="flex items-end justify-between pt-4 lg:hidden">
           <Link href="/" className="flex items-end gap-2" aria-label="Accueil Péyi">
             <Sun w={20} />
             <span className="font-display text-[23px] font-extrabold leading-[0.9] tracking-[-0.5px]">
@@ -336,6 +336,18 @@ export default async function AnnoncesPage(
                 { value: "1000", label: "− 1 000 €" },
                 { value: "5000", label: "− 5 000 €" },
                 { value: "20000", label: "− 20 000 €" },
+                // Valeur hors presets (lien profond / URL éditée) : on
+                // l'affiche telle quelle pour ne pas la perdre au prochain
+                // submit.
+                ...(filters.priceMax != null &&
+                ![50, 200, 1000, 5000, 20000].includes(filters.priceMax)
+                  ? [
+                      {
+                        value: String(filters.priceMax),
+                        label: `− ${filters.priceMax.toLocaleString("fr-FR")} €`,
+                      },
+                    ]
+                  : []),
               ]}
               defaultValue={
                 filters.priceMax != null ? String(filters.priceMax) : ""
@@ -348,7 +360,7 @@ export default async function AnnoncesPage(
               defaultValue={city ?? ""}
             />
           </div>
-          <button type="submit" className="sr-only">
+          <button type="submit" className="sr-only focus:not-sr-only focus:mt-2 focus:inline-flex focus:min-h-[36px] focus:items-center focus:rounded-full focus:border-[1.5px] focus:border-soleil-forest focus:px-3 focus:text-xs focus:font-bold dark:focus:border-soleil-cream">
             Filtrer
           </button>
         </form>

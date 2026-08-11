@@ -30,7 +30,7 @@ export function FilterChips({ chips, className }: Props) {
           href={chip.href}
           aria-current={chip.active ? "true" : undefined}
           className={cn(
-            "flex-none whitespace-nowrap rounded-full px-3.5 py-[7px] text-xs",
+            "flex min-h-[36px] flex-none items-center whitespace-nowrap rounded-full px-3.5 py-[7px] text-xs",
             chip.active
               ? "bg-soleil-forest font-bold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
               : "border-[1.5px] border-soleil-border font-semibold text-soleil-forest dark:border-soleil-border-d dark:text-soleil-cream",

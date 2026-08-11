@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { cn } from "@/lib/utils";
 
 export type FilterSelectOption = { value: string; label: string };
@@ -17,9 +18,11 @@ type Props = {
 
 /**
  * FilterSelect — un `<select>` natif habillé en chip « Soleil péyi »
- * (▾ inclus). Soumet automatiquement son formulaire parent au
- * changement ; un bouton submit sr-only dans le formulaire couvre le
- * cas sans JavaScript.
+ * (▾ inclus). À la souris / au doigt, le formulaire parent est soumis
+ * dès le changement ; au clavier (flèches), la soumission attend
+ * Entrée ou la sortie du champ pour ne pas naviguer à chaque touche.
+ * Un bouton submit sr-only dans le formulaire couvre le cas sans
+ * JavaScript.
  */
 export function FilterSelect({
   name,
@@ -30,6 +33,14 @@ export function FilterSelect({
   className,
 }: Props) {
   const active = alwaysActive || Boolean(defaultValue);
+  const keyboardInteraction = useRef(false);
+  const submitted = useRef(false);
+
+  function submit(form: HTMLFormElement | null) {
+    if (submitted.current) return;
+    submitted.current = true;
+    form?.requestSubmit();
+  }
 
   return (
     <span className={cn("relative flex-none", className)}>
@@ -37,9 +48,31 @@ export function FilterSelect({
         name={name}
         defaultValue={defaultValue ?? ""}
         aria-label={placeholder ?? name}
-        onChange={(event) => event.currentTarget.form?.requestSubmit()}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            if (event.currentTarget.value !== (defaultValue ?? "")) {
+              submit(event.currentTarget.form);
+            }
+          } else {
+            keyboardInteraction.current = true;
+          }
+        }}
+        onChange={(event) => {
+          if (!keyboardInteraction.current) {
+            submit(event.currentTarget.form);
+          }
+        }}
+        onBlur={(event) => {
+          if (
+            keyboardInteraction.current &&
+            event.currentTarget.value !== (defaultValue ?? "")
+          ) {
+            submit(event.currentTarget.form);
+          }
+          keyboardInteraction.current = false;
+        }}
         className={cn(
-          "cursor-pointer appearance-none rounded-full py-[7px] pl-3.5 pr-7 text-xs outline-none",
+          "min-h-[36px] cursor-pointer appearance-none rounded-full py-[7px] pl-3.5 pr-7 text-xs outline-none",
           active
             ? "border-[1.5px] border-soleil-forest bg-soleil-forest font-bold text-soleil-cream dark:border-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
             : "border-[1.5px] border-soleil-border bg-transparent font-semibold text-soleil-forest dark:border-soleil-border-d dark:text-soleil-cream",

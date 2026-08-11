@@ -313,7 +313,7 @@ export default async function BonsPlansPage(
       <h1 className="sr-only">Bons plans de Guyane</h1>
       <div className="mx-auto w-full max-w-md px-5 pb-12 lg:max-w-6xl lg:px-8">
         {/* Header wordmark + pilule ville (mobile-first, maquette 4a). */}
-        <div className="flex items-end justify-between pt-4">
+        <div className="flex items-end justify-between pt-4 lg:hidden">
           <Link href="/" className="flex items-end gap-2" aria-label="Accueil Péyi">
             <Sun w={20} />
             <span className="font-display text-[23px] font-extrabold leading-[0.9] tracking-[-0.5px]">
@@ -367,7 +367,7 @@ export default async function BonsPlansPage(
               defaultValue={city ?? ""}
             />
           </div>
-          <button type="submit" className="sr-only">
+          <button type="submit" className="sr-only focus:not-sr-only focus:mt-2 focus:inline-flex focus:min-h-[36px] focus:items-center focus:rounded-full focus:border-[1.5px] focus:border-soleil-forest focus:px-3 focus:text-xs focus:font-bold dark:focus:border-soleil-cream">
             Filtrer
           </button>
         </form>

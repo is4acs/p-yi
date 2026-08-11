@@ -155,7 +155,7 @@ export function DealCard({
             <Ph className="h-16 w-16 flex-none rounded-[14px]" />
           )}
           <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-bold leading-tight">{deal.title}</h3>
+            <h2 className="text-sm font-bold leading-tight">{deal.title}</h2>
             <p className="mt-[3px] text-[11px] text-soleil-muted dark:text-soleil-muted-d">
               {meta}
             </p>
@@ -371,7 +371,7 @@ export function DealCard({
             />
           </div>
           <div className="min-w-0 flex-1 space-y-1">
-            <h3 className="line-clamp-2 font-display text-sm font-bold leading-[1.25] tracking-tight text-ink-900 sm:text-[17px]">
+            <h3 className="line-clamp-2 font-display text-sm font-bold leading-[1.25] tracking-tight text-foreground sm:text-[17px]">
               <Link
                 href={`/bons-plans/${deal.slug}`}
                 className="transition group-hover:text-peyi-orange-700 before:absolute before:inset-0 before:content-['']"
@@ -413,7 +413,7 @@ export function DealCard({
             line-clamp-2 pour contenir la carte à ~2 lignes additionnelles
             quoi qu'écrive l'auteur. */}
         {deal.description && (
-          <p className="hidden text-[13px] leading-[1.5] text-ink-700 line-clamp-2 sm:block">
+          <p className="hidden text-[13px] leading-[1.5] text-muted-foreground line-clamp-2 sm:block">
             {deal.description}
           </p>
         )}
@@ -463,7 +463,7 @@ export function DealCard({
             </span>
             <span className="truncate">
               par{" "}
-              <b className="font-display text-[12px] font-bold text-ink-900">
+              <b className="font-display text-[12px] font-bold text-foreground">
                 {deal.author.username}
               </b>
               {deal.author.city && (

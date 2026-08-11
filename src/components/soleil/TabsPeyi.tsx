@@ -30,7 +30,7 @@ export function TabsPeyi({ active, className }: Props) {
           href={tab.href}
           aria-current={tab.key === active ? "page" : undefined}
           className={cn(
-            "pb-1.5",
+            "flex min-h-[36px] items-end pb-1.5",
             tab.key === active
               ? "border-b-[3px] border-soleil-orange text-soleil-forest dark:text-soleil-cream"
               : "text-soleil-muted dark:text-soleil-muted-d",

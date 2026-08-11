@@ -133,12 +133,21 @@ export function ListingForm({
       <PhotosUploader initialUrls={v.photoUrls ?? []} max={maxPhotos} />
 
       <div className="space-y-1.5">
-        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="type">Type d&apos;annonce *</Label>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <p
+          id="listing-type-label"
+          className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d"
+        >
+          Type d&apos;annonce *
+        </p>
+        <div
+          role="radiogroup"
+          aria-labelledby="listing-type-label"
+          className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+        >
           {TYPES.map((t) => (
             <label
               key={t}
-              className="flex min-h-[38px] cursor-pointer items-center justify-center gap-1 rounded-full border-[1.5px] border-soleil-border px-2 py-2 text-xs font-semibold transition has-[:checked]:border-soleil-forest has-[:checked]:bg-soleil-forest has-[:checked]:font-bold has-[:checked]:text-soleil-cream dark:border-soleil-border-d dark:has-[:checked]:border-soleil-cream dark:has-[:checked]:bg-soleil-cream dark:has-[:checked]:text-soleil-forest"
+              className="flex min-h-[38px] cursor-pointer items-center justify-center gap-1 rounded-full border-[1.5px] border-soleil-border px-2 py-2 text-xs font-semibold transition has-[:checked]:border-soleil-forest has-[:checked]:bg-soleil-forest has-[:checked]:font-bold has-[:checked]:text-soleil-cream has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-soleil-orange dark:border-soleil-border-d dark:has-[:checked]:border-soleil-cream dark:has-[:checked]:bg-soleil-cream dark:has-[:checked]:text-soleil-forest"
             >
               <input
                 type="radio"

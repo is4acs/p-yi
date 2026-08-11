@@ -4,6 +4,15 @@ import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 
+/**
+ * Préférence de pilotage du thème :
+ *  - absente ou "auto" : le thème suit la fenêtre nocturne locale à
+ *    chaque chargement (dark le soir, light le jour) ;
+ *  - "manual" : l'utilisateur a touché l'interrupteur, on respecte son
+ *    choix (stocké par next-themes sous la clé "theme").
+ */
+const MODE_KEY = "soleil-theme-mode";
+
 /** Fenêtre nocturne locale : 18 h 45 → 06 h 15 (coucher du soleil à Cayenne). */
 function isNightWindow(date: Date): boolean {
   const minutes = date.getHours() * 60 + date.getMinutes();
@@ -11,9 +20,29 @@ function isNightWindow(date: Date): boolean {
 }
 
 /**
- * NightModeToggle — interrupteur 44×24 branché sur next-themes. Tant
- * qu'aucune préférence n'est enregistrée, le mode nuit s'active
- * automatiquement dans la fenêtre nocturne locale.
+ * AutoNightTheme — monté une fois dans le layout : tant que le mode est
+ * « auto », chaque chargement de page aligne le thème sur l'heure locale
+ * (et revient donc en clair au matin).
+ */
+export function AutoNightTheme() {
+  const { setTheme } = useTheme();
+
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem(MODE_KEY) === "manual") return;
+      setTheme(isNightWindow(new Date()) ? "dark" : "light");
+    } catch {
+      // localStorage indisponible : on laisse le thème par défaut.
+    }
+  }, [setTheme]);
+
+  return null;
+}
+
+/**
+ * NightModeToggle — interrupteur 44×24 branché sur next-themes. Le
+ * premier toggle passe le pilotage en « manuel » ; l'auto reste actif
+ * tant que l'utilisateur n'a pas touché l'interrupteur.
  */
 export function NightModeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
@@ -21,17 +50,18 @@ export function NightModeToggle() {
 
   useEffect(() => {
     setMounted(true);
-    try {
-      if (!window.localStorage.getItem("theme") && isNightWindow(new Date())) {
-        setTheme("dark");
-      }
-    } catch {
-      // localStorage indisponible (navigation privée stricte) : tant pis
-      // pour l'auto — le toggle manuel reste fonctionnel.
-    }
-  }, [setTheme]);
+  }, []);
 
   const isDark = mounted && resolvedTheme === "dark";
+
+  function toggle() {
+    try {
+      window.localStorage.setItem(MODE_KEY, "manual");
+    } catch {
+      // Sans stockage, le choix vaut pour la session en cours.
+    }
+    setTheme(isDark ? "light" : "dark");
+  }
 
   return (
     <button
@@ -39,7 +69,7 @@ export function NightModeToggle() {
       role="switch"
       aria-checked={isDark}
       aria-label="Mode nuit"
-      onClick={() => setTheme(isDark ? "light" : "dark")}
+      onClick={toggle}
       className="relative h-6 w-11 flex-none rounded-full bg-soleil-line transition-colors dark:bg-soleil-orange"
     >
       <span

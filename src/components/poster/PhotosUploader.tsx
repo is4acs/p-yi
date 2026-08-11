@@ -67,14 +67,20 @@ export function PhotosUploader({ initialUrls = [], max, className }: Props) {
 
   /* ------------------------------------------------------------------ *
    * Nettoyage des blob: URLs au unmount pour éviter les fuites mémoire.
+   * Le cleanup lit une ref tenue à jour — une fermeture sur `photos`
+   * figerait la liste du premier render et laisserait fuir les previews
+   * ajoutées ensuite.
    * ------------------------------------------------------------------ */
+  const photosRef = useRef(photos);
+  useEffect(() => {
+    photosRef.current = photos;
+  }, [photos]);
   useEffect(() => {
     return () => {
-      for (const p of photos) {
+      for (const p of photosRef.current) {
         if (p.kind === "new") URL.revokeObjectURL(p.previewUrl);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /* ------------------------------------------------------------------ *

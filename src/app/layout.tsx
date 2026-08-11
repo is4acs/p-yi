@@ -18,6 +18,7 @@ import {
   SoleilSurface,
 } from "@/components/soleil/ChromeVisibility";
 import { MobileNav } from "@/components/soleil/MobileNav";
+import { AutoNightTheme } from "@/components/soleil/NightModeToggle";
 import { InstallBanner } from "@/components/pwa/InstallBanner";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { getCurrentUser } from "@/lib/auth/current-user";
@@ -231,6 +232,7 @@ export default async function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
+        <AutoNightTheme />
         <SkipLink />
         <ServiceWorkerRegister />
         <WebVitals />

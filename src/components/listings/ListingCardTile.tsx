@@ -128,9 +128,9 @@ export function ListingCardTile({
             )}
             <SoleilPriceTag>{priceLabel}</SoleilPriceTag>
           </div>
-          <h3 className="mt-1.5 line-clamp-2 text-[12.5px] font-bold leading-[1.3]">
+          <h2 className="mt-1.5 line-clamp-2 text-[12.5px] font-bold leading-[1.3]">
             {listing.title}
-          </h3>
+          </h2>
           <p className="mt-0.5 truncate text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
             {locationLabel} ·{" "}
             {formatRelativeTime(listing.bumpedAt ?? listing.publishedAt)}

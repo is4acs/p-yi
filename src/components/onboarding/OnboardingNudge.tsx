@@ -85,7 +85,7 @@ export function OnboardingNudge({
           type="button"
           onClick={dismiss}
           aria-label="Masquer ce guide"
-          className="inline-flex h-6 w-6 items-center justify-center rounded-full text-soleil-muted dark:text-soleil-muted-d"
+          className="-m-1 inline-flex h-8 w-8 items-center justify-center rounded-full text-soleil-muted dark:text-soleil-muted-d"
         >
           <X className="h-4 w-4" aria-hidden />
         </button>

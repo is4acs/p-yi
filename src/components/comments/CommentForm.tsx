@@ -62,6 +62,7 @@ export function CommentForm({
         rows={compact ? 2 : 2}
         maxLength={MAX_LEN}
         placeholder={placeholder}
+        aria-label={placeholder}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         className="flex w-full resize-y rounded-[22px] border-[1.5px] border-soleil-border bg-transparent px-4 py-2.5 text-[12.5px] text-soleil-forest transition placeholder:text-soleil-muted focus:border-soleil-forest focus:outline-none dark:border-soleil-border-d dark:text-soleil-cream dark:placeholder:text-soleil-muted-d dark:focus:border-soleil-cream"
