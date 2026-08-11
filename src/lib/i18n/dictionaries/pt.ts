@@ -15,6 +15,7 @@ export const pt: Messages = {
     price: "Preço",
     login: "Entrar",
     report: "Denunciar",
+    home: "Início",
   },
   nav: {
     deals: "Ofertas",
@@ -161,6 +162,11 @@ export const pt: Messages = {
     typeExchange: "Troca",
     typeDonation: "Doação",
     rangeTo: "a",
+    allFilters: "Todos os filtros",
+    showResults: "Ver os {n} anúncios",
+    clearAll: "Limpar tudo",
+    remove: "Remover",
+    allCities: "Toda a Guiana",
   },
   listingDetail: {
     title: "Anúncio",

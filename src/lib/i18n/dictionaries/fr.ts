@@ -18,6 +18,7 @@ export const fr = {
     price: "Prix",
     login: "Se connecter",
     report: "Signaler",
+    home: "Accueil",
   },
   nav: {
     deals: "Deals",
@@ -164,6 +165,11 @@ export const fr = {
     typeExchange: "Échange",
     typeDonation: "Don",
     rangeTo: "à",
+    allFilters: "Tous les filtres",
+    showResults: "Afficher les {n} annonces",
+    clearAll: "Tout effacer",
+    remove: "Retirer",
+    allCities: "Toute la Guyane",
   },
   listingDetail: {
     title: "Annonce",

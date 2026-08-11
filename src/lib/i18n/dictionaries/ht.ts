@@ -15,6 +15,7 @@ export const ht: Messages = {
     price: "Pri",
     login: "Konekte",
     report: "Siyale",
+    home: "Akèy",
   },
   nav: {
     deals: "Bon plan",
@@ -160,6 +161,11 @@ export const ht: Messages = {
     typeExchange: "Twoke",
     typeDonation: "Don",
     rangeTo: "a",
+    allFilters: "Tout filtè yo",
+    showResults: "Montre {n} anons yo",
+    clearAll: "Efase tout",
+    remove: "Retire",
+    allCities: "Tout Giyàn",
   },
   listingDetail: {
     title: "Anons",

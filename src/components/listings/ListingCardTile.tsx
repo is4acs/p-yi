@@ -60,7 +60,10 @@ type Props = {
   // `catalogue` : carte du catalogue « calme » (S38) — carte bordée
   //   radius 16 fond paper, photo 180/170, prix posé sur la photo,
   //   ligne d'attributs sous le titre, ville · date.
-  variant?: "default" | "soleil" | "catalogue";
+  // `row` : rangée horizontale modèle Leboncoin (S39) — photo à gauche,
+  //   titre, prix en gras, ligne d'attributs, ville · date, favori en
+  //   haut à droite. Utilisée sur la liste /annonces.
+  variant?: "default" | "soleil" | "catalogue" | "row";
   className?: string;
 };
 
@@ -110,6 +113,67 @@ export async function ListingCardTile({
   // URGENT bat NOUVEAU : même si c'est <72h, le signal d'urgence
   // prime. Un seul badge en haut-gauche pour garder la tile lisible.
   const showNewBadge = !listing.isUrgent && isRecentlyPublished(listing.publishedAt);
+
+  if (variant === "row") {
+    const attrLine = summarizeAttributesForCard(
+      listing.category.slug,
+      listing.attributes,
+    );
+    return (
+      <article
+        className={cn(
+          "relative flex overflow-hidden rounded-2xl border border-soleil-line bg-soleil-paper text-soleil-forest transition hover:shadow-sm dark:border-soleil-line-d dark:bg-soleil-forest dark:text-soleil-cream",
+          className,
+        )}
+      >
+        <Link
+          href={`/annonces/${listing.slug}`}
+          className="flex min-w-0 flex-1 transition active:scale-[0.995]"
+        >
+          <div className="relative h-[124px] w-[124px] flex-none sm:h-[168px] sm:w-[224px]">
+            {isRenderableImageUrl(listing.coverImageUrl) ? (
+              <Image
+                src={listing.coverImageUrl}
+                alt={displayTitle}
+                fill
+                sizes="(max-width: 640px) 124px, 224px"
+                unoptimized
+                className="object-cover"
+              />
+            ) : (
+              <Ph label={listing.category.name} className="h-full w-full" />
+            )}
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col p-3 pr-11 sm:p-4 sm:pr-12">
+            <h2 className="line-clamp-2 font-display text-[14.5px] font-bold leading-[1.3] sm:text-base">
+              {displayTitle}
+            </h2>
+            <p className="mt-1 font-display text-[15px] font-extrabold sm:text-[17px]">
+              {priceLabel}
+            </p>
+            {attrLine && (
+              <p className="mt-1 line-clamp-1 text-xs text-soleil-muted dark:text-soleil-muted-d">
+                {attrLine}
+              </p>
+            )}
+            <p className="mt-auto truncate pt-1.5 text-xs text-soleil-muted dark:text-soleil-muted-d">
+              {locationLabel} ·{" "}
+              {formatRelativeTime(listing.bumpedAt ?? listing.publishedAt, locale)}
+            </p>
+          </div>
+        </Link>
+        <div className="absolute right-2.5 top-2.5">
+          <ListingFavoriteButton
+            listingId={listing.id}
+            initialFavorited={isFavorited}
+            canFavorite={canFavorite}
+            disabledHint={favoriteHint}
+            size="sm"
+          />
+        </div>
+      </article>
+    );
+  }
 
   if (variant === "catalogue") {
     const attrLine = summarizeAttributesForCard(
