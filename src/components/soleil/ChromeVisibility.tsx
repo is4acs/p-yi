@@ -29,9 +29,14 @@ function isSoleilRoute(pathname: string): boolean {
     pathname === "/bons-plans" ||
     pathname === "/annonces" ||
     pathname === "/messages" ||
+    pathname.startsWith("/messages/") ||
     pathname === "/profil" ||
     pathname === "/poster" ||
-    pathname.startsWith("/poster/")
+    pathname.startsWith("/poster/") ||
+    pathname === "/connexion" ||
+    pathname.startsWith("/connexion/") ||
+    pathname === "/auth/reset-password" ||
+    pathname === "/activites"
   ) {
     return true;
   }

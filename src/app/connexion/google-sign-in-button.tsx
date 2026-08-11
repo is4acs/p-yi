@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useMessages } from "@/components/soleil/I18nProvider";
 
 /**
  * Bouton « Continuer avec Google ».
@@ -40,6 +40,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
  * puis on fait la navigation manuellement — le cookie est garanti écrit.
  */
 export function GoogleSignInButton({ next }: { next?: string }) {
+  const t = useMessages();
   const [loading, setLoading] = useState(false);
 
   async function handleClick() {
@@ -63,9 +64,7 @@ export function GoogleSignInButton({ next }: { next?: string }) {
       // eslint-disable-next-line no-console
       console.error("[google-sign-in] signInWithOAuth failed:", error);
       setLoading(false);
-      const params = new URLSearchParams({
-        error: "Connexion Google indisponible pour le moment.",
-      });
+      const params = new URLSearchParams({ error: t.auth.googleError });
       window.location.href = `/connexion?${params.toString()}`;
       return;
     }
@@ -78,11 +77,9 @@ export function GoogleSignInButton({ next }: { next?: string }) {
   }
 
   return (
-    <Button
+    <button
       type="button"
-      variant="outline"
-      size="lg"
-      className="mt-5 w-full gap-2.5"
+      className="mt-5 flex min-h-[48px] w-full items-center justify-center gap-2.5 rounded-full border-[1.5px] border-soleil-border bg-soleil-input text-[14px] font-extrabold text-soleil-forest transition active:scale-[0.98] disabled:opacity-60 dark:border-soleil-border-d dark:bg-soleil-forest dark:text-soleil-cream"
       onClick={handleClick}
       disabled={loading}
       aria-busy={loading}
@@ -92,8 +89,8 @@ export function GoogleSignInButton({ next }: { next?: string }) {
       ) : (
         <GoogleLogo className="h-5 w-5" />
       )}
-      Continuer avec Google
-    </Button>
+      {t.auth.googleCta}
+    </button>
   );
 }
 

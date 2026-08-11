@@ -1,9 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowLeft, Mail } from "lucide-react";
+import { AlertCircle, ArrowLeft, Mail } from "lucide-react";
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { getMessages } from "@/lib/i18n";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 import { requestPasswordResetAction } from "./actions";
@@ -25,88 +24,93 @@ export default async function MotDePasseOubliePage(props: {
   searchParams: Promise<SearchParams>;
 }) {
   const searchParams = await props.searchParams;
+  const t = await getMessages();
   const error = searchParams.error;
   const sent = searchParams.sent === "1";
 
   return (
-    <main className="mx-auto flex min-h-[80vh] max-w-md flex-col px-4 pb-16 pt-6 sm:pt-12">
-      <Link
-        href="/connexion"
-        className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" aria-hidden />
-        Retour à la connexion
-      </Link>
-
-      <div className="mt-6 text-center">
-        <h1 className="font-display text-3xl font-bold tracking-tight">
-          Mot de passe oublié&nbsp;?
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Saisis ton e-mail, on t&apos;envoie un lien pour choisir un nouveau
-          mot de passe.
-        </p>
-      </div>
-
-      {sent ? (
-        <div
-          role="status"
-          className="mt-6 flex items-start gap-2 rounded-lg border border-peyi-green-300 bg-peyi-green-50 p-4 text-sm text-peyi-green-900"
-        >
-          <Mail className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
-          <div>
-            <p className="font-semibold">Vérifie ta boîte mail</p>
-            <p className="mt-1 text-xs">
-              Si un compte existe pour cette adresse, tu recevras un e-mail
-              dans quelques minutes. Pense à regarder tes spams.
-            </p>
-          </div>
-        </div>
-      ) : (
-        <>
-          {error && (
-            <div
-              role="alert"
-              className="mt-6 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
-            >
-              {error}
-            </div>
-          )}
-
-          <form action={requestPasswordResetAction} className="mt-6 space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                required
-                autoComplete="email"
-                inputMode="email"
-                placeholder="toi@exemple.gf"
-              />
-            </div>
-
-            <SubmitButton
-              size="lg"
-              className="w-full"
-              pendingLabel="Envoi…"
-            >
-              Envoyer le lien
-            </SubmitButton>
-          </form>
-        </>
-      )}
-
-      <p className="mt-8 text-center text-xs text-muted-foreground">
-        Tu te souviens&nbsp;?{" "}
+    <main className="min-h-screen bg-soleil-cream px-4 pb-10 text-soleil-forest dark:bg-soleil-night dark:text-soleil-cream">
+      <div className="mx-auto flex w-full max-w-md flex-col pt-4">
         <Link
           href="/connexion"
-          className="font-medium text-peyi-orange-700 hover:underline"
+          aria-label={t.auth.backToLogin}
+          className="inline-flex h-11 w-11 items-center justify-center self-start rounded-full border-[1.5px] border-soleil-border bg-soleil-input transition active:scale-95 dark:border-soleil-border-d dark:bg-soleil-forest"
         >
-          Retour à la connexion
+          <ArrowLeft className="h-5 w-5" aria-hidden />
         </Link>
-      </p>
+
+        <div className="mt-7 text-center">
+          <h1 className="font-display text-[26px] font-extrabold leading-tight tracking-[-0.5px]">
+            {t.auth.forgotTitle}
+          </h1>
+          <p className="mt-2 text-[13px] font-medium text-soleil-muted2 dark:text-soleil-muted-d">
+            {t.auth.forgotSub}
+          </p>
+        </div>
+
+        {sent ? (
+          <div
+            role="status"
+            className="mt-6 flex items-start gap-2.5 rounded-[14px] bg-soleil-valid p-4 text-sm text-soleil-forest dark:bg-soleil-valid-d"
+          >
+            <Mail className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
+            <div>
+              <p className="font-extrabold">{t.auth.checkInbox}</p>
+              <p className="mt-1 text-xs font-medium">{t.auth.forgotSentSub}</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {error && (
+              <div
+                role="alert"
+                className="mt-6 flex items-start gap-2.5 rounded-[14px] border-[1.5px] border-destructive/40 bg-destructive/10 p-3.5 text-sm font-semibold text-destructive"
+              >
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <form action={requestPasswordResetAction} className="mt-6 space-y-4">
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="email"
+                  className="text-[11px] font-extrabold uppercase tracking-[0.5px] text-soleil-muted2 dark:text-soleil-muted-d"
+                >
+                  {t.auth.email}
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  inputMode="email"
+                  placeholder={t.auth.emailPlaceholder}
+                  className="w-full rounded-[14px] border-[1.5px] border-soleil-border bg-soleil-input px-3.5 py-3 text-[14px] font-semibold text-soleil-forest placeholder:font-medium placeholder:text-soleil-muted focus:border-soleil-forest focus:outline-none dark:border-soleil-border-d dark:bg-soleil-forest dark:text-soleil-cream dark:placeholder:text-soleil-muted-d dark:focus:border-soleil-cream"
+                />
+              </div>
+
+              <SubmitButton
+                className="min-h-[48px] w-full rounded-full bg-soleil-forest text-[14px] font-extrabold text-soleil-cream hover:bg-soleil-forest/90 dark:bg-soleil-cream dark:text-soleil-forest dark:hover:bg-soleil-cream/90"
+                pendingLabel={t.auth.forgotPending}
+              >
+                {t.auth.forgotCta}
+              </SubmitButton>
+            </form>
+          </>
+        )}
+
+        <p className="mt-8 text-center text-xs text-soleil-muted dark:text-soleil-muted-d">
+          {t.auth.remember}{" "}
+          <Link
+            href="/connexion"
+            className="font-bold text-soleil-otext hover:underline dark:text-soleil-otext-d"
+          >
+            {t.auth.backToLogin}
+          </Link>
+        </p>
+      </div>
     </main>
   );
 }
