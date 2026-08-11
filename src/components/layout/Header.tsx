@@ -3,6 +3,7 @@ import { Bell, LogIn, MapPin, MessageSquare, Plus } from "lucide-react";
 import type { User } from "@prisma/client";
 
 import { Wordmark } from "@/components/brand/Wordmark";
+import { SoleilSearchField } from "@/components/home/soleil/SoleilSearchField";
 import { VerticalTabs } from "@/components/layout/VerticalTabs";
 
 import { UserAvatar } from "./UserAvatar";
@@ -38,10 +39,14 @@ export function Header({ user, unreadCount, unreadNotifications }: Props) {
     <header className="sticky top-0 z-30 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
         <div className="flex min-h-14 items-center justify-between gap-4 sm:min-h-16">
-          <div className="flex items-center gap-8">
+          <div className="flex min-w-0 flex-1 items-center gap-6">
             <Wordmark />
             {/* Desktop : les onglets s'alignent sur le wordmark. */}
             <VerticalTabs className="hidden lg:flex" />
+            {/* Desktop : la recherche prend la place laissée libre au
+                centre de l'en-tête (maquette #5b). Sur mobile elle vit
+                dans le héros de chaque écran, en plus grand. */}
+            <SoleilSearchField className="hidden min-w-0 max-w-[420px] flex-1 lg:flex" />
           </div>
 
           <div className="flex items-center gap-2">
@@ -140,7 +145,7 @@ export function Header({ user, unreadCount, unreadNotifications }: Props) {
         {/* Mobile : les onglets prennent leur propre ligne, collés au
             filet du bas pour que le soulignement de 3 px se lise comme
             un onglet et non comme une décoration flottante. */}
-        <VerticalTabs className="-mb-px lg:hidden" />
+        <VerticalTabs hideOnHome className="-mb-px lg:hidden" />
       </div>
     </header>
   );

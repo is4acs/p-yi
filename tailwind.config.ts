@@ -154,6 +154,13 @@ const config: Config = {
           DEFAULT: "hsl(var(--peyi-promo))",
           foreground: "hsl(var(--peyi-promo-foreground))",
         },
+        // Carte inversée : encre du thème en fond, fond du thème en encre.
+        // `bg-invert text-invert-foreground` suffit à obtenir la carte
+        // « deal du jour » dans les deux thèmes.
+        invert: {
+          DEFAULT: "hsl(var(--peyi-invert))",
+          foreground: "hsl(var(--peyi-invert-foreground))",
+        },
         chart: {
           "1": "hsl(var(--chart-1))",
           "2": "hsl(var(--chart-2))",

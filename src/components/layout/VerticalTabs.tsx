@@ -20,13 +20,23 @@ import { cn } from "@/lib/utils";
  */
 export function VerticalTabs({
   activeKeyOverride,
+  hideOnHome = false,
   className,
 }: {
   /** Force l'onglet actif (l'accueil affiche « Bons plans » actif). */
   activeKeyOverride?: string;
+  /**
+   * Masque les onglets sur l'accueil. Utilisé pour la rangée mobile :
+   * l'accueil y porte déjà ses propres portes d'entrée (les tuiles
+   * compteurs et les liens de section), les onglets y feraient doublon
+   * sur un écran étroit. Sur desktop ils restent, la place ne manque pas.
+   */
+  hideOnHome?: boolean;
   className?: string;
 }) {
   const pathname = usePathname() ?? "/";
+
+  if (hideOnHome && pathname === "/") return null;
 
   return (
     <nav

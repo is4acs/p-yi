@@ -78,6 +78,15 @@
     --peyi-valid-foreground: 155.7 48.8% 16.9%;
     --peyi-promo: 26.4 100% 90.2%;       /* #FFE3CD chip −32 % */
     --peyi-promo-foreground: 29 70% 40.6%;
+    /* Carte « inversée » — le deal du jour et le CTA principal. Elle
+       prend l'encre du thème en fond et le fond du thème en encre :
+       forêt sur crème le jour, crème sur forêt la nuit. C'est
+       l'inversion signature de la direction, et elle est portée par ces
+       trois variables plutôt que par des `dark:` dans le composant. */
+    --peyi-invert: 155.7 48.8% 16.9%;            /* #16402F */
+    --peyi-invert-foreground: 39 58.8% 93.3%;    /* #F8F1E4 */
+    --peyi-invert-subtle: 167.6 20% 71.6%;       /* #A8C5BF */
+
     /* Rayures des placeholders d'image, avant les vraies photos. */
     --peyi-stripe: 155.7 48.8% 16.9% / 0.06;
   }
@@ -130,6 +139,9 @@
     --peyi-valid-foreground: 156 50% 11.8%;
     --peyi-promo: 25.2 51% 19.2%;        /* #4A2D18 */
     --peyi-promo-foreground: 24.5 100% 74.5%;
+    --peyi-invert: 39 58.8% 93.3%;               /* #F8F1E4 */
+    --peyi-invert-foreground: 155.7 48.8% 16.9%; /* #16402F */
+    --peyi-invert-subtle: 142.1 9.4% 39.8%;      /* #5C6F63 */
     --peyi-stripe: 39 58.8% 93.3% / 0.05;
   }
 
@@ -170,6 +182,21 @@
       transparent 6px,
       transparent 12px
     );
+  }
+
+  /* Dans la carte inversée, les rayures et le texte secondaire suivent
+     l'inversion : sans ça, un placeholder rayé en encre du thème
+     disparaîtrait sur un fond de cette même encre. */
+  .peyi-invert-surface {
+    --peyi-stripe: 39 58.8% 93.3% / 0.05;
+    --peyi-subtle: var(--peyi-invert-subtle);
+    /* Le placeholder prend le ton de la carte : ce sont les rayures qui
+       le distinguent, pas un aplat clair. Sans ça, un bloc crème
+       s'ouvrait au milieu de la carte forêt. */
+    --peyi-surface: var(--peyi-invert);
+  }
+  .dark .peyi-invert-surface {
+    --peyi-stripe: 155.7 48.8% 16.9% / 0.06;
   }
 
   /* Highlight éditorial derrière un mot-clé — signature Peyi.
