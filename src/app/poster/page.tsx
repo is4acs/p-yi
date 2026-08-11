@@ -52,7 +52,7 @@ export default async function PosterPage() {
   }
 
   return (
-    <main className="bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
+    <main className="min-h-screen bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
       <div className="mx-auto w-full max-w-md lg:max-w-2xl">
         <BackHeader title="Poster" backHref="/" />
         <h1 className="sr-only">Poster sur Péyi</h1>

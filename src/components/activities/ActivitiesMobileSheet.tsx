@@ -200,7 +200,7 @@ export function ActivitiesMobileSheet({
       aria-label="Liste des activités"
       style={{ height }}
       className={cn(
-        "fixed inset-x-0 bottom-20 z-30 flex flex-col rounded-t-lg border-t border-border bg-background shadow-lg sm:bottom-0",
+        "fixed inset-x-0 bottom-20 z-30 flex flex-col rounded-t-lg border-t border-border bg-background shadow-lg lg:bottom-0",
         // Pas de transition pendant le glissement : le panneau doit coller
         // au doigt. Elle ne sert qu'à l'aimantation et aux boutons.
         !dragging && "transition-[height] duration-slow ease-out",

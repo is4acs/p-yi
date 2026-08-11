@@ -13,7 +13,10 @@ import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { RouteProgress } from "@/components/layout/RouteProgress";
 import { SkipLink } from "@/components/layout/SkipLink";
-import { ChromeVisibility } from "@/components/soleil/ChromeVisibility";
+import {
+  ChromeVisibility,
+  SoleilSurface,
+} from "@/components/soleil/ChromeVisibility";
 import { MobileNav } from "@/components/soleil/MobileNav";
 import { InstallBanner } from "@/components/pwa/InstallBanner";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
@@ -272,7 +275,9 @@ export default async function RootLayout({
         >
           {children}
         </div>
-        <Footer />
+        <SoleilSurface>
+          <Footer />
+        </SoleilSurface>
         <MobileNav unreadCount={unreadCount} />
         <InstallBanner />
         </ThemeProvider>

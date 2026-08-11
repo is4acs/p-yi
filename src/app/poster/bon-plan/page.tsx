@@ -48,7 +48,7 @@ export default async function PosterPage(
   return (
     // lg:max-w-5xl pour accueillir l'aside sticky (preview + tips) de
     // DealPosterLayout. En dessous de lg le formulaire reste en max-w-md.
-    <main className="bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
+    <main className="min-h-screen bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
       <div className="mx-auto w-full max-w-md lg:max-w-5xl">
         <BackHeader title="Poster" backHref="/poster" />
         <h1 className="sr-only">Poster un bon plan</h1>

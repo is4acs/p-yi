@@ -309,7 +309,7 @@ export default async function BonsPlansPage(
   const dealOfTheDay = !hasFilters && page === 1 ? deals[0] ?? null : null;
 
   return (
-    <main className="bg-soleil-cream text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
+    <main className="min-h-screen bg-soleil-cream text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
       <h1 className="sr-only">Bons plans de Guyane</h1>
       <div className="mx-auto w-full max-w-md px-5 pb-12 lg:max-w-6xl lg:px-8">
         {/* Header wordmark + pilule ville (mobile-first, maquette 4a). */}

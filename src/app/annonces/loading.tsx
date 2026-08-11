@@ -12,7 +12,7 @@ import { ListingCardTileSkeleton } from "@/components/listings/ListingCardTileSk
  */
 export default function ListingsLoading() {
   return (
-    <main className="mx-auto max-w-md pb-12 sm:max-w-2xl lg:max-w-6xl">
+    <main className="min-h-screen bg-soleil-cream dark:bg-soleil-night mx-auto max-w-md pb-12 sm:max-w-2xl lg:max-w-6xl">
       <div className="sticky top-0 z-10 border-b border-border bg-background/95 px-4 pb-3 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-0 sm:pt-6">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0 flex-1 space-y-1.5">

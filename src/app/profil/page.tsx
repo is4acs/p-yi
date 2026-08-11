@@ -68,7 +68,7 @@ export default async function ProfilPage(props: Props) {
   const memberSince = user.createdAt.getFullYear();
 
   return (
-    <main className="bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
+    <main className="min-h-screen bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
       <div className="mx-auto w-full max-w-md px-5 lg:max-w-2xl">
         {/* En-tête centré : avatar, nom, meta. */}
         <section className="flex flex-col items-center pt-6 text-center">

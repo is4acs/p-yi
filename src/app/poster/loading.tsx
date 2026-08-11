@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
  */
 export default function PosterLoading() {
   return (
-    <main className="mx-auto max-w-md px-4 pb-16 pt-4 sm:max-w-2xl sm:pt-8">
+    <main className="min-h-screen bg-soleil-cream dark:bg-soleil-night mx-auto max-w-md px-4 pb-16 pt-4 sm:max-w-2xl sm:pt-8">
       <Skeleton className="h-4 w-32" />
       <Skeleton className="mt-4 h-8 w-60" />
       <Skeleton className="mt-2 h-4 w-80" />

@@ -32,7 +32,7 @@ export default async function MessagesInboxPage() {
   const conversations = await fetchInbox(user.id);
 
   return (
-    <main className="bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
+    <main className="min-h-screen bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
       <div className="mx-auto w-full max-w-md px-5 lg:max-w-2xl">
         <div className="flex items-center justify-between pt-4">
           <h1 className="font-display text-[22px] font-extrabold">Messages</h1>

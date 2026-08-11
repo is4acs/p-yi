@@ -122,7 +122,7 @@ export default async function PosterAnnoncePage(
       .map((c) => ({ slug: c.slug, name: c.name, icon: c.icon }));
 
     return (
-      <main className="bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
+      <main className="min-h-screen bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
         <div className="mx-auto w-full max-w-md sm:max-w-2xl">
           <BackHeader title="Poster" backHref="/poster/annonce" />
 
@@ -179,7 +179,7 @@ export default async function PosterAnnoncePage(
 
   // ----- Picker branch -------------------------------------------------
   return (
-    <main className="bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
+    <main className="min-h-screen bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
       <div className="mx-auto w-full max-w-md sm:max-w-2xl">
       <BackHeader title="Poster" backHref="/poster" />
 

@@ -72,12 +72,12 @@ export function OnboardingNudge({
   return (
     <section
       aria-label="Bien démarrer sur Péyi"
-      className="mx-4 mb-4 rounded-xl border border-peyi-orange-200 bg-gradient-to-br from-peyi-orange-50 to-white p-4 shadow-sm sm:mx-0"
+      className="mt-4 rounded-[14px] border-[1.5px] border-soleil-border bg-soleil-input p-4 dark:border-soleil-border-d dark:bg-soleil-forest"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-peyi-orange-600" aria-hidden />
-          <h2 className="font-display text-sm font-bold text-peyi-orange-900">
+          <Sparkles className="h-4 w-4 text-soleil-otext dark:text-soleil-otext-d" aria-hidden />
+          <h2 className="font-display text-sm font-extrabold text-soleil-forest dark:text-soleil-cream">
             Bien démarrer sur Péyi
           </h2>
         </div>
@@ -85,7 +85,7 @@ export function OnboardingNudge({
           type="button"
           onClick={dismiss}
           aria-label="Masquer ce guide"
-          className="inline-flex h-6 w-6 items-center justify-center rounded-md text-peyi-orange-700 hover:bg-peyi-orange-100"
+          className="inline-flex h-6 w-6 items-center justify-center rounded-full text-soleil-muted dark:text-soleil-muted-d"
         >
           <X className="h-4 w-4" aria-hidden />
         </button>
@@ -96,24 +96,24 @@ export function OnboardingNudge({
           <li key={step.key} className="flex items-center gap-2">
             {step.done ? (
               <CheckCircle2
-                className="h-4 w-4 shrink-0 text-peyi-green-600"
+                className="h-4 w-4 shrink-0 text-soleil-otext dark:text-soleil-otext-d"
                 aria-hidden
               />
             ) : (
               <Circle
-                className="h-4 w-4 shrink-0 text-muted-foreground"
+                className="h-4 w-4 shrink-0 text-soleil-muted dark:text-soleil-muted-d"
                 aria-hidden
               />
             )}
             {step.done ? (
-              <span className="text-muted-foreground line-through">
+              <span className="text-soleil-muted line-through dark:text-soleil-muted-d">
                 {step.label}
               </span>
             ) : (
               <Link
                 href={step.href}
                 className={cn(
-                  "font-medium text-peyi-orange-900 underline-offset-2 hover:underline",
+                  "font-bold text-soleil-body underline-offset-2 hover:underline dark:text-soleil-body-d",
                 )}
               >
                 {step.label}
