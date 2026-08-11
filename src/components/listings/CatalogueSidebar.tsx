@@ -153,18 +153,20 @@ export function CatalogueNav({
   const active = category
     ? categories.find((c) => c.slug === category) ?? null
     : null;
-  // Niveau sous-catégories : la sélection est un parent à enfants, ou un
-  // enfant (on remonte alors à son parent).
-  const parentNode = active
-    ? active.parentId
-      ? categories.find((c) => c.id === active.parentId) ?? null
-      : (kidsByParent.get(active.id)?.length ?? 0) > 0
-      ? active
-      : null
-    : null;
 
-  if (parentNode) {
-    const kids = kidsByParent.get(parentNode.id) ?? [];
+  // ── Vue « contexte » — UNIFORME pour toutes les catégories ──────────
+  // Sélectionner n'importe quelle catégorie (parent, enfant ou feuille)
+  // bascule la colonne sur son contexte : retour ‹, en-tête au nom du
+  // parent, ligne « Tout {parent} », puis les sous-catégories s'il y en
+  // a. Une feuille sans enfants a le même squelette (juste sans liste) —
+  // un seul modèle mental, colonne minimale, zéro liste racine parasite.
+  if (active) {
+    const contextNode = active.parentId
+      ? categories.find((c) => c.id === active.parentId) ?? active
+      : active;
+    const kids = kidsByParent.get(contextNode.id) ?? [];
+    const allActive = category === contextNode.slug;
+
     return (
       <div>
         <Link
@@ -175,21 +177,25 @@ export function CatalogueNav({
           ‹ {t.listings.allCategories}
         </Link>
         <div className="border-b border-soleil-line pb-2.5 dark:border-soleil-line-d">
-          <span className={EYEBROW_CLASS}>{parentNode.name}</span>
+          <span className={EYEBROW_CLASS}>{contextNode.name}</span>
         </div>
         <div className="flex flex-col py-2">
           <CategoryRow
-            href={categoryUrl(state, parentNode.slug)}
-            name={tFormat(t.listings.allIn, { name: parentNode.name })}
-            count={totalFor(parentNode)}
-            active={category === parentNode.slug}
+            href={
+              allActive
+                ? categoryUrl(state, null)
+                : categoryUrl(state, contextNode.slug)
+            }
+            name={tFormat(t.listings.allIn, { name: contextNode.name })}
+            count={totalFor(contextNode)}
+            active={allActive}
           />
           {kids.map((k) => (
             <CategoryRow
               key={k.id}
               href={
                 category === k.slug
-                  ? categoryUrl(state, parentNode.slug)
+                  ? categoryUrl(state, contextNode.slug)
                   : categoryUrl(state, k.slug)
               }
               name={k.name}
@@ -202,11 +208,13 @@ export function CatalogueNav({
     );
   }
 
-  // Niveau racine : les catégories vides sont repliées derrière un lien
-  // (règle produit — jamais une catégorie vide comme destination normale),
-  // sauf si l'une d'elles est active.
-  const visible = roots.filter((c) => totalFor(c) > 0 || category === c.slug);
-  const hidden = roots.filter((c) => totalFor(c) === 0 && category !== c.slug);
+  // ── Niveau racine ───────────────────────────────────────────────────
+  // Chaque ligne est une entrée de parcours (chevron systématique — le
+  // clic ouvre toujours le contexte de la catégorie). Les catégories
+  // vides restent repliées derrière un lien (règle produit : jamais une
+  // catégorie vide comme destination normale).
+  const visible = roots.filter((c) => totalFor(c) > 0);
+  const hidden = roots.filter((c) => totalFor(c) === 0);
 
   return (
     <div>
@@ -214,24 +222,16 @@ export function CatalogueNav({
         <span className={EYEBROW_CLASS}>{t.listings.categoriesEyebrow}</span>
       </div>
       <div className="flex flex-col py-2">
-        {visible.map((c) => {
-          const isLeafActive = category === c.slug;
-          const hasKids = (kidsByParent.get(c.id)?.length ?? 0) > 0;
-          return (
-            <CategoryRow
-              key={c.id}
-              href={
-                isLeafActive && !hasKids
-                  ? categoryUrl(state, null)
-                  : categoryUrl(state, c.slug)
-              }
-              name={c.name}
-              count={totalFor(c)}
-              active={isLeafActive && !hasKids}
-              hasKids={hasKids}
-            />
-          );
-        })}
+        {visible.map((c) => (
+          <CategoryRow
+            key={c.id}
+            href={categoryUrl(state, c.slug)}
+            name={c.name}
+            count={totalFor(c)}
+            active={false}
+            hasKids
+          />
+        ))}
       </div>
       {hidden.length > 0 && (
         <details className="group">
@@ -244,19 +244,16 @@ export function CatalogueNav({
             </span>
           </summary>
           <div className="flex flex-col pt-1">
-            {hidden.map((c) => {
-              const hasKids = (kidsByParent.get(c.id)?.length ?? 0) > 0;
-              return (
-                <CategoryRow
-                  key={c.id}
-                  href={categoryUrl(state, c.slug)}
-                  name={c.name}
-                  count={0}
-                  active={false}
-                  hasKids={hasKids}
-                />
-              );
-            })}
+            {hidden.map((c) => (
+              <CategoryRow
+                key={c.id}
+                href={categoryUrl(state, c.slug)}
+                name={c.name}
+                count={0}
+                active={false}
+                hasKids
+              />
+            ))}
           </div>
         </details>
       )}
