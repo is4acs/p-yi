@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
+import { useMessages } from "./I18nProvider";
 
 /**
  * Préférence de pilotage du thème :
@@ -45,6 +46,7 @@ export function AutoNightTheme() {
  * tant que l'utilisateur n'a pas touché l'interrupteur.
  */
 export function NightModeToggle() {
+  const t = useMessages();
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -68,7 +70,7 @@ export function NightModeToggle() {
       type="button"
       role="switch"
       aria-checked={isDark}
-      aria-label="Mode nuit"
+      aria-label={t.profile.nightMode}
       onClick={toggle}
       className="relative h-6 w-11 flex-none rounded-full bg-soleil-line transition-colors dark:bg-soleil-orange"
     >

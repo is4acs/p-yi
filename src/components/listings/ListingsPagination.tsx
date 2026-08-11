@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getMessages } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
   buildListingsUrl,
@@ -18,7 +19,7 @@ type Props = {
   filters?: ListingsFilters;
 };
 
-export function ListingsPagination({
+export async function ListingsPagination({
   page,
   pageCount,
   sort,
@@ -29,6 +30,7 @@ export function ListingsPagination({
   filters,
 }: Props) {
   if (pageCount <= 1) return null;
+  const t = await getMessages();
 
   const hasPrev = page > 1;
   const hasNext = page < pageCount;
@@ -57,15 +59,15 @@ export function ListingsPagination({
       aria-label="Pagination des annonces"
       className="mt-6 flex items-center justify-between gap-3"
     >
-      <PagerLink href={prevUrl} disabled={!hasPrev} label="Précédent" />
+      <PagerLink href={prevUrl} disabled={!hasPrev} label={t.deals.previous} />
       <span className="text-xs tabular-nums text-soleil-muted dark:text-soleil-muted-d">
-        Page{" "}
+        {t.deals.page}{" "}
         <span className="font-bold text-soleil-forest dark:text-soleil-cream">
           {page}
         </span>{" "}
         / {pageCount}
       </span>
-      <PagerLink href={nextUrl} disabled={!hasNext} label="Suivant" />
+      <PagerLink href={nextUrl} disabled={!hasNext} label={t.deals.next} />
     </nav>
   );
 }

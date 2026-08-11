@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
+import { useMessages } from "./I18nProvider";
 import { Sun } from "./Sun";
 
 type ActiveTab = "deals" | "annonces" | "messages" | "profil";
@@ -28,29 +29,30 @@ function deriveActive(pathname: string): ActiveTab | null {
  * est sur /poster. Visible jusqu'à lg (desktop = nav du header).
  */
 export function MobileNav({ active, unreadCount = 0 }: Props) {
+  const t = useMessages();
   const pathname = usePathname() ?? "/";
   const current = active ?? deriveActive(pathname);
   const posterActive = pathname.startsWith("/poster");
 
   return (
     <nav
-      aria-label="Navigation principale"
+      aria-label={t.nav.main}
       className="fixed inset-x-0 bottom-0 z-40 border-t border-soleil-line bg-soleil-cream pb-[env(safe-area-inset-bottom)] dark:border-soleil-line-d dark:bg-soleil-night lg:hidden"
     >
       <div className="flex items-end justify-around px-2 pb-3 pt-2">
         <NavItem
           href="/bons-plans"
-          label="Deals"
+          label={t.nav.deals}
           active={current === "deals"}
         />
         <NavItem
           href="/annonces"
-          label="Annonces"
+          label={t.nav.listings}
           active={current === "annonces"}
         />
         <Link
           href="/poster"
-          aria-label="Poster"
+          aria-label={t.nav.post}
           aria-current={posterActive ? "page" : undefined}
           className={cn(
             "-mt-6 flex h-[46px] w-[46px] flex-none items-center justify-center rounded-full transition active:scale-95",
@@ -63,11 +65,11 @@ export function MobileNav({ active, unreadCount = 0 }: Props) {
         </Link>
         <NavItem
           href="/messages"
-          label="Messages"
+          label={t.nav.messages}
           active={current === "messages"}
           badge={unreadCount}
         />
-        <NavItem href="/profil" label="Profil" active={current === "profil"} />
+        <NavItem href="/profil" label={t.nav.profile} active={current === "profil"} />
       </div>
     </nav>
   );

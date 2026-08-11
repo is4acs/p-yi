@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { Button } from "@/components/ui/button";
+import { getMessages } from "@/lib/i18n";
 
 import { CommentForm } from "./CommentForm";
 import { CommentItem, type CommentView } from "./CommentItem";
@@ -81,13 +82,14 @@ async function fetchThread(dealId: string): Promise<CommentView[]> {
 }
 
 export async function CommentList({ dealId, dealSlug, currentUserId }: Props) {
+  const t = await getMessages();
   const comments = await fetchThread(dealId);
 
   return (
     <div>
       {comments.length === 0 ? (
         <p className="rounded-[14px] bg-soleil-sand px-4 py-6 text-center text-[12.5px] text-soleil-body dark:bg-soleil-forest dark:text-soleil-body-d">
-          Sois le premier à donner ton avis.
+          {t.dealDetail.firstComment}
         </p>
       ) : (
         <ul>
@@ -111,12 +113,12 @@ export async function CommentList({ dealId, dealSlug, currentUserId }: Props) {
 
       {currentUserId ? (
         <div className="pt-3">
-          <CommentForm dealId={dealId} placeholder="Ajouter un commentaire…" />
+          <CommentForm dealId={dealId} placeholder={t.dealDetail.addComment} />
         </div>
       ) : (
         <div className="mt-3 flex items-center justify-between gap-3 rounded-full border-[1.5px] border-soleil-border py-2.5 pl-4 pr-2.5 dark:border-soleil-border-d">
           <span className="text-[12.5px] text-soleil-muted dark:text-soleil-muted-d">
-            Ajouter un commentaire…
+            {t.dealDetail.addComment}
           </span>
           <Button asChild size="sm" className="rounded-full">
             <Link
@@ -124,7 +126,7 @@ export async function CommentList({ dealId, dealSlug, currentUserId }: Props) {
                 `/bons-plans/${dealSlug}`,
               )}`}
             >
-              Se connecter
+              {t.common.login}
             </Link>
           </Button>
         </div>

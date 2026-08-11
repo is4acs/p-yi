@@ -9,6 +9,7 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { formatPrice, formatRelativeTime } from "@/lib/format";
 import { isRenderableImageUrl } from "@/lib/images";
 import { withTimeout } from "@/lib/async/with-timeout";
+import { getMessages, tFormat, type Messages } from "@/lib/i18n";
 
 import { HomePillarLinks } from "@/components/seo/HomePillarLinks";
 import { CountLine } from "@/components/soleil/CountLine";
@@ -53,19 +54,20 @@ type Props = {
   searchParams?: Promise<{ deleted?: string }>;
 };
 
-function activityPriceLabel(activity: {
-  isFree: boolean;
-  priceMinCents: number | null;
-}): string | null {
-  if (activity.isFree) return "gratuit";
+function activityPriceLabel(
+  activity: { isFree: boolean; priceMinCents: number | null },
+  t: Messages,
+): string | null {
+  if (activity.isFree) return t.home.freeLower;
   if (activity.priceMinCents != null) {
-    return `dès ${Math.round(activity.priceMinCents / 100)} €`;
+    return tFormat(t.home.from, { n: Math.round(activity.priceMinCents / 100) });
   }
   return null;
 }
 
 export default async function HomePage(props: Props) {
   const searchParams = await props.searchParams;
+  const t = await getMessages();
   const [dealsPayload, listingsPayload, currentUser] = await Promise.all([
     fetchDealsPage({ sort: "hot", page: 1, category: null, city: null, q: null }),
     fetchListingsPage({
@@ -132,7 +134,7 @@ export default async function HomePage(props: Props) {
       <div className="mx-auto w-full max-w-md px-5 lg:max-w-6xl lg:px-8">
         {/* Header wordmark mobile (le Header global prend le relais en lg). */}
         <div className="flex items-center justify-between pt-4 lg:hidden">
-          <Link href="/" className="flex items-end gap-2" aria-label="Accueil Péyi">
+          <Link href="/" className="flex items-end gap-2" aria-label={t.nav.home}>
             <Sun w={22} />
             <span className="font-display text-[25px] font-extrabold leading-[0.9] tracking-[-0.5px]">
               péyi
@@ -145,7 +147,7 @@ export default async function HomePage(props: Props) {
             {currentUser ? (
               <Link
                 href="/profil"
-                aria-label="Mon profil"
+                aria-label={t.home.myProfile}
                 className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-soleil-forest text-[11.5px] font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
               >
                 {currentUser.username.trim().slice(0, 2).toUpperCase()}
@@ -155,7 +157,7 @@ export default async function HomePage(props: Props) {
                 href="/connexion"
                 className="rounded-full bg-soleil-forest px-3 py-1.5 text-xs font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
               >
-                Connexion
+                {t.home.connection}
               </Link>
             )}
           </div>
@@ -166,8 +168,7 @@ export default async function HomePage(props: Props) {
             role="status"
             className="mt-4 rounded-[14px] bg-soleil-valid p-3 text-sm font-semibold text-soleil-forest dark:bg-soleil-valid-d"
           >
-            Ton compte a bien été supprimé. Merci d&apos;avoir fait partie de
-            l&apos;aventure Péyi.
+            {t.home.deletedAccount}
           </div>
         )}
 
@@ -176,13 +177,13 @@ export default async function HomePage(props: Props) {
         <div className="lg:grid lg:grid-cols-12 lg:items-start lg:gap-9 lg:pt-6">
           <div className="lg:col-span-7">
             <h1 className="pt-[18px] font-display text-[28px] font-extrabold leading-[1.05] tracking-[-0.6px] lg:pt-0 lg:text-[40px] lg:leading-[1.02] lg:tracking-[-1px]">
-              Les bons plans du péyi,
+              {t.home.heroL1}
               <br />
-              votés par le péyi.
+              {t.home.heroL2}
             </h1>
 
             <SearchField
-              placeholder="Chercher… riz, pirogue, billet Paris"
+              placeholder={t.home.searchPlaceholder}
               action="/recherche"
               className="mt-3 lg:hidden"
             />
@@ -197,13 +198,13 @@ export default async function HomePage(props: Props) {
                   {dealsTotal}
                 </div>
                 <div className="mt-px text-[11.5px] font-bold">
-                  Bons plans{" "}
+                  {t.home.dealsCard}{" "}
                   <span className="text-soleil-otext dark:text-soleil-otext-d">
                     →
                   </span>
                 </div>
                 <div className="mt-0.5 text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
-                  votés par la commu
+                  {t.home.dealsCardSub}
                 </div>
               </Link>
               <Link
@@ -214,13 +215,13 @@ export default async function HomePage(props: Props) {
                   {listingsTotal}
                 </div>
                 <div className="mt-px text-[11.5px] font-bold">
-                  Annonces{" "}
+                  {t.home.listingsCard}{" "}
                   <span className="text-soleil-otext dark:text-soleil-otext-d">
                     →
                   </span>
                 </div>
                 <div className="mt-0.5 text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
-                  près de chez toi
+                  {t.home.listingsCardSub}
                 </div>
               </Link>
             </div>
@@ -229,7 +230,7 @@ export default async function HomePage(props: Props) {
             <FilterChips
               className="pt-3.5"
               chips={[
-                { label: "Toute la Guyane", href: "/bons-plans/guyane", active: true },
+                { label: t.home.allGuyane, href: "/bons-plans/guyane", active: true },
                 ...COMMUNE_CHIPS.map((c) => ({
                   label: c.label,
                   href: `/bons-plans/${c.slug}`,
@@ -241,7 +242,7 @@ export default async function HomePage(props: Props) {
           {/* Le deal du jour — carte forêt (inversée crème en nuit). */}
           {dealOfTheDay && (
             <aside className="pt-5 lg:col-span-5 lg:pt-0">
-              <CountLine className="pb-2.5">Le deal du jour</CountLine>
+              <CountLine className="pb-2.5">{t.home.dealOfDay}</CountLine>
               <div className="rounded-[20px] bg-soleil-forest p-[18px] text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest">
                 <div className="flex items-center justify-between">
                   <span className="rounded-full bg-soleil-orange px-3 py-1 font-display text-sm font-extrabold text-soleil-forest">
@@ -257,7 +258,7 @@ export default async function HomePage(props: Props) {
                 </div>
                 <div className="mt-1.5 text-xs text-soleil-muted-d dark:text-soleil-muted">
                   {dealOfTheDay.isFree
-                    ? "Gratuit"
+                    ? t.common.free
                     : formatPrice(dealOfTheDay.price.toString())}
                   {" · "}
                   {formatRelativeTime(dealOfTheDay.publishedAt)}
@@ -279,7 +280,7 @@ export default async function HomePage(props: Props) {
                   href={`/bons-plans/${dealOfTheDay.slug}`}
                   className="mt-3 block rounded-full bg-soleil-cream py-3 text-center text-[13px] font-extrabold text-soleil-forest transition active:scale-[0.99] dark:bg-soleil-forest dark:text-soleil-cream"
                 >
-                  Voir le deal →
+                  {t.home.seeDeal}
                 </Link>
               </div>
             </aside>
@@ -290,14 +291,13 @@ export default async function HomePage(props: Props) {
           {/* Ça chauffe cette semaine — liste éditoriale numérotée. */}
           <section className="pt-6 lg:col-span-7">
             <SectionHead
-              title="Ça chauffe cette semaine"
+              title={t.home.hotWeek}
               href="/bons-plans"
-              linkLabel="Tout voir"
+              linkLabel={t.common.seeAll}
             />
             {hotDeals.length === 0 ? (
               <p className="rounded-[14px] bg-soleil-sand p-4 pt-3.5 text-[12.5px] text-soleil-body dark:bg-soleil-forest dark:text-soleil-body-d">
-                Les prochains bons plans votés par la communauté s&apos;affichent
-                ici.
+                {t.home.hotWeekEmpty}
               </p>
             ) : (
               <ul>
@@ -323,7 +323,7 @@ export default async function HomePage(props: Props) {
                             {" "}
                             ·{" "}
                             {deal.isFree
-                              ? "Gratuit"
+                              ? t.common.free
                               : formatPrice(deal.price.toString())}
                           </span>
                         </span>
@@ -366,20 +366,20 @@ export default async function HomePage(props: Props) {
                 )}
                 <span className="min-w-0 flex-1">
                   <span className="block text-[13px] font-bold">
-                    À faire ce week-end : {activities[0].name}
+                    {tFormat(t.home.weekendTeaser, { name: activities[0].name })}
                   </span>
                   <span className="mt-0.5 block text-[11px] text-soleil-muted dark:text-soleil-muted-d">
                     {[
                       activities[0].city.name,
-                      activityPriceLabel(activities[0]),
-                      "validé Péyi",
+                      activityPriceLabel(activities[0], t),
+                      t.home.validatedPeyi,
                     ]
                       .filter(Boolean)
                       .join(" · ")}
                   </span>
                 </span>
                 <span className="flex-none text-xs font-bold text-soleil-otext dark:text-soleil-otext-d">
-                  Activités →
+                  {t.home.activitiesArrow}
                 </span>
               </Link>
             )}
@@ -388,9 +388,9 @@ export default async function HomePage(props: Props) {
           {/* Côté annonces — grille photo-first + tuile « Dépose ». */}
           <section className="pt-6 lg:col-span-5">
             <SectionHead
-              title="Côté annonces"
+              title={t.home.listingsSide}
               href="/annonces"
-              linkLabel="Tout voir"
+              linkLabel={t.common.seeAll}
             />
             <div className="mt-3 grid grid-cols-2 gap-3">
               {homeListings.map((listing) => (
@@ -435,9 +435,9 @@ export default async function HomePage(props: Props) {
                   <Icon name="plus" size={15} />
                 </span>
                 <span className="text-center text-[11.5px] font-bold leading-[1.3]">
-                  Dépose ton
+                  {t.home.dropListing1}
                   <br />
-                  annonce
+                  {t.home.dropListing2}
                 </span>
               </Link>
             </div>
@@ -448,9 +448,9 @@ export default async function HomePage(props: Props) {
         {activities.length > 0 && (
           <section className="pt-6 lg:hidden">
             <SectionHead
-              title="À faire dans le péyi"
+              title={t.home.todo}
               href="/activites"
-              linkLabel="Activités"
+              linkLabel={t.home.activities}
             />
             <ul>
               {activities.map((activity) => (
@@ -480,14 +480,14 @@ export default async function HomePage(props: Props) {
                         {activity.name}
                       </span>
                       <span className="mt-0.5 block text-[11px] text-soleil-muted dark:text-soleil-muted-d">
-                        {[activity.city.name, activityPriceLabel(activity)]
+                        {[activity.city.name, activityPriceLabel(activity, t)]
                           .filter(Boolean)
                           .join(" · ")}
                       </span>
                     </span>
                     <span className="flex flex-none items-center gap-1 rounded-full bg-soleil-valid px-2 py-1 text-[10.5px] font-extrabold text-soleil-forest dark:bg-soleil-valid-d">
                       <Icon name="check" size={10} />
-                      Validé
+                      {t.home.validated}
                     </span>
                   </Link>
                 </li>
@@ -509,16 +509,16 @@ export default async function HomePage(props: Props) {
             className="absolute -right-6 -top-6 h-[100px] w-[100px] rounded-full bg-soleil-cream/25"
           />
           <div className="font-display text-[21px] font-extrabold leading-[1.05] text-soleil-forest">
-            Pataj to bon plan !
+            {t.home.bannerTitle}
           </div>
           <div className="mt-1 text-[12.5px] font-medium text-[#5C3413]">
-            Gratuit, en 2 minutes. Le péyi te dira merci.
+            {t.home.bannerSub}
           </div>
           <Link
             href="/poster/bon-plan"
             className="mt-3 inline-block rounded-full bg-soleil-forest px-[17px] py-2.5 text-[12.5px] font-extrabold text-soleil-cream transition active:scale-[0.98]"
           >
-            Poster un deal +
+            {t.home.bannerCta}
           </Link>
         </div>
 
@@ -530,7 +530,7 @@ export default async function HomePage(props: Props) {
           </span>
           <span className="flex items-center gap-2">
             <Sun w={14} />
-            Péyi — fait en Guyane
+            {t.home.madeIn}
           </span>
         </div>
       </div>

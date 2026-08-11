@@ -7,6 +7,7 @@ import { withTimeout } from "@/lib/async/with-timeout";
 import { BackHeader } from "@/components/soleil/BackHeader";
 import { ConseilPeyi } from "@/components/soleil/ConseilPeyi";
 import { PosterFork } from "@/components/soleil/PosterFork";
+import { getMessages, tFormat } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Poster sur Péyi",
@@ -35,6 +36,7 @@ const AUTH_TIMEOUT_MS = 2_000;
  */
 
 export default async function PosterPage() {
+  const t = await getMessages();
   // On ne bloque pas la page si l'auth est lente ou indisponible : le nom
   // n'est qu'un agrément, les choix restent affichés.
   let username: string | null = null;
@@ -54,26 +56,24 @@ export default async function PosterPage() {
   return (
     <main className="min-h-screen bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
       <div className="mx-auto w-full max-w-md lg:max-w-2xl">
-        <BackHeader title="Poster" backHref="/" />
+        <BackHeader title={t.poster.title} backHref="/" />
         <h1 className="sr-only">Poster sur Péyi</h1>
 
         <div className="px-5">
           <p className="pt-4 text-[13px] leading-relaxed text-soleil-body dark:text-soleil-body-d">
             {username
-              ? `Qu'est-ce que tu veux publier, @${username} ?`
-              : "Choisis le type de publication — la connexion se fait juste après."}
+              ? tFormat(t.poster.intro, { name: username })
+              : t.poster.introAnon}
           </p>
 
           <PosterFork className="pt-4" />
 
           <ConseilPeyi className="mt-6">
-            tu cherches à référencer une activité touristique (sentier,
-            sortie pirogue, site à visiter)&nbsp;? Écris-nous&nbsp;: les
-            fiches de la{" "}
+            {t.poster.activityNote.split("{link}")[0]}
             <Link href="/activites" className="font-bold underline">
-              carte des activités
-            </Link>{" "}
-            sont validées par l&apos;équipe Péyi.
+              {t.poster.activityMapLink}
+            </Link>
+            {t.poster.activityNote.split("{link}")[1] ?? ""}
           </ConseilPeyi>
         </div>
       </div>

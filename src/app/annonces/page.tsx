@@ -28,6 +28,7 @@ import { SearchField } from "@/components/soleil/SearchField";
 import { Sun } from "@/components/soleil/Sun";
 import { TabsPeyi } from "@/components/soleil/TabsPeyi";
 import { withTimeout } from "@/lib/async/with-timeout";
+import { getMessages, tFormat } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 const METADATA_TIMEOUT_MS = 2_000;
@@ -167,6 +168,7 @@ export default async function AnnoncesPage(
   }
 ) {
   const searchParams = await props.searchParams;
+  const t = await getMessages();
   const sort = parseSort(searchParams.sort);
   const page = parsePage(searchParams.page);
   const type = parseType(searchParams.type);
@@ -281,11 +283,11 @@ export default async function AnnoncesPage(
 
   return (
     <main className="min-h-screen bg-soleil-cream text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
-      <h1 className="sr-only">Petites annonces de Guyane</h1>
+      <h1 className="sr-only">{t.listings.title}</h1>
       <div className="mx-auto w-full max-w-md px-5 pb-12 lg:max-w-6xl lg:px-8">
         {/* Header wordmark + pilule ville (même squelette que l'écran 1). */}
         <div className="flex items-end justify-between pt-4 lg:hidden">
-          <Link href="/" className="flex items-end gap-2" aria-label="Accueil Péyi">
+          <Link href="/" className="flex items-end gap-2" aria-label={t.nav.home}>
             <Sun w={20} />
             <span className="font-display text-[23px] font-extrabold leading-[0.9] tracking-[-0.5px]">
               péyi
@@ -299,7 +301,7 @@ export default async function AnnoncesPage(
         <TabsPeyi active="annonces" className="pt-3" />
 
         <SearchField
-          placeholder="Chercher une annonce…"
+          placeholder={t.listings.searchPlaceholder}
           action="/annonces"
           defaultValue={q ?? ""}
           hidden={searchHidden}
@@ -314,22 +316,22 @@ export default async function AnnoncesPage(
             <FilterSelect
               name="sort"
               options={[
-                { value: "new", label: "Récentes" },
-                { value: "price-asc", label: "Prix croissant" },
-                { value: "price-desc", label: "Prix décroissant" },
+                { value: "new", label: t.listings.sortRecent },
+                { value: "price-asc", label: t.listings.sortPriceAsc },
+                { value: "price-desc", label: t.listings.sortPriceDesc },
               ]}
               defaultValue={sort}
               alwaysActive
             />
             <FilterSelect
               name="category"
-              placeholder="Catégorie"
+              placeholder={t.common.category}
               options={categories.map((c) => ({ value: c.slug, label: c.name }))}
               defaultValue={category ?? ""}
             />
             <FilterSelect
               name="prixMax"
-              placeholder="Prix"
+              placeholder={t.common.price}
               options={[
                 { value: "50", label: "− 50 €" },
                 { value: "200", label: "− 200 €" },
@@ -355,13 +357,13 @@ export default async function AnnoncesPage(
             />
             <FilterSelect
               name="city"
-              placeholder="Ville"
+              placeholder={t.common.city}
               options={cities.map((c) => ({ value: c.slug, label: c.name }))}
               defaultValue={city ?? ""}
             />
           </div>
           <button type="submit" className="sr-only focus:not-sr-only focus:mt-2 focus:inline-flex focus:min-h-[36px] focus:items-center focus:rounded-full focus:border-[1.5px] focus:border-soleil-forest focus:px-3 focus:text-xs focus:font-bold dark:focus:border-soleil-cream">
-            Filtrer
+            {t.common.filter}
           </button>
         </form>
 
@@ -370,13 +372,12 @@ export default async function AnnoncesPage(
             role="status"
             className="mt-3 rounded-[14px] bg-soleil-sand px-3 py-2 text-xs text-soleil-body dark:bg-soleil-forest dark:text-soleil-body-d"
           >
-            Certaines données sont temporairement indisponibles. Tu peux
-            recharger la page dans quelques secondes.
+            {t.common.loadIssue}
           </div>
         )}
 
         <CountLine className="pb-2 pt-3.5">
-          {total} annonce{total > 1 ? "s" : ""} · {cityName ?? "Guyane"}
+          {tFormat(t.listings.count, { n: total, place: cityName ?? "Guyane" })}
         </CountLine>
 
         {listings.length === 0 ? (

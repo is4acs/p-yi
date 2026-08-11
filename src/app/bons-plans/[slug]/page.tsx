@@ -27,6 +27,7 @@ import { HeartButton } from "@/components/soleil/HeartButton";
 import { Ph } from "@/components/soleil/Ph";
 import { VotePill } from "@/components/soleil/VotePill";
 import { getSiteUrl } from "@/lib/site-url";
+import { getMessages, tFormat } from "@/lib/i18n";
 import {
   getDealCategoryBySlug,
   getDealsCategoryPath,
@@ -197,6 +198,7 @@ export default async function DealDetailPage(
   }
 ) {
   const params = await props.params;
+  const t = await getMessages();
   const [dealResult, currentUserResult] = await Promise.allSettled([
     getDeal(params.slug),
     withTimeout(
@@ -386,7 +388,7 @@ export default async function DealDetailPage(
 
       <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-8">
         <BackHeader
-          title="Bon plan"
+          title={t.dealDetail.title}
           backHref="/bons-plans"
           action={
             <HeartButton
@@ -423,20 +425,24 @@ export default async function DealDetailPage(
 
             <div className="px-5 pt-4 lg:px-0">
               <CountLine>
-                {deal.category.name} · {deal.store ? "En magasin" : "Web"}
+                {deal.category.name} ·{" "}
+                {deal.store ? t.dealDetail.inStore : t.dealDetail.web}
               </CountLine>
               <h1 className="mt-1.5 font-display text-[22px] font-extrabold leading-[1.12]">
                 {deal.title}
               </h1>
               <p className="mt-[5px] text-xs text-soleil-muted dark:text-soleil-muted-d">
-                {sellerName} · posté {formatRelativeTime(deal.publishedAt)} par{" "}
-                {deal.author.username}
+                {tFormat(t.dealDetail.postedMeta, {
+                  seller: sellerName,
+                  ago: formatRelativeTime(deal.publishedAt),
+                  author: deal.author.username,
+                })}
               </p>
 
               <div className="mt-3 flex flex-wrap items-baseline gap-2.5">
                 {deal.isFree ? (
                   <span className="font-display text-[34px] font-extrabold leading-none">
-                    Gratuit
+                    {t.common.free}
                   </span>
                 ) : (
                   <>
@@ -475,15 +481,15 @@ export default async function DealDetailPage(
                       rel="nofollow sponsored noopener"
                       className="block rounded-full bg-soleil-forest py-3.5 text-center text-sm font-extrabold text-soleil-cream transition active:scale-[0.99] dark:bg-soleil-cream dark:text-soleil-forest"
                     >
-                      Voir le deal chez {sellerName} →
+                      {tFormat(t.dealDetail.seeDealAt, { seller: sellerName })}
                     </a>
                     <p className="mt-1.5 text-center text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
-                      Lien direct — Péyi ne prend aucune commission
+                      {t.dealDetail.noCommission}
                     </p>
                   </>
                 ) : (
                   <div className="rounded-[14px] bg-soleil-sand px-4 py-3 text-[12.5px] text-soleil-body dark:bg-soleil-forest dark:text-soleil-body-d">
-                    Offre à retirer en magasin
+                    {t.dealDetail.pickupInStore}
                     {deal.store?.address ? ` · ${deal.store.address}` : ""}
                     {deal.store?.city?.name ? ` · ${deal.store.city.name}` : ""}
                   </div>
@@ -500,11 +506,13 @@ export default async function DealDetailPage(
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 {expiresLabel && (
                   <span className="rounded-full border-[1.5px] border-soleil-border px-2.5 py-1 text-[11px] font-bold dark:border-soleil-border-d">
-                    Expire le {expiresLabel}
+                    {tFormat(t.dealDetail.expireOn, { date: expiresLabel })}
                   </span>
                 )}
                 <span className="rounded-full border-[1.5px] border-soleil-border px-2.5 py-1 text-[11px] font-bold dark:border-soleil-border-d">
-                  Vérifié {formatRelativeTime(deal.updatedAt)}
+                  {tFormat(t.dealDetail.verifiedAgo, {
+                    ago: formatRelativeTime(deal.updatedAt),
+                  })}
                 </span>
                 {currentUser && !isAuthor && (
                   <ReportDialog
@@ -517,14 +525,14 @@ export default async function DealDetailPage(
               </div>
 
               <p className="mt-2 text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
-                Publié le{" "}
+                {t.dealDetail.publishedOn}{" "}
                 <time dateTime={deal.publishedAt.toISOString()}>
                   {publishedDateLabel}
                 </time>
                 {showUpdatedAt && (
                   <>
                     {" "}
-                    · mis à jour le{" "}
+                    · {t.dealDetail.updatedOn}{" "}
                     <time dateTime={deal.updatedAt.toISOString()}>
                       {updatedDateLabel}
                     </time>
@@ -544,7 +552,7 @@ export default async function DealDetailPage(
               {/* Commentaires */}
               <section className="pt-5">
                 <h2 className="font-display text-[17px] font-extrabold">
-                  Commentaires{" "}
+                  {t.dealDetail.comments}{" "}
                   <span className="text-soleil-otext dark:text-soleil-otext-d">
                     {deal.commentCount}
                   </span>
@@ -587,7 +595,7 @@ export default async function DealDetailPage(
 
             <section className="mt-5">
               <h2 className="font-display text-[17px] font-extrabold">
-                Voir aussi
+                {t.dealDetail.seeAlso}
               </h2>
               <ul className="mt-2 space-y-2 text-[12.5px] font-bold">
                 {cityPath && deal.city && (
@@ -596,7 +604,7 @@ export default async function DealDetailPage(
                       href={cityPath}
                       className="text-soleil-otext dark:text-soleil-otext-d"
                     >
-                      Voir les bons plans à {deal.city.name}
+                      {tFormat(t.dealDetail.seeCityDeals, { city: deal.city.name })}
                     </Link>
                   </li>
                 )}
@@ -605,8 +613,9 @@ export default async function DealDetailPage(
                     href={categoryPath}
                     className="text-soleil-otext dark:text-soleil-otext-d"
                   >
-                    Voir les bons plans {deal.category.name.toLowerCase()} en
-                    Guyane
+                    {tFormat(t.dealDetail.seeCategoryDeals, {
+                      category: deal.category.name.toLowerCase(),
+                    })}
                   </Link>
                 </li>
                 {storePath && deal.store && (
@@ -615,7 +624,7 @@ export default async function DealDetailPage(
                       href={storePath}
                       className="text-soleil-otext dark:text-soleil-otext-d"
                     >
-                      Voir les promos chez {deal.store.name}
+                      {tFormat(t.dealDetail.seeStoreDeals, { store: deal.store.name })}
                     </Link>
                   </li>
                 )}

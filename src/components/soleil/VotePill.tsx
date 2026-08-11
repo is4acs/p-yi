@@ -4,6 +4,8 @@ import { useState, useTransition } from "react";
 import type { VoteType } from "@prisma/client";
 import { voteDealAction, type VoteInput } from "@/app/bons-plans/actions";
 import { cn } from "@/lib/utils";
+import type { Messages } from "@/lib/i18n/dictionaries/fr";
+import { useMessages } from "./I18nProvider";
 
 type Props = {
   dealId: string;
@@ -14,11 +16,11 @@ type Props = {
   className?: string;
 };
 
-function tempQualifier(temperature: number): string {
-  if (temperature >= 100) return "deal brûlant";
-  if (temperature >= 50) return "deal chaud";
-  if (temperature >= 0) return "deal tiède";
-  return "deal froid";
+function tempQualifier(temperature: number, t: Messages): string {
+  if (temperature >= 100) return t.dealDetail.tempBlazing;
+  if (temperature >= 50) return t.dealDetail.tempHot;
+  if (temperature >= 0) return t.dealDetail.tempWarm;
+  return t.dealDetail.tempCold;
 }
 
 /**
@@ -34,6 +36,7 @@ export function VotePill({
   disabledHint,
   className,
 }: Props) {
+  const t = useMessages();
   const [temp, setTemp] = useState(temperature);
   const [vote, setVote] = useState<VoteType | null>(myVote);
   const [error, setError] = useState<string | null>(null);
@@ -90,7 +93,7 @@ export function VotePill({
           onClick={() => cast("COLD")}
           disabled={!canVote || pending}
           title={!canVote ? disabledHint : undefined}
-          aria-label="Voter froid"
+          aria-label={t.dealDetail.voteCold}
           aria-pressed={vote === "COLD"}
           className={cn(
             "flex h-[38px] w-[38px] items-center justify-center rounded-full bg-soleil-sand text-[15px] text-soleil-muted2 transition active:scale-95 dark:bg-soleil-forest dark:text-soleil-muted-d",
@@ -104,14 +107,14 @@ export function VotePill({
           aria-live="polite"
           className="font-display font-extrabold text-soleil-otext dark:text-soleil-otext-d"
         >
-          {label} · {tempQualifier(temp)}
+          {label} · {tempQualifier(temp, t)}
         </span>
         <button
           type="button"
           onClick={() => cast("HOT")}
           disabled={!canVote || pending}
           title={!canVote ? disabledHint : undefined}
-          aria-label="Voter chaud"
+          aria-label={t.dealDetail.voteHot}
           aria-pressed={vote === "HOT"}
           className={cn(
             "flex h-[38px] w-[38px] items-center justify-center rounded-full bg-soleil-orange text-[15px] text-soleil-forest transition active:scale-95",

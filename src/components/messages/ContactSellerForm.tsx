@@ -6,6 +6,7 @@ import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { sendMessageAction } from "@/app/messages/actions";
+import { useMessages } from "@/components/soleil/I18nProvider";
 
 type Props = {
   recipientUsername: string;
@@ -20,6 +21,7 @@ type Props = {
  * so the user lands on the thread they just started.
  */
 export function ContactSellerForm({ recipientUsername, listingSlug }: Props) {
+  const t = useMessages();
   const [open, setOpen] = useState(false);
   const [content, setContent] = useState("");
 
@@ -30,7 +32,7 @@ export function ContactSellerForm({ recipientUsername, listingSlug }: Props) {
         onClick={() => setOpen(true)}
         className="w-full rounded-full bg-soleil-forest py-3 text-center text-[13.5px] font-extrabold text-soleil-cream transition active:scale-[0.98] dark:bg-soleil-cream dark:text-soleil-forest"
       >
-        Message
+        {t.listingDetail.message}
       </button>
     );
   }
@@ -50,7 +52,7 @@ export function ContactSellerForm({ recipientUsername, listingSlug }: Props) {
         htmlFor="message-content"
         className="text-xs font-medium text-soleil-muted2 dark:text-soleil-muted-d"
       >
-        Ton message à{" "}
+        {t.listingDetail.messageTo}{" "}
         <span className="font-bold text-soleil-forest dark:text-soleil-cream">
           @{recipientUsername}
         </span>
@@ -64,7 +66,7 @@ export function ContactSellerForm({ recipientUsername, listingSlug }: Props) {
         maxLength={2000}
         rows={4}
         autoFocus
-        placeholder="Bonjour, est-ce toujours disponible ?"
+        placeholder={t.listingDetail.messagePlaceholder}
         className="w-full resize-y rounded-[14px] border-[1.5px] border-soleil-border bg-soleil-input px-3.5 py-3 text-[13px] font-semibold text-soleil-forest placeholder:text-soleil-muted focus:border-soleil-forest focus:outline-none dark:border-soleil-border-d dark:bg-soleil-night dark:text-soleil-cream dark:placeholder:text-soleil-muted-d dark:focus:border-soleil-cream"
       />
       <div className="flex items-center justify-between gap-2">
@@ -81,11 +83,11 @@ export function ContactSellerForm({ recipientUsername, listingSlug }: Props) {
               setContent("");
             }}
           >
-            Annuler
+            {t.listingDetail.cancel}
           </Button>
-          <SubmitButton size="sm" disabled={!canSubmit} pendingLabel="Envoi…">
+          <SubmitButton size="sm" disabled={!canSubmit} pendingLabel={t.listingDetail.sending}>
             <Send className="h-3.5 w-3.5" aria-hidden />
-            Envoyer
+            {t.listingDetail.send}
           </SubmitButton>
         </div>
       </div>

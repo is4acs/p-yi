@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { formatPrice, formatRelativeTime } from "@/lib/format";
 import type { DealCardData } from "@/lib/deals/queries";
 import { StoreLogo } from "@/components/common/StoreLogo";
+import { getMessages, tFormat } from "@/lib/i18n";
 import { Ph } from "@/components/soleil/Ph";
 import { TempBadge } from "@/components/soleil/TempBadge";
 import { PriceTag } from "./PriceTag";
@@ -99,7 +100,7 @@ function MerchantTag({
   );
 }
 
-export function DealCard({
+export async function DealCard({
   deal,
   currentUserId,
   myVote = null,
@@ -107,6 +108,7 @@ export function DealCard({
   variant = "full",
   className,
 }: Props) {
+  const t = await getMessages();
   const sellerName = deal.store?.name ?? deal.merchant?.name ?? null;
   const isLocalStore = Boolean(deal.store);
   const sellerLogoUrl = deal.store?.logoUrl ?? deal.merchant?.logoUrl ?? null;
@@ -162,7 +164,7 @@ export function DealCard({
             <div className="mt-1.5 flex flex-wrap items-center gap-2">
               {deal.isFree ? (
                 <span className="font-display text-base font-extrabold text-soleil-otext dark:text-soleil-otext-d">
-                  Gratuit
+                  {t.common.free}
                 </span>
               ) : (
                 <>
@@ -186,7 +188,7 @@ export function DealCard({
           <div className="flex flex-none flex-col items-center gap-1">
             <TempBadge temperature={deal.temperature} />
             <span className="text-[10px] text-soleil-muted dark:text-soleil-muted-d">
-              {deal.commentCount} comm.
+              {tFormat(t.deals.comments, { n: deal.commentCount })}
             </span>
           </div>
         </Link>

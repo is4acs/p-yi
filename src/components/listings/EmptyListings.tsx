@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getMessages } from "@/lib/i18n";
 import { PackageSearch, SlidersHorizontal } from "lucide-react";
 
 type Props = {
@@ -17,10 +18,11 @@ type Props = {
   clearFiltersHref?: string;
 };
 
-export function EmptyListings({
+export async function EmptyListings({
   mode,
   clearFiltersHref = "/annonces",
 }: Props) {
+  const t = await getMessages();
   if (mode === "filtered") {
     return (
       <div className="flex flex-col items-center rounded-[14px] bg-soleil-sand px-4 py-12 text-center text-soleil-forest dark:bg-soleil-forest dark:text-soleil-cream">
@@ -29,16 +31,16 @@ export function EmptyListings({
           aria-hidden
         />
         <h2 className="font-display text-lg font-extrabold">
-          Aucun résultat avec ces filtres
+          {t.listings.emptyTitleFiltered}
         </h2>
         <p className="mt-1 max-w-xs text-sm text-soleil-body dark:text-soleil-body-d">
-          Essaie d&apos;élargir la fourchette ou retire un critère.
+          {t.deals.emptySubFiltered}
         </p>
         <Link
           href={clearFiltersHref}
           className="mt-4 inline-flex min-h-[44px] items-center rounded-full bg-soleil-forest px-4 text-sm font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
         >
-          Effacer les filtres
+          {t.deals.clearFilters}
         </Link>
       </div>
     );
@@ -51,16 +53,16 @@ export function EmptyListings({
         aria-hidden
       />
       <h2 className="font-display text-lg font-extrabold">
-        Aucune annonce pour le moment
+        {t.listings.emptyTitle}
       </h2>
       <p className="mt-1 max-w-xs text-sm text-soleil-body dark:text-soleil-body-d">
-        Sois le premier à publier une annonce en Guyane.
+        {t.deals.emptySub}
       </p>
       <Link
         href="/poster/annonce"
         className="mt-4 inline-flex min-h-[44px] items-center rounded-full bg-soleil-forest px-4 text-sm font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
       >
-        Poster une annonce
+        {t.listings.emptyCta}
       </Link>
     </div>
   );

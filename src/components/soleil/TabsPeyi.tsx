@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { getMessages } from "@/lib/i18n";
 
 type Tab = "deals" | "annonces" | "activites";
 
-const TABS: { key: Tab; label: string; href: string }[] = [
-  { key: "deals", label: "Bons plans", href: "/bons-plans" },
-  { key: "annonces", label: "Annonces", href: "/annonces" },
-  { key: "activites", label: "Activités", href: "/activites" },
+const TAB_LINKS: { key: Tab; href: string }[] = [
+  { key: "deals", href: "/bons-plans" },
+  { key: "annonces", href: "/annonces" },
+  { key: "activites", href: "/activites" },
 ];
 
 type Props = {
@@ -18,13 +19,19 @@ type Props = {
  * TabsPeyi — onglets hauts Bons plans / Annonces / Activités. L'actif
  * porte le filet orange 3px, les autres sont en muted.
  */
-export function TabsPeyi({ active, className }: Props) {
+export async function TabsPeyi({ active, className }: Props) {
+  const t = await getMessages();
+  const labels: Record<Tab, string> = {
+    deals: t.tabs.deals,
+    annonces: t.tabs.listings,
+    activites: t.tabs.activities,
+  };
   return (
     <nav
-      aria-label="Sections"
+      aria-label={t.tabs.sections}
       className={cn("flex gap-[18px] text-[13px] font-bold", className)}
     >
-      {TABS.map((tab) => (
+      {TAB_LINKS.map((tab) => (
         <Link
           key={tab.key}
           href={tab.href}
@@ -36,7 +43,7 @@ export function TabsPeyi({ active, className }: Props) {
               : "text-soleil-muted dark:text-soleil-muted-d",
           )}
         >
-          {tab.label}
+          {labels[tab.key]}
         </Link>
       ))}
     </nav>

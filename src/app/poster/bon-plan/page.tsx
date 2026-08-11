@@ -8,6 +8,7 @@ import { BackHeader } from "@/components/soleil/BackHeader";
 import { PosterFork } from "@/components/soleil/PosterFork";
 
 import { createDealAction } from "@/app/poster/actions";
+import { getMessages, tFormat } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Poster un bon plan",
@@ -21,6 +22,7 @@ export default async function PosterPage(
   }
 ) {
   const searchParams = await props.searchParams;
+  const t = await getMessages();
   const user = await requireUser("/poster/bon-plan");
 
   const [categories, cities, storesRaw] = await Promise.all([
@@ -50,14 +52,13 @@ export default async function PosterPage(
     // DealPosterLayout. En dessous de lg le formulaire reste en max-w-md.
     <main className="min-h-screen bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
       <div className="mx-auto w-full max-w-md lg:max-w-5xl">
-        <BackHeader title="Poster" backHref="/poster" />
+        <BackHeader title={t.poster.title} backHref="/poster" />
         <h1 className="sr-only">Poster un bon plan</h1>
 
         <div className="px-5">
           <PosterFork selected="deal" className="pt-4" />
           <p className="pt-3 text-xs text-soleil-muted dark:text-soleil-muted-d">
-            Partage une promo, un prix fou ou un deal caché. +5 karma pour
-            toi, @{user.username}.
+            {tFormat(t.poster.dealIntro, { name: user.username })}
           </p>
 
           {searchParams.error && (
@@ -76,7 +77,7 @@ export default async function PosterPage(
                 categories={categories}
                 cities={cities}
                 stores={stores}
-                submitLabel="Publier — c'est gratuit"
+                submitLabel={t.poster.publishCta}
               />
             </DealPosterLayout>
           </div>

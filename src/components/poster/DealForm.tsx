@@ -6,6 +6,7 @@ import { Send } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { useMessages } from "@/components/soleil/I18nProvider";
 
 import { ImagePicker } from "./ImagePicker";
 
@@ -44,6 +45,7 @@ export function DealForm({
   defaults,
   submitLabel = "Publier le bon plan",
 }: Props) {
+  const t = useMessages();
   const v = defaults ?? {};
   const [citySlug, setCitySlug] = useState<string>(v.citySlug ?? "");
   // `stores` n'est plus consommé depuis qu'on a retiré le datalist de
@@ -56,7 +58,7 @@ export function DealForm({
       {v.dealId && <input type="hidden" name="dealId" value={v.dealId} />}
 
       <div className="space-y-1.5">
-        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="title">Titre *</Label>
+        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="title">{t.form.title} *</Label>
         <Input
           id="title"
           name="title"
@@ -73,7 +75,7 @@ export function DealForm({
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="price">Prix (€) *</Label>
+          <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="price">{t.form.price} *</Label>
           <Input
             id="price"
             name="price"
@@ -86,7 +88,7 @@ export function DealForm({
           />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="originalPrice">Prix d&apos;origine (€)</Label>
+          <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="originalPrice">{t.form.originalPrice}</Label>
           <Input
             id="originalPrice"
             name="originalPrice"
@@ -100,7 +102,7 @@ export function DealForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="categorySlug">Catégorie *</Label>
+        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="categorySlug">{t.form.category} *</Label>
         <select
           id="categorySlug"
           name="categorySlug"
@@ -109,7 +111,7 @@ export function DealForm({
           defaultValue={v.categorySlug ?? ""}
         >
           <option value="" disabled>
-            Choisis une catégorie
+            {t.form.chooseCategory}
           </option>
           {categories.map((c) => (
             <option key={c.slug} value={c.slug}>
@@ -121,7 +123,7 @@ export function DealForm({
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="citySlug">Commune</Label>
+          <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="citySlug">{t.form.cityField}</Label>
           <select
             id="citySlug"
             name="citySlug"
@@ -129,7 +131,7 @@ export function DealForm({
             onChange={(e) => setCitySlug(e.target.value)}
             className="flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-peyi-orange-300"
           >
-            <option value="">Toute la Guyane</option>
+            <option value="">{t.form.allGuyane}</option>
             {cities.map((c) => (
               <option key={c.slug} value={c.slug}>
                 {c.name}
@@ -139,7 +141,7 @@ export function DealForm({
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="storeName">Magasin</Label>
+          <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="storeName">{t.form.store}</Label>
           <Input
             id="storeName"
             name="storeName"
@@ -150,14 +152,13 @@ export function DealForm({
             autoComplete="off"
           />
           <p className="text-xs text-muted-foreground">
-            Saisis librement le nom du magasin. Laisse vide pour un deal en
-            ligne.
+            {t.form.storeHelp}
           </p>
         </div>
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="externalUrl">Lien vers l&apos;offre</Label>
+        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="externalUrl">{t.form.link}</Label>
         <Input
           id="externalUrl"
           name="externalUrl"
@@ -166,13 +167,12 @@ export function DealForm({
           placeholder="https://..."
         />
         <p className="text-xs text-muted-foreground">
-          Amazon, Cdiscount, site du commerçant… on détectera automatiquement
-          les liens affiliés.
+          {t.form.linkHelp}
         </p>
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="expiresAt">Date d&apos;expiration</Label>
+        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="expiresAt">{t.form.expiry}</Label>
         <Input
           id="expiresAt"
           name="expiresAt"
@@ -182,7 +182,7 @@ export function DealForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="description">Description</Label>
+        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="description">{t.form.description}</Label>
         <textarea
           id="description"
           name="description"
@@ -197,13 +197,13 @@ export function DealForm({
       <SubmitButton
         size="lg"
         className="w-full rounded-full bg-soleil-forest py-3.5 text-sm font-extrabold text-soleil-cream hover:bg-soleil-forest dark:bg-soleil-cream dark:text-soleil-forest dark:hover:bg-soleil-cream"
-        pendingLabel="Publication…"
+        pendingLabel={t.poster.publishing}
       >
         <Send className="h-4 w-4" aria-hidden />
         {submitLabel}
       </SubmitButton>
       <p className="!mt-2 text-center text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
-        En ligne immédiatement — l&apos;équipe Péyi veille sur les contenus
+        {t.poster.publishNote}
       </p>
     </form>
   );
