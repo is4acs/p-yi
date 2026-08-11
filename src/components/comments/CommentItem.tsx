@@ -8,7 +8,6 @@ import { formatRelativeTime } from "@/lib/format";
 import { LEVEL_META } from "@/lib/deals/user-level";
 import type { UserLevel } from "@prisma/client";
 import { Button } from "@/components/ui/button";
-import { UserAvatar } from "@/components/layout/UserAvatar";
 import { deleteCommentAction } from "@/app/bons-plans/comments/actions";
 
 import { CommentForm } from "./CommentForm";
@@ -35,6 +34,9 @@ type Props = {
   canReply: boolean;
   replyDisabledHint?: string;
   isReply?: boolean;
+  // Alternance des avatars « Soleil péyi » : orange plein / forêt plein
+  // (la liste passe la parité de l'index).
+  tone?: "orange" | "forest";
 };
 
 export function CommentItem({
@@ -44,6 +46,7 @@ export function CommentItem({
   canReply,
   replyDisabledHint,
   isReply = false,
+  tone = "orange",
 }: Props) {
   const [showReply, setShowReply] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -74,35 +77,38 @@ export function CommentItem({
     <article
       className={cn(
         "space-y-2",
-        isReply ? "border-l-2 border-peyi-orange-100 pl-3" : "",
+        isReply ? "border-l-2 border-soleil-line pl-3 dark:border-soleil-line-d" : "",
       )}
     >
       <div className="flex gap-2.5">
-        <UserAvatar
-          username={comment.author.username}
-          avatarUrl={comment.author.avatarUrl}
-          size="sm"
-        />
+        <span
+          aria-hidden
+          className={cn(
+            "flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full text-xs font-extrabold",
+            tone === "orange"
+              ? "bg-soleil-orange text-soleil-forest"
+              : "bg-soleil-forest text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest",
+          )}
+        >
+          {comment.author.username.trim()[0]?.toUpperCase() ?? "?"}
+        </span>
 
         <div className="min-w-0 flex-1 space-y-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
-            <span className="font-semibold text-foreground">
-              @{comment.author.username}
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs">
+            <b className="text-soleil-forest dark:text-soleil-cream">
+              {comment.author.username}
+            </b>
+            <span className="text-soleil-muted dark:text-soleil-muted-d">
+              · {level.label} · {formatRelativeTime(comment.createdAt)}
             </span>
-            <span aria-hidden>·</span>
-            <span>
-              <span aria-hidden>{level.emoji}</span> {level.label}
-            </span>
-            <span aria-hidden>·</span>
-            <span>{formatRelativeTime(comment.createdAt)}</span>
           </div>
 
           {comment.isDeleted ? (
-            <p className="text-sm italic text-muted-foreground">
+            <p className="text-[12.5px] italic text-soleil-muted dark:text-soleil-muted-d">
               [commentaire supprimé]
             </p>
           ) : (
-            <p className="whitespace-pre-line text-sm text-foreground">
+            <p className="whitespace-pre-line text-[12.5px] leading-normal text-soleil-body dark:text-soleil-body-d">
               {comment.content}
             </p>
           )}
@@ -171,7 +177,7 @@ export function CommentItem({
 
       {comment.replies && comment.replies.length > 0 && (
         <div className="ml-9 space-y-3">
-          {comment.replies.map((reply) => (
+          {comment.replies.map((reply, i) => (
             <CommentItem
               key={reply.id}
               comment={reply}
@@ -179,6 +185,7 @@ export function CommentItem({
               currentUserId={currentUserId}
               canReply={false}
               isReply
+              tone={i % 2 === 0 ? "forest" : "orange"}
             />
           ))}
         </div>

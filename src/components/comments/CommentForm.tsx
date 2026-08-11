@@ -59,12 +59,12 @@ export function CommentForm({
         name="content"
         required
         autoFocus={autoFocus}
-        rows={compact ? 2 : 3}
+        rows={compact ? 2 : 2}
         maxLength={MAX_LEN}
         placeholder={placeholder}
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="flex w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-peyi-orange-300"
+        className="flex w-full resize-y rounded-[22px] border-[1.5px] border-soleil-border bg-transparent px-4 py-2.5 text-[12.5px] text-soleil-forest transition placeholder:text-soleil-muted focus:border-soleil-forest focus:outline-none dark:border-soleil-border-d dark:text-soleil-cream dark:placeholder:text-soleil-muted-d dark:focus:border-soleil-cream"
       />
 
       {error && (
@@ -74,7 +74,7 @@ export function CommentForm({
       )}
 
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[10px] tabular-nums text-muted-foreground">
+        <span className="text-[10px] tabular-nums text-soleil-muted dark:text-soleil-muted-d">
           {value.length}/{MAX_LEN}
         </span>
         <div className="flex gap-2">

@@ -84,15 +84,41 @@ export async function CommentList({ dealId, dealSlug, currentUserId }: Props) {
   const comments = await fetchThread(dealId);
 
   return (
-    <div className="space-y-5">
-      {currentUserId ? (
-        <CommentForm dealId={dealId} />
+    <div>
+      {comments.length === 0 ? (
+        <p className="rounded-[14px] bg-soleil-sand px-4 py-6 text-center text-[12.5px] text-soleil-body dark:bg-soleil-forest dark:text-soleil-body-d">
+          Sois le premier à donner ton avis.
+        </p>
       ) : (
-        <div className="rounded-lg border border-dashed border-border bg-muted/40 px-4 py-4 text-center">
-          <p className="text-sm text-muted-foreground">
-            Connecte-toi pour laisser un avis sur ce bon plan.
-          </p>
-          <Button asChild size="sm" className="mt-2">
+        <ul>
+          {comments.map((c, i) => (
+            <li
+              key={c.id}
+              className="border-b border-soleil-line py-3 last:border-0 dark:border-soleil-line-d"
+            >
+              <CommentItem
+                comment={c}
+                dealId={dealId}
+                currentUserId={currentUserId}
+                canReply={Boolean(currentUserId)}
+                replyDisabledHint="Connecte-toi pour répondre."
+                tone={i % 2 === 0 ? "orange" : "forest"}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {currentUserId ? (
+        <div className="pt-3">
+          <CommentForm dealId={dealId} placeholder="Ajouter un commentaire…" />
+        </div>
+      ) : (
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-full border-[1.5px] border-soleil-border py-2.5 pl-4 pr-2.5 dark:border-soleil-border-d">
+          <span className="text-[12.5px] text-soleil-muted dark:text-soleil-muted-d">
+            Ajouter un commentaire…
+          </span>
+          <Button asChild size="sm" className="rounded-full">
             <Link
               href={`/connexion?next=${encodeURIComponent(
                 `/bons-plans/${dealSlug}`,
@@ -102,26 +128,6 @@ export async function CommentList({ dealId, dealSlug, currentUserId }: Props) {
             </Link>
           </Button>
         </div>
-      )}
-
-      {comments.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border bg-muted/40 px-4 py-6 text-center text-sm text-muted-foreground">
-          Sois le premier à donner ton avis.
-        </p>
-      ) : (
-        <ul className="space-y-5">
-          {comments.map((c) => (
-            <li key={c.id}>
-              <CommentItem
-                comment={c}
-                dealId={dealId}
-                currentUserId={currentUserId}
-                canReply={Boolean(currentUserId)}
-                replyDisabledHint="Connecte-toi pour répondre."
-              />
-            </li>
-          ))}
-        </ul>
       )}
     </div>
   );
