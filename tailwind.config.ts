@@ -195,7 +195,7 @@ const config: Config = {
         //  1. Les valeurs handoff (10/14/20/28) ne dérivent pas d'une
         //     base unique — elles suivent une progression non-linéaire
         //     (+4/+6/+8) pour gagner en douceur visuelle aux grandes
-        //     tailles, cohérente avec Nunito + logo rond.
+        //     tailles, cohérente avec la typo display et le logo rond.
         //  2. `--radius` (0.75rem) reste défini dans globals.css pour
         //     compat shadcn à venir mais n'est plus référencé ici.
         // Impact : ~260 usages `rounded-{sm,md,lg,xl}` gagnent de la
