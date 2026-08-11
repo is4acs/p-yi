@@ -98,7 +98,7 @@ export function ActivitiesFilterBar({
             <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
             Filtres
             {activeCount > 0 && (
-              <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-peyi-orange-500 px-1 font-mono text-[10px] font-bold text-white">
+              <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-soleil-orange px-1 text-[10px] font-extrabold text-soleil-forest">
                 {activeCount}
               </span>
             )}
@@ -140,7 +140,6 @@ export function ActivitiesFilterBar({
                     active={filters.accessModes.includes(mode)}
                     onClick={() => toggleAccessMode(mode)}
                   >
-                    <span aria-hidden>{ACCESS_MODES[mode].emoji}</span>
                     {ACCESS_MODES[mode].label}
                   </Chip>
                 ))}
@@ -246,7 +245,11 @@ export function ActivitiesFilterBar({
             onClick={() => toggleCategory(category)}
             className="shrink-0"
           >
-            <span aria-hidden>{meta.emoji}</span>
+            <span
+              aria-hidden
+              className="inline-block h-2 w-2 rounded-full"
+              style={{ backgroundColor: meta.color }}
+            />
             {meta.label}
           </Chip>
         );
@@ -256,7 +259,7 @@ export function ActivitiesFilterBar({
         <button
           type="button"
           onClick={clearAll}
-          className="shrink-0 whitespace-nowrap text-xs font-medium text-peyi-orange-700 hover:text-peyi-orange-800"
+          className="shrink-0 whitespace-nowrap text-xs font-bold text-soleil-otext hover:underline dark:text-soleil-otext-d"
         >
           Tout effacer
         </button>

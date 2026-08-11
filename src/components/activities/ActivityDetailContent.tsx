@@ -34,7 +34,6 @@ import {
 import { isPracticableNow } from "@/lib/activities/seasons";
 import type { ActivityDetailPayload } from "@/lib/activities/types";
 import { isRenderableImageUrl } from "@/lib/images";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -129,19 +128,23 @@ export function ActivityDetailContent({
       ) : (
         <div
           aria-hidden
-          className="-mx-4 -mt-4 flex aspect-[4/3] items-center justify-center text-5xl sm:mx-0 sm:mt-0 sm:rounded-md"
+          className="-mx-4 -mt-4 flex aspect-[4/3] items-center justify-center sm:mx-0 sm:mt-0 sm:rounded-[14px]"
           style={{ backgroundColor: `${category.color}22` }}
         >
-          {category.emoji}
+          <MapPin
+            className="h-10 w-10"
+            style={{ color: category.color }}
+            aria-hidden
+          />
         </div>
       )}
 
       {/* 2. Identité. */}
       <div>
-        <h2 className="font-display text-title-sm font-bold leading-tight">
+        <h2 className="font-display text-xl font-extrabold leading-tight">
           {detail.name}
         </h2>
-        <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+        <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-soleil-muted2 dark:text-soleil-muted-d">
           <MapPin className="h-3.5 w-3.5" aria-hidden />
           {detail.city.name}
           <span aria-hidden>·</span>
@@ -154,13 +157,15 @@ export function ActivityDetailContent({
             {category.label}
           </span>
         </p>
-        <p className="mt-2 text-sm text-foreground">{detail.tagline}</p>
+        <p className="mt-2 text-sm text-soleil-body dark:text-soleil-body-d">
+          {detail.tagline}
+        </p>
       </div>
 
       {/* 3. Bandeau ACCÈS — le différenciant n° 1. */}
       <section
         aria-label="Mode d'accès"
-        className="rounded-md border border-ink-100 bg-ink-50/60 p-3"
+        className="rounded-[14px] bg-soleil-sand p-3 dark:bg-soleil-forest"
       >
         <div className="flex flex-wrap items-center gap-2">
           {detail.accessModes.map((mode) => {
@@ -168,24 +173,23 @@ export function ActivityDetailContent({
             return (
               <span
                 key={mode}
-                className="inline-flex items-center gap-1.5 rounded-sm border border-ink-100 bg-white px-2 py-1 text-xs font-semibold text-ink-700"
+                className="inline-flex items-center rounded-[7px] border-[1.5px] border-soleil-border bg-soleil-input px-2 py-1 text-xs font-bold dark:border-soleil-border-d dark:bg-soleil-night"
                 title={meta.description}
               >
-                <span aria-hidden className="text-sm">{meta.emoji}</span>
                 {meta.label}
               </span>
             );
           })}
           {detail.startPoint && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-soleil-muted2 dark:text-soleil-muted-d">
               Départ : {detail.startPoint}
             </span>
           )}
         </div>
         {detail.accessNote && (
-          <p className="mt-2 flex items-start gap-1.5 text-xs font-medium text-ink-700">
+          <p className="mt-2 flex items-start gap-1.5 text-xs font-medium text-soleil-body dark:text-soleil-body-d">
             <AlertTriangle
-              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning"
+              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-soleil-otext dark:text-soleil-otext-d"
               aria-hidden
             />
             {detail.accessNote}
@@ -197,10 +201,10 @@ export function ActivityDetailContent({
       <section
         aria-label="Saisonnalité"
         className={cn(
-          "flex items-start gap-2 rounded-md border p-3 text-sm",
+          "flex items-start gap-2 rounded-[14px] p-3 text-sm",
           practicable
-            ? "border-peyi-green-200 bg-peyi-green-50 text-peyi-green-800"
-            : "border-warning/40 bg-warning/10 text-ink-700",
+            ? "bg-soleil-valid text-soleil-forest dark:bg-soleil-valid-d"
+            : "bg-soleil-promo text-soleil-otext dark:bg-soleil-promo-d dark:text-soleil-otext-d",
         )}
       >
         <CalendarDays className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
@@ -222,20 +226,28 @@ export function ActivityDetailContent({
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
         {duration && (
           <span className="inline-flex items-center gap-1.5">
-            <Clock className="h-4 w-4 text-muted-foreground" aria-hidden />
+            <Clock
+              className="h-4 w-4 text-soleil-muted dark:text-soleil-muted-d"
+              aria-hidden
+            />
             {duration}
           </span>
         )}
         {detail.difficulty && (
           <span className="inline-flex items-center gap-1.5">
-            <Gauge className="h-4 w-4 text-muted-foreground" aria-hidden />
+            <Gauge
+              className="h-4 w-4 text-soleil-muted dark:text-soleil-muted-d"
+              aria-hidden
+            />
             {DIFFICULTIES[detail.difficulty].label}
           </span>
         )}
         {detail.isFree ? (
-          <Badge variant="new">Gratuit</Badge>
+          <span className="rounded-[7px] bg-soleil-valid px-2 py-0.5 text-xs font-extrabold text-soleil-forest dark:bg-soleil-valid-d">
+            Gratuit
+          </span>
         ) : (
-          <span className="inline-flex items-center gap-1.5 font-mono font-semibold text-peyi-orange-700">
+          <span className="inline-flex items-center gap-1.5 font-extrabold text-soleil-otext dark:text-soleil-otext-d">
             <Ticket className="h-4 w-4" aria-hidden />
             {formatActivityPrice(detail)}
           </span>
@@ -243,7 +255,7 @@ export function ActivityDetailContent({
       </div>
 
       {/* 6. Description (markdown simple : paragraphes). */}
-      <div className="space-y-2.5 text-sm leading-relaxed text-foreground">
+      <div className="space-y-2.5 text-sm leading-relaxed text-soleil-body dark:text-soleil-body-d">
         {detail.description
           .split(/\n{2,}/)
           .filter(Boolean)
@@ -256,37 +268,33 @@ export function ActivityDetailContent({
 
       {/* 7. Horaires du jour + statut temps réel. */}
       {hours && (
-        <section aria-label="Horaires" className="rounded-md border border-border p-3">
+        <section
+          aria-label="Horaires"
+          className="rounded-[14px] border-[1.5px] border-soleil-border p-3 dark:border-soleil-border-d"
+        >
           <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold">Aujourd&apos;hui</p>
+            <p className="text-sm font-bold">Aujourd&apos;hui</p>
             <span
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-mono text-[11px] font-semibold",
+                "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-extrabold",
                 openNow
-                  ? "bg-peyi-green-50 text-peyi-green-700"
+                  ? "bg-soleil-valid text-soleil-forest dark:bg-soleil-valid-d"
                   : "bg-destructive/10 text-destructive",
               )}
             >
-              <span
-                aria-hidden
-                className={cn(
-                  "inline-block h-1.5 w-1.5 rounded-full",
-                  openNow ? "bg-peyi-green-500" : "bg-destructive",
-                )}
-              />
               {openNow ? "Ouvert" : "Fermé"}
             </span>
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-soleil-muted2 dark:text-soleil-muted-d">
             {ranges.length > 0
               ? ranges.map(([start, end]) => `${start} – ${end}`).join(" · ")
               : "Fermé aujourd'hui"}
           </p>
           <details className="mt-2">
-            <summary className="cursor-pointer text-xs font-medium text-peyi-orange-700">
+            <summary className="cursor-pointer text-xs font-bold text-soleil-otext dark:text-soleil-otext-d">
               Tous les horaires
             </summary>
-            <ul className="mt-1.5 space-y-0.5 text-xs text-muted-foreground">
+            <ul className="mt-1.5 space-y-0.5 text-xs text-soleil-muted2 dark:text-soleil-muted-d">
               {DAY_KEYS.map((day) => (
                 <li key={day} className="flex justify-between gap-4">
                   <span>{DAY_LABELS[day]}</span>
@@ -301,7 +309,7 @@ export function ActivityDetailContent({
               ))}
             </ul>
             {hours.exceptions && hours.exceptions.length > 0 && (
-              <p className="mt-1.5 text-xs italic text-muted-foreground">
+              <p className="mt-1.5 text-xs italic text-soleil-muted dark:text-soleil-muted-d">
                 {hours.exceptions.join(" — ")}
               </p>
             )}
@@ -358,7 +366,7 @@ export function ActivityDetailContent({
       </div>
 
       {detail.bookingRequired && !detail.bookingUrl && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-soleil-muted2 dark:text-soleil-muted-d">
           Réservation obligatoire — passe par l&apos;opérateur avant d&apos;y
           aller.
         </p>
@@ -368,7 +376,7 @@ export function ActivityDetailContent({
       {showFullPageLink && (
         <Link
           href={`/activites/${detail.slug}`}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-peyi-orange-700 hover:text-peyi-orange-800"
+          className="inline-flex items-center gap-1.5 text-sm font-bold text-soleil-otext hover:underline dark:text-soleil-otext-d"
         >
           Voir la fiche complète
           <ArrowRight className="h-4 w-4" aria-hidden />

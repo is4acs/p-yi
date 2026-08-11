@@ -25,11 +25,11 @@ type ChipProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 export const Chip = React.forwardRef<HTMLButtonElement, ChipProps>(
   ({ active = false, className, children, asLink, ...props }, ref) => {
     const classes = cn(
-      "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 font-display text-[13px] font-semibold transition-colors duration-base",
+      "inline-flex items-center gap-1.5 rounded-full border-[1.5px] px-3.5 py-2 text-[13px] font-bold transition-colors duration-base",
       "min-h-[40px]", // hit target mobile
       active
-        ? "border-ink-900 bg-ink-900 text-white"
-        : "border-ink-100 bg-white text-ink-700 hover:border-peyi-orange-300 hover:text-peyi-orange-700",
+        ? "border-soleil-forest bg-soleil-forest text-soleil-cream dark:border-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
+        : "border-soleil-border bg-soleil-input text-soleil-forest hover:border-soleil-forest dark:border-soleil-border-d dark:bg-soleil-forest dark:text-soleil-cream dark:hover:border-soleil-cream",
       className,
     );
     if (asLink) {

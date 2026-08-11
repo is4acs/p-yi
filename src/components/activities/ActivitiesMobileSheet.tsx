@@ -200,7 +200,7 @@ export function ActivitiesMobileSheet({
       aria-label="Liste des activités"
       style={{ height }}
       className={cn(
-        "fixed inset-x-0 bottom-20 z-30 flex flex-col rounded-t-lg border-t border-border bg-background shadow-lg lg:bottom-0",
+        "fixed inset-x-0 bottom-20 z-30 flex flex-col rounded-t-[20px] border-t border-soleil-line bg-soleil-cream text-soleil-forest shadow-lg dark:border-soleil-line-d dark:bg-soleil-night dark:text-soleil-cream lg:bottom-0",
         // Pas de transition pendant le glissement : le panneau doit coller
         // au doigt. Elle ne sert qu'à l'aimantation et aux boutons.
         !dragging && "transition-[height] duration-slow ease-out",
@@ -218,10 +218,10 @@ export function ActivitiesMobileSheet({
         onPointerCancel={endDrag}
         onClick={onHandleClick}
         aria-label={expanded ? "Réduire la liste" : "Agrandir la liste"}
-        className="flex w-full shrink-0 touch-none items-center justify-center px-4 pb-1.5 pt-3 text-muted-foreground"
+        className="flex w-full shrink-0 touch-none items-center justify-center px-4 pb-1.5 pt-3 text-soleil-muted dark:text-soleil-muted-d"
       >
         <span
-          className="h-1.5 w-12 rounded-full bg-ink-200 transition-colors"
+          className="h-1.5 w-12 rounded-full bg-soleil-border transition-colors dark:bg-soleil-border-d"
           aria-hidden
         />
       </button>
@@ -231,20 +231,20 @@ export function ActivitiesMobileSheet({
           <button
             type="button"
             onClick={() => onSelect(null)}
-            className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-peyi-orange-700"
+            className="inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-soleil-otext dark:text-soleil-otext-d"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden />
             Retour à la liste
           </button>
         ) : (
-          <p className="text-sm font-semibold" aria-live="polite">
+          <p className="text-sm font-bold" aria-live="polite">
             {countLabel}
           </p>
         )}
         <button
           type="button"
           onClick={toggle}
-          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-accent"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-soleil-muted transition hover:bg-soleil-sand dark:text-soleil-muted-d dark:hover:bg-soleil-forest"
           aria-label={expanded ? "Voir la carte" : "Agrandir la liste"}
         >
           {expanded ? (
@@ -256,7 +256,9 @@ export function ActivitiesMobileSheet({
       </header>
 
       {!showDetail && filterBar && (
-        <div className="shrink-0 border-b border-border">{filterBar}</div>
+        <div className="shrink-0 border-b border-soleil-line dark:border-soleil-line-d">
+          {filterBar}
+        </div>
       )}
 
       {/*
@@ -273,7 +275,7 @@ export function ActivitiesMobileSheet({
           <>
             {detail.status === "loading" && <DetailSkeleton />}
             {detail.status === "error" && (
-              <p className="py-6 text-center text-sm text-muted-foreground">
+              <p className="py-6 text-center text-sm text-soleil-muted2 dark:text-soleil-muted-d">
                 Impossible de charger cette activité — sélectionne-la à
                 nouveau.
               </p>
@@ -283,7 +285,7 @@ export function ActivitiesMobileSheet({
             )}
           </>
         ) : count === 0 && isReady ? (
-          <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+          <p className="px-4 py-8 text-center text-sm text-soleil-muted2 dark:text-soleil-muted-d">
             Aucune activité dans cette zone — déplace la carte ou dézoome.
           </p>
         ) : (

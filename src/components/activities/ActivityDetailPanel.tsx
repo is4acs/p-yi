@@ -4,7 +4,6 @@ import { X } from "lucide-react";
 
 import { ActivityDetailContent } from "@/components/activities/ActivityDetailContent";
 import type { ActivityDetailState } from "@/components/activities/use-activity-detail";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
@@ -22,13 +21,13 @@ export function ActivityDetailPanel({ state, onClose }: Props) {
   return (
     <aside
       aria-label="Détail de l'activité"
-      className="absolute bottom-3 left-3 top-3 z-10 hidden w-96 max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-lg border border-border bg-background shadow-lg lg:flex"
+      className="absolute bottom-3 left-3 top-3 z-10 hidden w-96 max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-[14px] border-[1.5px] border-soleil-border bg-soleil-cream text-soleil-forest shadow-lg dark:border-soleil-border-d dark:bg-soleil-night dark:text-soleil-cream lg:flex"
     >
       <button
         type="button"
         onClick={onClose}
         aria-label="Fermer le détail"
-        className="absolute right-2 top-2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm backdrop-blur transition hover:bg-accent"
+        className="absolute right-2 top-2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-soleil-cream/90 shadow-sm backdrop-blur transition hover:bg-soleil-sand dark:bg-soleil-night/90 dark:hover:bg-soleil-forest"
       >
         <X className="h-4 w-4" aria-hidden />
       </button>
@@ -37,12 +36,16 @@ export function ActivityDetailPanel({ state, onClose }: Props) {
         {state.status === "loading" && <DetailSkeleton />}
         {state.status === "error" && (
           <div className="flex flex-col items-start gap-3 pt-8">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-soleil-muted2 dark:text-soleil-muted-d">
               Impossible de charger cette activité.
             </p>
-            <Button variant="outline" size="sm" onClick={onClose}>
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex min-h-[40px] items-center rounded-full border-[1.5px] border-soleil-border px-4 text-sm font-bold dark:border-soleil-border-d"
+            >
               Fermer
-            </Button>
+            </button>
           </div>
         )}
         {state.status === "ready" && (
