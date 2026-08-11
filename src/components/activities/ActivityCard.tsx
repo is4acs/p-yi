@@ -121,21 +121,31 @@ export function ActivityCard({
           )}
         </div>
 
-        <p className="flex items-center gap-1 text-xs text-muted-foreground">
+        {/* `min-w-0` sur la ligne ET sur le groupe catégorie : sans ça la
+            ligne refusait de rétrécir et débordait de la carte sur mobile.
+            Le libellé de catégorie est isolé dans son propre `truncate` —
+            `text-overflow: ellipsis` ne s'applique pas au contenu d'un
+            `inline-flex`, le texte était donc coupé net (« Patrimoir »)
+            au lieu d'être suivi de points de suspension. */}
+        <p className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
           <MapPin className="h-3 w-3 shrink-0" aria-hidden />
           <span className="truncate">{props.cityName}</span>
-          <span aria-hidden>·</span>
-          <span className="inline-flex items-center gap-1 truncate">
+          <span aria-hidden className="shrink-0">
+            ·
+          </span>
+          <span className="inline-flex min-w-0 items-center gap-1">
             <span
               aria-hidden
-              className="inline-block h-2 w-2 rounded-full"
+              className="inline-block h-2 w-2 shrink-0 rounded-full"
               style={{ backgroundColor: category.color }}
             />
-            {category.label}
+            <span className="truncate">{category.label}</span>
           </span>
           {duration && (
             <>
-              <span aria-hidden>·</span>
+              <span aria-hidden className="shrink-0">
+                ·
+              </span>
               <span className="inline-flex shrink-0 items-center gap-0.5">
                 <Clock className="h-3 w-3" aria-hidden />
                 {duration}

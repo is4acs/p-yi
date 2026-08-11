@@ -43,7 +43,11 @@ export default async function ActivitesPage() {
   }
 
   return (
-    <main className="h-[calc(100dvh-8.5rem)] sm:h-[calc(100dvh-4rem)]">
+    // Desktop : la vue scindée occupe la fenêtre moins le header —
+    // `--header-h` plutôt qu'un 4rem en dur, pour rester juste si la
+    // hauteur du header bouge. Mobile : aucune contrainte, la page
+    // s'empile et défile normalement.
+    <main className="lg:h-[calc(100dvh-var(--header-h))]">
       <h1 className="sr-only">
         Activités et lieux à découvrir en Guyane — carte interactive
       </h1>

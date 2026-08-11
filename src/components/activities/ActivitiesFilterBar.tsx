@@ -27,6 +27,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ScrollRail } from "@/components/shared/ScrollRail";
 import { cn } from "@/lib/utils";
 
 /**
@@ -86,11 +87,9 @@ export function ActivitiesFilterBar({
   const clearAll = () => onChange(EMPTY_FILTERS);
 
   return (
-    <div
-      className={cn(
-        "flex items-center gap-2 overflow-x-auto px-3 py-2 [scrollbar-width:none]",
-        className,
-      )}
+    <ScrollRail
+      className={cn("bg-background", className)}
+      railClassName="px-3 py-2"
     >
       <Dialog>
         <DialogTrigger asChild>
@@ -261,6 +260,6 @@ export function ActivitiesFilterBar({
           Tout effacer
         </button>
       )}
-    </div>
+    </ScrollRail>
   );
 }

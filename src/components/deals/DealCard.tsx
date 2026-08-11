@@ -77,6 +77,8 @@ function MerchantTag({
   return (
     <div className="flex min-w-0 items-center gap-2 text-[10px] uppercase tracking-[0.06em] text-muted-foreground">
       <StoreLogo name={name} logoUrl={logoUrl} size="sm" />
+      {/* L'enseigne ne rétrécit pas : c'est l'information utile. Quand la
+          place manque, c'est la mention secondaire qui s'abrège. */}
       <span
         className={cn(
           "shrink-0 rounded-xs px-1.5 py-0.5 font-mono font-semibold text-white",
@@ -273,12 +275,19 @@ export function DealCard({
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        {/* Réserve la place du bouton favori, en absolu en haut à droite :
+            sans cette gouttière, l'enseigne et le titre passaient dessous
+            (« … EN MAGASIN » et le prix du titre finissaient sous le
+            marque-page). Seules ces deux lignes sont concernées — le prix
+            et les métadonnées, plus bas, gardent toute la largeur. */}
         {sellerName && (
-          <MerchantTag
-            name={sellerName}
-            isLocal={isLocalStore}
-            logoUrl={sellerLogoUrl}
-          />
+          <div className="pr-9 sm:pr-10">
+            <MerchantTag
+              name={sellerName}
+              isLocal={isLocalStore}
+              logoUrl={sellerLogoUrl}
+            />
+          </div>
         )}
 
         {/* Ligne titre + image mobile. Sur sm:+ on passe en block pour
@@ -298,7 +307,7 @@ export function DealCard({
             />
           </div>
           <div className="min-w-0 flex-1 space-y-1">
-            <h3 className="line-clamp-2 font-display text-sm font-bold leading-[1.25] tracking-tight text-ink-900 sm:text-[17px]">
+            <h3 className="line-clamp-2 pr-9 font-display text-sm font-bold leading-[1.25] tracking-tight text-ink-900 sm:pr-10 sm:text-[17px]">
               <Link
                 href={`/bons-plans/${deal.slug}`}
                 className="transition group-hover:text-peyi-orange-700 before:absolute before:inset-0 before:content-['']"

@@ -32,7 +32,7 @@ export function ListingsSearchBar({
   type = null,
   filters,
   autoFocus = false,
-  placeholder = "Rechercher une annonce…",
+  placeholder = "Une annonce…",
   className,
 }: Props) {
   const [value, setValue] = useState(defaultValue);

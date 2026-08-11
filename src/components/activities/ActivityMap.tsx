@@ -50,6 +50,17 @@ type Props = {
   onSelect: (slug: string | null) => void;
   /** Fin de déplacement/zoom — sert à filtrer la liste sur la vue. */
   onBoundsChange?: (bounds: MapBounds) => void;
+  /**
+   * Gestes coopératifs : un doigt fait défiler la PAGE, deux doigts
+   * déplacent la carte (molette seule = page, Ctrl + molette = zoom).
+   *
+   * Activé sur mobile, où la carte est un bloc au milieu d'une page qui
+   * défile : sans ça, tout glissement vertical commencé sur la carte la
+   * déplaçait au lieu de faire défiler la page, et on restait coincé
+   * dessus. Désactivé en desktop, où la carte occupe une colonne
+   * entière et où la page ne défile pas derrière elle.
+   */
+  cooperativeGestures?: boolean;
   className?: string;
 };
 
@@ -59,6 +70,7 @@ export default function ActivityMap({
   hoveredSlug,
   onSelect,
   onBoundsChange,
+  cooperativeGestures = false,
   className,
 }: Props) {
   const mapRef = useRef<MapRef | null>(null);
@@ -92,6 +104,16 @@ export default function ActivityMap({
     });
   }, [selectedSlug, data]);
 
+  // Le mode se met à jour à la rotation / au redimensionnement, d'où le
+  // pilotage impératif du handler plutôt qu'une simple option de départ :
+  // MapLibre ne relit pas `cooperativeGestures` après l'initialisation.
+  useEffect(() => {
+    const handler = mapRef.current?.getMap().cooperativeGestures;
+    if (!handler) return;
+    if (cooperativeGestures) handler.enable();
+    else handler.disable();
+  }, [cooperativeGestures]);
+
   const recenter = useCallback(() => {
     mapRef.current?.getMap().fitBounds(GUYANE_BOUNDS, {
       padding: 40,
@@ -121,6 +143,7 @@ export default function ActivityMap({
         }}
         minZoom={4}
         maxZoom={18}
+        cooperativeGestures={cooperativeGestures}
         style={{ width: "100%", height: "100%" }}
         onLoad={emitBounds}
         onMoveEnd={emitBounds}

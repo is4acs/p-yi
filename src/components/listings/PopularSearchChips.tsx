@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { ScrollRail } from "@/components/shared/ScrollRail";
+
 import { buildListingsUrl } from "@/lib/listings/url";
 
 /**
@@ -70,7 +72,9 @@ export function PopularSearchChips() {
       aria-label="Recherches populaires"
       className="border-b border-ink-100 bg-background px-4 py-4 sm:px-0 sm:py-5"
     >
-      <div className="scrollbar-hide flex snap-x snap-mandatory items-center gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:snap-none sm:gap-2.5 sm:overflow-visible sm:pb-0">
+      <ScrollRail
+        fadeClassName="sm:hidden"
+        railClassName="snap-x snap-mandatory pb-1 sm:flex-wrap sm:snap-none sm:gap-2.5 sm:overflow-visible sm:pb-0">
         <span className="shrink-0 snap-start pr-1 font-display text-sm font-bold text-ink-700">
           Populaires :
         </span>
@@ -84,7 +88,7 @@ export function PopularSearchChips() {
             <span>{p.label}</span>
           </Link>
         ))}
-      </div>
+      </ScrollRail>
     </section>
   );
 }

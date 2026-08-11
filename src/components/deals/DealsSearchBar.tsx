@@ -23,7 +23,7 @@ export function DealsSearchBar({
   category = null,
   city = null,
   autoFocus = false,
-  placeholder = "Rechercher un bon plan…",
+  placeholder = "Un bon plan…",
   className,
 }: Props) {
   const [value, setValue] = useState(defaultValue);
@@ -60,7 +60,12 @@ export function DealsSearchBar({
         className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
         aria-hidden
       />
-      {/* Padding-right responsive : mobile réserve ~44px pour le bouton
+      {/* Le champ partage désormais sa ligne avec le bouton « Filtrer »,
+          il ne fait plus que ~230px sur un écran de 390 : le placeholder
+          est passé de « Rechercher un bon plan… » à « Un bon plan… », qui
+          tient. La loupe à gauche porte déjà le verbe.
+
+          Padding-right responsive : mobile réserve ~44px pour le bouton
           icon-only (h-9 w-9), desktop réserve ~96px pour le bouton
           "Chercher" texte. Sans ça, à 375px viewport, les 96px de
           pr-24 mangeaient ~40% de la zone placeholder et "Rechercher
