@@ -15,35 +15,47 @@
        header. À mettre à jour si la hauteur du header change. */
     --header-h: 3.5rem;
 
-    /* Base (light) */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 10%;
+    /* ================================================================
+       Thème JOUR — refonte « Soleil péyi » (handoff août 2026)
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+       Le produit passe du blanc au crème, et l'encre du gris au vert
+       forêt. Tout est exprimé en HSL parce que shadcn compose ses
+       couleurs avec `hsl(var(--x) / <alpha>)` — un hex ici casserait
+       toutes les opacités (`bg-background/80` et compagnie).
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+       L'orange `#FF914C` ne bouge JAMAIS entre les deux thèmes ; il ne
+       sert qu'en aplat, badge ou bordure. En texte courant sur fond
+       clair il tombe à 3:1, d'où `--peyi-accent-text` (#B0651F).
+       ================================================================ */
+    --background: 39 58.8% 93.3%;    /* #F8F1E4 crème */
+    --foreground: 155.7 48.8% 16.9%; /* #16402F vert forêt */
 
-    /* Péyi brand (design system v1.0, avril 2026) */
-    --primary: 23 100% 65%;         /* #FF914C orange Solèy (logo) */
-    --primary-foreground: 0 0% 100%;
+    --card: 39 58.8% 93.3%;
+    --card-foreground: 155.7 48.8% 16.9%;
 
-    --secondary: 99 62% 59%;        /* #7ED956 vert Lawèt (logo) */
-    --secondary-foreground: 0 0% 10%;
+    --popover: 40 78.9% 96.3%;       /* #FDF8EE */
+    --popover-foreground: 155.7 48.8% 16.9%;
 
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    /* Le CTA principal est un aplat forêt sur crème (« Poster un deal »),
+       pas un aplat orange : c'est la signature de la direction. */
+    --primary: 155.7 48.8% 16.9%;    /* #16402F */
+    --primary-foreground: 39 58.8% 93.3%;
 
-    --accent: 27 100% 95%;          /* #FFF1E5 orange très pâle (peyi-orange-50) */
-    --accent-foreground: 22 82% 47%;
+    --secondary: 40.6 44.9% 86.5%;   /* #ECE2CD surface teintée */
+    --secondary-foreground: 155.7 48.8% 16.9%;
+
+    --muted: 40.6 44.9% 86.5%;
+    --muted-foreground: 137.1 5.6% 51.4%; /* #7C8A80 */
+
+    --accent: 26.4 100% 90.2%;       /* #FFE3CD chip promo */
+    --accent-foreground: 29 70% 40.6%; /* #B0651F */
 
     --destructive: 0 84% 60%;       /* #DC2626 (token sémantique danger) */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 23 100% 65%;
+    --border: 38.9 38.9% 81.4%;      /* #E2D5BD filet */
+    --input: 38.5 28.1% 72.7%;       /* #CDBFA6 bordure de pilule */
+    --ring: 23.1 100% 64.9%;         /* #FF914C */
 
     --chart-1: 23 100% 62%;
     --chart-2: 95 62% 59%;
@@ -51,37 +63,74 @@
     --chart-4: 38 92% 50%;
     --chart-5: 0 84% 60%;
 
-    --radius: 0.75rem;
+    /* Rayon de référence : 14px (cartes, champs, vignettes). */
+    --radius: 0.875rem;
+
+    /* --- Rôles Péyi (exposés en classes via tailwind.config) -------- */
+    --peyi-surface: 40.6 44.9% 86.5%;    /* #ECE2CD */
+    --peyi-field: 40 78.9% 96.3%;        /* #FDF8EE */
+    --peyi-copy: 145.7 15.3% 26.9%;      /* #3A4F43 corps de texte doux */
+    --peyi-subtle: 142.1 9.4% 39.8%;     /* #5C6F63 texte secondaire */
+    --peyi-accent-text: 29 70% 40.6%;    /* #B0651F */
+    --peyi-strike: 32.3 13% 60.8%;       /* #A89C8E prix barré */
+    --peyi-hairline: 38.9 38.9% 81.4%;   /* #E2D5BD */
+    --peyi-valid: 97.8 42.9% 87.6%;      /* #DCEDD2 badge Validé */
+    --peyi-valid-foreground: 155.7 48.8% 16.9%;
+    --peyi-promo: 26.4 100% 90.2%;       /* #FFE3CD chip −32 % */
+    --peyi-promo-foreground: 29 70% 40.6%;
+    /* Rayures des placeholders d'image, avant les vraies photos. */
+    --peyi-stripe: 155.7 48.8% 16.9% / 0.06;
   }
 
+  /* ==================================================================
+     Thème NUIT — mapping 1:1, forêt profonde.
+
+     Inversion signature : ce qui était un aplat forêt sur crème (carte
+     « deal du jour », CTA principal) devient un aplat crème sur forêt.
+     C'est `--primary` / `--card` qui portent ce basculement, donc les
+     composants n'ont rien à savoir du thème.
+     ================================================================== */
   .dark {
-    --background: 0 0% 4%;
-    --foreground: 0 0% 98%;
+    --background: 156 50% 11.8%;     /* #0F2D21 */
+    --foreground: 39 58.8% 93.3%;    /* #F8F1E4 */
 
-    --card: 0 0% 9%;
-    --card-foreground: 0 0% 98%;
+    --card: 155.7 48.8% 16.9%;       /* #16402F */
+    --card-foreground: 39 58.8% 93.3%;
 
-    --popover: 0 0% 9%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 155.7 48.8% 16.9%;
+    --popover-foreground: 39 58.8% 93.3%;
 
-    --primary: 25 100% 65%;
-    --primary-foreground: 0 0% 10%;
+    --primary: 39 58.8% 93.3%;       /* crème — l'inversion */
+    --primary-foreground: 155.7 48.8% 16.9%;
 
-    --secondary: 95 52% 47%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 155.7 48.8% 16.9%;
+    --secondary-foreground: 39 58.8% 93.3%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 64%;
+    --muted: 155.7 48.8% 16.9%;
+    --muted-foreground: 152 18.1% 67.5%; /* #9DBBAD */
 
-    --accent: 22 70% 15%;
-    --accent-foreground: 27 100% 70%;
+    --accent: 25.2 51% 19.2%;        /* #4A2D18 */
+    --accent-foreground: 24.5 100% 74.5%; /* #FFB27D */
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 25 100% 65%;
+    --border: 155.7 33.3% 24.7%;     /* #2A5443 */
+    --input: 152.9 25.9% 31.8%;      /* #3C6653 */
+    --ring: 23.1 100% 64.9%;
+
+    --peyi-surface: 155.7 48.8% 16.9%;
+    --peyi-field: 155.7 48.8% 16.9%;
+    --peyi-copy: 144.7 21.5% 84.5%;      /* #CFE0D6 */
+    --peyi-subtle: 152 18.1% 67.5%;      /* #9DBBAD */
+    --peyi-accent-text: 24.5 100% 74.5%; /* #FFB27D */
+    --peyi-strike: 152.1 12.1% 54.5%;    /* #7D998C */
+    --peyi-hairline: 155.7 33.3% 24.7%;  /* #2A5443 */
+    --peyi-valid: 100 61.6% 70.4%;       /* #A4E285 */
+    --peyi-valid-foreground: 156 50% 11.8%;
+    --peyi-promo: 25.2 51% 19.2%;        /* #4A2D18 */
+    --peyi-promo-foreground: 24.5 100% 74.5%;
+    --peyi-stripe: 39 58.8% 93.3% / 0.05;
   }
 
   * {
@@ -106,6 +155,21 @@
   }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Placeholder d'image rayé à 45° — les visuels définitifs (photos
+     d'annonces, visuels de campagne, activités) n'existent pas encore.
+     Le motif suit le thème via `--peyi-stripe`, donc une même classe
+     tient en jour comme en nuit.
+     À poser sur un bloc qui a déjà `bg-surface`. */
+  .peyi-stripes {
+    background-image: repeating-linear-gradient(
+      45deg,
+      hsl(var(--peyi-stripe)) 0px,
+      hsl(var(--peyi-stripe)) 6px,
+      transparent 6px,
+      transparent 12px
+    );
   }
 
   /* Highlight éditorial derrière un mot-clé — signature Peyi.

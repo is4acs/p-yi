@@ -1,6 +1,11 @@
 import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono, Nunito } from "next/font/google";
+import {
+  Bricolage_Grotesque,
+  Inter,
+  JetBrains_Mono,
+  Schibsted_Grotesk,
+} from "next/font/google";
 import { cn } from "@/lib/utils";
 import { WebVitals } from "@/components/analytics/WebVitals";
 import { BannedBanner } from "@/components/layout/BannedBanner";
@@ -11,6 +16,7 @@ import { RouteProgress } from "@/components/layout/RouteProgress";
 import { SkipLink } from "@/components/layout/SkipLink";
 import { InstallBanner } from "@/components/pwa/InstallBanner";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { fetchUnreadCount } from "@/lib/messages/queries";
 import { fetchUnreadNotificationsCount } from "@/lib/notifications/queries";
@@ -24,24 +30,31 @@ import {
 import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 
-// Peyi design system v1.0 : Inter (body) + Nunito (display) + JetBrains
-// Mono (labels techniques, eyebrows, prix). Les trois sont chargées via
+// Refonte « Soleil péyi » : Schibsted Grotesk (corps) + Bricolage
+// Grotesque (display) remplacent Inter + Nunito. Toutes sont chargées via
 // next/font/google : Next self-hoste les fichiers au build, donc pas de
 // requête runtime vers fonts.googleapis.com (meilleur CLS et FCP).
-const inter = Inter({
+//
+// Les deux sont des polices variables : on ne liste pas de poids, l'axe
+// `wght` couvre toute la plage d'un seul fichier.
+const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-bricolage",
   display: "swap",
 });
 
-const nunito = Nunito({
+const schibsted = Schibsted_Grotesk({
   subsets: ["latin"],
-  // On charge tous les poids utiles au design : 400 pour le body de
-  // secours, 700 pour les titres md, 800 pour les titres lg, 900 pour
-  // les display géants. Les variantes non utilisées sont purgées au
-  // build par next/font, donc pas de coût réseau inutile.
-  weight: ["400", "500", "600", "700", "800", "900"],
-  variable: "--font-nunito",
+  variable: "--font-schibsted",
+  display: "swap",
+});
+
+// Inter reste chargée en secours de `font-sans` le temps que tous les
+// écrans passent à la nouvelle charte — un écran non encore repris garde
+// ainsi exactement le rendu qu'il avait.
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
   display: "swap",
 });
 
@@ -77,8 +90,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Péyi — Bons plans de Guyane",
-    description:
-      "Partage, vote et profite des meilleurs bons plans de Guyane.",
+    description: "Partage, vote et profite des meilleurs bons plans de Guyane.",
   },
   // Icons are generated dynamically by src/app/icon.tsx and apple-icon.tsx.
   // Next auto-wires them into <head>, no need to list them here.
@@ -207,7 +219,12 @@ export default async function RootLayout({
   return (
     <html
       lang="fr"
-      className={cn(inter.variable, nunito.variable, jetBrainsMono.variable)}
+      className={cn(
+        bricolage.variable,
+        schibsted.variable,
+        inter.variable,
+        jetBrainsMono.variable,
+      )}
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-background pb-20 font-sans text-foreground antialiased sm:pb-0">
@@ -215,22 +232,29 @@ export default async function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: rootJsonLd }}
         />
-        <SkipLink />
-        <ServiceWorkerRegister />
-        <WebVitals />
-        <Suspense fallback={null}>
-          <RouteProgress />
-        </Suspense>
-        <Header
-          user={user}
-          unreadCount={unreadCount}
-          unreadNotifications={unreadNotifications}
-        />
-        {user?.isBanned &&
-          (!user.bannedUntil || user.bannedUntil > new Date()) && (
-            <BannedBanner bannedUntil={user.bannedUntil} />
-          )}
-        {/*
+        {/* ThemeProvider englobe tout le contenu : c'est lui qui pose la
+            classe `.dark` sur <html> et donc qui fait basculer les tokens
+            de couleur. `suppressHydrationWarning` sur <html> plus haut est
+            sa contrepartie obligatoire — le thème est appliqué par un
+            script avant l'hydratation, l'attribut diffère donc du HTML
+            rendu côté serveur. */}
+        <ThemeProvider>
+          <SkipLink />
+          <ServiceWorkerRegister />
+          <WebVitals />
+          <Suspense fallback={null}>
+            <RouteProgress />
+          </Suspense>
+          <Header
+            user={user}
+            unreadCount={unreadCount}
+            unreadNotifications={unreadNotifications}
+          />
+          {user?.isBanned &&
+            (!user.bannedUntil || user.bannedUntil > new Date()) && (
+              <BannedBanner bannedUntil={user.bannedUntil} />
+            )}
+          {/*
           Wrapper invisible qui sert de cible au SkipLink. On ne met pas
           `<main>` ici parce que chaque page définit son propre `<main>`
           (utile pour les landmarks ARIA et le SEO). Le wrapper reçoit
@@ -250,16 +274,17 @@ export default async function RootLayout({
           position:sticky des filter-bars reste ancrée sur window, pas
           sur ce wrapper. Supporté partout depuis Safari 16 / Chrome 90.
         */}
-        <div
-          id="main-content"
-          tabIndex={-1}
-          className="overflow-x-clip focus:outline-none"
-        >
-          {children}
-        </div>
-        <Footer />
-        <BottomNav unreadCount={unreadCount} />
-        <InstallBanner />
+          <div
+            id="main-content"
+            tabIndex={-1}
+            className="overflow-x-clip focus:outline-none"
+          >
+            {children}
+          </div>
+          <Footer />
+          <BottomNav unreadCount={unreadCount} />
+          <InstallBanner />
+        </ThemeProvider>
       </body>
     </html>
   );

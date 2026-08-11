@@ -16,8 +16,24 @@ const config: Config = {
         // 200/300/400/800/900 sont interpolées pour préserver l'échelle
         // complète utilisée par ~220 usages dans l'UI existante.
         peyi: {
+          // --- Refonte « Soleil péyi » (handoff août 2026) -------------
+          // Crème : le fond du produit passe du blanc au crème. Les
+          // teintes vont du plus clair (champ de saisie) au plus foncé
+          // (bordure de pilule inactive).
+          cream: {
+            50: "#FDF8EE", // fond des champs
+            100: "#F8F1E4", // fond de page — la valeur de référence
+            200: "#ECE2CD", // surface teintée (placeholders, bandeaux)
+            300: "#E2D5BD", // filet
+            400: "#CDBFA6", // bordure de pilule inactive
+            DEFAULT: "#F8F1E4",
+          },
           // Orange Solèy — fond du logo (#FF914C), couleur d'action
           orange: {
+            // Orange lisible en TEXTE sur fond clair (4.5:1 sur crème).
+            // `#FF914C` ne passe pas le contraste en texte courant : il
+            // reste réservé aux aplats, badges et bordures.
+            text: "#B0651F",
             50: "#FFF1E5",
             100: "#FFE0CB",
             200: "#FFC59D",
@@ -44,14 +60,21 @@ const config: Config = {
             900: "#1C3F0B",
             DEFAULT: "#7ED956",
           },
-          // Vert Forêt — réservé dark mode / bandes éditoriales
+          // Vert Forêt — l'encre de la marque depuis la refonte « Soleil
+          // péyi » : texte, aplats, CTA principal en thème jour ; fond de
+          // page en thème nuit.
           forest: {
             50: "#E3EEDA",
             100: "#B9D2AE",
-            500: "#1E4D12",
-            600: "#183E0E",
+            300: "#3C6653", // bordure de pilule, nuit
+            400: "#2A5443", // filet, nuit
+            500: "#16402F", // encre / surface nuit
+            600: "#0F2D21", // fond de page nuit
             700: "#122F0A",
-            DEFAULT: "#1E4D12",
+            // Ancienne valeur de marque, conservée pour les usages
+            // historiques qui ne relèvent pas de la nouvelle charte.
+            legacy: "#1E4D12",
+            DEFAULT: "#16402F",
           },
           // Drapeau guyanais — accents éditoriaux uniquement (jamais CTA
           // ni erreur, ces rôles sont tenus par `destructive`).
@@ -110,6 +133,27 @@ const config: Config = {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+
+        // --- Rôles « Soleil péyi » qui basculent jour/nuit -------------
+        // Ces couleurs n'existent pas dans shadcn mais reviennent partout
+        // dans la maquette. Les passer par des variables CSS évite de
+        // semer des `dark:` sur chaque composant : le thème bascule, la
+        // classe ne change pas.
+        surface: "hsl(var(--peyi-surface))", // aplat teinté, placeholders
+        field: "hsl(var(--peyi-field))", // fond des champs
+        copy: "hsl(var(--peyi-copy))", // corps de texte doux
+        subtle: "hsl(var(--peyi-subtle))", // texte secondaire
+        "accent-text": "hsl(var(--peyi-accent-text))", // orange lisible
+        strike: "hsl(var(--peyi-strike))", // prix barré
+        hairline: "hsl(var(--peyi-hairline))", // filet entre lignes
+        valid: {
+          DEFAULT: "hsl(var(--peyi-valid))",
+          foreground: "hsl(var(--peyi-valid-foreground))",
+        },
+        promo: {
+          DEFAULT: "hsl(var(--peyi-promo))",
+          foreground: "hsl(var(--peyi-promo-foreground))",
+        },
         chart: {
           "1": "hsl(var(--chart-1))",
           "2": "hsl(var(--chart-2))",
@@ -119,12 +163,18 @@ const config: Config = {
         },
       },
       fontFamily: {
-        // Body — Inter (UI, paragraphes, formulaires)
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
-        // Display — Nunito (titres, marque, gros chiffres, boutons)
+        // Refonte « Soleil péyi » : Schibsted Grotesk (corps) + Bricolage
+        // Grotesque (display) remplacent Inter + Nunito. Inter reste
+        // chargée en secours pendant la bascule des écrans.
+        sans: [
+          "var(--font-schibsted)",
+          "var(--font-inter)",
+          "system-ui",
+          "sans-serif",
+        ],
         display: [
-          "var(--font-nunito)",
-          "ui-rounded",
+          "var(--font-bricolage)",
+          "var(--font-schibsted)",
           "system-ui",
           "sans-serif",
         ],
