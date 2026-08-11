@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { DealCard } from "@/components/deals/DealCard";
-import { ExplorerAlso, SeoFaq, SeoIntro } from "@/components/seo/SeoBlocks";
+import { SeoFaq, SeoIntro } from "@/components/seo/SeoBlocks";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { fetchDealsForPillar } from "@/lib/seo/pillar-queries";
 import type { ExploreLink, FaqItem } from "@/lib/seo/local-pages";
@@ -36,7 +36,6 @@ export async function DealsPillarPage({
   filters,
   breadcrumb,
   faq,
-  exploreLinks,
 }: Props) {
   // Un hiccup Prisma (ex. pool saturé pendant un pic de trafic) ne
   // doit pas écrouler toute la page pilier — le gros du contenu est
@@ -124,7 +123,6 @@ export async function DealsPillarPage({
       </section>
 
       <div className="mt-5 space-y-5">
-        <ExplorerAlso links={exploreLinks} />
         <SeoFaq items={faq} />
       </div>
     </main>

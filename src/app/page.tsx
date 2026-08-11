@@ -11,7 +11,6 @@ import { isRenderableImageUrl } from "@/lib/images";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { getMessages, tFormat, type Messages } from "@/lib/i18n";
 
-import { HomePillarLinks } from "@/components/seo/HomePillarLinks";
 import { CountLine } from "@/components/soleil/CountLine";
 import { FilterChips } from "@/components/soleil/FilterChips";
 import { Icon } from "@/components/ui/Icon";
@@ -496,10 +495,6 @@ export default async function HomePage(props: Props) {
           </section>
         )}
 
-        {/* Entrées SEO locales : liens crawlables ville/catégorie. */}
-        <div className="pt-6">
-          <HomePillarLinks />
-        </div>
 
         {/* Bannière « Pataj to bon plan ! » — la seule exception hex
             tolérée : le sous-texte #5C3413 sur l'aplat orange. */}
