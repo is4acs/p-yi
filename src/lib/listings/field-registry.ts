@@ -945,6 +945,9 @@ const FILTER_SLOTS_BY_CATEGORY: Record<string, AttributeFilterSlot[]> = {
   "utilitaires-4x4": VEHICULE_CAR_SLOTS,
   "motos-scooters": VEHICULE_MOTO_SLOTS,
   "quads-buggy": VEHICULE_MOTO_SLOTS,
+  velos: ["priceRange", "brand", "yearMin"],
+  "pirogues-bateaux": ["priceRange", "yearMin"],
+  "pieces-accessoires-vehicules": ["priceRange", "brand"],
 
   "vente-appartement": LOGEMENT_SLOTS,
   "location-appartement": LOGEMENT_SLOTS,
@@ -956,6 +959,17 @@ const FILTER_SLOTS_BY_CATEGORY: Record<string, AttributeFilterSlot[]> = {
   "vente-terrain": ["priceRange", "surfaceMin"],
 
   "emploi-services": ["contract"],
+
+  // Catégories à marque dénormalisée (`attributes.marque` → attrBrand).
+  "multimedia-tech": ["priceRange", "brand"],
+  "mode-vide-dressing": ["priceRange", "brand"],
+  "maison-mobilier": ["priceRange", "brand"],
+  "loisirs-sport": ["priceRange", "brand"],
+  "materiel-pro-btp": ["priceRange", "brand"],
+
+  // Parents (le catalogue « calme » : parent = agrégat des enfants).
+  vehicules: VEHICULE_CAR_SLOTS,
+  immobilier: LOGEMENT_SLOTS,
 };
 
 /**

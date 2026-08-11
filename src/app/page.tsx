@@ -10,13 +10,13 @@ import { formatPrice, formatRelativeTime } from "@/lib/format";
 import { isRenderableImageUrl } from "@/lib/images";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { getLocale, getMessages, tFormat, type Messages } from "@/lib/i18n";
+import { translateUserTexts } from "@/lib/i18n/translate";
 
 import { CountLine } from "@/components/soleil/CountLine";
 import { FilterChips } from "@/components/soleil/FilterChips";
 import { LanguageSwitcher } from "@/components/soleil/LanguageSwitcher";
 import { Icon } from "@/components/ui/Icon";
 import { Ph } from "@/components/soleil/Ph";
-import { PriceTag } from "@/components/soleil/PriceTag";
 import { SearchField } from "@/components/soleil/SearchField";
 import { SectionHead } from "@/components/soleil/SectionHead";
 import { Sun } from "@/components/soleil/Sun";
@@ -88,6 +88,12 @@ export default async function HomePage(props: Props) {
   const dealOfTheDay = deals[0] ?? null;
   const hotDeals = deals.slice(1, 4);
   const homeListings = listings.slice(0, 3);
+  // Titres d'annonces traduits vers la langue de l'interface (batch,
+  // passthrough en français — cf. lib/i18n/translate.ts).
+  const homeListingTitles = await translateUserTexts(
+    homeListings.map((l) => l.title),
+    locale,
+  );
 
   // « À faire dans le péyi » — 2 fiches publiées, mises en avant d'abord.
   // Fail-soft : la home ne doit pas tomber si la table activités hoquette.
@@ -391,14 +397,14 @@ export default async function HomePage(props: Props) {
               href="/annonces"
               linkLabel={t.common.seeAll}
             />
-            <div className="mt-3 grid grid-cols-2 gap-3">
-              {homeListings.map((listing) => (
+            <div className="mt-3 grid grid-cols-2 gap-3 lg:gap-4">
+              {homeListings.map((listing, i) => (
                 <Link
                   key={listing.id}
                   href={`/annonces/${listing.slug}`}
-                  className="transition active:scale-[0.99]"
+                  className="overflow-hidden rounded-[14px] border border-soleil-line bg-soleil-paper transition hover:shadow-sm active:scale-[0.99] dark:border-soleil-line-d dark:bg-soleil-forest"
                 >
-                  <div className="relative h-[118px] overflow-hidden rounded-[14px] lg:h-[104px]">
+                  <div className="relative h-[118px] lg:h-[104px]">
                     {isRenderableImageUrl(listing.coverImageUrl) ? (
                       <Image
                         src={listing.coverImageUrl}
@@ -414,15 +420,17 @@ export default async function HomePage(props: Props) {
                         className="h-full w-full"
                       />
                     )}
-                    <PriceTag>
+                    <span className="absolute bottom-2 left-2 rounded-[7px] bg-soleil-cream px-2 py-1 text-xs font-extrabold text-soleil-forest dark:bg-soleil-night dark:text-soleil-cream">
                       {formatPriceType(listing.priceType, listing.price, locale)}
-                    </PriceTag>
+                    </span>
                   </div>
-                  <div className="mt-1.5 line-clamp-1 text-[12.5px] font-bold">
-                    {listing.title}
-                  </div>
-                  <div className="text-[11px] text-soleil-muted dark:text-soleil-muted-d">
-                    {listing.city.name}
+                  <div className="px-[11px] pb-3 pt-2.5">
+                    <div className="line-clamp-1 font-display text-[13px] font-bold leading-[1.3]">
+                      {homeListingTitles[i]?.text ?? listing.title}
+                    </div>
+                    <div className="mt-[5px] text-[11px] text-soleil-muted dark:text-soleil-muted-d">
+                      {listing.city.name}
+                    </div>
                   </div>
                 </Link>
               ))}

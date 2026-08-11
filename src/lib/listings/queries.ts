@@ -114,7 +114,17 @@ function buildWhere({
   return {
     status: ListingStatus.PUBLISHED,
     expiresAt: { gt: new Date() },
-    ...(category ? { category: { slug: category } } : {}),
+    // Une catégorie PARENTE (vehicules, immobilier) agrège ses enfants :
+    // les annonces sont rattachées aux feuilles, donc « Tout Véhicules »
+    // matche le slug lui-même OU le slug du parent de la catégorie de
+    // l'annonce (catalogue « calme », S38).
+    ...(category
+      ? {
+          category: {
+            OR: [{ slug: category }, { parent: { slug: category } }],
+          },
+        }
+      : {}),
     ...(city ? { city: { slug: city } } : {}),
     ...(type ? { type: listingTypeFromSlug(type) } : {}),
     ...(priceRange ? { price: priceRange } : {}),
@@ -135,6 +145,31 @@ function buildWhere({
     ...(attrs?.contract ? { attrContract: attrs.contract } : {}),
     ...(search ?? {}),
   };
+}
+
+/**
+ * Compte d'annonces publiées (non expirées) par catégorie — UNE requête
+ * `groupBy`, pas N counts. Alimente la colonne catégories du catalogue :
+ * les counts des feuilles sont sommés côté appelant pour les parents.
+ */
+export async function fetchListingCategoryCounts(): Promise<
+  Record<string, number>
+> {
+  const rows = await prisma.listing.groupBy({
+    by: ["categoryId"],
+    where: {
+      status: ListingStatus.PUBLISHED,
+      expiresAt: { gt: new Date() },
+    },
+    _count: { _all: true },
+  });
+  return Object.fromEntries(
+    rows
+      .filter((r): r is typeof r & { categoryId: string } =>
+        Boolean(r.categoryId),
+      )
+      .map((r) => [r.categoryId, r._count._all]),
+  );
 }
 
 export async function fetchListingsPage({

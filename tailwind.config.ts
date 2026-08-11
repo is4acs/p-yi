@@ -70,6 +70,9 @@ const config: Config = {
           forest: "#16402F",
           sand: "#ECE2CD",
           input: "#FDF8EE",
+          // Fond des cartes du catalogue annonces (maquette « catalogue
+          // calme ») — un cran plus clair que cream.
+          paper: "#FFFBF5",
           line: { DEFAULT: "#E2D5BD", d: "#2A5443" },
           border: { DEFAULT: "#CDBFA6", d: "#3C6653" },
           muted: { DEFAULT: "#7C8A80", d: "#9DBBAD" },

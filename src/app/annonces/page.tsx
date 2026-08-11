@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Search } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
 import {
+  fetchListingCategoryCounts,
   fetchListingsPage,
   fetchUserFavoriteListingSet,
   PAGE_SIZE,
 } from "@/lib/listings/queries";
 import {
+  buildListingsUrl,
   hasActiveFilters,
   parseFilters,
   parsePage,
@@ -19,15 +22,18 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { getListingsFacetCanonicalPath } from "@/lib/seo/local-pages";
 import { ListingCardTile } from "@/components/listings/ListingCardTile";
 import { ListingsPagination } from "@/components/listings/ListingsPagination";
-import { EmptyListings } from "@/components/listings/EmptyListings";
+import {
+  CatalogueFilters,
+  CatalogueNav,
+  type CatalogueCategory,
+  type CatalogueState,
+} from "@/components/listings/CatalogueSidebar";
+import { CatalogueDrawer } from "@/components/listings/CatalogueDrawer";
 import { Icon } from "@/components/ui/Icon";
-import { CountLine } from "@/components/soleil/CountLine";
-import { FilterSelect } from "@/components/soleil/FilterSelect";
-import { SearchField } from "@/components/soleil/SearchField";
 import { Sun } from "@/components/soleil/Sun";
-import { TabsPeyi } from "@/components/soleil/TabsPeyi";
 import { withTimeout } from "@/lib/async/with-timeout";
-import { getMessages, tFormat } from "@/lib/i18n";
+import { getLocale, getMessages, tFormat } from "@/lib/i18n";
+import { translateUserTexts } from "@/lib/i18n/translate";
 
 export const dynamic = "force-dynamic";
 const METADATA_TIMEOUT_MS = 2_000;
@@ -161,6 +167,8 @@ export async function generateMetadata(
   };
 }
 
+const SORT_VALUES = ["new", "price-asc", "price-desc"] as const;
+
 export default async function AnnoncesPage(
   props: {
     searchParams: Promise<SearchParams>;
@@ -168,6 +176,7 @@ export default async function AnnoncesPage(
 ) {
   const searchParams = await props.searchParams;
   const t = await getMessages();
+  const locale = await getLocale();
   const sort = parseSort(searchParams.sort);
   const page = parsePage(searchParams.page);
   const type = parseType(searchParams.type);
@@ -176,7 +185,7 @@ export default async function AnnoncesPage(
   const q = parseQuery(searchParams.q);
   const filters = parseFilters(searchParams);
 
-  const [listingsResult, categoriesResult, citiesResult, currentUserResult] =
+  const [listingsResult, categoriesResult, countsResult, currentUserResult] =
     await Promise.allSettled([
       withTimeout(
         fetchListingsPage({ sort, page, category, city, type, q, filters }),
@@ -187,18 +196,15 @@ export default async function AnnoncesPage(
         prisma.category.findMany({
           where: { type: { in: ["LISTING", "BOTH"] }, isActive: true },
           orderBy: { sortOrder: "asc" },
-          select: { slug: true, name: true, icon: true },
+          select: { id: true, slug: true, name: true, parentId: true },
         }),
         PAGE_DATA_TIMEOUT_MS,
         "listings/page-categories",
       ),
       withTimeout(
-        prisma.city.findMany({
-          orderBy: { name: "asc" },
-          select: { slug: true, name: true },
-        }),
+        fetchListingCategoryCounts(),
         PAGE_DATA_TIMEOUT_MS,
-        "listings/page-cities",
+        "listings/page-category-counts",
       ),
       withTimeout(
         getCurrentUser(),
@@ -214,16 +220,16 @@ export default async function AnnoncesPage(
   const listings = listingsPayload.listings;
   const total = listingsPayload.total;
 
-  const categories =
+  const rawCategories =
     categoriesResult.status === "fulfilled" ? categoriesResult.value : [];
-  const cities = citiesResult.status === "fulfilled" ? citiesResult.value : [];
+  const counts = countsResult.status === "fulfilled" ? countsResult.value : {};
   const currentUser =
     currentUserResult.status === "fulfilled" ? currentUserResult.value : null;
 
   const hasDataLoadIssue =
     listingsResult.status === "rejected" ||
     categoriesResult.status === "rejected" ||
-    citiesResult.status === "rejected" ||
+    countsResult.status === "rejected" ||
     currentUserResult.status === "rejected";
 
   if (hasDataLoadIssue) {
@@ -237,14 +243,33 @@ export default async function AnnoncesPage(
         categoriesResult.status === "rejected"
           ? categoriesResult.reason
           : undefined,
-      cities:
-        citiesResult.status === "rejected" ? citiesResult.reason : undefined,
+      counts:
+        countsResult.status === "rejected" ? countsResult.reason : undefined,
       currentUser:
         currentUserResult.status === "rejected"
           ? currentUserResult.reason
           : undefined,
     });
   }
+
+  // Noms de catégories traduits vers la langue de l'interface (batch,
+  // passthrough en français — cf. lib/i18n/translate.ts).
+  const translatedNames = await translateUserTexts(
+    rawCategories.map((c) => c.name),
+    locale,
+  );
+  const categories: CatalogueCategory[] = rawCategories.map((c, i) => ({
+    id: c.id,
+    slug: c.slug,
+    name: translatedNames[i]?.text ?? c.name,
+    parentId: c.parentId,
+  }));
+
+  const activeCategory = category
+    ? categories.find((c) => c.slug === category) ?? null
+    : null;
+  const activeName = activeCategory?.name ?? null;
+  const headingName = activeName ?? t.listings.catalogTitle;
 
   const listingIds = listings.map((l) => l.id);
   let favoriteSet = new Set<string>();
@@ -260,31 +285,83 @@ export default async function AnnoncesPage(
   }
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const hasFilters =
-    Boolean(category || city || type || q) || hasActiveFilters(filters);
-  const cityName = city
-    ? cities.find((c) => c.slug === city)?.name ?? city
-    : null;
 
-  // Paramètres bruts à préserver quand un formulaire ne contrôle qu'une
-  // partie des filtres (les chips pilotent sort/category/city/prixMax,
-  // la recherche pilote q — tout le reste passe en input hidden).
-  const rawParams = Object.entries(searchParams).filter(
+  const navState: CatalogueState = { sort, city, q, type, filters };
+
+  // Paramètres bruts préservés par le formulaire de recherche (il ne
+  // contrôle que `q` — tout le reste passe en input hidden).
+  const searchHidden = Object.entries(searchParams).filter(
     (entry): entry is [string, string] =>
-      typeof entry[1] === "string" && entry[1] !== "",
+      typeof entry[1] === "string" &&
+      entry[1] !== "" &&
+      !["q", "page"].includes(entry[0]),
   );
-  const chipsHidden = rawParams.filter(
-    ([key]) => !["sort", "category", "city", "prixMax", "page"].includes(key),
+
+  const sortLabels: Record<(typeof SORT_VALUES)[number], string> = {
+    new: t.listings.sortRecent,
+    "price-asc": t.listings.sortPriceAsc,
+    "price-desc": t.listings.sortPriceDesc,
+  };
+
+  const sidebar = (
+    <>
+      <CatalogueNav
+        categories={categories}
+        counts={counts}
+        category={category}
+        state={navState}
+        t={t}
+      />
+      <CatalogueFilters
+        category={category}
+        activeName={activeName}
+        state={navState}
+        t={t}
+        idPrefix="d-"
+      />
+    </>
   );
-  const searchHidden = Object.fromEntries(
-    rawParams.filter(([key]) => !["q", "page"].includes(key)),
+
+  const drawerContent = (
+    <>
+      <CatalogueNav
+        categories={categories}
+        counts={counts}
+        category={category}
+        state={navState}
+        t={t}
+      />
+      <CatalogueFilters
+        category={category}
+        activeName={activeName}
+        state={navState}
+        t={t}
+        idPrefix="m-"
+      />
+    </>
+  );
+
+  const emptyState = (
+    <div className="mt-[22px] flex flex-col items-center gap-3.5 rounded-2xl border border-dashed border-soleil-border bg-soleil-paper px-10 py-[74px] dark:border-soleil-border-d dark:bg-soleil-forest">
+      <h2 className="text-center font-display text-[19px] font-extrabold">
+        {tFormat(t.listings.catalogEmptyTitle, { name: headingName })}
+      </h2>
+      <p className="max-w-[360px] text-center text-sm text-soleil-muted dark:text-soleil-muted-d">
+        {t.listings.catalogEmptySub}
+      </p>
+      <Link
+        href="/poster/annonce"
+        className="inline-flex h-[42px] items-center rounded-full bg-soleil-orange px-5 text-sm font-bold text-soleil-forest transition active:scale-95"
+      >
+        {t.listings.postCta}
+      </Link>
+    </div>
   );
 
   return (
     <main className="min-h-screen bg-soleil-cream text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
-      <h1 className="sr-only">{t.listings.title}</h1>
-      <div className="mx-auto w-full max-w-md px-5 pb-12 lg:max-w-6xl lg:px-8">
-        {/* Header wordmark + pilule ville (même squelette que l'écran 1). */}
+      <div className="mx-auto w-full max-w-md px-5 pb-12 lg:max-w-6xl lg:px-10">
+        {/* Header wordmark mobile (le Header global prend le relais en lg). */}
         <div className="flex items-end justify-between pt-4 lg:hidden">
           <Link href="/" className="flex items-end gap-2" aria-label={t.nav.home}>
             <Sun w={20} />
@@ -292,98 +369,79 @@ export default async function AnnoncesPage(
               péyi
             </span>
           </Link>
-          <div className="flex items-center gap-2">
-            <span className="rounded-full border-[1.5px] border-soleil-forest px-3 py-1.5 text-xs font-bold dark:border-soleil-cream">
-              {cityName ?? "Guyane"}
-            </span>
-            {currentUser ? (
-              <Link
-                href="/profil"
-                aria-label={t.home.myProfile}
-                className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-soleil-forest text-[11.5px] font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
-              >
-                {currentUser.username.trim().slice(0, 2).toUpperCase()}
-              </Link>
-            ) : (
-              <Link
-                href="/connexion"
-                aria-label={t.home.myProfile}
-                className="flex h-[34px] w-[34px] items-center justify-center rounded-full border-[1.5px] border-soleil-forest dark:border-soleil-cream"
-              >
-                <Icon name="user" size={15} />
-              </Link>
-            )}
-          </div>
+          {currentUser ? (
+            <Link
+              href="/profil"
+              aria-label={t.home.myProfile}
+              className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-soleil-forest text-[11.5px] font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
+            >
+              {currentUser.username.trim().slice(0, 2).toUpperCase()}
+            </Link>
+          ) : (
+            <Link
+              href="/connexion"
+              aria-label={t.home.myProfile}
+              className="flex h-[34px] w-[34px] items-center justify-center rounded-full border-[1.5px] border-soleil-forest dark:border-soleil-cream"
+            >
+              <Icon name="user" size={15} />
+            </Link>
+          )}
         </div>
 
-        <TabsPeyi active="annonces" className="pt-3" />
+        {/* Ligne titre : H1 (nom de la catégorie active sur mobile,
+            « Annonces de Guyane » sur desktop) + CTA orange. */}
+        <div className="flex items-center justify-between gap-8 pt-4 lg:pt-[34px]">
+          <h1 className="font-display text-2xl font-extrabold leading-none tracking-[-0.5px] lg:text-[34px] lg:tracking-[-0.7px]">
+            <span className="lg:hidden">{headingName}</span>
+            <span className="hidden lg:inline">{t.listings.catalogTitle}</span>
+          </h1>
+          <Link
+            href="/poster/annonce"
+            className="hidden h-11 flex-none items-center rounded-full bg-soleil-orange px-[22px] text-sm font-bold text-soleil-forest shadow-[0_10px_24px_rgba(255,145,76,.28)] transition active:scale-95 lg:inline-flex"
+          >
+            {t.listings.postCta}
+          </Link>
+        </div>
 
-        <SearchField
-          placeholder={t.listings.searchPlaceholder}
-          action="/annonces"
-          defaultValue={q ?? ""}
-          hidden={searchHidden}
-          className="mt-3.5"
-        />
-
-        <form action="/annonces" method="get" className="pt-3">
-          {chipsHidden.map(([name, value]) => (
-            <input key={name} type="hidden" name={name} value={value} />
-          ))}
-          <div className="scrollbar-hide -mx-5 flex gap-2 overflow-x-auto px-5">
-            <FilterSelect
-              name="sort"
-              options={[
-                { value: "new", label: t.listings.sortRecent },
-                { value: "price-asc", label: t.listings.sortPriceAsc },
-                { value: "price-desc", label: t.listings.sortPriceDesc },
-              ]}
-              defaultValue={sort}
-              alwaysActive
-            />
-            <FilterSelect
-              name="category"
-              placeholder={t.common.category}
-              options={categories.map((c) => ({ value: c.slug, label: c.name }))}
-              defaultValue={category ?? ""}
-            />
-            <FilterSelect
-              name="prixMax"
-              placeholder={t.common.price}
-              options={[
-                { value: "50", label: "− 50 €" },
-                { value: "200", label: "− 200 €" },
-                { value: "1000", label: "− 1 000 €" },
-                { value: "5000", label: "− 5 000 €" },
-                { value: "20000", label: "− 20 000 €" },
-                // Valeur hors presets (lien profond / URL éditée) : on
-                // l'affiche telle quelle pour ne pas la perdre au prochain
-                // submit.
-                ...(filters.priceMax != null &&
-                ![50, 200, 1000, 5000, 20000].includes(filters.priceMax)
-                  ? [
-                      {
-                        value: String(filters.priceMax),
-                        label: `− ${filters.priceMax.toLocaleString("fr-FR")} €`,
-                      },
-                    ]
-                  : []),
-              ]}
-              defaultValue={
-                filters.priceMax != null ? String(filters.priceMax) : ""
-              }
-            />
-            <FilterSelect
-              name="city"
-              placeholder={t.common.city}
-              options={cities.map((c) => ({ value: c.slug, label: c.name }))}
-              defaultValue={city ?? ""}
-            />
+        {/* Recherche (+ bouton Filtrer sur mobile → tiroir plein écran). */}
+        <div className="mt-3.5 flex gap-2 lg:mt-[22px] lg:gap-2.5">
+          <form
+            action="/annonces"
+            method="get"
+            role="search"
+            className="flex min-w-0 flex-1 gap-2 lg:gap-2.5"
+          >
+            {searchHidden.map(([name, value]) => (
+              <input key={name} type="hidden" name={name} value={value} />
+            ))}
+            <div className="flex h-[46px] min-w-0 flex-1 items-center gap-2.5 rounded-xl border-[1.5px] border-soleil-border bg-soleil-input px-4 focus-within:border-soleil-forest dark:border-soleil-border-d dark:bg-soleil-forest dark:focus-within:border-soleil-cream lg:h-[52px] lg:rounded-[14px] lg:px-5">
+              <Search
+                className="h-4 w-4 flex-none text-soleil-muted dark:text-soleil-muted-d"
+                aria-hidden
+              />
+              <input
+                type="search"
+                name="q"
+                defaultValue={q ?? ""}
+                placeholder={t.listings.searchLong}
+                aria-label={t.common.search}
+                autoComplete="off"
+                className="w-full min-w-0 bg-transparent text-[14.5px] text-soleil-forest placeholder:text-soleil-strike focus:outline-none dark:text-soleil-cream dark:placeholder:text-soleil-strike-d lg:text-[15px]"
+              />
+            </div>
+            <button
+              type="submit"
+              className="hidden h-[52px] flex-none items-center rounded-[14px] bg-soleil-forest px-[26px] text-[14.5px] font-bold text-soleil-cream transition active:scale-95 dark:bg-soleil-cream dark:text-soleil-forest lg:inline-flex"
+            >
+              {t.listings.searchCta}
+            </button>
+          </form>
+          <div className="lg:hidden">
+            <CatalogueDrawer activeName={headingName}>
+              {drawerContent}
+            </CatalogueDrawer>
           </div>
-          <button type="submit" className="sr-only focus:not-sr-only focus:mt-2 focus:inline-flex focus:min-h-[36px] focus:items-center focus:rounded-full focus:border-[1.5px] focus:border-soleil-forest focus:px-3 focus:text-xs focus:font-bold dark:focus:border-soleil-cream">
-            {t.common.filter}
-          </button>
-        </form>
+        </div>
 
         {hasDataLoadIssue && (
           <div
@@ -394,41 +452,82 @@ export default async function AnnoncesPage(
           </div>
         )}
 
-        <CountLine className="pb-2 pt-3.5">
-          {tFormat(t.listings.count, { n: total, place: cityName ?? "Guyane" })}
-        </CountLine>
+        {/* Corps : sidebar catalogue (desktop) + résultats. */}
+        <div className="mt-5 flex gap-10 lg:mt-8">
+          <aside className="hidden w-[236px] flex-none lg:block">
+            {sidebar}
+          </aside>
 
-        {listings.length === 0 ? (
-          <EmptyListings
-            mode={hasFilters ? "filtered" : "no-listings"}
-            clearFiltersHref="/annonces"
-          />
-        ) : (
-          <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {listings.map((l) => (
-              <li key={l.id}>
-                <ListingCardTile
-                  listing={l}
-                  currentUserId={currentUser?.id ?? null}
-                  isFavorited={favoriteSet.has(l.id)}
-                  variant="soleil"
-                />
-              </li>
-            ))}
-          </ul>
-        )}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-baseline justify-between gap-3 border-b border-soleil-line pb-3.5 dark:border-soleil-line-d">
+              <span className="min-w-0 truncate font-mono text-[10px] font-bold uppercase tracking-[1.6px] text-soleil-otext dark:text-soleil-otext-d lg:text-[11px] lg:tracking-[2px]">
+                {tFormat(t.listings.count, { n: total, place: headingName })}
+              </span>
 
-        <ListingsPagination
-          page={page}
-          pageCount={pageCount}
-          sort={sort}
-          category={category}
-          city={city}
-          type={type}
-          q={q}
-          filters={filters}
-        />
+              {/* Tri en menu texte (détails natif — pas de pastilles). */}
+              <details className="group relative flex-none">
+                <summary className="cursor-pointer list-none text-[13px] text-soleil-muted2 dark:text-soleil-muted-d [&::-webkit-details-marker]:hidden">
+                  {t.listings.sortLabel}{" "}
+                  <b className="font-bold text-soleil-forest dark:text-soleil-cream">
+                    {sortLabels[sort]}
+                  </b>{" "}
+                  <span aria-hidden>▾</span>
+                </summary>
+                <div className="absolute right-0 top-full z-20 mt-1.5 flex w-44 flex-col overflow-hidden rounded-[10px] border border-soleil-border bg-soleil-input py-1 shadow-lg dark:border-soleil-border-d dark:bg-soleil-forest">
+                  {SORT_VALUES.map((value) => (
+                    <Link
+                      key={value}
+                      href={buildListingsUrl({
+                        sort: value,
+                        category,
+                        city,
+                        q,
+                        type,
+                        filters,
+                      })}
+                      scroll={false}
+                      className={
+                        value === sort
+                          ? "px-3.5 py-2 text-[13px] font-bold text-soleil-forest dark:text-soleil-cream"
+                          : "px-3.5 py-2 text-[13px] text-soleil-body hover:bg-soleil-sand dark:text-soleil-body-d dark:hover:bg-soleil-night"
+                      }
+                    >
+                      {sortLabels[value]}
+                    </Link>
+                  ))}
+                </div>
+              </details>
+            </div>
 
+            {listings.length === 0 ? (
+              emptyState
+            ) : (
+              <ul className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:mt-[22px] lg:grid-cols-3 lg:gap-[22px]">
+                {listings.map((l) => (
+                  <li key={l.id}>
+                    <ListingCardTile
+                      listing={l}
+                      currentUserId={currentUser?.id ?? null}
+                      isFavorited={favoriteSet.has(l.id)}
+                      variant="catalogue"
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <ListingsPagination
+              page={page}
+              pageCount={pageCount}
+              sort={sort}
+              category={category}
+              city={city}
+              type={type}
+              q={q}
+              filters={filters}
+            />
+          </div>
+        </div>
       </div>
     </main>
   );

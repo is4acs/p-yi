@@ -9,6 +9,7 @@ import {
   type ListingCardData,
   formatPriceType,
 } from "@/lib/listings/queries";
+import { summarizeAttributesForCard } from "@/lib/listings/field-registry";
 import { Badge } from "@/components/ui/badge";
 import { getLocale, getMessages } from "@/lib/i18n";
 import { translateUserText } from "@/lib/i18n/translate";
@@ -56,7 +57,10 @@ type Props = {
   isFavorited?: boolean;
   // `soleil` : tuile de la grille /annonces refondue (T4) — photo 118px
   //   arrondie 14px + PriceTag posé sur la photo, titre 12.5px, ville·ago.
-  variant?: "default" | "soleil";
+  // `catalogue` : carte du catalogue « calme » (S38) — carte bordée
+  //   radius 16 fond paper, photo 180/170, prix posé sur la photo,
+  //   ligne d'attributs sous le titre, ville · date.
+  variant?: "default" | "soleil" | "catalogue";
   className?: string;
 };
 
@@ -106,6 +110,67 @@ export async function ListingCardTile({
   // URGENT bat NOUVEAU : même si c'est <72h, le signal d'urgence
   // prime. Un seul badge en haut-gauche pour garder la tile lisible.
   const showNewBadge = !listing.isUrgent && isRecentlyPublished(listing.publishedAt);
+
+  if (variant === "catalogue") {
+    const attrLine = summarizeAttributesForCard(
+      listing.category.slug,
+      listing.attributes,
+    );
+    return (
+      <article
+        className={cn(
+          "relative overflow-hidden rounded-2xl border border-soleil-line bg-soleil-paper text-soleil-forest transition hover:shadow-sm dark:border-soleil-line-d dark:bg-soleil-forest dark:text-soleil-cream",
+          className,
+        )}
+      >
+        <Link
+          href={`/annonces/${listing.slug}`}
+          className="block transition active:scale-[0.99]"
+        >
+          <div className="relative h-[180px] lg:h-[170px]">
+            {isRenderableImageUrl(listing.coverImageUrl) ? (
+              <Image
+                src={listing.coverImageUrl}
+                alt={displayTitle}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                unoptimized
+                className="object-cover"
+              />
+            ) : (
+              <Ph label={listing.category.name} className="h-full w-full" />
+            )}
+            <span className="absolute bottom-2.5 left-2.5 rounded-lg bg-soleil-cream px-[11px] py-1.5 text-sm font-extrabold text-soleil-forest dark:bg-soleil-night dark:text-soleil-cream">
+              {priceLabel}
+            </span>
+          </div>
+          <div className="px-3.5 pb-[15px] pt-[13px]">
+            <h2 className="line-clamp-2 font-display text-[14.5px] font-bold leading-[1.3]">
+              {displayTitle}
+            </h2>
+            {attrLine && (
+              <p className="mt-[7px] line-clamp-1 text-xs text-soleil-muted dark:text-soleil-muted-d">
+                {attrLine}
+              </p>
+            )}
+            <p className="mt-1 truncate text-xs text-soleil-muted dark:text-soleil-muted-d">
+              {locationLabel} ·{" "}
+              {formatRelativeTime(listing.bumpedAt ?? listing.publishedAt, locale)}
+            </p>
+          </div>
+        </Link>
+        <div className="absolute right-2.5 top-2.5">
+          <ListingFavoriteButton
+            listingId={listing.id}
+            initialFavorited={isFavorited}
+            canFavorite={canFavorite}
+            disabledHint={favoriteHint}
+            size="sm"
+          />
+        </div>
+      </article>
+    );
+  }
 
   if (variant === "soleil") {
     return (
