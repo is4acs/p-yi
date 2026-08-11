@@ -13,6 +13,7 @@ import { getLocale, getMessages, tFormat, type Messages } from "@/lib/i18n";
 
 import { CountLine } from "@/components/soleil/CountLine";
 import { FilterChips } from "@/components/soleil/FilterChips";
+import { LanguageSwitcher } from "@/components/soleil/LanguageSwitcher";
 import { Icon } from "@/components/ui/Icon";
 import { Ph } from "@/components/soleil/Ph";
 import { PriceTag } from "@/components/soleil/PriceTag";
@@ -141,9 +142,7 @@ export default async function HomePage(props: Props) {
             </span>
           </Link>
           <div className="flex items-center gap-2">
-            <span className="rounded-full border-[1.5px] border-soleil-forest px-3 py-1.5 text-xs font-bold dark:border-soleil-cream">
-              Guyane
-            </span>
+            <LanguageSwitcher />
             {currentUser ? (
               <Link
                 href="/profil"

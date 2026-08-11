@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Search } from "lucide-react";
 
+import { useMessages } from "@/components/soleil/I18nProvider";
+
 /**
  * Barre de recherche globale montée dans le Header. Submit → navigation
  * vers `/recherche?q=<terme>` qui rend à la fois des deals et des
@@ -16,6 +18,7 @@ import { Search } from "lucide-react";
  * pour l'échelle Péyi.
  */
 export function GlobalSearchBar() {
+  const t = useMessages();
   const router = useRouter();
   const [value, setValue] = useState("");
 
@@ -34,12 +37,12 @@ export function GlobalSearchBar() {
       className="flex min-w-0 flex-1 items-center"
     >
       <label htmlFor="global-search" className="sr-only">
-        Rechercher sur Péyi
+        {t.common.search}
       </label>
       <div className="relative flex w-full max-w-md items-center">
         <Search
           aria-hidden
-          className="pointer-events-none absolute left-2.5 h-4 w-4 text-muted-foreground"
+          className="pointer-events-none absolute left-3 h-4 w-4 text-soleil-muted dark:text-soleil-muted-d"
         />
         <input
           id="global-search"
@@ -47,8 +50,8 @@ export function GlobalSearchBar() {
           name="q"
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="Rechercher"
-          className="h-9 w-full rounded-full border border-border bg-card pl-8 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-peyi-orange-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-peyi-orange-400"
+          placeholder={t.common.search}
+          className="h-10 w-full rounded-full border-[1.5px] border-soleil-border bg-soleil-input pl-9 pr-3 text-sm font-semibold text-soleil-forest placeholder:font-medium placeholder:text-soleil-muted focus-visible:border-soleil-forest focus-visible:outline-none dark:border-soleil-border-d dark:bg-soleil-forest dark:text-soleil-cream dark:placeholder:text-soleil-muted-d dark:focus-visible:border-soleil-cream"
           autoComplete="off"
         />
       </div>

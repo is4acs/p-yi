@@ -23,6 +23,7 @@ export const ht: Messages = {
     profile: "Pwofil",
     activities: "Aktivite",
     post: "Pibliye",
+    notifications: "Notifikasyon",
     home: "Akèy Péyi",
     main: "Navigasyon prensipal",
     unread: "{n} poko li",
@@ -374,6 +375,8 @@ export const ht: Messages = {
     bookingRequired: "Rezèvasyon obligatwa — pale ak operatè a anvan ou ale.",
     fullPage: "Wè fich konplè a",
     cannotLoad: "Nou pa t ka chaje aktivite sa a.",
+    recenter: "Regle kat la sou Giyàn",
+    recenterAria: "Regle kat la sou tout Giyàn",
   },
   mt: {
     translated: "Tradiksyon otomatik",

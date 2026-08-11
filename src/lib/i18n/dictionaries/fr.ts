@@ -26,6 +26,7 @@ export const fr = {
     profile: "Profil",
     activities: "Activités",
     post: "Poster",
+    notifications: "Notifications",
     home: "Accueil Péyi",
     main: "Navigation principale",
     unread: "{n} non lu(s)",
@@ -387,6 +388,8 @@ export const fr = {
       "Réservation obligatoire — passe par l'opérateur avant d'y aller.",
     fullPage: "Voir la fiche complète",
     cannotLoad: "Impossible de charger cette activité.",
+    recenter: "Recentrer sur la Guyane",
+    recenterAria: "Recentrer la carte sur la Guyane entière",
   },
   messagesPage: {
     title: "Messages",

@@ -23,6 +23,7 @@ export const pt: Messages = {
     profile: "Perfil",
     activities: "Atividades",
     post: "Publicar",
+    notifications: "Notificações",
     home: "Início Péyi",
     main: "Navegação principal",
     unread: "{n} não lida(s)",
@@ -378,6 +379,8 @@ export const pt: Messages = {
     bookingRequired: "Reserva obrigatória — fale com o operador antes de ir.",
     fullPage: "Ver a ficha completa",
     cannotLoad: "Não foi possível carregar esta atividade.",
+    recenter: "Recentralizar na Guiana",
+    recenterAria: "Recentralizar o mapa na Guiana inteira",
   },
   mt: {
     translated: "Traduzido automaticamente",
