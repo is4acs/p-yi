@@ -1,14 +1,20 @@
 import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono, Nunito } from "next/font/google";
+import {
+  Bricolage_Grotesque,
+  JetBrains_Mono,
+  Schibsted_Grotesk,
+} from "next/font/google";
+import { ThemeProvider } from "next-themes";
 import { cn } from "@/lib/utils";
 import { WebVitals } from "@/components/analytics/WebVitals";
 import { BannedBanner } from "@/components/layout/BannedBanner";
-import { BottomNav } from "@/components/layout/BottomNav";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { RouteProgress } from "@/components/layout/RouteProgress";
 import { SkipLink } from "@/components/layout/SkipLink";
+import { ChromeVisibility } from "@/components/soleil/ChromeVisibility";
+import { MobileNav } from "@/components/soleil/MobileNav";
 import { InstallBanner } from "@/components/pwa/InstallBanner";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { getCurrentUser } from "@/lib/auth/current-user";
@@ -24,24 +30,21 @@ import {
 import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 
-// Peyi design system v1.0 : Inter (body) + Nunito (display) + JetBrains
-// Mono (labels techniques, eyebrows, prix). Les trois sont chargées via
-// next/font/google : Next self-hoste les fichiers au build, donc pas de
-// requête runtime vers fonts.googleapis.com (meilleur CLS et FCP).
-const inter = Inter({
+// Refonte « Soleil péyi » : Schibsted Grotesk (body) + Bricolage
+// Grotesque (display, titres/prix/wordmark en 800) + JetBrains Mono
+// (labels techniques). Chargées via next/font/google : Next self-hoste
+// les fichiers au build, donc pas de requête runtime vers
+// fonts.googleapis.com (meilleur CLS et FCP). Les deux familles sont
+// variables — pas de `weight` à lister.
+const schibsted = Schibsted_Grotesk({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-schibsted",
   display: "swap",
 });
 
-const nunito = Nunito({
+const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
-  // On charge tous les poids utiles au design : 400 pour le body de
-  // secours, 700 pour les titres md, 800 pour les titres lg, 900 pour
-  // les display géants. Les variantes non utilisées sont purgées au
-  // build par next/font, donc pas de coût réseau inutile.
-  weight: ["400", "500", "600", "700", "800", "900"],
-  variable: "--font-nunito",
+  variable: "--font-bricolage",
   display: "swap",
 });
 
@@ -207,25 +210,37 @@ export default async function RootLayout({
   return (
     <html
       lang="fr"
-      className={cn(inter.variable, nunito.variable, jetBrainsMono.variable)}
+      className={cn(
+        schibsted.variable,
+        bricolage.variable,
+        jetBrainsMono.variable,
+      )}
       suppressHydrationWarning
     >
-      <body className="min-h-screen bg-background pb-20 font-sans text-foreground antialiased sm:pb-0">
+      <body className="min-h-screen bg-background pb-20 font-sans text-foreground antialiased lg:pb-0">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: rootJsonLd }}
         />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem={false}
+          disableTransitionOnChange
+        >
         <SkipLink />
         <ServiceWorkerRegister />
         <WebVitals />
         <Suspense fallback={null}>
           <RouteProgress />
         </Suspense>
-        <Header
-          user={user}
-          unreadCount={unreadCount}
-          unreadNotifications={unreadNotifications}
-        />
+        <ChromeVisibility>
+          <Header
+            user={user}
+            unreadCount={unreadCount}
+            unreadNotifications={unreadNotifications}
+          />
+        </ChromeVisibility>
         {user?.isBanned &&
           (!user.bannedUntil || user.bannedUntil > new Date()) && (
             <BannedBanner bannedUntil={user.bannedUntil} />
@@ -258,8 +273,9 @@ export default async function RootLayout({
           {children}
         </div>
         <Footer />
-        <BottomNav unreadCount={unreadCount} />
+        <MobileNav unreadCount={unreadCount} />
         <InstallBanner />
+        </ThemeProvider>
       </body>
     </html>
   );

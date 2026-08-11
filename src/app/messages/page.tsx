@@ -1,13 +1,11 @@
 import Link from "next/link";
-import Image from "next/image";
 import type { Metadata } from "next";
-import { Inbox, MessageSquare } from "lucide-react";
 
 import { requireUser } from "@/lib/auth/current-user";
 import { formatRelativeTime } from "@/lib/format";
-import { isRenderableImageUrl } from "@/lib/images";
 import { fetchInbox, type InboxConversation } from "@/lib/messages/queries";
-import { UserAvatar } from "@/components/layout/UserAvatar";
+import { Icon } from "@/components/ui/Icon";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -18,53 +16,79 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+/** Fond d'avatar en alternance (maquette 4f) : forêt / orange / sable. */
+const AVATAR_TONES = [
+  "bg-soleil-forest text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest",
+  "bg-soleil-orange text-soleil-forest",
+  "bg-soleil-sand text-soleil-forest dark:bg-soleil-forest dark:text-soleil-cream",
+] as const;
+
+function isTeamAccount(username: string): boolean {
+  return /^(equipe|équipe|team)[-_.]?peyi$|^peyi$/i.test(username.trim());
+}
+
 export default async function MessagesInboxPage() {
   const user = await requireUser("/messages");
   const conversations = await fetchInbox(user.id);
 
-  const unreadTotal = conversations.reduce(
-    (sum, c) => sum + c.unreadCount,
-    0,
-  );
-
   return (
-    <main className="mx-auto max-w-md px-4 pb-16 pt-6 animate-in fade-in duration-300 sm:max-w-2xl sm:pt-10">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-            Messagerie
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {conversations.length === 0
-              ? "Aucune conversation pour l'instant."
-              : `${conversations.length} conversation${conversations.length > 1 ? "s" : ""}${
-                  unreadTotal > 0
-                    ? ` · ${unreadTotal} non lu${unreadTotal > 1 ? "s" : ""}`
-                    : ""
-                }.`}
-          </p>
+    <main className="bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
+      <div className="mx-auto w-full max-w-md px-5 lg:max-w-2xl">
+        <div className="flex items-center justify-between pt-4">
+          <h1 className="font-display text-[22px] font-extrabold">Messages</h1>
+          <Link
+            href="/recherche"
+            aria-label="Rechercher"
+            className="flex h-9 w-9 items-center justify-center rounded-full border-[1.5px] border-soleil-border dark:border-soleil-border-d"
+          >
+            <Icon name="search" size={15} />
+          </Link>
         </div>
-      </div>
 
-      {conversations.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <ul className="mt-6 flex flex-col gap-2">
-          {conversations.map((c) => (
-            <li key={c.key}>
-              <ConversationRow conversation={c} />
-            </li>
-          ))}
-        </ul>
-      )}
+        {conversations.length === 0 ? (
+          <div className="mt-8 rounded-[14px] bg-soleil-sand p-6 text-center dark:bg-soleil-forest">
+            <p className="text-sm font-bold">
+              Aucun message pour l&apos;instant.
+            </p>
+            <p className="mt-1 text-xs text-soleil-body dark:text-soleil-body-d">
+              Ouvre une annonce et contacte le vendeur pour démarrer une
+              conversation.
+            </p>
+            <Link
+              href="/annonces"
+              className="mt-4 inline-flex min-h-[44px] items-center rounded-full bg-soleil-forest px-4 text-sm font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
+            >
+              Parcourir les annonces
+            </Link>
+          </div>
+        ) : (
+          <>
+            <ul className="pt-2">
+              {conversations.map((c, i) => (
+                <li
+                  key={c.key}
+                  className="border-b border-soleil-line last:border-0 dark:border-soleil-line-d"
+                >
+                  <ConversationRow conversation={c} index={i} />
+                </li>
+              ))}
+            </ul>
+            <p className="py-6 text-center text-[11px] text-soleil-muted dark:text-soleil-muted-d">
+              C&apos;est tout pour le moment.
+            </p>
+          </>
+        )}
+      </div>
     </main>
   );
 }
 
 function ConversationRow({
   conversation: c,
+  index,
 }: {
   conversation: InboxConversation;
+  index: number;
 }) {
   const href = c.listing
     ? `/messages/${c.otherParty.username}?listing=${c.listing.slug}`
@@ -72,106 +96,82 @@ function ConversationRow({
 
   const previewPrefix = c.lastMessage.isFromMe ? "Toi : " : "";
   const isUnread = c.unreadCount > 0;
+  const isTeam = isTeamAccount(c.otherParty.username);
 
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 transition active:scale-[0.99] hover:border-peyi-orange-300 hover:bg-peyi-orange-50/40"
+      className="flex items-center gap-3 py-3 transition active:scale-[0.99]"
     >
-      <UserAvatar
-        username={c.otherParty.username}
-        avatarUrl={c.otherParty.avatarUrl}
-        size="md"
-      />
+      {isTeam ? (
+        <span
+          aria-hidden
+          className="flex h-[46px] w-[46px] flex-none items-center justify-center rounded-full bg-soleil-valid dark:bg-soleil-valid-d"
+        >
+          {/* P du logo Péyi (même tracé que public/icons.svg#peyi-logo). */}
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 200 200"
+            className="fill-soleil-forest"
+          >
+            <path d="M70 30 h55 a45 45 0 0 1 45 45 v0 a45 45 0 0 1 -45 45 h-35 v40 a12 12 0 0 1 -12 12 h-12 a12 12 0 0 1 -12 -12 v-118 a12 12 0 0 1 12 -12 z M90 62 v34 h30 a17 17 0 0 0 17 -17 v0 a17 17 0 0 0 -17 -17 z" />
+          </svg>
+        </span>
+      ) : (
+        <span
+          aria-hidden
+          className={cn(
+            "flex h-[46px] w-[46px] flex-none items-center justify-center rounded-full text-[15px] font-extrabold",
+            AVATAR_TONES[index % AVATAR_TONES.length],
+          )}
+        >
+          {c.otherParty.username.trim()[0]?.toUpperCase() ?? "?"}
+        </span>
+      )}
 
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-2">
-          <p
-            className={
-              "truncate font-semibold " +
-              (isUnread ? "text-foreground" : "text-foreground")
-            }
-          >
-            @{c.otherParty.username}
-          </p>
           <span
-            className={
-              "shrink-0 text-[11px] tabular-nums " +
-              (isUnread
-                ? "font-semibold text-peyi-orange-600"
-                : "text-muted-foreground")
-            }
+            className={cn(
+              "truncate text-[13.5px]",
+              isUnread ? "font-extrabold" : "font-bold",
+            )}
           >
+            {isTeam ? "Équipe Péyi" : c.otherParty.username}
+          </span>
+          <span className="flex-none text-[10.5px] tabular-nums text-soleil-muted dark:text-soleil-muted-d">
             {formatRelativeTime(c.lastMessage.createdAt)}
           </span>
         </div>
 
-        {c.listing && (
-          <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-            {c.listing.category.icon && (
-              <span aria-hidden>{c.listing.category.icon}</span>
-            )}
-            <span className="truncate">{c.listing.title}</span>
-          </div>
-        )}
-
         <p
-          className={
-            "mt-0.5 line-clamp-1 text-sm " +
-            (isUnread && !c.lastMessage.isFromMe
-              ? "font-medium text-foreground"
-              : "text-muted-foreground")
-          }
+          className={cn(
+            "mt-0.5 line-clamp-1 text-xs",
+            isUnread && !c.lastMessage.isFromMe
+              ? "font-bold"
+              : "text-soleil-muted dark:text-soleil-muted-d",
+          )}
         >
           {previewPrefix}
           {c.lastMessage.content}
         </p>
-      </div>
 
-      {isRenderableImageUrl(c.listing?.coverImageUrl) ? (
-        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md">
-          <Image
-            src={c.listing.coverImageUrl}
-            alt=""
-            fill
-            sizes="48px"
-            className="object-cover"
-            unoptimized
-          />
-        </div>
-      ) : null}
+        {c.listing && (
+          <p className="mt-0.5 truncate text-[10.5px] font-bold text-soleil-otext dark:text-soleil-otext-d">
+            {c.listing.title}
+          </p>
+        )}
+      </div>
 
       {isUnread && (
         <span
           aria-label={`${c.unreadCount} message${c.unreadCount > 1 ? "s" : ""} non lu${c.unreadCount > 1 ? "s" : ""}`}
-          className="ml-1 inline-flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-peyi-orange-500 px-1.5 text-[11px] font-bold text-white"
+          className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-soleil-orange text-[10.5px] font-extrabold text-soleil-forest"
         >
-          {c.unreadCount > 99 ? "99+" : c.unreadCount}
+          {c.unreadCount > 9 ? "9+" : c.unreadCount}
         </span>
       )}
     </Link>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className="mt-8 rounded-lg border border-dashed border-border bg-muted/40 p-6 text-center">
-      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-peyi-orange-100 text-peyi-orange-600">
-        <Inbox className="h-6 w-6" aria-hidden />
-      </div>
-      <p className="mt-3 text-sm font-medium">
-        Aucun message pour l&apos;instant.
-      </p>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Ouvre une annonce et contacte le vendeur pour démarrer une conversation.
-      </p>
-      <Link
-        href="/annonces"
-        className="mt-4 inline-flex h-9 items-center gap-1.5 rounded-md bg-peyi-orange-500 px-4 text-sm font-semibold text-white transition hover:bg-peyi-orange-600"
-      >
-        <MessageSquare className="h-4 w-4" aria-hidden />
-        Parcourir les annonces
-      </Link>
-    </div>
   );
 }

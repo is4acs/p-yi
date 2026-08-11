@@ -58,9 +58,12 @@ export function ListingsPagination({
       className="mt-6 flex items-center justify-between gap-3"
     >
       <PagerLink href={prevUrl} disabled={!hasPrev} label="Précédent" />
-      <span className="text-sm text-muted-foreground tabular-nums">
-        Page <span className="font-semibold text-foreground">{page}</span> /{" "}
-        {pageCount}
+      <span className="text-xs tabular-nums text-soleil-muted dark:text-soleil-muted-d">
+        Page{" "}
+        <span className="font-bold text-soleil-forest dark:text-soleil-cream">
+          {page}
+        </span>{" "}
+        / {pageCount}
       </span>
       <PagerLink href={nextUrl} disabled={!hasNext} label="Suivant" />
     </nav>
@@ -77,10 +80,10 @@ function PagerLink({
   label: string;
 }) {
   const classes = cn(
-    "inline-flex h-10 items-center rounded-md border px-4 text-sm font-medium",
+    "inline-flex min-h-[44px] items-center rounded-full border-[1.5px] px-4 py-2 text-xs font-bold",
     disabled
-      ? "cursor-not-allowed border-border bg-muted text-muted-foreground/50"
-      : "border-border bg-background text-foreground hover:border-peyi-orange-300",
+      ? "cursor-not-allowed border-soleil-border text-soleil-muted dark:border-soleil-border-d dark:text-soleil-muted-d"
+      : "border-soleil-forest text-soleil-forest dark:border-soleil-cream dark:text-soleil-cream",
   );
 
   if (disabled) {

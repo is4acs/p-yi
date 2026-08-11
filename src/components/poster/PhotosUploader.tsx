@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertCircle, ImagePlus, Loader2, Star, Trash2 } from "lucide-react";
+import { AlertCircle, Loader2, Star, Trash2 } from "lucide-react";
+
+import { Icon } from "@/components/ui/Icon";
 
 import { cn } from "@/lib/utils";
 import { uploadFilesDirect } from "@/lib/client/upload";
@@ -217,14 +219,11 @@ export function PhotosUploader({ initialUrls = [], max, className }: Props) {
   return (
     <div className={cn("space-y-2", className)}>
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium">
-          Photos{" "}
-          <span className="text-muted-foreground">
-            ({photos.length}/{max})
-          </span>
+        <span className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d">
+          Photos · {photos.length}/{max}
         </span>
-        <span className="text-[11px] text-muted-foreground">
-          JPG · PNG · WebP · optimisées automatiquement
+        <span className="text-[10px] text-soleil-muted dark:text-soleil-muted-d">
+          JPG · PNG · WebP
         </span>
       </div>
 
@@ -238,12 +237,12 @@ export function PhotosUploader({ initialUrls = [], max, className }: Props) {
             <div
               key={photo.kind === "existing" ? `e-${photo.url}` : `n-${photo.id}`}
               className={cn(
-                "group relative aspect-square overflow-hidden rounded-lg border bg-muted",
+                "group relative aspect-square overflow-hidden rounded-[14px] border bg-soleil-sand dark:bg-soleil-forest",
                 isError
                   ? "border-destructive ring-1 ring-destructive/40"
                   : isCover
-                    ? "border-peyi-orange-400 ring-1 ring-peyi-orange-300"
-                    : "border-border",
+                    ? "border-soleil-orange ring-1 ring-soleil-orange"
+                    : "border-soleil-border dark:border-soleil-border-d",
               )}
             >
               <Image
@@ -302,11 +301,11 @@ export function PhotosUploader({ initialUrls = [], max, className }: Props) {
 
         {canAddMore && (
           <label
-            className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-border bg-muted/40 p-2 text-center transition hover:border-peyi-orange-300 hover:bg-peyi-orange-50/30"
+            className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-[14px] border-[1.5px] border-dashed border-soleil-border p-2 text-center text-soleil-muted2 transition dark:border-soleil-border-d dark:text-soleil-muted-d"
             aria-label="Ajouter une photo"
           >
-            <ImagePlus className="h-6 w-6 text-peyi-orange-500" aria-hidden />
-            <span className="text-[11px] font-medium">Ajouter</span>
+            <Icon name="camera" size={18} aria-hidden />
+            <span className="text-[9.5px] font-bold">Ajouter</span>
             <input
               ref={pickerRef}
               type="file"

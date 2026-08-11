@@ -59,6 +59,28 @@ const config: Config = {
           jaune: "#FFD93D",
         },
 
+        // --- Palette « Soleil péyi » (refonte T4, maquette Refonte_Pe_yi) --
+        // Tokens plats jour/nuit : chaque rôle a sa variante `-d` pour le
+        // dark (classe `dark:`). `soleil-orange` est identique jour et
+        // nuit ; le texte orange lisible est `soleil-otext`.
+        soleil: {
+          orange: "#FF914C",
+          cream: "#F8F1E4",
+          night: "#0F2D21",
+          forest: "#16402F",
+          sand: "#ECE2CD",
+          input: "#FDF8EE",
+          line: { DEFAULT: "#E2D5BD", d: "#2A5443" },
+          border: { DEFAULT: "#CDBFA6", d: "#3C6653" },
+          muted: { DEFAULT: "#7C8A80", d: "#9DBBAD" },
+          muted2: "#5C6F63",
+          body: { DEFAULT: "#3A4F43", d: "#CFE0D6" },
+          strike: { DEFAULT: "#A89C8E", d: "#7D998C" },
+          otext: { DEFAULT: "#B0651F", d: "#FFB27D" },
+          promo: { DEFAULT: "#FFE3CD", d: "#4A2D18" },
+          valid: { DEFAULT: "#DCEDD2", d: "#A4E285" },
+        },
+
         // Neutres teintés orange (tonalité chaude Peyi)
         ink: {
           50: "#F6F2EB",
@@ -119,12 +141,11 @@ const config: Config = {
         },
       },
       fontFamily: {
-        // Body — Inter (UI, paragraphes, formulaires)
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
-        // Display — Nunito (titres, marque, gros chiffres, boutons)
+        // Body — Schibsted Grotesk (UI, paragraphes, formulaires)
+        sans: ["var(--font-schibsted)", "system-ui", "sans-serif"],
+        // Display — Bricolage Grotesque 800 (titres, prix, rangs, wordmark)
         display: [
-          "var(--font-nunito)",
-          "ui-rounded",
+          "var(--font-bricolage)",
           "system-ui",
           "sans-serif",
         ],
@@ -174,7 +195,7 @@ const config: Config = {
         //  1. Les valeurs handoff (10/14/20/28) ne dérivent pas d'une
         //     base unique — elles suivent une progression non-linéaire
         //     (+4/+6/+8) pour gagner en douceur visuelle aux grandes
-        //     tailles, cohérente avec Nunito + logo rond.
+        //     tailles, cohérente avec la typo display et le logo rond.
         //  2. `--radius` (0.75rem) reste défini dans globals.css pour
         //     compat shadcn à venir mais n'est plus référencé ici.
         // Impact : ~260 usages `rounded-{sm,md,lg,xl}` gagnent de la

@@ -1,27 +1,15 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { unstable_cache } from "next/cache";
 import type { Metadata } from "next";
-import {
-  ArrowLeft,
-  MessageSquare,
-  Eye,
-  Flame,
-  Snowflake,
-  Clock,
-  ExternalLink,
-  MapPin,
-  Store as StoreIcon,
-} from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
 import { DealStatus, type VoteType } from "@prisma/client";
-import { cn } from "@/lib/utils";
-import { formatRelativeTime } from "@/lib/format";
+import { formatPrice, formatRelativeTime } from "@/lib/format";
 import { isRenderableImageUrl } from "@/lib/images";
 import { rethrowIfNextInternal } from "@/lib/next-errors";
 import { withTimeout } from "@/lib/async/with-timeout";
-import { LEVEL_META } from "@/lib/deals/user-level";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import {
   buildBreadcrumbJsonLd,
@@ -29,19 +17,15 @@ import {
   serializeJsonLd,
 } from "@/lib/seo/json-ld";
 
-import { Button } from "@/components/ui/button";
-import { PriceTag } from "@/components/deals/PriceTag";
-import { TemperatureBadge } from "@/components/deals/TemperatureBadge";
-import { CategoryChip } from "@/components/deals/CategoryChip";
-import { CommuneChip } from "@/components/deals/CommuneChip";
-import { DealImagePlaceholder } from "@/components/deals/DealImagePlaceholder";
 import { AuthorControls } from "@/components/deals/AuthorControls";
-import { VoteButtons } from "@/components/deals/VoteButtons";
-import { FavoriteButton } from "@/components/deals/FavoriteButton";
 import { CommentList } from "@/components/comments/CommentList";
 import { ReportDialog } from "@/components/reports/ReportDialog";
 import { ShareRow } from "@/components/shared/ShareRow";
-import { ListingGallery } from "@/components/listings/ListingGallery";
+import { BackHeader } from "@/components/soleil/BackHeader";
+import { CountLine } from "@/components/soleil/CountLine";
+import { HeartButton } from "@/components/soleil/HeartButton";
+import { Ph } from "@/components/soleil/Ph";
+import { VotePill } from "@/components/soleil/VotePill";
 import { getSiteUrl } from "@/lib/site-url";
 import {
   getDealCategoryBySlug,
@@ -230,24 +214,24 @@ export default async function DealDetailPage(
     // eslint-disable-next-line no-console
     console.error("[deal/page] load failed", { slug: params.slug, err: dealResult.reason });
     return (
-      <main className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center px-4 py-12 text-center sm:max-w-2xl">
-        <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+      <main className="flex min-h-[60vh] flex-col items-center justify-center bg-soleil-cream px-4 py-12 text-center text-soleil-forest dark:bg-soleil-night dark:text-soleil-cream">
+        <h1 className="font-display text-[22px] font-extrabold leading-[1.12]">
           Bon plan indisponible temporairement
         </h1>
-        <p className="mt-3 max-w-sm text-sm text-muted-foreground sm:text-base">
+        <p className="mt-3 max-w-sm text-[13px] leading-relaxed text-soleil-body dark:text-soleil-body-d">
           La fiche n&apos;a pas pu être chargée pour le moment. Réessaie dans
           quelques secondes.
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
           <Link
             href="/bons-plans"
-            className="inline-flex h-10 items-center rounded-full bg-peyi-orange-500 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-peyi-orange-600"
+            className="inline-flex min-h-[44px] items-center rounded-full bg-soleil-forest px-4 text-sm font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
           >
             Retour aux bons plans
           </Link>
           <Link
             href={`/bons-plans/${params.slug}`}
-            className="inline-flex h-10 items-center rounded-full border border-border bg-background px-4 text-sm font-semibold text-foreground transition hover:border-peyi-orange-300"
+            className="inline-flex min-h-[44px] items-center rounded-full border-[1.5px] border-soleil-forest px-4 text-sm font-bold dark:border-soleil-cream"
           >
             Recharger
           </Link>
@@ -316,9 +300,13 @@ export default async function DealDetailPage(
   const ctaUrl = deal.affiliateUrl ?? deal.externalUrl ?? deal.store?.website ?? null;
   const sellerName =
     deal.store?.name ?? deal.merchant?.name ?? "Vendeur non précisé";
-  const level = LEVEL_META[deal.author.level] ?? LEVEL_META.BEGINNER;
-  const placeholderEmoji = deal.category.icon ?? null;
   const placeholderLabel = deal.store?.name ?? deal.merchant?.name ?? deal.title;
+  const expiresLabel = deal.expiresAt
+    ? new Intl.DateTimeFormat("fr-FR", {
+        day: "numeric",
+        month: "long",
+      }).format(deal.expiresAt)
+    : null;
   const categoryPath = getDealCategoryBySlug(deal.category.slug)
     ? getDealsCategoryPath(deal.category.slug)
     : `/bons-plans?category=${encodeURIComponent(deal.category.slug)}`;
@@ -388,319 +376,254 @@ export default async function DealDetailPage(
   }
 
   return (
-    <main className="mx-auto max-w-md pb-16 animate-in fade-in duration-300 sm:max-w-2xl">
+    <main className="bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
       {jsonLd ? (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: jsonLd }}
         />
       ) : null}
-      {/* Back link */}
-      <div className="px-4 pt-4 sm:px-0 sm:pt-6">
-        <Link
-          href="/bons-plans"
-          className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-          Bons plans
-        </Link>
-      </div>
 
-      {/* Hero image */}
-      <div className="relative mt-3 px-4 sm:px-0">
-        {dealPhotos.length > 0 ? (
-          <ListingGallery photos={dealPhotos} title={deal.title} />
-        ) : (
-          <DealImagePlaceholder
-            emoji={placeholderEmoji}
-            label={placeholderLabel}
-            className="aspect-[4/3] w-full sm:aspect-[16/10]"
-          />
-        )}
-        <div className="absolute left-5 top-2 sm:left-1">
-          <TemperatureBadge temperature={deal.temperature} />
-        </div>
-      </div>
-
-      {/* Header */}
-      <header className="space-y-3 px-4 pt-5 sm:px-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <CategoryChip name={deal.category.name} icon={deal.category.icon} />
-          {deal.city && <CommuneChip name={deal.city.name} />}
-          <span className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground">
-            <Clock className="h-3 w-3" aria-hidden />
-            {formatRelativeTime(deal.publishedAt)}
-          </span>
-        </div>
-
-        <h1 className="font-display text-2xl font-bold leading-tight tracking-tight sm:text-3xl">
-          {deal.title}
-        </h1>
-
-        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <StoreIcon className="h-4 w-4 shrink-0" aria-hidden />
-          <span className="truncate">{sellerName}</span>
-          {deal.merchant?.domain && (
-            <span className="text-xs">· {deal.merchant.domain}</span>
-          )}
-        </div>
-
-        <p className="text-xs text-muted-foreground">
-          Publié le <time dateTime={deal.publishedAt.toISOString()}>{publishedDateLabel}</time>
-          {showUpdatedAt && (
-            <>
-              {" "}· mis à jour le{" "}
-              <time dateTime={deal.updatedAt.toISOString()}>{updatedDateLabel}</time>
-            </>
-          )}
-        </p>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {isAuthor && (
-            <AuthorControls
-              dealId={deal.id}
-              editHref={`/bons-plans/${deal.slug}/edit`}
-            />
-          )}
-          <FavoriteButton
-            dealId={deal.id}
-            initialFavorited={isFavorited}
-            canFavorite={canFavorite}
-            disabledHint={favoriteDisabledHint}
-            size="md"
-          />
-          {currentUser && !isAuthor && (
-            <ReportDialog
+      <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-8">
+        <BackHeader
+          title="Bon plan"
+          backHref="/bons-plans"
+          action={
+            <HeartButton
               kind="deal"
               targetId={deal.id}
-              title="Signaler ce bon plan"
-              variant="ghost"
+              initialFavorited={isFavorited}
+              canFavorite={canFavorite}
+              disabledHint={favoriteDisabledHint}
             />
-          )}
-        </div>
-      </header>
-
-      {/* Partage — WhatsApp/Messenger/Copier. Clé en Guyane où WhatsApp
-          est le canal de viralité principal, bien devant Facebook. */}
-      <section className="mt-4 px-4 sm:px-0">
-        <ShareRow
-          url={`${getSiteUrl()}/bons-plans/${deal.slug}`}
-          text={`${deal.title} — ${deal.isFree ? "Gratuit" : `${deal.price}€`}`}
-        />
-      </section>
-
-      {/* Vote */}
-      <section className="mt-5 px-4 sm:px-0">
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-3">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Ce bon plan est-il bien ?
-            </p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Vote chaud pour soutenir, froid si le prix n&apos;est pas bon.
-            </p>
-          </div>
-          <VoteButtons
-            dealId={deal.id}
-            temperature={deal.temperature}
-            upvotes={deal.upvotes}
-            downvotes={deal.downvotes}
-            myVote={myVote}
-            canVote={canVote}
-            disabledHint={voteDisabledHint}
-            variant="wide"
-          />
-        </div>
-      </section>
-
-      {/* Price + CTA */}
-      <section className="mt-5 space-y-4 px-4 sm:px-0">
-        <PriceTag
-          price={deal.price.toString()}
-          originalPrice={deal.originalPrice?.toString() ?? null}
-          discountPercent={deal.discountPercent ?? null}
-          isFree={deal.isFree}
-          size="lg"
+          }
         />
 
-        {ctaUrl ? (
-          <Button asChild size="lg" className="w-full">
-            <a
-              href={ctaUrl}
-              target="_blank"
-              rel="noopener noreferrer nofollow"
-            >
-              Voir l&apos;offre
-              <ExternalLink className="h-4 w-4" aria-hidden />
-            </a>
-          </Button>
-        ) : (
-          <div className="rounded-md border border-dashed border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-            Offre à retirer en magasin
-            {deal.store?.address ? ` · ${deal.store.address}` : ""}
-          </div>
-        )}
-
-        {deal.expiresAt && (
-          <p className="text-xs text-muted-foreground">
-            Expire {formatRelativeTime(deal.expiresAt)}
-          </p>
-        )}
-      </section>
-
-      {/* Stats */}
-      <section className="mt-6 grid grid-cols-4 gap-2 px-4 sm:px-0">
-        <Stat
-          icon={<Flame className="h-4 w-4" />}
-          value={deal.upvotes}
-          label="Chaud"
-          tone="hot"
-        />
-        <Stat
-          icon={<Snowflake className="h-4 w-4" />}
-          value={deal.downvotes}
-          label="Froid"
-          tone="cold"
-        />
-        <Stat
-          icon={<MessageSquare className="h-4 w-4" />}
-          value={deal.commentCount}
-          label="Avis"
-        />
-        <Stat
-          icon={<Eye className="h-4 w-4" />}
-          value={deal.viewCount}
-          label="Vues"
-        />
-      </section>
-
-      {/* Description */}
-      {deal.description && (
-        <section className="mt-6 px-4 sm:px-0">
-          <h2 className="font-display text-lg font-semibold">Description</h2>
-          <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-foreground">
-            {deal.description}
-          </p>
-        </section>
-      )}
-
-      {/* Store details */}
-      {deal.store && (
-        <section className="mt-6 px-4 sm:px-0">
-          <h2 className="font-display text-lg font-semibold">Où le trouver</h2>
-          <div className="mt-2 flex items-start gap-2 rounded-lg border border-border bg-card p-3 text-sm">
-            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-peyi-orange-500" aria-hidden />
-            <div className="min-w-0">
-              <p className="font-semibold">{deal.store.name}</p>
-              {deal.store.address && (
-                <p className="text-muted-foreground">{deal.store.address}</p>
+        <div className="lg:grid lg:grid-cols-12 lg:items-start lg:gap-8">
+          <div className="lg:col-span-7">
+            {/* Visuel + badge température posé dessus. */}
+            <div className="relative mx-5 mt-3.5 h-[170px] overflow-hidden rounded-2xl lg:mx-0 lg:h-[280px]">
+              {dealPhotos.length > 0 ? (
+                <Image
+                  src={dealPhotos[0].url}
+                  alt={deal.title}
+                  fill
+                  unoptimized
+                  priority
+                  className="object-cover"
+                />
+              ) : (
+                <Ph label={placeholderLabel} className="h-full w-full" />
               )}
-              {deal.store.city?.name && (
-                <p className="text-muted-foreground">{deal.store.city.name}</p>
+              <span className="absolute left-2.5 top-2.5 rounded-full bg-soleil-orange px-2.5 py-1 font-display text-[13px] font-extrabold text-soleil-forest">
+                {deal.temperature >= 0 ? "+" : ""}
+                {deal.temperature}°
+              </span>
+            </div>
+
+            <div className="px-5 pt-4 lg:px-0">
+              <CountLine>
+                {deal.category.name} · {deal.store ? "En magasin" : "Web"}
+              </CountLine>
+              <h1 className="mt-1.5 font-display text-[22px] font-extrabold leading-[1.12]">
+                {deal.title}
+              </h1>
+              <p className="mt-[5px] text-xs text-soleil-muted dark:text-soleil-muted-d">
+                {sellerName} · posté {formatRelativeTime(deal.publishedAt)} par{" "}
+                {deal.author.username}
+              </p>
+
+              <div className="mt-3 flex flex-wrap items-baseline gap-2.5">
+                {deal.isFree ? (
+                  <span className="font-display text-[34px] font-extrabold leading-none">
+                    Gratuit
+                  </span>
+                ) : (
+                  <>
+                    <span className="font-display text-[34px] font-extrabold leading-none">
+                      {formatPrice(deal.price.toString())}
+                    </span>
+                    {deal.originalPrice != null && (
+                      <span className="text-sm text-soleil-strike line-through dark:text-soleil-strike-d">
+                        {formatPrice(deal.originalPrice.toString())}
+                      </span>
+                    )}
+                    {deal.discountPercent != null && deal.discountPercent > 0 && (
+                      <span className="rounded-[7px] bg-soleil-promo px-2 py-[3px] text-[11px] font-extrabold text-soleil-otext dark:bg-soleil-promo-d dark:text-soleil-otext-d">
+                        −{deal.discountPercent}%
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
+
+              <VotePill
+                dealId={deal.id}
+                temperature={deal.temperature}
+                myVote={myVote}
+                canVote={canVote}
+                disabledHint={voteDisabledHint}
+                className="mt-3.5"
+              />
+
+              <div className="pt-3.5">
+                {ctaUrl ? (
+                  <>
+                    <a
+                      href={ctaUrl}
+                      target="_blank"
+                      rel="nofollow sponsored noopener"
+                      className="block rounded-full bg-soleil-forest py-3.5 text-center text-sm font-extrabold text-soleil-cream transition active:scale-[0.99] dark:bg-soleil-cream dark:text-soleil-forest"
+                    >
+                      Voir le deal chez {sellerName} →
+                    </a>
+                    <p className="mt-1.5 text-center text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
+                      Lien direct — Péyi ne prend aucune commission
+                    </p>
+                  </>
+                ) : (
+                  <div className="rounded-[14px] bg-soleil-sand px-4 py-3 text-[12.5px] text-soleil-body dark:bg-soleil-forest dark:text-soleil-body-d">
+                    Offre à retirer en magasin
+                    {deal.store?.address ? ` · ${deal.store.address}` : ""}
+                    {deal.store?.city?.name ? ` · ${deal.store.city.name}` : ""}
+                  </div>
+                )}
+              </div>
+
+              {deal.description && (
+                <p className="mt-4 whitespace-pre-line text-[13px] leading-relaxed text-soleil-body dark:text-soleil-body-d">
+                  {deal.description}
+                </p>
               )}
+
+              {/* Chips info + actions de modération. */}
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {expiresLabel && (
+                  <span className="rounded-full border-[1.5px] border-soleil-border px-2.5 py-1 text-[11px] font-bold dark:border-soleil-border-d">
+                    Expire le {expiresLabel}
+                  </span>
+                )}
+                <span className="rounded-full border-[1.5px] border-soleil-border px-2.5 py-1 text-[11px] font-bold dark:border-soleil-border-d">
+                  Vérifié {formatRelativeTime(deal.updatedAt)}
+                </span>
+                {currentUser && !isAuthor && (
+                  <ReportDialog
+                    kind="deal"
+                    targetId={deal.id}
+                    title="Signaler ce bon plan"
+                    variant="ghost"
+                  />
+                )}
+              </div>
+
+              <p className="mt-2 text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
+                Publié le{" "}
+                <time dateTime={deal.publishedAt.toISOString()}>
+                  {publishedDateLabel}
+                </time>
+                {showUpdatedAt && (
+                  <>
+                    {" "}
+                    · mis à jour le{" "}
+                    <time dateTime={deal.updatedAt.toISOString()}>
+                      {updatedDateLabel}
+                    </time>
+                  </>
+                )}
+              </p>
+
+              {isAuthor && (
+                <div className="mt-3">
+                  <AuthorControls
+                    dealId={deal.id}
+                    editHref={`/bons-plans/${deal.slug}/edit`}
+                  />
+                </div>
+              )}
+
+              {/* Commentaires */}
+              <section className="pt-5">
+                <h2 className="font-display text-[17px] font-extrabold">
+                  Commentaires{" "}
+                  <span className="text-soleil-otext dark:text-soleil-otext-d">
+                    {deal.commentCount}
+                  </span>
+                </h2>
+                <div className="mt-1">
+                  <CommentList
+                    dealId={deal.id}
+                    dealSlug={deal.slug}
+                    currentUserId={currentUser?.id ?? null}
+                  />
+                </div>
+              </section>
             </div>
           </div>
-        </section>
-      )}
 
-      {/* Author */}
-      <section className="mt-6 px-4 sm:px-0">
-        <h2 className="font-display text-lg font-semibold">Partagé par</h2>
-        <div className="mt-2 flex items-center gap-3 rounded-lg border border-border bg-card p-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-peyi-orange-100 font-display text-base font-bold text-peyi-orange-700">
-            {deal.author.username.slice(0, 2).toUpperCase()}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold">
-              @{deal.author.username}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              <span aria-hidden>{level.emoji}</span> {level.label} ·{" "}
-              {deal.author.karma.toLocaleString("fr-FR")} karma
-              {deal.author.city?.name ? ` · ${deal.author.city.name}` : ""}
-            </p>
-          </div>
+          {/* Colonne latérale desktop : magasin, partage, maillage SEO. */}
+          <aside className="px-5 lg:sticky lg:top-24 lg:col-span-5 lg:px-0 lg:pt-3.5">
+            {deal.store && (
+              <div className="mt-5 rounded-2xl border-[1.5px] border-soleil-border p-3 dark:border-soleil-border-d lg:mt-0">
+                <p className="text-[13.5px] font-bold">{deal.store.name}</p>
+                {deal.store.address && (
+                  <p className="mt-0.5 text-[11.5px] text-soleil-muted dark:text-soleil-muted-d">
+                    {deal.store.address}
+                  </p>
+                )}
+                {deal.store.city?.name && (
+                  <p className="text-[11.5px] text-soleil-muted dark:text-soleil-muted-d">
+                    {deal.store.city.name}
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="mt-4">
+              <ShareRow
+                url={`${getSiteUrl()}/bons-plans/${deal.slug}`}
+                text={`${deal.title} — ${deal.isFree ? "Gratuit" : `${deal.price}€`}`}
+              />
+            </div>
+
+            <section className="mt-5">
+              <h2 className="font-display text-[17px] font-extrabold">
+                Voir aussi
+              </h2>
+              <ul className="mt-2 space-y-2 text-[12.5px] font-bold">
+                {cityPath && deal.city && (
+                  <li>
+                    <Link
+                      href={cityPath}
+                      className="text-soleil-otext dark:text-soleil-otext-d"
+                    >
+                      Voir les bons plans à {deal.city.name}
+                    </Link>
+                  </li>
+                )}
+                <li>
+                  <Link
+                    href={categoryPath}
+                    className="text-soleil-otext dark:text-soleil-otext-d"
+                  >
+                    Voir les bons plans {deal.category.name.toLowerCase()} en
+                    Guyane
+                  </Link>
+                </li>
+                {storePath && deal.store && (
+                  <li>
+                    <Link
+                      href={storePath}
+                      className="text-soleil-otext dark:text-soleil-otext-d"
+                    >
+                      Voir les promos chez {deal.store.name}
+                    </Link>
+                  </li>
+                )}
+              </ul>
+            </section>
+          </aside>
         </div>
-      </section>
-
-      <section className="mt-6 px-4 sm:px-0">
-        <h2 className="font-display text-lg font-semibold">Voir aussi</h2>
-        <ul className="mt-3 space-y-2 text-sm">
-          {cityPath && deal.city && (
-            <li>
-              <Link
-                href={cityPath}
-                className="text-peyi-orange-700 hover:underline"
-              >
-                Voir les bons plans à {deal.city.name}
-              </Link>
-            </li>
-          )}
-          <li>
-            <Link href={categoryPath} className="text-peyi-orange-700 hover:underline">
-              Voir les bons plans {deal.category.name.toLowerCase()} en Guyane
-            </Link>
-          </li>
-          {storePath && deal.store && (
-            <li>
-              <Link href={storePath} className="text-peyi-orange-700 hover:underline">
-                Voir les promos chez {deal.store.name}
-              </Link>
-            </li>
-          )}
-        </ul>
-      </section>
-
-      {/* Comments */}
-      <section className="mt-6 px-4 sm:px-0">
-        <h2 className="font-display text-lg font-semibold">
-          Avis de la communauté ({deal.commentCount})
-        </h2>
-        <div className="mt-3">
-          <CommentList
-            dealId={deal.id}
-            dealSlug={deal.slug}
-            currentUserId={currentUser?.id ?? null}
-          />
-        </div>
-      </section>
+      </div>
     </main>
-  );
-}
-
-function Stat({
-  icon,
-  value,
-  label,
-  tone,
-}: {
-  icon: React.ReactNode;
-  value: number;
-  label: string;
-  tone?: "hot" | "cold";
-}) {
-  return (
-    <div
-      className={cn(
-        "flex flex-col items-center rounded-lg border border-border bg-card px-2 py-2 text-center",
-      )}
-    >
-      <span
-        className={cn(
-          "flex items-center justify-center",
-          tone === "hot" && "text-hot",
-          tone === "cold" && "text-cold",
-        )}
-        aria-hidden
-      >
-        {icon}
-      </span>
-      <span className="mt-1 text-sm font-bold tabular-nums">
-        {value.toLocaleString("fr-FR")}
-      </span>
-      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-        {label}
-      </span>
-    </div>
   );
 }
