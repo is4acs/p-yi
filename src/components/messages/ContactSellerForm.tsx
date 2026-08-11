@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MessageSquare, Send } from "lucide-react";
+import { Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -28,10 +28,9 @@ export function ContactSellerForm({ recipientUsername, listingSlug }: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex h-12 w-full items-center justify-center gap-2 rounded-md border border-border bg-card text-sm font-semibold text-foreground transition active:scale-[0.98] hover:border-peyi-orange-300 hover:bg-peyi-orange-50/40"
+        className="w-full rounded-full bg-soleil-forest py-3 text-center text-[13.5px] font-extrabold text-soleil-cream transition active:scale-[0.98] dark:bg-soleil-cream dark:text-soleil-forest"
       >
-        <MessageSquare className="h-4 w-4" aria-hidden />
-        Envoyer un message au vendeur
+        Message
       </button>
     );
   }
@@ -42,17 +41,17 @@ export function ContactSellerForm({ recipientUsername, listingSlug }: Props) {
   return (
     <form
       action={sendMessageAction}
-      className="flex flex-col gap-2 rounded-md border border-peyi-orange-200 bg-peyi-orange-50/40 p-3"
+      className="flex flex-col gap-2 rounded-[14px] border-[1.5px] border-soleil-border bg-soleil-sand p-3 dark:border-soleil-border-d dark:bg-soleil-forest"
     >
       <input type="hidden" name="recipientUsername" value={recipientUsername} />
       <input type="hidden" name="listingSlug" value={listingSlug} />
 
       <label
         htmlFor="message-content"
-        className="text-xs font-medium text-muted-foreground"
+        className="text-xs font-medium text-soleil-muted2 dark:text-soleil-muted-d"
       >
         Ton message à{" "}
-        <span className="font-semibold text-foreground">
+        <span className="font-bold text-soleil-forest dark:text-soleil-cream">
           @{recipientUsername}
         </span>
       </label>
@@ -66,10 +65,10 @@ export function ContactSellerForm({ recipientUsername, listingSlug }: Props) {
         rows={4}
         autoFocus
         placeholder="Bonjour, est-ce toujours disponible ?"
-        className="w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:border-peyi-orange-400 focus:outline-none focus:ring-2 focus:ring-peyi-orange-200"
+        className="w-full resize-y rounded-[14px] border-[1.5px] border-soleil-border bg-soleil-input px-3.5 py-3 text-[13px] font-semibold text-soleil-forest placeholder:text-soleil-muted focus:border-soleil-forest focus:outline-none dark:border-soleil-border-d dark:bg-soleil-night dark:text-soleil-cream dark:placeholder:text-soleil-muted-d dark:focus:border-soleil-cream"
       />
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs tabular-nums text-muted-foreground">
+        <span className="text-xs tabular-nums text-soleil-muted dark:text-soleil-muted-d">
           {content.length}/2000
         </span>
         <div className="flex gap-2">
