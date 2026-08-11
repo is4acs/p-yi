@@ -14,7 +14,8 @@ import { cn } from "@/lib/utils";
 import { formatPrice, formatRelativeTime } from "@/lib/format";
 import type { DealCardData } from "@/lib/deals/queries";
 import { StoreLogo } from "@/components/common/StoreLogo";
-import { getMessages, tFormat } from "@/lib/i18n";
+import { getLocale, getMessages, tFormat } from "@/lib/i18n";
+import { translateUserText } from "@/lib/i18n/translate";
 import { Ph } from "@/components/soleil/Ph";
 import { TempBadge } from "@/components/soleil/TempBadge";
 import { PriceTag } from "./PriceTag";
@@ -109,6 +110,12 @@ export async function DealCard({
   className,
 }: Props) {
   const t = await getMessages();
+  // Titre traduit vers la langue de l'interface (passthrough sans
+  // fournisseur configuré — cf. lib/i18n/translate.ts).
+  const { text: displayTitle } = await translateUserText(
+    deal.title,
+    await getLocale(),
+  );
   const sellerName = deal.store?.name ?? deal.merchant?.name ?? null;
   const isLocalStore = Boolean(deal.store);
   const sellerLogoUrl = deal.store?.logoUrl ?? deal.merchant?.logoUrl ?? null;
@@ -157,7 +164,7 @@ export async function DealCard({
             <Ph className="h-16 w-16 flex-none rounded-[14px]" />
           )}
           <div className="min-w-0 flex-1">
-            <h2 className="text-sm font-bold leading-tight">{deal.title}</h2>
+            <h2 className="text-sm font-bold leading-tight">{displayTitle}</h2>
             <p className="mt-[3px] text-[11px] text-soleil-muted dark:text-soleil-muted-d">
               {meta}
             </p>
@@ -247,7 +254,7 @@ export async function DealCard({
                 <span className="truncate">{fallbackSellerName}</span>
               </div>
               <h3 className="line-clamp-2 font-display text-sm font-semibold leading-tight text-foreground group-hover:text-peyi-orange-700">
-                {deal.title}
+                {displayTitle}
               </h3>
             </div>
 
@@ -378,7 +385,7 @@ export async function DealCard({
                 href={`/bons-plans/${deal.slug}`}
                 className="transition group-hover:text-peyi-orange-700 before:absolute before:inset-0 before:content-['']"
               >
-                {deal.title}
+                {displayTitle}
               </Link>
             </h3>
 

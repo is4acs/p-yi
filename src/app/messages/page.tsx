@@ -6,7 +6,8 @@ import { formatRelativeTime } from "@/lib/format";
 import { fetchInbox, type InboxConversation } from "@/lib/messages/queries";
 import { Icon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
-import { getMessages, type Messages } from "@/lib/i18n";
+import { getLocale, getMessages, type Messages } from "@/lib/i18n";
+import { translateUserTexts } from "@/lib/i18n/translate";
 
 export const dynamic = "force-dynamic";
 
@@ -30,8 +31,18 @@ function isTeamAccount(username: string): boolean {
 
 export default async function MessagesInboxPage() {
   const t = await getMessages();
+  const locale = await getLocale();
   const user = await requireUser("/messages");
   const conversations = await fetchInbox(user.id);
+
+  // Aperçus : les derniers messages reçus sont traduits vers la langue de
+  // l'interface (comme dans le fil). Passthrough sans fournisseur.
+  const previews = await translateUserTexts(
+    conversations.map((c) =>
+      c.lastMessage.isFromMe ? "" : c.lastMessage.content,
+    ),
+    locale,
+  );
 
   return (
     <main className="min-h-screen bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
@@ -68,7 +79,16 @@ export default async function MessagesInboxPage() {
                   key={c.key}
                   className="border-b border-soleil-line last:border-0 dark:border-soleil-line-d"
                 >
-                  <ConversationRow conversation={c} index={i} t={t} />
+                  <ConversationRow
+                    conversation={c}
+                    index={i}
+                    t={t}
+                    preview={
+                      c.lastMessage.isFromMe
+                        ? c.lastMessage.content
+                        : previews[i]?.text ?? c.lastMessage.content
+                    }
+                  />
                 </li>
               ))}
             </ul>
@@ -86,10 +106,12 @@ function ConversationRow({
   conversation: c,
   index,
   t,
+  preview,
 }: {
   conversation: InboxConversation;
   index: number;
   t: Messages;
+  preview: string;
 }) {
   const href = c.listing
     ? `/messages/${c.otherParty.username}?listing=${c.listing.slug}`
@@ -155,7 +177,7 @@ function ConversationRow({
           )}
         >
           {previewPrefix}
-          {c.lastMessage.content}
+          {preview}
         </p>
 
         {c.listing && (

@@ -33,7 +33,8 @@ import { ConseilPeyi } from "@/components/soleil/ConseilPeyi";
 import { HeartButton } from "@/components/soleil/HeartButton";
 import { Ph } from "@/components/soleil/Ph";
 import { getSiteUrl } from "@/lib/site-url";
-import { getMessages, tFormat } from "@/lib/i18n";
+import { getLocale, getMessages, tFormat } from "@/lib/i18n";
+import { translateUserTexts } from "@/lib/i18n/translate";
 import {
   getListingCategoryBySlug,
   getListingsCategoryPath,
@@ -209,6 +210,7 @@ export default async function ListingDetailPage(
 ) {
   const params = await props.params;
   const t = await getMessages();
+  const locale = await getLocale();
   // `Promise.allSettled` plutôt que `Promise.all` : si la requête
   // user (Supabase auth) hiccup, on veut quand même afficher
   // l'annonce en mode "déconnecté" plutôt que crasher toute la
@@ -267,6 +269,15 @@ export default async function ListingDetailPage(
     currentUserResult.status === "fulfilled" ? currentUserResult.value : null;
 
   if (!listing || listing.expiresAt <= new Date()) notFound();
+
+  // Traduction automatique du contenu de l'annonce vers la langue de
+  // l'interface (passthrough sans fournisseur configuré). Le SEO garde
+  // les textes originaux.
+  const [mtTitle, mtDescription] = await translateUserTexts(
+    [listing.title, listing.description],
+    locale,
+  );
+  const contentTranslated = mtTitle.translated || mtDescription.translated;
 
   if (currentUserResult.status === "rejected") {
     // eslint-disable-next-line no-console
@@ -455,7 +466,7 @@ export default async function ListingDetailPage(
               <p className="font-display text-[30px] font-extrabold leading-none">
                 {priceLabel}
               </p>
-              <h1 className="mt-1.5 text-base font-bold">{listing.title}</h1>
+              <h1 className="mt-1.5 text-base font-bold">{mtTitle.text}</h1>
               <p className="mt-1 text-[11.5px] text-soleil-muted dark:text-soleil-muted-d">
                 {locationLabel} ·{" "}
                 {formatRelativeTime(listing.bumpedAt ?? listing.publishedAt)} ·{" "}
@@ -478,8 +489,22 @@ export default async function ListingDetailPage(
               )}
 
               <p className="mt-3 whitespace-pre-line text-[13px] leading-relaxed text-soleil-body dark:text-soleil-body-d">
-                {listing.description}
+                {mtDescription.text}
               </p>
+
+              {contentTranslated && (
+                <details className="mt-2 text-xs text-soleil-muted dark:text-soleil-muted-d">
+                  <summary className="cursor-pointer font-semibold">
+                    {t.mt.translated} · {t.mt.seeOriginal}
+                  </summary>
+                  <div className="mt-2 space-y-1.5">
+                    <p className="font-bold">{listing.title}</p>
+                    <p className="whitespace-pre-line leading-relaxed">
+                      {listing.description}
+                    </p>
+                  </div>
+                </details>
+              )}
 
               <p className="mt-3 text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
                 {t.listingDetail.publishedOn}{" "}

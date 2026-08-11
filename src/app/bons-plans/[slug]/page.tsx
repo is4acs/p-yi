@@ -27,7 +27,8 @@ import { HeartButton } from "@/components/soleil/HeartButton";
 import { Ph } from "@/components/soleil/Ph";
 import { VotePill } from "@/components/soleil/VotePill";
 import { getSiteUrl } from "@/lib/site-url";
-import { getMessages, tFormat } from "@/lib/i18n";
+import { getLocale, getMessages, tFormat } from "@/lib/i18n";
+import { translateUserTexts } from "@/lib/i18n/translate";
 import {
   getDealCategoryBySlug,
   getDealsCategoryPath,
@@ -199,6 +200,7 @@ export default async function DealDetailPage(
 ) {
   const params = await props.params;
   const t = await getMessages();
+  const locale = await getLocale();
   const [dealResult, currentUserResult] = await Promise.allSettled([
     getDeal(params.slug),
     withTimeout(
@@ -247,6 +249,16 @@ export default async function DealDetailPage(
     currentUserResult.status === "fulfilled" ? currentUserResult.value : null;
 
   if (!deal || (deal.expiresAt && deal.expiresAt <= new Date())) notFound();
+
+  // Traduction automatique du contenu utilisateur vers la langue de
+  // l'interface (no-op passthrough tant qu'aucun fournisseur n'est
+  // configuré — cf. lib/i18n/translate.ts). Le SEO (metadata, JSON-LD)
+  // garde les textes originaux.
+  const [mtTitle, mtDescription] = await translateUserTexts(
+    [deal.title, deal.description ?? ""],
+    locale,
+  );
+  const contentTranslated = mtTitle.translated || mtDescription.translated;
 
   if (currentUserResult.status === "rejected") {
     // eslint-disable-next-line no-console
@@ -429,7 +441,7 @@ export default async function DealDetailPage(
                 {deal.store ? t.dealDetail.inStore : t.dealDetail.web}
               </CountLine>
               <h1 className="mt-1.5 font-display text-[22px] font-extrabold leading-[1.12]">
-                {deal.title}
+                {mtTitle.text}
               </h1>
               <p className="mt-[5px] text-xs text-soleil-muted dark:text-soleil-muted-d">
                 {tFormat(t.dealDetail.postedMeta, {
@@ -498,8 +510,24 @@ export default async function DealDetailPage(
 
               {deal.description && (
                 <p className="mt-4 whitespace-pre-line text-[13px] leading-relaxed text-soleil-body dark:text-soleil-body-d">
-                  {deal.description}
+                  {mtDescription.text}
                 </p>
+              )}
+
+              {contentTranslated && (
+                <details className="mt-2 text-xs text-soleil-muted dark:text-soleil-muted-d">
+                  <summary className="cursor-pointer font-semibold">
+                    {t.mt.translated} · {t.mt.seeOriginal}
+                  </summary>
+                  <div className="mt-2 space-y-1.5">
+                    <p className="font-bold">{deal.title}</p>
+                    {deal.description && (
+                      <p className="whitespace-pre-line leading-relaxed">
+                        {deal.description}
+                      </p>
+                    )}
+                  </div>
+                </details>
               )}
 
               {/* Chips info + actions de modération. */}
