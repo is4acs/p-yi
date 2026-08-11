@@ -103,6 +103,28 @@
     display: none;
   }
 
+  /* Placeholder visuel « Soleil péyi » (composant Ph) : hachures 45°
+     sable en jour, forêt en nuit. Couleur + image de fond dans une seule
+     classe pour éviter tout hex inline dans les className JSX. */
+  .soleil-ph {
+    background-color: #ece2cd;
+    background-image: repeating-linear-gradient(
+      45deg,
+      rgba(22, 64, 47, 0.06) 0 8px,
+      transparent 8px 16px
+    );
+    color: #8d9b8f;
+  }
+  .dark .soleil-ph {
+    background-color: #16402f;
+    background-image: repeating-linear-gradient(
+      45deg,
+      rgba(248, 241, 228, 0.05) 0 8px,
+      transparent 8px 16px
+    );
+    color: #89a89f;
+  }
+
   /* Highlight éditorial derrière un mot-clé — signature Peyi.
      Utilise le jaune du drapeau guyanais. Usage :
        <span class="hl-jaune">100% Guyane</span>
