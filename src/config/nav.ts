@@ -17,12 +17,16 @@ import {
  * les deux composants portaient bien chacun leur liste codée en dur :
  * le risque de divergence était réel).
  *
- * Les deux surfaces n'affichent PAS le même sous-ensemble, par choix
- * produit : la BottomNav garde 5 onglets symétriques autour du bouton
- * Poster (Messages y cède sa place à Activités, la messagerie restant
- * accessible via le Header et le Profil) ; le Header n'affiche pas
- * Profil (l'avatar joue ce rôle). D'où les listes DESKTOP_NAV /
- * MOBILE_NAV dérivées du même registre.
+ * Deux surfaces, deux rôles (refonte « Soleil péyi ») :
+ *
+ *  - `VERTICAL_TABS` — les trois verticales de contenu, en onglets sous
+ *    le wordmark, sur mobile comme sur desktop ;
+ *  - `MOBILE_NAV` — la barre du bas, qui porte les destinations d'usage
+ *    autour du bouton Poster central.
+ *
+ * Les deux listes dérivent du même registre `ITEMS`, ce qui interdit
+ * structurellement qu'un libellé ou une URL diverge d'une surface à
+ * l'autre.
  */
 
 export type NavItem = {
@@ -96,18 +100,36 @@ const ITEMS = {
   },
 } satisfies Record<string, NavItem>;
 
-export const DESKTOP_NAV: NavItem[] = [
+/**
+ * Les trois verticales de contenu, affichées en onglets sous le wordmark
+ * — sur mobile comme sur desktop. C'est la navigation éditoriale : elle
+ * dit de quoi parle le site, et elle est visible partout.
+ *
+ * Depuis la refonte « Soleil péyi », c'est ici qu'Activités vit. Elle
+ * occupait auparavant une case de la barre du bas ; elle y était au
+ * même rang que Profil ou Poster, alors que c'est une verticale de
+ * contenu comme les deux autres. Le déplacement la remet à sa place et
+ * libère la barre du bas pour Messages.
+ */
+export const VERTICAL_TABS: NavItem[] = [
   ITEMS.bonsPlans,
   ITEMS.annonces,
   ITEMS.activites,
-  ITEMS.poster,
-  ITEMS.messages,
 ];
 
+/** Alias historique — le header desktop affiche les mêmes onglets. */
+export const DESKTOP_NAV: NavItem[] = VERTICAL_TABS;
+
+/**
+ * Barre du bas mobile : 5 emplacements symétriques autour du bouton
+ * Poster central. Ce sont les destinations d'usage (mes conversations,
+ * mon profil), pas les verticales de contenu — celles-ci sont dans les
+ * onglets hauts, présents sur le même écran.
+ */
 export const MOBILE_NAV: NavItem[] = [
-  ITEMS.activites,
   ITEMS.bonsPlans,
-  ITEMS.poster,
   ITEMS.annonces,
+  ITEMS.poster,
+  ITEMS.messages,
   ITEMS.profil,
 ];

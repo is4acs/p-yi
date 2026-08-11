@@ -1,22 +1,26 @@
 import Link from "next/link";
 
+import { SunArc } from "@/components/brand/SunArc";
+
 /**
- * Footer discret en bas de chaque page. Regroupe les liens légaux RGPD
- * (CNIL exige qu'ils soient accessibles depuis n'importe quelle page),
- * un lien de contact et le copyright. Pas de newsletter ni de réseaux
- * sociaux ici — c'est volontairement minimal pour ne pas parasiter
- * l'app mobile-first.
+ * Pied de page — refonte « Soleil péyi ».
  *
- * On reste en simple lien texte plutôt qu'en icônes ou en boutons pour
- * rester dans une esthétique "note de bas de page" qui ne concurrence
- * pas la BottomNav mobile.
+ * La maquette ne montre qu'une signature centrée « Péyi — fait en
+ * Guyane ». On garde en plus les liens légaux : la CNIL exige qu'ils
+ * soient atteignables depuis n'importe quelle page, ce n'est pas un
+ * choix graphique. Ils passent au-dessus de la signature sur mobile, et
+ * à gauche sur desktop, comme les liens de communes de la maquette
+ * desktop.
  */
 export function Footer() {
   const year = new Date().getFullYear();
   return (
-    <footer className="mt-12 border-t border-border bg-muted/20 px-4 py-6 text-xs text-muted-foreground">
-      <div className="mx-auto max-w-6xl space-y-3 sm:flex sm:items-center sm:justify-between sm:space-y-0">
-        <nav className="flex flex-wrap items-center gap-x-4 gap-y-1" aria-label="Pied de page">
+    <footer className="mt-12 border-t border-border px-5 py-7 text-xs text-muted-foreground sm:px-8">
+      <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <nav
+          className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5"
+          aria-label="Pied de page"
+        >
           <Link href="/mentions-legales" className="hover:text-foreground">
             Mentions légales
           </Link>
@@ -33,8 +37,11 @@ export function Footer() {
             Contact
           </a>
         </nav>
-        <p className="text-[11px]">
-          © {year} Péyi · Fait en Guyane
+
+        <p className="flex items-end gap-1.5 font-semibold text-subtle">
+          <SunArc width={14} className="mb-[3px]" />
+          Péyi — fait en Guyane
+          <span className="sr-only"> · © {year}</span>
         </p>
       </div>
     </footer>
