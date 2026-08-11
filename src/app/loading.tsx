@@ -6,7 +6,7 @@ import { ListingCardSkeleton } from "@/components/listings/ListingCardSkeleton";
 // Matches HomePage layout so the swap is seamless.
 export default function HomeLoading() {
   return (
-    <main className="mx-auto max-w-md pb-12 sm:max-w-2xl">
+    <main className="min-h-screen bg-soleil-cream dark:bg-soleil-night mx-auto max-w-md pb-12 sm:max-w-2xl">
       <section className="px-4 pt-6 sm:px-0 sm:pt-10">
         <Skeleton className="h-3 w-24" />
         <Skeleton className="mt-2 h-10 w-32" />

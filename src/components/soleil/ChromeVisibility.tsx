@@ -25,6 +25,7 @@ const PILLAR_SLUGS = new Set([
  */
 function isSoleilRoute(pathname: string): boolean {
   if (
+    pathname === "/" ||
     pathname === "/bons-plans" ||
     pathname === "/annonces" ||
     pathname === "/messages" ||
