@@ -24,8 +24,11 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#FFFFFF",
-    theme_color: "#FF914C",
+    // Surfaces « Soleil péyi » : le splash PWA et la barre système doivent
+    // fondre dans la crème du site — le blanc/orange d'avant créait des
+    // bandes visibles au lancement et derrière la barre de statut iOS.
+    background_color: "#F8F1E4",
+    theme_color: "#F8F1E4",
     categories: ["shopping", "lifestyle", "social"],
     lang: "fr",
     dir: "ltr",

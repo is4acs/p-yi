@@ -117,7 +117,15 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#FF914C",
+  // Crème/nuit plutôt qu'orange : Safari iOS IGNORE les theme-color trop
+  // saturés (lisibilité de sa barre de statut) et retombe sur BLANC —
+  // d'où la bande blanche au-dessus du header sur iPhone. Les couleurs
+  // de surface, elles, sont respectées et fondent la barre de statut
+  // dans la page.
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#0F2D21" },
+    { color: "#F8F1E4" },
+  ],
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -229,7 +237,11 @@ export default async function RootLayout({
       )}
       suppressHydrationWarning
     >
-      <body className="min-h-screen bg-background pb-20 font-sans text-foreground antialiased lg:pb-0">
+      {/* Fond crème/nuit posé en UTILITAIRE sur le body : une classe
+          utilitaire (bg-background) écraserait la règle @layer base de
+          globals.css — c'est exactement le bug des bandes blanches vues
+          sous la nav basse et au-dessus du footer sur iPhone. */}
+      <body className="min-h-screen bg-soleil-cream pb-20 font-sans text-foreground antialiased dark:bg-soleil-night lg:pb-0">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: rootJsonLd }}
