@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useMessages } from "./I18nProvider";
 import { Sun } from "./Sun";
 
-type ActiveTab = "deals" | "annonces" | "messages" | "profil";
+type ActiveTab = "deals" | "annonces" | "activites" | "messages";
 
 type Props = {
   /** Force l'onglet actif ; sinon il est déduit du pathname. */
@@ -18,8 +18,8 @@ type Props = {
 function deriveActive(pathname: string): ActiveTab | null {
   if (pathname === "/" || pathname.startsWith("/bons-plans")) return "deals";
   if (pathname.startsWith("/annonces")) return "annonces";
+  if (pathname.startsWith("/activites")) return "activites";
   if (pathname.startsWith("/messages")) return "messages";
-  if (pathname.startsWith("/profil")) return "profil";
   return null;
 }
 
@@ -64,12 +64,16 @@ export function MobileNav({ active, unreadCount = 0 }: Props) {
           <Icon name="plus" size={19} />
         </Link>
         <NavItem
+          href="/activites"
+          label={t.nav.activities}
+          active={current === "activites"}
+        />
+        <NavItem
           href="/messages"
           label={t.nav.messages}
           active={current === "messages"}
           badge={unreadCount}
         />
-        <NavItem href="/profil" label={t.nav.profile} active={current === "profil"} />
       </div>
     </nav>
   );

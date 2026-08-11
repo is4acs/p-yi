@@ -84,11 +84,15 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-soleil-cream text-foreground dark:bg-soleil-night;
   }
 
+  /* Fond crème/nuit sur <html> aussi : c'est LUI qui apparaît derrière le
+     rubber-band iOS (scroll élastique en haut/bas de page) et sous les
+     zones de padding réservées à la nav basse. Sans ça, bande blanche
+     laide sur iPhone dès qu'on tire la page. */
   html {
-    @apply font-sans;
+    @apply bg-soleil-cream font-sans dark:bg-soleil-night;
   }
 }
 

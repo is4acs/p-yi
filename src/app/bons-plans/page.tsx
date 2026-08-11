@@ -12,6 +12,7 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { DealCard } from "@/components/deals/DealCard";
 import { DealsPagination } from "@/components/deals/DealsPagination";
 import { EmptyDeals } from "@/components/deals/EmptyDeals";
+import { Icon } from "@/components/ui/Icon";
 import { CountLine } from "@/components/soleil/CountLine";
 import { FilterSelect } from "@/components/soleil/FilterSelect";
 import { Ph } from "@/components/soleil/Ph";
@@ -20,7 +21,7 @@ import { Sun } from "@/components/soleil/Sun";
 import { TabsPeyi } from "@/components/soleil/TabsPeyi";
 import { formatPrice, formatRelativeTime } from "@/lib/format";
 import Link from "next/link";
-import { getMessages, tFormat } from "@/lib/i18n";
+import { getLocale, getMessages, tFormat } from "@/lib/i18n";
 import { OnboardingNudge } from "@/components/onboarding/OnboardingNudge";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { getDealsFacetCanonicalPath } from "@/lib/seo/local-pages";
@@ -154,6 +155,7 @@ export default async function BonsPlansPage(
 ) {
   const searchParams = await props.searchParams;
   const t = await getMessages();
+  const locale = await getLocale();
   const sort = parseSort(searchParams.sort);
   const page = parsePage(searchParams.page);
   const category = searchParams.category?.trim() || null;
@@ -320,9 +322,28 @@ export default async function BonsPlansPage(
               péyi
             </span>
           </Link>
-          <span className="rounded-full border-[1.5px] border-soleil-forest px-3 py-1.5 text-xs font-bold dark:border-soleil-cream">
-            {cityName ?? "Guyane"}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="rounded-full border-[1.5px] border-soleil-forest px-3 py-1.5 text-xs font-bold dark:border-soleil-cream">
+              {cityName ?? "Guyane"}
+            </span>
+            {currentUser ? (
+              <Link
+                href="/profil"
+                aria-label={t.home.myProfile}
+                className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-soleil-forest text-[11.5px] font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
+              >
+                {currentUser.username.trim().slice(0, 2).toUpperCase()}
+              </Link>
+            ) : (
+              <Link
+                href="/connexion"
+                aria-label={t.home.myProfile}
+                className="flex h-[34px] w-[34px] items-center justify-center rounded-full border-[1.5px] border-soleil-forest dark:border-soleil-cream"
+              >
+                <Icon name="user" size={15} />
+              </Link>
+            )}
+          </div>
         </div>
 
         <TabsPeyi active="deals" className="pt-3" />
@@ -450,7 +471,7 @@ export default async function BonsPlansPage(
                       ? t.common.free
                       : formatPrice(dealOfTheDay.price.toString())}
                     {" · "}
-                    {formatRelativeTime(dealOfTheDay.publishedAt)}
+                    {formatRelativeTime(dealOfTheDay.publishedAt, locale)}
                   </div>
                   <Ph label="visuel" className="mt-3 h-[84px] rounded-xl" />
                   <Link

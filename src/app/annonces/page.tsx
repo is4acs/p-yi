@@ -20,6 +20,7 @@ import { getListingsFacetCanonicalPath } from "@/lib/seo/local-pages";
 import { ListingCardTile } from "@/components/listings/ListingCardTile";
 import { ListingsPagination } from "@/components/listings/ListingsPagination";
 import { EmptyListings } from "@/components/listings/EmptyListings";
+import { Icon } from "@/components/ui/Icon";
 import { CountLine } from "@/components/soleil/CountLine";
 import { FilterSelect } from "@/components/soleil/FilterSelect";
 import { SearchField } from "@/components/soleil/SearchField";
@@ -291,9 +292,28 @@ export default async function AnnoncesPage(
               péyi
             </span>
           </Link>
-          <span className="rounded-full border-[1.5px] border-soleil-forest px-3 py-1.5 text-xs font-bold dark:border-soleil-cream">
-            {cityName ?? "Guyane"}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="rounded-full border-[1.5px] border-soleil-forest px-3 py-1.5 text-xs font-bold dark:border-soleil-cream">
+              {cityName ?? "Guyane"}
+            </span>
+            {currentUser ? (
+              <Link
+                href="/profil"
+                aria-label={t.home.myProfile}
+                className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-soleil-forest text-[11.5px] font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
+              >
+                {currentUser.username.trim().slice(0, 2).toUpperCase()}
+              </Link>
+            ) : (
+              <Link
+                href="/connexion"
+                aria-label={t.home.myProfile}
+                className="flex h-[34px] w-[34px] items-center justify-center rounded-full border-[1.5px] border-soleil-forest dark:border-soleil-cream"
+              >
+                <Icon name="user" size={15} />
+              </Link>
+            )}
+          </div>
         </div>
 
         <TabsPeyi active="annonces" className="pt-3" />
