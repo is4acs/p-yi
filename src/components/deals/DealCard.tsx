@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   AlertTriangle,
   Clock,
@@ -13,6 +14,8 @@ import { cn } from "@/lib/utils";
 import { formatPrice, formatRelativeTime } from "@/lib/format";
 import type { DealCardData } from "@/lib/deals/queries";
 import { StoreLogo } from "@/components/common/StoreLogo";
+import { Ph } from "@/components/soleil/Ph";
+import { TempBadge } from "@/components/soleil/TempBadge";
 import { PriceTag } from "./PriceTag";
 import { CategoryChip } from "./CategoryChip";
 import { CommuneChip } from "./CommuneChip";
@@ -28,12 +31,14 @@ type Props = {
   myVote?: VoteType | null;
   isFavorited?: boolean;
   // `full` (défaut) : carte mockup Dealabs S30 — vote à gauche, image
-  //   séparée (sm:+), posted-by en pied. Utilisée sur `/bons-plans` et
-  //   `/profil/favoris`.
+  //   séparée (sm:+), posted-by en pied. Utilisée sur `/profil/favoris`.
   // `compact` : ancienne carte — image 96/112 + body + vote à droite.
   //   Conservée pour le rail horizontal sur la home (`w-[85vw]`) où
   //   l'espace ne permet pas la disposition en 3 colonnes.
-  variant?: "full" | "compact";
+  // `soleil` : rangée liste « Soleil péyi » (refonte T4) — thumb 64,
+  //   titre + meta + prix, température en cercle à droite. Utilisée sur
+  //   `/bons-plans`.
+  variant?: "full" | "compact" | "soleil";
   className?: string;
 };
 
@@ -120,6 +125,74 @@ export function DealCard({
   const favoriteHint = !isAuthenticated
     ? "Connecte-toi pour sauvegarder."
     : undefined;
+
+  // ───────── variant = "soleil" (rangée liste, refonte T4) ─────────
+  if (variant === "soleil") {
+    const meta = [
+      sellerName,
+      deal.city?.name,
+      formatRelativeTime(deal.publishedAt),
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
+    return (
+      <article className={cn("text-soleil-forest dark:text-soleil-cream", className)}>
+        <Link
+          href={`/bons-plans/${deal.slug}`}
+          className="flex gap-3.5 py-3.5 transition active:scale-[0.99]"
+        >
+          {deal.coverImageUrl ? (
+            <Image
+              src={deal.coverImageUrl}
+              alt=""
+              width={64}
+              height={64}
+              unoptimized
+              className="h-16 w-16 flex-none rounded-[14px] object-cover"
+            />
+          ) : (
+            <Ph className="h-16 w-16 flex-none rounded-[14px]" />
+          )}
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-bold leading-tight">{deal.title}</h3>
+            <p className="mt-[3px] text-[11px] text-soleil-muted dark:text-soleil-muted-d">
+              {meta}
+            </p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+              {deal.isFree ? (
+                <span className="font-display text-base font-extrabold text-soleil-otext dark:text-soleil-otext-d">
+                  Gratuit
+                </span>
+              ) : (
+                <>
+                  <span className="font-display text-base font-extrabold text-soleil-otext dark:text-soleil-otext-d">
+                    {formatPrice(deal.price.toString())}
+                  </span>
+                  {deal.originalPrice != null && (
+                    <span className="text-[11px] text-soleil-strike line-through dark:text-soleil-strike-d">
+                      {formatPrice(deal.originalPrice.toString())}
+                    </span>
+                  )}
+                  {deal.discountPercent != null && deal.discountPercent > 0 && (
+                    <span className="rounded-[7px] bg-soleil-promo px-1.5 py-0.5 text-[10px] font-extrabold text-soleil-otext dark:bg-soleil-promo-d dark:text-soleil-otext-d">
+                      −{deal.discountPercent}%
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-none flex-col items-center gap-1">
+            <TempBadge temperature={deal.temperature} />
+            <span className="text-[10px] text-soleil-muted dark:text-soleil-muted-d">
+              {deal.commentCount} comm.
+            </span>
+          </div>
+        </Link>
+      </article>
+    );
+  }
 
   // ───────── variant = "compact" (home carousel, ancien layout S28) ─────────
   if (variant === "compact") {

@@ -9,14 +9,17 @@ import {
 } from "@/lib/deals/queries";
 import { parsePage, parseQuery, parseSort } from "@/lib/deals/url";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { BonsPlansHero } from "@/components/deals/BonsPlansHero";
 import { DealCard } from "@/components/deals/DealCard";
-import { DealCategoryStrip } from "@/components/deals/DealCategoryStrip";
-import { DealsSortTabs } from "@/components/deals/DealsSortTabs";
-import { DealsFilterBar } from "@/components/deals/DealsFilterBar";
 import { DealsPagination } from "@/components/deals/DealsPagination";
-import { DealsSearchBar } from "@/components/deals/DealsSearchBar";
 import { EmptyDeals } from "@/components/deals/EmptyDeals";
+import { CountLine } from "@/components/soleil/CountLine";
+import { FilterSelect } from "@/components/soleil/FilterSelect";
+import { Ph } from "@/components/soleil/Ph";
+import { SearchField } from "@/components/soleil/SearchField";
+import { Sun } from "@/components/soleil/Sun";
+import { TabsPeyi } from "@/components/soleil/TabsPeyi";
+import { formatPrice, formatRelativeTime } from "@/lib/format";
+import Link from "next/link";
 import { OnboardingNudge } from "@/components/onboarding/OnboardingNudge";
 import { ExplorerAlso } from "@/components/seo/SeoBlocks";
 import { withTimeout } from "@/lib/async/with-timeout";
@@ -300,118 +303,163 @@ export default async function BonsPlansPage(
     }
   }
 
+  const cityName = city
+    ? cities.find((c) => c.slug === city)?.name ?? city
+    : null;
+  const dealOfTheDay = !hasFilters && page === 1 ? deals[0] ?? null : null;
+
   return (
-    <main className="mx-auto max-w-md pb-12 animate-in fade-in duration-300 sm:max-w-2xl">
-      {/* Hero éditorial : mode découverte uniquement (sous filtre, on
-          laisse la vedette aux résultats). */}
-      {!hasFilters && <BonsPlansHero />}
+    <main className="bg-soleil-cream text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
+      <h1 className="sr-only">Bons plans de Guyane</h1>
+      <div className="mx-auto w-full max-w-md px-5 pb-12 lg:max-w-6xl lg:px-8">
+        {/* Header wordmark + pilule ville (mobile-first, maquette 4a). */}
+        <div className="flex items-end justify-between pt-4">
+          <Link href="/" className="flex items-end gap-2" aria-label="Accueil Péyi">
+            <Sun w={20} />
+            <span className="font-display text-[23px] font-extrabold leading-[0.9] tracking-[-0.5px]">
+              péyi
+            </span>
+          </Link>
+          <span className="rounded-full border-[1.5px] border-soleil-forest px-3 py-1.5 text-xs font-bold dark:border-soleil-cream">
+            {cityName ?? "Guyane"}
+          </span>
+        </div>
 
-      {/* Onboarding nudge : profil incomplet / aucun post. Dismiss
-          persistant en localStorage. Server-computed steps → pas de
-          flash d'étapes fausses. */}
-      {onboardingSteps.length > 0 && (
-        <OnboardingNudge steps={onboardingSteps} />
-      )}
+        <TabsPeyi active="deals" className="pt-3" />
 
-      {/* Strip catégories : TOUJOURS visible (refonte S34). Avant, elle
-          était masquée sous filtre comme le hero, ce qui donnait une
-          impression de "redirect" sèche quand l'utilisateur cliquait
-          une catégorie (perte du rail de navigation). Maintenant la
-          pill active est mise en avant en orange brand, et l'utilisateur
-          peut sauter d'une catégorie à l'autre sans passer par le
-          select dropdown. */}
-      <DealCategoryStrip selectedCategory={category} />
+        <SearchField
+          placeholder="Chercher un bon plan…"
+          action="/bons-plans"
+          defaultValue={q ?? ""}
+          className="mt-3.5"
+        />
 
-      {/* Sticky ancré SOUS le Header global (`sticky top-0 z-30 h-14
-          sm:h-16`) et non à `top-0` comme avant S33 — sinon les deux
-          se chevauchent au même offset. `z-20` passe au-dessus des
-          `z-10` internes aux `DealCard` (vote-rail + FavoriteButton),
-          ce qui évite le bug S32 où le rail flottait par-dessus la
-          barre de recherche en scroll. */}
-      <div className="sticky top-14 z-20 -mx-0 border-b border-border bg-background/95 px-4 pb-3 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:top-16 sm:px-0 sm:pt-6">
-        {/* H1 + count : on les conserve UNIQUEMENT en mode filtré.
-            Quand le hero est affiché il porte déjà le H1 — doubler le
-            titre casserait la hiérarchie a11y (deux H1 = pas d'ancrage
-            d'outline clair pour les lecteurs d'écran). En mode filtré
-            le hero disparaît, donc le titre reprend sa place ici. */}
-        {hasFilters && (
-          <>
-            <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-              Bons plans
-            </h1>
-            <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
-              {total} bon{total > 1 ? "s" : ""} plan{total > 1 ? "s" : ""}
-              {q ? (
-                <>
-                  {" "}pour <span className="font-medium text-foreground">“{q}”</span>
-                </>
-              ) : (
-                " (filtré)"
-              )}
-            </p>
-          </>
+        {/* Filtres en chips : tri + catégorie + ville. Auto-submit au
+            changement, bouton sr-only pour le fallback sans JS. */}
+        <form action="/bons-plans" method="get" className="pt-3">
+          {q && <input type="hidden" name="q" value={q} />}
+          <div className="scrollbar-hide -mx-5 flex gap-2 overflow-x-auto px-5">
+            <FilterSelect
+              name="sort"
+              options={[
+                { value: "hot", label: "Plus chauds" },
+                { value: "new", label: "Récents" },
+                { value: "top-week", label: "Top semaine" },
+              ]}
+              defaultValue={sort}
+              alwaysActive
+            />
+            <FilterSelect
+              name="category"
+              placeholder="Catégorie"
+              options={categories.map((c) => ({ value: c.slug, label: c.name }))}
+              defaultValue={category ?? ""}
+            />
+            <FilterSelect
+              name="city"
+              placeholder="Ville"
+              options={cities.map((c) => ({ value: c.slug, label: c.name }))}
+              defaultValue={city ?? ""}
+            />
+          </div>
+          <button type="submit" className="sr-only">
+            Filtrer
+          </button>
+        </form>
+
+        {onboardingSteps.length > 0 && (
+          <OnboardingNudge steps={onboardingSteps} />
         )}
 
-        <div className={hasFilters ? "mt-3 space-y-2" : "space-y-2"}>
-          <DealsSearchBar
-            defaultValue={q ?? ""}
-            sort={sort}
-            category={category}
-            city={city}
-          />
-          <DealsSortTabs
-            currentSort={sort}
-            category={category}
-            city={city}
-            q={q}
-          />
-          <DealsFilterBar
-            sort={sort}
-            categories={categories}
-            cities={cities}
-            selectedCategory={category}
-            selectedCity={city}
-            q={q}
-          />
-        </div>
-      </div>
-
-      <div className="px-4 pt-4 sm:px-0">
         {hasDataLoadIssue && (
           <div
             role="status"
-            className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 sm:text-sm"
+            className="mt-3 rounded-[14px] bg-soleil-sand px-3 py-2 text-xs text-soleil-body dark:bg-soleil-forest dark:text-soleil-body-d"
           >
             Certaines données sont temporairement indisponibles. Tu peux
             recharger la page dans quelques secondes.
           </div>
         )}
 
-        {deals.length === 0 ? (
-          <EmptyDeals hasFilters={hasFilters} />
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {deals.map((d) => (
-              <li key={d.id}>
-                <DealCard
-                  deal={d}
-                  currentUserId={currentUser?.id ?? null}
-                  myVote={voteMap.get(d.id) ?? null}
-                  isFavorited={favoriteSet.has(d.id)}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
+        <div className="lg:grid lg:grid-cols-12 lg:items-start lg:gap-8">
+          <div className="lg:col-span-7">
+            <CountLine className="pb-0.5 pt-3.5">
+              {total} deal{total > 1 ? "s" : ""} · {cityName ?? "Guyane"}
+            </CountLine>
 
-        <DealsPagination
-          page={page}
-          pageCount={pageCount}
-          sort={sort}
-          category={category}
-          city={city}
-          q={q}
-        />
+            {deals.length === 0 ? (
+              <div className="pt-4">
+                <EmptyDeals hasFilters={hasFilters} />
+              </div>
+            ) : (
+              <ul>
+                {deals.map((d) => (
+                  <li
+                    key={d.id}
+                    className="border-b border-soleil-line last:border-0 dark:border-soleil-line-d"
+                  >
+                    <DealCard
+                      deal={d}
+                      currentUserId={currentUser?.id ?? null}
+                      myVote={voteMap.get(d.id) ?? null}
+                      isFavorited={favoriteSet.has(d.id)}
+                      variant="soleil"
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <DealsPagination
+              page={page}
+              pageCount={pageCount}
+              sort={sort}
+              category={category}
+              city={city}
+              q={q}
+            />
+          </div>
+
+          {/* Colonne latérale desktop : deal du jour (1er deal du tri
+              « plus chauds », vue non filtrée uniquement). */}
+          {dealOfTheDay && (
+            <aside className="hidden lg:col-span-5 lg:block">
+              <div className="sticky top-24 pt-3.5">
+                <CountLine className="pb-2.5">Le deal du jour</CountLine>
+                <div className="rounded-[20px] bg-soleil-forest p-[18px] text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest">
+                  <div className="flex items-center justify-between">
+                    <span className="rounded-full bg-soleil-orange px-3 py-1 font-display text-sm font-extrabold text-soleil-forest">
+                      {dealOfTheDay.temperature >= 0 ? "+" : ""}
+                      {dealOfTheDay.temperature}°
+                    </span>
+                    <span className="text-xs font-semibold text-soleil-muted-d dark:text-soleil-muted">
+                      {dealOfTheDay.store?.name ??
+                        dealOfTheDay.merchant?.name ??
+                        "Web"}
+                    </span>
+                  </div>
+                  <div className="mt-3 font-display text-2xl font-extrabold leading-[1.1]">
+                    {dealOfTheDay.title}
+                  </div>
+                  <div className="mt-1.5 text-xs text-soleil-muted-d dark:text-soleil-muted">
+                    {dealOfTheDay.isFree
+                      ? "Gratuit"
+                      : formatPrice(dealOfTheDay.price.toString())}
+                    {" · "}
+                    {formatRelativeTime(dealOfTheDay.publishedAt)}
+                  </div>
+                  <Ph label="visuel" className="mt-3 h-[84px] rounded-xl" />
+                  <Link
+                    href={`/bons-plans/${dealOfTheDay.slug}`}
+                    className="mt-3 block rounded-full bg-soleil-cream py-3 text-center text-[13px] font-extrabold text-soleil-forest dark:bg-soleil-forest dark:text-soleil-cream"
+                  >
+                    Voir le deal →
+                  </Link>
+                </div>
+              </div>
+            </aside>
+          )}
+        </div>
 
         {!hasFilters && (
           <div className="mt-6">
