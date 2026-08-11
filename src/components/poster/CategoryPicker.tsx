@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 
+import { Icon, type IconName } from "@/components/ui/Icon";
+
 export type PickerCategory = {
   slug: string;
   name: string;
@@ -20,11 +22,27 @@ type Props = {
 };
 
 /**
+ * Icône Péyi (stroke 2px) déduite du slug de catégorie — le champ
+ * `icon` de la DB contient un emoji, banni de la refonte Soleil.
+ */
+function iconForSlug(slug: string): IconName {
+  const s = slug.toLowerCase();
+  if (/(vehicul|auto|moto|voiture|bateau|pirogue|scooter)/.test(s)) return "car";
+  if (/(immo|maison|logement|location|terrain|appart)/.test(s)) return "home";
+  if (/(emploi|job|recrut)/.test(s)) return "job";
+  if (/(service|bricol|cours|aide)/.test(s)) return "service";
+  if (/(even|sortie|loisir|billet)/.test(s)) return "event";
+  if (/(alim|food|cuisine|manger|produit)/.test(s)) return "food";
+  if (/(maison|meuble|deco|electromenager)/.test(s)) return "home";
+  return "tag";
+}
+
+/**
  * Two-step visual category picker used on `/poster/annonce`.
  *
- *  - Top level : parents as large tiles (3 cols mobile / 4 cols desktop).
- *    Parents with children expose a ">" arrow to hint that another step
- *    is coming ; childless parents jump straight to the form.
+ *  - Top level : parents as large tiles. Parents with children expose a
+ *    ">" arrow to hint that another step is coming ; childless parents
+ *    jump straight to the form.
  *  - Sub level : same visual grid, with a "back" control to return to
  *    the parent list.
  *
@@ -37,22 +55,24 @@ export function CategoryPicker({ parents, activeParent }: Props) {
       <div className="space-y-4">
         <Link
           href="/poster/annonce"
-          className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition hover:text-foreground"
+          className="inline-flex min-h-[44px] items-center gap-1 text-sm font-bold text-soleil-muted transition dark:text-soleil-muted-d"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Toutes les catégories
         </Link>
 
-        <div className="flex items-center gap-2 rounded-xl border border-peyi-orange-200 bg-peyi-orange-50 px-3 py-2 text-sm">
-          {activeParent.icon && (
-            <span aria-hidden className="text-lg">
-              {activeParent.icon}
-            </span>
-          )}
-          <span className="font-semibold text-peyi-orange-700">
+        <div className="flex items-center gap-2 rounded-[14px] bg-soleil-sand px-3 py-2 text-sm dark:bg-soleil-forest">
+          <Icon
+            name={iconForSlug(activeParent.slug)}
+            size={16}
+            className="text-soleil-otext dark:text-soleil-otext-d"
+          />
+          <span className="font-bold text-soleil-otext dark:text-soleil-otext-d">
             {activeParent.name}
           </span>
-          <span className="text-peyi-orange-600/80">· précise ta sous-catégorie</span>
+          <span className="text-soleil-muted dark:text-soleil-muted-d">
+            · précise ta sous-catégorie
+          </span>
         </div>
 
         <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
@@ -60,7 +80,7 @@ export function CategoryPicker({ parents, activeParent }: Props) {
             <li key={c.slug}>
               <CategoryTile
                 href={`/poster/annonce?category=${encodeURIComponent(c.slug)}`}
-                icon={c.icon}
+                iconName={iconForSlug(c.slug)}
                 name={c.name}
               />
             </li>
@@ -81,7 +101,7 @@ export function CategoryPicker({ parents, activeParent }: Props) {
           <li key={p.slug}>
             <CategoryTile
               href={href}
-              icon={p.icon}
+              iconName={iconForSlug(p.slug)}
               name={p.name}
               showChevron={hasChildren}
             />
@@ -94,30 +114,32 @@ export function CategoryPicker({ parents, activeParent }: Props) {
 
 function CategoryTile({
   href,
-  icon,
+  iconName,
   name,
   showChevron = false,
 }: {
   href: string;
-  icon: string | null;
+  iconName: IconName;
   name: string;
   showChevron?: boolean;
 }) {
   return (
     <Link
       href={href}
-      className="group relative flex h-full flex-col items-center justify-center gap-2 rounded-xl border border-border bg-card px-3 py-5 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-peyi-orange-300 hover:shadow-md active:translate-y-0"
+      className="group relative flex h-full flex-col items-center justify-center gap-2 rounded-2xl border-[1.5px] border-soleil-border px-3 py-5 text-center text-soleil-forest transition active:scale-[0.99] dark:border-soleil-border-d dark:text-soleil-cream"
     >
-      <span aria-hidden className="text-3xl leading-none">
-        {icon ?? "📦"}
-      </span>
-      <span className="line-clamp-2 text-sm font-semibold leading-tight text-foreground">
+      <Icon
+        name={iconName}
+        size={26}
+        className="text-soleil-otext dark:text-soleil-otext-d"
+      />
+      <span className="line-clamp-2 text-sm font-bold leading-tight">
         {name}
       </span>
       {showChevron && (
         <ChevronRight
           aria-hidden
-          className="absolute right-2 top-2 h-4 w-4 text-muted-foreground transition group-hover:text-peyi-orange-500"
+          className="absolute right-2 top-2 h-4 w-4 text-soleil-muted dark:text-soleil-muted-d"
         />
       )}
     </Link>

@@ -1,6 +1,6 @@
-import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/current-user";
@@ -9,6 +9,8 @@ import {
   CategoryPicker,
   type PickerCategory,
 } from "@/components/poster/CategoryPicker";
+import { BackHeader } from "@/components/soleil/BackHeader";
+import { PosterFork } from "@/components/soleil/PosterFork";
 
 import { createListingAction } from "./actions";
 
@@ -120,58 +122,56 @@ export default async function PosterAnnoncePage(
       .map((c) => ({ slug: c.slug, name: c.name, icon: c.icon }));
 
     return (
-      <main className="mx-auto max-w-md px-4 pb-16 pt-6 animate-in fade-in duration-300 sm:max-w-2xl sm:pt-10">
-        <Link
-          href="/poster/annonce"
-          className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-          Changer de catégorie
-        </Link>
+      <main className="bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
+        <div className="mx-auto w-full max-w-md sm:max-w-2xl">
+          <BackHeader title="Poster" backHref="/poster/annonce" />
 
-        <div className="mt-4 flex items-start gap-3">
-          <span
-            aria-hidden
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-peyi-orange-100 text-2xl"
-          >
-            {selected.icon ?? "📦"}
-          </span>
-          <div className="min-w-0">
-            <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+          <div className="px-5">
+            <PosterFork selected="annonce" className="pt-4" />
+
+            <Link
+              href="/poster/annonce"
+              className="mt-4 inline-flex min-h-[36px] items-center gap-1 text-xs font-bold text-soleil-muted dark:text-soleil-muted-d"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
+              Changer de catégorie
+            </Link>
+
+            <h1 className="mt-1 font-display text-[22px] font-extrabold leading-[1.12]">
               {selected.name}
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-xs text-soleil-muted dark:text-soleil-muted-d">
               Poste ton annonce dans cette catégorie — +3 karma pour toi,
               @{user.username}.
             </p>
-          </div>
-        </div>
 
-        {searchParams.error && (
-          <div
-            role="alert"
-            className="mt-5 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
-          >
-            {searchParams.error}
-          </div>
-        )}
+            {searchParams.error && (
+              <div
+                role="alert"
+                className="mt-4 rounded-[14px] border-[1.5px] border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+              >
+                {searchParams.error}
+              </div>
+            )}
 
-        <div className="mt-6">
-          <ListingForm
-            action={createListingAction}
-            categories={formCategories}
-            cities={cities}
-            defaults={{
-              categorySlug: selectedCategorySlug,
-              // Only auto-fill when the phone is verified — an unverified number
-              // would weaken the trust signal we show on listing cards.
-              contactPhone: user.phoneVerified ? user.phone : null,
-              showPhone: Boolean(user.phoneVerified && user.phone),
-            }}
-            profilePhone={user.phone}
-            profilePhoneVerified={user.phoneVerified}
-            submitLabel="Publier l'annonce"
-          />
+            <div className="mt-5">
+              <ListingForm
+                action={createListingAction}
+                categories={formCategories}
+                cities={cities}
+                defaults={{
+                  categorySlug: selectedCategorySlug,
+                  // Only auto-fill when the phone is verified — an unverified number
+                  // would weaken the trust signal we show on listing cards.
+                  contactPhone: user.phoneVerified ? user.phone : null,
+                  showPhone: Boolean(user.phoneVerified && user.phone),
+                }}
+                profilePhone={user.phone}
+                profilePhoneVerified={user.phoneVerified}
+                submitLabel="Publier — c'est gratuit"
+              />
+            </div>
+          </div>
         </div>
       </main>
     );
@@ -179,28 +179,25 @@ export default async function PosterAnnoncePage(
 
   // ----- Picker branch -------------------------------------------------
   return (
-    <main className="mx-auto max-w-md px-4 pb-16 pt-6 animate-in fade-in duration-300 sm:max-w-2xl sm:pt-10">
-      <Link
-        href="/poster"
-        className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" aria-hidden />
-        Changer de type
-      </Link>
+    <main className="bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
+      <div className="mx-auto w-full max-w-md sm:max-w-2xl">
+      <BackHeader title="Poster" backHref="/poster" />
+
+      <div className="px-5">
+      <PosterFork selected="annonce" className="pt-4" />
+
+      <h1 className="mt-5 font-display text-[17px] font-extrabold">
+        Choisis une catégorie
+      </h1>
+      <p className="mt-1 text-xs text-soleil-muted dark:text-soleil-muted-d">
+        On te proposera ensuite les bonnes questions pour que ton annonce
+        soit au top.
+      </p>
 
       <div className="mt-4">
-        <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-          <Pencil className="mr-2 inline h-6 w-6 text-peyi-orange-500" aria-hidden />
-          Que veux-tu poster&nbsp;?
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Choisis une catégorie — on te proposera ensuite les bonnes questions
-          pour que ton annonce soit au top.
-        </p>
-      </div>
-
-      <div className="mt-6">
         <CategoryPicker parents={parents} activeParent={activeParent} />
+      </div>
+      </div>
       </div>
     </main>
   );

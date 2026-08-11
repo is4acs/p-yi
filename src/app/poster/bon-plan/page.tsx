@@ -1,11 +1,11 @@
-import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowLeft } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/current-user";
 import { DealForm } from "@/components/poster/DealForm";
 import { DealPosterLayout } from "@/components/poster/DealPosterLayout";
+import { BackHeader } from "@/components/soleil/BackHeader";
+import { PosterFork } from "@/components/soleil/PosterFork";
 
 import { createDealAction } from "@/app/poster/actions";
 
@@ -46,44 +46,41 @@ export default async function PosterPage(
   }));
 
   return (
-    // lg:max-w-5xl pour accueillir l'aside sticky (preview + tips).
-    // En dessous de lg on garde max-w-2xl — le formulaire reste lisible
-    // sans se diluer dans l'espace blanc.
-    <main className="mx-auto max-w-md px-4 pb-16 pt-6 animate-in fade-in duration-300 sm:max-w-2xl sm:pt-10 lg:max-w-5xl">
-      <Link
-        href="/poster"
-        className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" aria-hidden />
-        Changer de type
-      </Link>
-      <div className="mt-4">
-        <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-          Poster un bon plan
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Partage une promo, un prix fou ou un deal caché. +5 karma pour toi,
-          @{user.username}.
-        </p>
-      </div>
-      {searchParams.error && (
-        <div
-          role="alert"
-          className="mt-5 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
-        >
-          {searchParams.error}
+    // lg:max-w-5xl pour accueillir l'aside sticky (preview + tips) de
+    // DealPosterLayout. En dessous de lg le formulaire reste en max-w-md.
+    <main className="bg-soleil-cream pb-16 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
+      <div className="mx-auto w-full max-w-md lg:max-w-5xl">
+        <BackHeader title="Poster" backHref="/poster" />
+        <h1 className="sr-only">Poster un bon plan</h1>
+
+        <div className="px-5">
+          <PosterFork selected="deal" className="pt-4" />
+          <p className="pt-3 text-xs text-soleil-muted dark:text-soleil-muted-d">
+            Partage une promo, un prix fou ou un deal caché. +5 karma pour
+            toi, @{user.username}.
+          </p>
+
+          {searchParams.error && (
+            <div
+              role="alert"
+              className="mt-4 rounded-[14px] border-[1.5px] border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+            >
+              {searchParams.error}
+            </div>
+          )}
+
+          <div className="mt-5">
+            <DealPosterLayout categories={categories} cities={cities}>
+              <DealForm
+                action={createDealAction}
+                categories={categories}
+                cities={cities}
+                stores={stores}
+                submitLabel="Publier — c'est gratuit"
+              />
+            </DealPosterLayout>
+          </div>
         </div>
-      )}
-      <div className="mt-6">
-        <DealPosterLayout categories={categories} cities={cities}>
-          <DealForm
-            action={createDealAction}
-            categories={categories}
-            cities={cities}
-            stores={stores}
-            submitLabel="Publier le bon plan"
-          />
-        </DealPosterLayout>
       </div>
     </main>
   );

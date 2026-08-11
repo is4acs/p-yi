@@ -52,11 +52,11 @@ export function DealForm({
   void stores;
 
   return (
-    <form action={action} className="space-y-5">
+    <form action={action} className="soleil-form space-y-5">
       {v.dealId && <input type="hidden" name="dealId" value={v.dealId} />}
 
       <div className="space-y-1.5">
-        <Label htmlFor="title">Titre *</Label>
+        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="title">Titre *</Label>
         <Input
           id="title"
           name="title"
@@ -73,7 +73,7 @@ export function DealForm({
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label htmlFor="price">Prix (€) *</Label>
+          <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="price">Prix (€) *</Label>
           <Input
             id="price"
             name="price"
@@ -86,7 +86,7 @@ export function DealForm({
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="originalPrice">Prix d&apos;origine (€)</Label>
+          <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="originalPrice">Prix d&apos;origine (€)</Label>
           <Input
             id="originalPrice"
             name="originalPrice"
@@ -100,7 +100,7 @@ export function DealForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="categorySlug">Catégorie *</Label>
+        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="categorySlug">Catégorie *</Label>
         <select
           id="categorySlug"
           name="categorySlug"
@@ -113,7 +113,6 @@ export function DealForm({
           </option>
           {categories.map((c) => (
             <option key={c.slug} value={c.slug}>
-              {c.icon ? `${c.icon} ` : ""}
               {c.name}
             </option>
           ))}
@@ -122,7 +121,7 @@ export function DealForm({
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label htmlFor="citySlug">Commune</Label>
+          <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="citySlug">Commune</Label>
           <select
             id="citySlug"
             name="citySlug"
@@ -140,7 +139,7 @@ export function DealForm({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="storeName">Magasin</Label>
+          <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="storeName">Magasin</Label>
           <Input
             id="storeName"
             name="storeName"
@@ -158,7 +157,7 @@ export function DealForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="externalUrl">Lien vers l&apos;offre</Label>
+        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="externalUrl">Lien vers l&apos;offre</Label>
         <Input
           id="externalUrl"
           name="externalUrl"
@@ -173,7 +172,7 @@ export function DealForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="expiresAt">Date d&apos;expiration</Label>
+        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="expiresAt">Date d&apos;expiration</Label>
         <Input
           id="expiresAt"
           name="expiresAt"
@@ -183,7 +182,7 @@ export function DealForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="description">Description</Label>
+        <Label className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d" htmlFor="description">Description</Label>
         <textarea
           id="description"
           name="description"
@@ -195,10 +194,17 @@ export function DealForm({
         />
       </div>
 
-      <SubmitButton size="lg" className="w-full" pendingLabel="Publication…">
+      <SubmitButton
+        size="lg"
+        className="w-full rounded-full bg-soleil-forest py-3.5 text-sm font-extrabold text-soleil-cream hover:bg-soleil-forest dark:bg-soleil-cream dark:text-soleil-forest dark:hover:bg-soleil-cream"
+        pendingLabel="Publication…"
+      >
         <Send className="h-4 w-4" aria-hidden />
         {submitLabel}
       </SubmitButton>
+      <p className="!mt-2 text-center text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
+        En ligne immédiatement — l&apos;équipe Péyi veille sur les contenus
+      </p>
     </form>
   );
 }
