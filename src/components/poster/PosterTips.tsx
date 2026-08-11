@@ -21,18 +21,18 @@ import { Shield, Sparkles } from "lucide-react";
 export function PosterTips() {
   return (
     <div className="space-y-3">
-      <div className="flex items-start gap-3 rounded-lg border border-peyi-orange-100 bg-peyi-orange-50/60 p-4">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-peyi-orange-500 text-white shadow-brand">
+      <div className="flex items-start gap-3 rounded-[14px] bg-soleil-sand p-4 dark:bg-soleil-forest">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-soleil-orange text-soleil-forest">
           <Sparkles className="h-4 w-4" aria-hidden />
         </div>
         <div className="min-w-0">
-          <h4 className="font-display text-sm font-bold text-ink-900">
+          <h4 className="font-display text-sm font-extrabold text-soleil-forest dark:text-soleil-cream">
             Les deals qui cartonnent
           </h4>
-          <p className="mt-1 text-xs leading-relaxed text-ink-700 sm:text-[13px]">
+          <p className="mt-1 text-xs leading-relaxed text-soleil-body dark:text-soleil-body-d sm:text-[13px]">
             Titre précis avec le prix, 3+ photos, et un code promo si possible.
             Les deals avec photo de preuve reçoivent{" "}
-            <b className="font-display text-peyi-orange-700">
+            <b className="font-display text-soleil-otext dark:text-soleil-otext-d">
               3× plus de votes chauds
             </b>
             .
@@ -40,20 +40,20 @@ export function PosterTips() {
         </div>
       </div>
 
-      <div className="flex items-start gap-3 rounded-lg border border-peyi-green-100 bg-peyi-green-50/60 p-4">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-peyi-green-700 text-white">
+      <div className="flex items-start gap-3 rounded-[14px] bg-soleil-sand p-4 dark:bg-soleil-forest">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-soleil-forest text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest">
           <Shield className="h-4 w-4" aria-hidden />
         </div>
         <div className="min-w-0">
-          <h4 className="font-display text-sm font-bold text-ink-900">
+          <h4 className="font-display text-sm font-extrabold text-soleil-forest dark:text-soleil-cream">
             Règles de publication
           </h4>
-          <p className="mt-1 text-xs leading-relaxed text-ink-700 sm:text-[13px]">
+          <p className="mt-1 text-xs leading-relaxed text-soleil-body dark:text-soleil-body-d sm:text-[13px]">
             Pas de liens affiliés non-déclarés, pas de deals expirés, pas de
             revente avec marge.{" "}
             <Link
               href="/cgu"
-              className="font-display font-bold text-peyi-green-700 underline-offset-2 hover:underline"
+              className="font-display font-bold text-soleil-otext underline-offset-2 hover:underline dark:text-soleil-otext-d"
             >
               Lire la charte →
             </Link>
