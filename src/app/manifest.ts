@@ -11,8 +11,9 @@ import type { MetadataRoute } from "next";
  *    real native app once installed.
  *  - `shortcuts` = the long-press menu on the icon (Android). iOS ignores
  *    them today but this will cost nothing to have ready.
- *  - Icons are generated dynamically by src/app/icon.tsx — the URLs below
- *    are the Next routes that produce the PNGs.
+ *  - Icons : logo Péyi v2 statique — src/app/icon.svg (favicon),
+ *    src/app/apple-icon.png (iOS), public/icons/peyi-icon-512.png (+
+ *    variante maskable) pour le manifest.
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -34,13 +35,13 @@ export default function manifest(): MetadataRoute.Manifest {
     dir: "ltr",
     icons: [
       {
-        src: "/icon",
+        src: "/icons/peyi-icon-512.png",
         sizes: "512x512",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icon-maskable",
+        src: "/icons/peyi-icon-maskable-512.png",
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",
@@ -52,21 +53,21 @@ export default function manifest(): MetadataRoute.Manifest {
         short_name: "Poster",
         description: "Vendre, échanger ou donner en un clic",
         url: "/poster",
-        icons: [{ src: "/icon", sizes: "192x192" }],
+        icons: [{ src: "/icons/peyi-icon-512.png", sizes: "512x512" }],
       },
       {
         name: "Messagerie",
         short_name: "Messages",
         description: "Tes conversations privées",
         url: "/messages",
-        icons: [{ src: "/icon", sizes: "192x192" }],
+        icons: [{ src: "/icons/peyi-icon-512.png", sizes: "512x512" }],
       },
       {
         name: "Annonces",
         short_name: "Annonces",
         description: "Parcourir les petites annonces de Guyane",
         url: "/annonces",
-        icons: [{ src: "/icon", sizes: "192x192" }],
+        icons: [{ src: "/icons/peyi-icon-512.png", sizes: "512x512" }],
       },
     ],
   };

@@ -4,7 +4,7 @@
 //     always get fresh content when online, and a cached page or the offline
 //     shell when offline.
 //   - Strategy 2 (stale-while-revalidate) for static assets (`/_next/static/`,
-//     images, the generated /icon route) so navigations feel instant on
+//     images, the static /icons/* logos) so navigations feel instant on
 //     repeat visits.
 //
 // We deliberately do NOT cache API/auth/supabase/prisma/messages routes —
@@ -12,13 +12,13 @@
 //
 // Versioning : bump CACHE_VERSION whenever this file changes to invalidate
 // the old caches on next activate.
-const CACHE_VERSION = "peyi-v2";
+const CACHE_VERSION = "peyi-v3";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const HTML_CACHE = `${CACHE_VERSION}-html`;
 const OFFLINE_URL = "/offline";
 
 // Assets precached at install time so the offline shell always works.
-const PRECACHE_URLS = [OFFLINE_URL, "/icon", "/apple-icon"];
+const PRECACHE_URLS = [OFFLINE_URL, "/icons/peyi-icon-512.png", "/apple-icon.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -132,8 +132,8 @@ self.addEventListener("push", (event) => {
   const title = data.title || "Péyi";
   const options = {
     body: data.body || "Tu as une nouvelle notification.",
-    icon: data.icon || "/icon",
-    badge: "/icon",
+    icon: data.icon || "/icons/peyi-icon-512.png",
+    badge: "/icons/peyi-icon-512.png",
     tag: data.tag,
     data: { url: data.url || "/" },
   };

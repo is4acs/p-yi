@@ -7,7 +7,7 @@ import { ImageResponse } from "next/og";
  *
  * Pourquoi la générer dynamiquement plutôt qu'un PNG statique :
  *   - Zéro asset à maintenir : la vérité vit dans le code
- *   - Cohérence graphique garantie avec `icon.tsx` et `apple-icon.tsx`
+ *   - Cohérence graphique avec le logo Péyi v2 (app/icon.svg)
  *   - Quand on ajustera le branding, une seule source change
  *
  * Edge runtime : pas d'accès DB ici, on bénéficie de la latence froide

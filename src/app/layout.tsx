@@ -90,8 +90,8 @@ export const metadata: Metadata = {
     description:
       "Partage, vote et profite des meilleurs bons plans de Guyane.",
   },
-  // Icons are generated dynamically by src/app/icon.tsx and apple-icon.tsx.
-  // Next auto-wires them into <head>, no need to list them here.
+  // Icons : logo Péyi v2 statique (src/app/icon.svg + apple-icon.png).
+  // Next les câble automatiquement dans <head>, rien à lister ici.
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
