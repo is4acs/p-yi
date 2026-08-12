@@ -162,6 +162,8 @@ export const ht: Messages = {
     typeDonation: "Don",
     rangeTo: "a",
     allFilters: "Tout filtè yo",
+    dealsBang: "Bon plan !",
+    seeAllOf: "Wè tout",
     showResults: "Montre {n} anons yo",
     clearAll: "Efase tout",
     remove: "Retire",

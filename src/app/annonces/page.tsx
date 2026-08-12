@@ -26,7 +26,6 @@ import { ListingCardTile } from "@/components/listings/ListingCardTile";
 import { ListingsPagination } from "@/components/listings/ListingsPagination";
 import {
   ActiveChips,
-  CategoryAccordion,
   CityPanel,
   ContractChips,
   DrawerSections,
@@ -39,6 +38,10 @@ import {
   type CatalogueState,
 } from "@/components/listings/CatalogueSidebar";
 import { CatalogueDrawer } from "@/components/listings/CatalogueDrawer";
+import {
+  CategoryMenuBar,
+  type MenuFamily,
+} from "@/components/listings/CategoryMenuBar";
 import { FilterPill } from "@/components/listings/FilterPill";
 import { Icon } from "@/components/ui/Icon";
 import { Sun } from "@/components/soleil/Sun";
@@ -299,6 +302,29 @@ export default async function AnnoncesPage(
   const parentCategory = activeCategory?.parentId
     ? categories.find((c) => c.id === activeCategory.parentId) ?? null
     : null;
+
+  // Familles du méga-menu (modèle leboncoin) : racines + sous-catégories,
+  // compteurs agrégés.
+  const families: MenuFamily[] = categories
+    .filter((c) => !c.parentId)
+    .map((root) => {
+      const children = categories
+        .filter((c) => c.parentId === root.id)
+        .map((c) => ({
+          slug: c.slug,
+          name: c.name,
+          count: counts[c.id] ?? 0,
+        }));
+      return {
+        slug: root.slug,
+        name: root.name,
+        count: children.reduce(
+          (sum, k) => sum + k.count,
+          counts[root.id] ?? 0,
+        ),
+        children,
+      };
+    });
   const activeName = activeCategory?.name ?? null;
   const headingName = activeName ?? t.listings.catalogTitle;
   const cityName = city
@@ -409,6 +435,11 @@ export default async function AnnoncesPage(
           )}
         </div>
 
+        {/* Méga-menu de catégories (modèle Leboncoin). */}
+        <div className="pt-2 lg:pt-3">
+          <CategoryMenuBar families={families} activeSlug={category} />
+        </div>
+
         {/* Fil d'ariane (modèle Leboncoin). */}
         <nav
           aria-label="Fil d'ariane"
@@ -506,19 +537,6 @@ export default async function AnnoncesPage(
         {/* Barre de pilules de filtres (desktop) — chaque pilule ouvre son
             panneau, « Tous les filtres » ouvre la modale complète. */}
         <div className="mt-3 hidden flex-wrap items-center gap-2 lg:flex">
-          <FilterPill
-            label={activeName ?? t.common.category}
-            active={Boolean(category)}
-          >
-            <CategoryAccordion
-              categories={categories}
-              counts={counts}
-              category={category}
-              state={navState}
-              t={t}
-            />
-          </FilterPill>
-
           <FilterPill label={cityName ?? t.common.city} active={Boolean(city)}>
             <CityPanel cities={cities} category={category} state={navState} t={t} />
           </FilterPill>

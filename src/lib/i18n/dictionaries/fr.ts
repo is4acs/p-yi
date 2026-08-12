@@ -166,6 +166,8 @@ export const fr = {
     typeDonation: "Don",
     rangeTo: "à",
     allFilters: "Tous les filtres",
+    dealsBang: "Bons plans !",
+    seeAllOf: "Voir tout",
     showResults: "Afficher les {n} annonces",
     clearAll: "Tout effacer",
     remove: "Retirer",

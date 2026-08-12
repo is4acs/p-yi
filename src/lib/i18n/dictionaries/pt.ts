@@ -163,6 +163,8 @@ export const pt: Messages = {
     typeDonation: "Doação",
     rangeTo: "a",
     allFilters: "Todos os filtros",
+    dealsBang: "Ofertas!",
+    seeAllOf: "Ver tudo",
     showResults: "Ver os {n} anúncios",
     clearAll: "Limpar tudo",
     remove: "Remover",
