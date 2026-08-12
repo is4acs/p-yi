@@ -157,6 +157,115 @@ async function main() {
   }
 
   // ===========================================================================
+  // 5bis. SOUS-CATÉGORIES DE TOUTES LES AUTRES FAMILLES (modèle leboncoin)
+  // ===========================================================================
+  // Chaque famille d'annonces a ses sous-catégories, comme sur leboncoin.
+  // Slugs uniques (contrainte @unique sur Category.slug), upserts
+  // idempotents : relancer le seed ne crée jamais de doublon.
+
+  const listingSubcatsByParent: Record<
+    string,
+    { name: string; slug: string; icon: string }[]
+  > = {
+    'emploi-services': [
+      { name: "Offres d'emploi", slug: 'offres-emploi', icon: '💼' },
+      { name: "Demandes d'emploi", slug: 'demandes-emploi', icon: '🙋' },
+      { name: 'Services à la personne', slug: 'services-a-la-personne', icon: '🤝' },
+      { name: 'Cours particuliers', slug: 'cours-particuliers', icon: '📚' },
+      { name: 'Baby-sitting', slug: 'baby-sitting', icon: '🍼' },
+      { name: 'Services événementiels', slug: 'services-evenementiels', icon: '🎉' },
+      { name: 'Autres services', slug: 'autres-services', icon: '🛠️' },
+    ],
+    'multimedia-tech': [
+      { name: 'Smartphones & Téléphonie', slug: 'smartphones-telephonie', icon: '📱' },
+      { name: 'Ordinateurs', slug: 'ordinateurs', icon: '💻' },
+      { name: 'Tablettes & Liseuses', slug: 'tablettes-liseuses', icon: '📲' },
+      { name: 'Photo, audio & vidéo', slug: 'photo-audio-video', icon: '📷' },
+      { name: 'TV & Écrans', slug: 'tv-ecrans', icon: '📺' },
+      { name: 'Consoles & Jeux vidéo', slug: 'consoles-jeux-video', icon: '🎮' },
+      { name: 'Accessoires & Périphériques', slug: 'accessoires-informatique', icon: '⌨️' },
+    ],
+    'maison-mobilier': [
+      { name: 'Ameublement', slug: 'ameublement', icon: '🛋️' },
+      { name: 'Électroménager', slug: 'electromenager', icon: '🧺' },
+      { name: 'Décoration', slug: 'decoration', icon: '🖼️' },
+      { name: 'Arts de la table', slug: 'arts-de-la-table', icon: '🍽️' },
+      { name: 'Linge de maison', slug: 'linge-de-maison', icon: '🛏️' },
+      { name: 'Bricolage & Outillage', slug: 'bricolage-outillage', icon: '🔨' },
+      { name: 'Jardin & Plantes', slug: 'jardin-plantes', icon: '🪴' },
+    ],
+    'mode-vide-dressing': [
+      { name: 'Vêtements Femme', slug: 'vetements-femme', icon: '👗' },
+      { name: 'Vêtements Homme', slug: 'vetements-homme', icon: '👔' },
+      { name: 'Enfant & Bébé', slug: 'vetements-enfant-bebe', icon: '🧒' },
+      { name: 'Chaussures', slug: 'chaussures', icon: '👟' },
+      { name: 'Montres & Bijoux', slug: 'montres-bijoux', icon: '⌚' },
+      { name: 'Sacs & Accessoires', slug: 'sacs-accessoires', icon: '👜' },
+    ],
+    'loisirs-sport': [
+      { name: 'Sport & Fitness', slug: 'sport-fitness', icon: '🏋️' },
+      { name: 'Musique & Instruments', slug: 'musique-instruments', icon: '🎸' },
+      { name: 'Livres & BD', slug: 'livres-bd', icon: '📖' },
+      { name: 'Jeux & Jouets', slug: 'jeux-jouets', icon: '🧸' },
+      { name: 'Camping & Plein air', slug: 'camping-plein-air', icon: '🏕️' },
+      { name: 'Pêche & Chasse', slug: 'peche-chasse', icon: '🎣' },
+      { name: 'Collection', slug: 'collection', icon: '🪙' },
+    ],
+    animaux: [
+      { name: 'Chiens', slug: 'chiens', icon: '🐕' },
+      { name: 'Chats', slug: 'chats', icon: '🐈' },
+      { name: 'Oiseaux', slug: 'oiseaux', icon: '🦜' },
+      { name: 'Poissons & Aquariophilie', slug: 'poissons-aquariophilie', icon: '🐠' },
+      { name: 'Rongeurs', slug: 'rongeurs', icon: '🐹' },
+      { name: 'Autres animaux', slug: 'autres-animaux', icon: '🦎' },
+      { name: 'Accessoires animaux', slug: 'accessoires-animaux', icon: '🦴' },
+    ],
+    covoiturage: [
+      { name: 'Trajets réguliers', slug: 'trajets-reguliers', icon: '🔁' },
+      { name: 'Trajets ponctuels', slug: 'trajets-ponctuels', icon: '🚙' },
+      { name: 'Navettes aéroport', slug: 'navettes-aeroport', icon: '✈️' },
+      { name: 'Trajets fleuve & pirogue', slug: 'trajets-fleuve', icon: '🛶' },
+    ],
+    'perdu-trouve': [
+      { name: 'Objets perdus', slug: 'objets-perdus', icon: '🔍' },
+      { name: 'Objets trouvés', slug: 'objets-trouves', icon: '🧷' },
+      { name: 'Animaux perdus', slug: 'animaux-perdus', icon: '🐾' },
+      { name: 'Documents & Papiers', slug: 'documents-papiers', icon: '📄' },
+    ],
+    'materiel-pro-btp': [
+      { name: 'Outillage & BTP', slug: 'outillage-btp', icon: '🔧' },
+      { name: 'Engins de chantier', slug: 'engins-chantier', icon: '🚜' },
+      { name: 'Matériel agricole', slug: 'materiel-agricole', icon: '🌾' },
+      { name: 'Équipement commerce & resto', slug: 'equipement-commerce', icon: '🏪' },
+      { name: 'Équipement de bureau', slug: 'equipement-bureau', icon: '🖨️' },
+    ],
+    autres: [
+      { name: 'Billetterie & Évènements', slug: 'billetterie-evenements', icon: '🎟️' },
+      { name: 'Entraide entre voisins', slug: 'entraide', icon: '🤲' },
+      { name: 'Dons', slug: 'dons', icon: '🎁' },
+      { name: 'Divers', slug: 'divers', icon: '📦' },
+    ],
+  }
+
+  for (const [parentSlug, subs] of Object.entries(listingSubcatsByParent)) {
+    const parent = await prisma.category.findUnique({ where: { slug: parentSlug } })
+    if (!parent) {
+      console.warn(`⚠️ famille introuvable : ${parentSlug} — sous-catégories sautées`)
+      continue
+    }
+    for (const sub of subs) {
+      await prisma.category.upsert({
+        where: { slug: sub.slug },
+        // Rattache aussi les catégories créées avant cette hiérarchie
+        // (idempotent : parentId identique à chaque exécution).
+        update: { parentId: parent.id },
+        create: { ...sub, type: 'LISTING', parentId: parent.id },
+      })
+    }
+    console.log(`✅ ${subs.length} sous-catégories ${parent.name} créées`)
+  }
+
+  // ===========================================================================
   // 6. MAGASINS PRINCIPAUX DE GUYANE
   // ===========================================================================
   

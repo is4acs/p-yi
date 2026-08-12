@@ -655,13 +655,97 @@ export const FIELD_REGISTRY: Record<string, FieldDef[]> = {
 };
 
 /**
+ * Alias sous-catégorie → famille : les sous-catégories seedées en 5bis
+ * (modèle leboncoin — chaque famille a ses sous-catégories) héritent des
+ * champs, résumés de carte et filtres facettés de leur famille. Une
+ * sous-catégorie qui mérite son propre jeu de champs prend simplement
+ * une entrée dédiée dans FIELD_REGISTRY (prioritaire sur l'alias).
+ */
+const CATEGORY_SLUG_ALIASES: Record<string, string> = {
+  // Emploi & Services
+  'offres-emploi': 'emploi-services',
+  'demandes-emploi': 'emploi-services',
+  'services-a-la-personne': 'emploi-services',
+  'cours-particuliers': 'emploi-services',
+  'baby-sitting': 'emploi-services',
+  'services-evenementiels': 'emploi-services',
+  'autres-services': 'emploi-services',
+  // Multimédia & Tech
+  'smartphones-telephonie': 'multimedia-tech',
+  ordinateurs: 'multimedia-tech',
+  'tablettes-liseuses': 'multimedia-tech',
+  'photo-audio-video': 'multimedia-tech',
+  'tv-ecrans': 'multimedia-tech',
+  'consoles-jeux-video': 'multimedia-tech',
+  'accessoires-informatique': 'multimedia-tech',
+  // Maison & Mobilier
+  ameublement: 'maison-mobilier',
+  electromenager: 'maison-mobilier',
+  decoration: 'maison-mobilier',
+  'arts-de-la-table': 'maison-mobilier',
+  'linge-de-maison': 'maison-mobilier',
+  'bricolage-outillage': 'maison-mobilier',
+  'jardin-plantes': 'maison-mobilier',
+  // Mode & Vide-dressing
+  'vetements-femme': 'mode-vide-dressing',
+  'vetements-homme': 'mode-vide-dressing',
+  'vetements-enfant-bebe': 'mode-vide-dressing',
+  chaussures: 'mode-vide-dressing',
+  'montres-bijoux': 'mode-vide-dressing',
+  'sacs-accessoires': 'mode-vide-dressing',
+  // Loisirs & Sport
+  'sport-fitness': 'loisirs-sport',
+  'musique-instruments': 'loisirs-sport',
+  'livres-bd': 'loisirs-sport',
+  'jeux-jouets': 'loisirs-sport',
+  'camping-plein-air': 'loisirs-sport',
+  'peche-chasse': 'loisirs-sport',
+  collection: 'loisirs-sport',
+  // Animaux
+  chiens: 'animaux',
+  chats: 'animaux',
+  oiseaux: 'animaux',
+  'poissons-aquariophilie': 'animaux',
+  rongeurs: 'animaux',
+  'autres-animaux': 'animaux',
+  'accessoires-animaux': 'autres',
+  // Covoiturage
+  'trajets-reguliers': 'covoiturage',
+  'trajets-ponctuels': 'covoiturage',
+  'navettes-aeroport': 'covoiturage',
+  'trajets-fleuve': 'covoiturage',
+  // Perdu & Trouvé
+  'objets-perdus': 'perdu-trouve',
+  'objets-trouves': 'perdu-trouve',
+  'animaux-perdus': 'perdu-trouve',
+  'documents-papiers': 'perdu-trouve',
+  // Matériel Pro / BTP
+  'outillage-btp': 'materiel-pro-btp',
+  'engins-chantier': 'materiel-pro-btp',
+  'materiel-agricole': 'materiel-pro-btp',
+  'equipement-commerce': 'materiel-pro-btp',
+  'equipement-bureau': 'materiel-pro-btp',
+  // Autres
+  'billetterie-evenements': 'autres',
+  entraide: 'autres',
+  dons: 'autres',
+  divers: 'autres',
+};
+
+/** Slug effectif pour les lookups registre (entrée dédiée > alias). */
+function resolveCategorySlug(categorySlug: string): string {
+  if (FIELD_REGISTRY[categorySlug]) return categorySlug;
+  return CATEGORY_SLUG_ALIASES[categorySlug] ?? categorySlug;
+}
+
+/**
  * Récupère les champs pour un slug de catégorie. Renvoie `[]` quand la
  * catégorie n'a pas de formulaire spécifique — l'appelant peut alors
  * masquer entièrement la section "Détails spécifiques".
  */
 export function getFieldsForCategory(categorySlug: string | null | undefined): FieldDef[] {
   if (!categorySlug) return [];
-  return FIELD_REGISTRY[categorySlug] ?? [];
+  return FIELD_REGISTRY[resolveCategorySlug(categorySlug)] ?? [];
 }
 
 /* -------------------------------------------------------------------------- */
@@ -817,7 +901,7 @@ export function summarizeAttributesForCard(
   attributes: unknown,
 ): string | null {
   if (!categorySlug) return null;
-  const keys = CARD_SUMMARY_KEYS[categorySlug];
+  const keys = CARD_SUMMARY_KEYS[resolveCategorySlug(categorySlug)];
   if (!keys || keys.length === 0) return null;
 
   const fields = getFieldsForCategory(categorySlug);
@@ -981,7 +1065,10 @@ export function getFilterSlotsForCategory(
   categorySlug: string | null | undefined,
 ): AttributeFilterSlot[] {
   if (!categorySlug) return ["priceRange"];
-  return FILTER_SLOTS_BY_CATEGORY[categorySlug] ?? ["priceRange"];
+  return (
+    FILTER_SLOTS_BY_CATEGORY[categorySlug] ??
+    FILTER_SLOTS_BY_CATEGORY[resolveCategorySlug(categorySlug)] ?? ["priceRange"]
+  );
 }
 
 export function denormalizeAttributes(
