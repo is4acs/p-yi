@@ -6,7 +6,6 @@ import {
   Eye,
   MapPin,
   MessageSquare,
-  Store,
 } from "lucide-react";
 import type { VoteType } from "@prisma/client";
 
@@ -18,9 +17,6 @@ import { getLocale, getMessages, tFormat } from "@/lib/i18n";
 import { translateUserText } from "@/lib/i18n/translate";
 import { Ph } from "@/components/soleil/Ph";
 import { TempBadge } from "@/components/soleil/TempBadge";
-import { PriceTag } from "./PriceTag";
-import { CategoryChip } from "./CategoryChip";
-import { CommuneChip } from "./CommuneChip";
 import { DealImagePlaceholder } from "./DealImagePlaceholder";
 import { VoteButtons } from "./VoteButtons";
 import { FavoriteButton } from "./FavoriteButton";
@@ -34,13 +30,10 @@ type Props = {
   isFavorited?: boolean;
   // `full` (défaut) : carte mockup Dealabs S30 — vote à gauche, image
   //   séparée (sm:+), posted-by en pied. Utilisée sur `/profil/favoris`.
-  // `compact` : ancienne carte — image 96/112 + body + vote à droite.
-  //   Conservée pour le rail horizontal sur la home (`w-[85vw]`) où
-  //   l'espace ne permet pas la disposition en 3 colonnes.
   // `soleil` : rangée liste « Soleil péyi » (refonte T4) — thumb 64,
   //   titre + meta + prix, température en cercle à droite. Utilisée sur
   //   `/bons-plans`.
-  variant?: "full" | "compact" | "soleil";
+  variant?: "full" | "soleil";
   className?: string;
 };
 
@@ -196,100 +189,6 @@ export async function DealCard({
             </span>
           </div>
         </Link>
-      </article>
-    );
-  }
-
-  // ───────── variant = "compact" (home carousel, ancien layout S28) ─────────
-  if (variant === "compact") {
-    const fallbackSellerName = sellerName ?? "Vendeur non précisé";
-    return (
-      <article
-        className={cn(
-          "group flex items-stretch gap-3 rounded-xl border border-border bg-card p-3 shadow-sm transition hover:border-peyi-orange-300 hover:shadow-md",
-          className,
-        )}
-      >
-        <div className="relative h-24 w-24 shrink-0 sm:h-28 sm:w-28">
-          <Link
-            href={`/bons-plans/${deal.slug}`}
-            className="block h-full w-full active:scale-[0.99]"
-          >
-            <DealImagePlaceholder
-              emoji={placeholderEmoji}
-              label={placeholderLabel}
-              className="h-full w-full"
-            />
-          </Link>
-          <div className="absolute right-1 top-1">
-            <FavoriteButton
-              dealId={deal.id}
-              initialFavorited={isFavorited}
-              canFavorite={canFavorite}
-              disabledHint={favoriteHint}
-              size="sm"
-            />
-          </div>
-        </div>
-
-        <Link
-          href={`/bons-plans/${deal.slug}`}
-          className="flex min-w-0 flex-1 transition active:scale-[0.99]"
-        >
-          <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
-            <div className="min-w-0 space-y-1.5">
-              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                {sellerLogoUrl && sellerName ? (
-                  <StoreLogo
-                    name={sellerName}
-                    logoUrl={sellerLogoUrl}
-                    size="sm"
-                  />
-                ) : (
-                  <Store className="h-3 w-3 shrink-0" aria-hidden />
-                )}
-                <span className="truncate">{fallbackSellerName}</span>
-              </div>
-              <h3 className="line-clamp-2 font-display text-sm font-semibold leading-tight text-foreground group-hover:text-peyi-orange-700">
-                {displayTitle}
-              </h3>
-            </div>
-
-            <PriceTag
-              price={deal.price.toString()}
-              originalPrice={deal.originalPrice?.toString() ?? null}
-              discountPercent={deal.discountPercent ?? null}
-              isFree={deal.isFree}
-              size="sm"
-            />
-
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
-              <CategoryChip name={deal.category.name} icon={deal.category.icon} />
-              {deal.city && <CommuneChip name={deal.city.name} />}
-              <span className="inline-flex items-center gap-0.5">
-                <MessageSquare className="h-3 w-3" aria-hidden />
-                {deal.commentCount}
-              </span>
-              <span className="inline-flex items-center gap-0.5">
-                <Clock className="h-3 w-3" aria-hidden />
-                {formatRelativeTime(deal.publishedAt, locale)}
-              </span>
-            </div>
-          </div>
-        </Link>
-
-        <div className="flex shrink-0 items-center">
-          <VoteButtons
-            dealId={deal.id}
-            temperature={deal.temperature}
-            upvotes={deal.upvotes}
-            downvotes={deal.downvotes}
-            myVote={myVote}
-            canVote={canVote}
-            disabledHint={voteHint}
-            variant="compact"
-          />
-        </div>
       </article>
     );
   }
