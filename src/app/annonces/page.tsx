@@ -380,7 +380,7 @@ export default async function AnnoncesPage(
       <h2 className="text-center font-display text-[19px] font-extrabold">
         {tFormat(t.listings.catalogEmptyTitle, { name: headingName })}
       </h2>
-      <p className="max-w-[360px] text-center text-sm text-soleil-muted dark:text-soleil-muted-d">
+      <p className="max-w-[360px] text-center text-sm text-soleil-muted2 dark:text-soleil-muted-d">
         {t.listings.catalogEmptySub}
       </p>
       <Link
@@ -498,7 +498,7 @@ export default async function AnnoncesPage(
             ))}
             <div className="flex h-[46px] min-w-0 flex-1 items-center gap-2.5 rounded-xl border-[1.5px] border-soleil-border bg-soleil-input px-4 focus-within:border-soleil-forest dark:border-soleil-border-d dark:bg-soleil-forest dark:focus-within:border-soleil-cream lg:h-[48px] lg:rounded-[14px] lg:px-5">
               <Search
-                className="h-4 w-4 flex-none text-soleil-muted dark:text-soleil-muted-d"
+                className="h-4 w-4 flex-none text-soleil-muted2 dark:text-soleil-muted-d"
                 aria-hidden
               />
               <input

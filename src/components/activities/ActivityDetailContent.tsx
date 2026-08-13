@@ -222,7 +222,7 @@ export function ActivityDetailContent({
         {duration && (
           <span className="inline-flex items-center gap-1.5">
             <Clock
-              className="h-4 w-4 text-soleil-muted dark:text-soleil-muted-d"
+              className="h-4 w-4 text-soleil-muted2 dark:text-soleil-muted-d"
               aria-hidden
             />
             {duration}
@@ -231,7 +231,7 @@ export function ActivityDetailContent({
         {detail.difficulty && (
           <span className="inline-flex items-center gap-1.5">
             <Gauge
-              className="h-4 w-4 text-soleil-muted dark:text-soleil-muted-d"
+              className="h-4 w-4 text-soleil-muted2 dark:text-soleil-muted-d"
               aria-hidden
             />
             {t.act.difficulties[detail.difficulty]}
@@ -304,7 +304,7 @@ export function ActivityDetailContent({
               ))}
             </ul>
             {hours.exceptions && hours.exceptions.length > 0 && (
-              <p className="mt-1.5 text-xs italic text-soleil-muted dark:text-soleil-muted-d">
+              <p className="mt-1.5 text-xs italic text-soleil-muted2 dark:text-soleil-muted-d">
                 {hours.exceptions.join(" — ")}
               </p>
             )}

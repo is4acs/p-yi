@@ -40,7 +40,7 @@ export async function TabsPeyi({ active, className }: Props) {
             "flex min-h-[36px] items-end pb-1.5",
             tab.key === active
               ? "border-b-[3px] border-soleil-orange text-soleil-forest dark:text-soleil-cream"
-              : "text-soleil-muted dark:text-soleil-muted-d",
+              : "text-soleil-muted2 dark:text-soleil-muted-d",
           )}
         >
           {labels[tab.key]}

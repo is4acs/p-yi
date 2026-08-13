@@ -39,3 +39,30 @@ export function isRenderableImageUrl(
 
   return false;
 }
+
+/**
+ * True si l'URL peut passer par l'optimiseur `next/image` (resize +
+ * WebP/AVIF) : chemin local, ou hôte whitelisté dans
+ * `next.config.images.remotePatterns` (Supabase Storage public).
+ *
+ * Les URLs externes arbitraires (vieilles données de seed, liens
+ * copiés) doivent rester en `unoptimized` : un hôte hors whitelist
+ * fait THROW `next/image` au rendu et casse toute la page. D'où le
+ * pattern `unoptimized={!isOptimizableImageUrl(src)}` sur les cartes
+ * et galeries — les uploads Supabase (l'écrasante majorité) profitent
+ * de l'optimisation, le reste s'affiche tel quel.
+ */
+export function isOptimizableImageUrl(value: string): boolean {
+  const trimmed = value.trim();
+  if (trimmed.startsWith("/")) return !trimmed.startsWith("//");
+  try {
+    const { protocol, hostname, pathname } = new URL(trimmed);
+    return (
+      protocol === "https:" &&
+      hostname.endsWith(".supabase.co") &&
+      pathname.startsWith("/storage/v1/object/public/")
+    );
+  } catch {
+    return false;
+  }
+}

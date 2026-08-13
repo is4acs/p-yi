@@ -4,7 +4,10 @@ import { Clock, Flame, Images } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/format";
-import { isRenderableImageUrl } from "@/lib/images";
+import {
+  isOptimizableImageUrl,
+  isRenderableImageUrl,
+} from "@/lib/images";
 import {
   type ListingCardData,
   formatPriceType,
@@ -137,7 +140,7 @@ export async function ListingCardTile({
                 alt={displayTitle}
                 fill
                 sizes="(max-width: 640px) 124px, 224px"
-                unoptimized
+                unoptimized={!isOptimizableImageUrl(listing.coverImageUrl)}
                 className="object-cover"
               />
             ) : (
@@ -152,11 +155,11 @@ export async function ListingCardTile({
               {priceLabel}
             </p>
             {attrLine && (
-              <p className="mt-1 line-clamp-1 text-xs text-soleil-muted dark:text-soleil-muted-d">
+              <p className="mt-1 line-clamp-1 text-xs text-soleil-muted2 dark:text-soleil-muted-d">
                 {attrLine}
               </p>
             )}
-            <p className="mt-auto truncate pt-1.5 text-xs text-soleil-muted dark:text-soleil-muted-d">
+            <p className="mt-auto truncate pt-1.5 text-xs text-soleil-muted2 dark:text-soleil-muted-d">
               {locationLabel} ·{" "}
               {formatRelativeTime(listing.bumpedAt ?? listing.publishedAt, locale)}
             </p>
@@ -198,7 +201,7 @@ export async function ListingCardTile({
                 alt={displayTitle}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                unoptimized
+                unoptimized={!isOptimizableImageUrl(listing.coverImageUrl)}
                 className="object-cover"
               />
             ) : (
@@ -213,11 +216,11 @@ export async function ListingCardTile({
               {displayTitle}
             </h2>
             {attrLine && (
-              <p className="mt-[7px] line-clamp-1 text-xs text-soleil-muted dark:text-soleil-muted-d">
+              <p className="mt-[7px] line-clamp-1 text-xs text-soleil-muted2 dark:text-soleil-muted-d">
                 {attrLine}
               </p>
             )}
-            <p className="mt-1 truncate text-xs text-soleil-muted dark:text-soleil-muted-d">
+            <p className="mt-1 truncate text-xs text-soleil-muted2 dark:text-soleil-muted-d">
               {locationLabel} ·{" "}
               {formatRelativeTime(listing.bumpedAt ?? listing.publishedAt, locale)}
             </p>
@@ -255,7 +258,7 @@ export async function ListingCardTile({
                 alt={listing.title}
                 fill
                 sizes="(max-width: 1024px) 50vw, 25vw"
-                unoptimized
+                unoptimized={!isOptimizableImageUrl(listing.coverImageUrl)}
                 className="object-cover"
               />
             ) : (
@@ -266,7 +269,7 @@ export async function ListingCardTile({
           <h2 className="mt-1.5 line-clamp-2 text-[12.5px] font-bold leading-[1.3]">
             {displayTitle}
           </h2>
-          <p className="mt-0.5 truncate text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
+          <p className="mt-0.5 truncate text-[10.5px] text-soleil-muted2 dark:text-soleil-muted-d">
             {locationLabel} ·{" "}
             {formatRelativeTime(listing.bumpedAt ?? listing.publishedAt, locale)}
           </p>
@@ -307,7 +310,7 @@ export async function ListingCardTile({
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className="object-cover transition-transform duration-base group-hover:scale-[1.02]"
-              unoptimized
+              unoptimized={!isOptimizableImageUrl(listing.coverImageUrl)}
             />
           ) : (
             <DealImagePlaceholder

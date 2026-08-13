@@ -238,7 +238,7 @@ export function ActivitiesMobileSheet({
         onPointerCancel={endDrag}
         onClick={onHandleClick}
         aria-label={expanded ? t.act.collapseList : t.act.expandList}
-        className="flex w-full shrink-0 touch-none items-center justify-center px-4 pb-1.5 pt-3 text-soleil-muted dark:text-soleil-muted-d"
+        className="flex w-full shrink-0 touch-none items-center justify-center px-4 pb-1.5 pt-3 text-soleil-muted2 dark:text-soleil-muted-d"
       >
         <span
           className="h-1.5 w-12 rounded-full bg-soleil-border transition-colors dark:bg-soleil-border-d"
@@ -264,7 +264,7 @@ export function ActivitiesMobileSheet({
         <button
           type="button"
           onClick={toggle}
-          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-soleil-muted transition hover:bg-soleil-sand dark:text-soleil-muted-d dark:hover:bg-soleil-forest"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-soleil-muted2 transition hover:bg-soleil-sand dark:text-soleil-muted-d dark:hover:bg-soleil-forest"
           aria-label={expanded ? t.act.seeMap : t.act.expandList}
         >
           {expanded ? (

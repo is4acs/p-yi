@@ -1,7 +1,10 @@
 import Image from "next/image";
 
 import { cn } from "@/lib/utils";
-import { isRenderableImageUrl } from "@/lib/images";
+import {
+  isOptimizableImageUrl,
+  isRenderableImageUrl,
+} from "@/lib/images";
 
 /**
  * Logo d'enseigne — `next/image` avec fond blanc (contain) pour
@@ -58,7 +61,7 @@ export function StoreLogo({ name, logoUrl, size = "sm", className }: Props) {
         fill
         sizes={`${px}px`}
         className="object-contain"
-        unoptimized
+        unoptimized={!isOptimizableImageUrl(logoUrl)}
       />
     </span>
   );

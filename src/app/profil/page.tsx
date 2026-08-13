@@ -5,7 +5,10 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/current-user";
 import { fetchUnreadNotificationsCount } from "@/lib/notifications/queries";
-import { isRenderableImageUrl } from "@/lib/images";
+import {
+  isOptimizableImageUrl,
+  isRenderableImageUrl,
+} from "@/lib/images";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { LanguageSwitcher } from "@/components/soleil/LanguageSwitcher";
 import { NightModeToggle } from "@/components/soleil/NightModeToggle";
@@ -81,7 +84,7 @@ export default async function ProfilPage(props: Props) {
               alt=""
               width={64}
               height={64}
-              unoptimized
+              unoptimized={!isOptimizableImageUrl(user.avatarUrl)}
               className="h-16 w-16 rounded-full object-cover"
             />
           ) : (
@@ -95,7 +98,7 @@ export default async function ProfilPage(props: Props) {
           <h1 className="mt-2.5 font-display text-[22px] font-extrabold">
             {displayName}
           </h1>
-          <p className="mt-[3px] text-[11.5px] text-soleil-muted dark:text-soleil-muted-d">
+          <p className="mt-[3px] text-[11.5px] text-soleil-muted2 dark:text-soleil-muted-d">
             {city?.name ? `${city.name} · ` : ""}
             {tFormat(t.profile.memberSince, { year: memberSince })}
           </p>
@@ -124,7 +127,7 @@ export default async function ProfilPage(props: Props) {
             <div className="font-display text-[19px] font-extrabold">
               {dealCount}
             </div>
-            <div className="mt-0.5 text-[10px] font-bold uppercase text-soleil-muted dark:text-soleil-muted-d">
+            <div className="mt-0.5 text-[10px] font-bold uppercase text-soleil-muted2 dark:text-soleil-muted-d">
               {t.profile.statsDeals}
             </div>
           </div>
@@ -132,7 +135,7 @@ export default async function ProfilPage(props: Props) {
             <div className="font-display text-[19px] font-extrabold">
               {listingCount}
             </div>
-            <div className="mt-0.5 text-[10px] font-bold uppercase text-soleil-muted dark:text-soleil-muted-d">
+            <div className="mt-0.5 text-[10px] font-bold uppercase text-soleil-muted2 dark:text-soleil-muted-d">
               {t.profile.statsListings}
             </div>
           </div>
@@ -140,7 +143,7 @@ export default async function ProfilPage(props: Props) {
             <div className="font-display text-[19px] font-extrabold text-soleil-otext dark:text-soleil-otext-d">
               {user.karma.toLocaleString("fr-FR")}
             </div>
-            <div className="mt-0.5 text-[10px] font-bold uppercase text-soleil-muted dark:text-soleil-muted-d">
+            <div className="mt-0.5 text-[10px] font-bold uppercase text-soleil-muted2 dark:text-soleil-muted-d">
               {t.profile.statsThanks}
             </div>
           </div>
@@ -184,7 +187,7 @@ export default async function ProfilPage(props: Props) {
           <div className="flex items-center justify-between gap-3 border-b border-soleil-line py-3.5 dark:border-soleil-line-d">
             <div className="min-w-0">
               <div className="text-sm font-bold">{t.profile.nightMode}</div>
-              <div className="mt-0.5 text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
+              <div className="mt-0.5 text-[10.5px] text-soleil-muted2 dark:text-soleil-muted-d">
                 {t.profile.nightModeSub}
               </div>
             </div>
@@ -230,7 +233,7 @@ export default async function ProfilPage(props: Props) {
             variant="ghost"
             size="sm"
             pendingLabel={t.profile.loggingOut}
-            className="text-xs font-bold text-soleil-muted hover:bg-transparent hover:text-soleil-forest dark:text-soleil-muted-d dark:hover:text-soleil-cream"
+            className="text-xs font-bold text-soleil-muted2 hover:bg-transparent hover:text-soleil-forest dark:text-soleil-muted-d dark:hover:text-soleil-cream"
           >
             {t.profile.logout}
           </SubmitButton>
@@ -266,7 +269,7 @@ function MenuRow({
       <span className="min-w-0">
         <span className="block text-sm font-bold">{label}</span>
         {sub && (
-          <span className="mt-0.5 block text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
+          <span className="mt-0.5 block text-[10.5px] text-soleil-muted2 dark:text-soleil-muted-d">
             {sub}
           </span>
         )}
@@ -282,7 +285,7 @@ function MenuRow({
         )}
         <span
           aria-hidden
-          className="text-soleil-muted dark:text-soleil-muted-d"
+          className="text-soleil-muted2 dark:text-soleil-muted-d"
         >
           ›
         </span>

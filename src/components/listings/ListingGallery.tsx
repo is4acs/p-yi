@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 
 import { cn } from "@/lib/utils";
+import { isOptimizableImageUrl } from "@/lib/images";
 
 type Props = {
   photos: { url: string }[];
@@ -77,7 +78,7 @@ export function ListingGallery({ photos, title, className }: Props) {
               fill
               sizes="(max-width: 640px) 100vw, 640px"
               className="object-cover"
-              unoptimized
+              unoptimized={!isOptimizableImageUrl(photo.url)}
               priority={i === 0}
             />
           </button>
@@ -250,7 +251,7 @@ function Lightbox({ photos, title, openIndex, onClose }: LightboxProps) {
                   fill
                   sizes="100vw"
                   className="object-contain"
-                  unoptimized
+                  unoptimized={!isOptimizableImageUrl(photo.url)}
                   priority={i === openIndex}
                 />
               </div>

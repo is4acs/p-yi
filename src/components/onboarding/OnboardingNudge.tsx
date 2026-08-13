@@ -85,7 +85,7 @@ export function OnboardingNudge({
           type="button"
           onClick={dismiss}
           aria-label="Masquer ce guide"
-          className="-m-1 inline-flex h-8 w-8 items-center justify-center rounded-full text-soleil-muted dark:text-soleil-muted-d"
+          className="-m-1 inline-flex h-8 w-8 items-center justify-center rounded-full text-soleil-muted2 dark:text-soleil-muted-d"
         >
           <X className="h-4 w-4" aria-hidden />
         </button>
@@ -101,12 +101,12 @@ export function OnboardingNudge({
               />
             ) : (
               <Circle
-                className="h-4 w-4 shrink-0 text-soleil-muted dark:text-soleil-muted-d"
+                className="h-4 w-4 shrink-0 text-soleil-muted2 dark:text-soleil-muted-d"
                 aria-hidden
               />
             )}
             {step.done ? (
-              <span className="text-soleil-muted line-through dark:text-soleil-muted-d">
+              <span className="text-soleil-muted2 line-through dark:text-soleil-muted-d">
                 {step.label}
               </span>
             ) : (

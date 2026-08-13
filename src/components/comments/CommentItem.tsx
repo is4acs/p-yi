@@ -101,13 +101,13 @@ export function CommentItem({
             <b className="text-soleil-forest dark:text-soleil-cream">
               {comment.author.username}
             </b>
-            <span className="text-soleil-muted dark:text-soleil-muted-d">
+            <span className="text-soleil-muted2 dark:text-soleil-muted-d">
               · {level.label} · {formatRelativeTime(comment.createdAt, locale)}
             </span>
           </div>
 
           {comment.isDeleted ? (
-            <p className="text-[12.5px] italic text-soleil-muted dark:text-soleil-muted-d">
+            <p className="text-[12.5px] italic text-soleil-muted2 dark:text-soleil-muted-d">
               {t.dealDetail.deletedComment}
             </p>
           ) : (

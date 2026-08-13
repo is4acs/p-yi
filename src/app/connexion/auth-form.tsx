@@ -80,7 +80,7 @@ export function AuthForm({
 
       <GoogleSignInButton next={next} />
 
-      <div className="my-5 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.5px] text-soleil-muted dark:text-soleil-muted-d">
+      <div className="my-5 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.5px] text-soleil-muted2 dark:text-soleil-muted-d">
         <span
           className="h-px flex-1 bg-soleil-line dark:bg-soleil-line-d"
           aria-hidden
@@ -133,7 +133,7 @@ export function AuthForm({
             placeholder={t.auth.usernamePlaceholder}
             className={INPUT_CLASS}
           />
-          <p className="text-xs text-soleil-muted dark:text-soleil-muted-d">
+          <p className="text-xs text-soleil-muted2 dark:text-soleil-muted-d">
             {t.auth.usernameHelp}
           </p>
         </div>
@@ -161,7 +161,7 @@ export function AuthForm({
               aria-label={
                 showPassword ? t.auth.hidePassword : t.auth.showPassword
               }
-              className="absolute right-0 top-0 flex h-full w-11 items-center justify-center text-soleil-muted transition hover:text-soleil-forest dark:text-soleil-muted-d dark:hover:text-soleil-cream"
+              className="absolute right-0 top-0 flex h-full w-11 items-center justify-center text-soleil-muted2 transition hover:text-soleil-forest dark:text-soleil-muted-d dark:hover:text-soleil-cream"
             >
               {showPassword ? (
                 <EyeOff className="h-4 w-4" aria-hidden />

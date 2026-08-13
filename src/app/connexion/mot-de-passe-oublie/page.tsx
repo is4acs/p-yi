@@ -101,7 +101,7 @@ export default async function MotDePasseOubliePage(props: {
           </>
         )}
 
-        <p className="mt-8 text-center text-xs text-soleil-muted dark:text-soleil-muted-d">
+        <p className="mt-8 text-center text-xs text-soleil-muted2 dark:text-soleil-muted-d">
           {t.auth.remember}{" "}
           <Link
             href="/connexion"

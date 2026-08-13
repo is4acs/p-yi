@@ -35,7 +35,7 @@ export async function DealsPagination({
       className="mt-6 flex items-center justify-between gap-3"
     >
       <PagerLink href={prevUrl} disabled={!hasPrev} label={t.deals.previous} />
-      <span className="text-xs tabular-nums text-soleil-muted dark:text-soleil-muted-d">
+      <span className="text-xs tabular-nums text-soleil-muted2 dark:text-soleil-muted-d">
         {t.deals.page}{" "}
         <span className="font-bold text-soleil-forest dark:text-soleil-cream">
           {page}
@@ -59,7 +59,7 @@ function PagerLink({
   const classes = cn(
     "inline-flex min-h-[44px] items-center rounded-full border-[1.5px] px-4 py-2 text-xs font-bold",
     disabled
-      ? "cursor-not-allowed border-soleil-border text-soleil-muted dark:border-soleil-border-d dark:text-soleil-muted-d"
+      ? "cursor-not-allowed border-soleil-border text-soleil-muted2 dark:border-soleil-border-d dark:text-soleil-muted-d"
       : "border-soleil-forest text-soleil-forest dark:border-soleil-cream dark:text-soleil-cream",
   );
 

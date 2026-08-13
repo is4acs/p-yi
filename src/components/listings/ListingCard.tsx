@@ -4,7 +4,10 @@ import { Clock, Flame, Images, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/format";
-import { isRenderableImageUrl } from "@/lib/images";
+import {
+  isOptimizableImageUrl,
+  isRenderableImageUrl,
+} from "@/lib/images";
 import {
   type ListingCardData,
   formatPriceType,
@@ -70,7 +73,7 @@ export function ListingCard({
               fill
               sizes="(max-width: 640px) 96px, 112px"
               className="object-cover"
-              unoptimized
+              unoptimized={!isOptimizableImageUrl(listing.coverImageUrl)}
             />
           ) : (
             <DealImagePlaceholder

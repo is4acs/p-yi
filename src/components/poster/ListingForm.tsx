@@ -345,7 +345,7 @@ export function ListingForm({
         <Send className="h-4 w-4" aria-hidden />
         {submitLabel}
       </SubmitButton>
-      <p className="!mt-2 text-center text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
+      <p className="!mt-2 text-center text-[10.5px] text-soleil-muted2 dark:text-soleil-muted-d">
         {t.poster.publishNote}
       </p>
     </form>

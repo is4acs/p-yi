@@ -94,7 +94,7 @@ export default async function ConnexionPage(props: {
           signUpAction={signUpAction}
         />
 
-        <p className="mt-7 text-center text-xs leading-relaxed text-soleil-muted dark:text-soleil-muted-d">
+        <p className="mt-7 text-center text-xs leading-relaxed text-soleil-muted2 dark:text-soleil-muted-d">
           {termsParts.map((part, i) => {
             if (part === "{terms}") {
               return (

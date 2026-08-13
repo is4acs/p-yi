@@ -230,7 +230,7 @@ export function PhotosUploader({ initialUrls = [], max, className }: Props) {
         <span className="text-[11px] font-extrabold uppercase tracking-[1.5px] text-soleil-muted2 dark:text-soleil-muted-d">
           {t.poster.photos} · {photos.length}/{max}
         </span>
-        <span className="text-[10px] text-soleil-muted dark:text-soleil-muted-d">
+        <span className="text-[10px] text-soleil-muted2 dark:text-soleil-muted-d">
           {t.poster.photoFormats}
         </span>
       </div>

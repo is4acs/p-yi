@@ -467,7 +467,7 @@ export default async function ListingDetailPage(
                 {priceLabel}
               </p>
               <h1 className="mt-1.5 break-words text-base font-bold">{mtTitle.text}</h1>
-              <p className="mt-1 text-[11.5px] text-soleil-muted dark:text-soleil-muted-d">
+              <p className="mt-1 text-[11.5px] text-soleil-muted2 dark:text-soleil-muted-d">
                 {locationLabel} ·{" "}
                 {formatRelativeTime(listing.bumpedAt ?? listing.publishedAt, locale)}{" "}
                 ·{" "}
@@ -494,7 +494,7 @@ export default async function ListingDetailPage(
               </p>
 
               {contentTranslated && (
-                <details className="mt-2 text-xs text-soleil-muted dark:text-soleil-muted-d">
+                <details className="mt-2 text-xs text-soleil-muted2 dark:text-soleil-muted-d">
                   <summary className="cursor-pointer font-semibold">
                     {t.mt.translated} · {t.mt.seeOriginal}
                   </summary>
@@ -507,7 +507,7 @@ export default async function ListingDetailPage(
                 </details>
               )}
 
-              <p className="mt-3 text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
+              <p className="mt-3 text-[10.5px] text-soleil-muted2 dark:text-soleil-muted-d">
                 {t.listingDetail.publishedOn}{" "}
                 <time dateTime={listing.publishedAt.toISOString()}>
                   {publishedDateLabel}
@@ -542,7 +542,7 @@ export default async function ListingDetailPage(
                 <p className="truncate text-[13.5px] font-bold">
                   {listing.author.fullName ?? listing.author.username}
                 </p>
-                <p className="mt-0.5 text-[11px] text-soleil-muted dark:text-soleil-muted-d">
+                <p className="mt-0.5 text-[11px] text-soleil-muted2 dark:text-soleil-muted-d">
                   {level.label} ·{" "}
                   {listing.author.karma.toLocaleString("fr-FR")}{" "}
                   {t.listingDetail.karma}

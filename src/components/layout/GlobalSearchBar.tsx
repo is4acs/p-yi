@@ -42,7 +42,7 @@ export function GlobalSearchBar() {
       <div className="relative flex w-full max-w-md items-center">
         <Search
           aria-hidden
-          className="pointer-events-none absolute left-3 h-4 w-4 text-soleil-muted dark:text-soleil-muted-d"
+          className="pointer-events-none absolute left-3 h-4 w-4 text-soleil-muted2 dark:text-soleil-muted-d"
         />
         <input
           id="global-search"

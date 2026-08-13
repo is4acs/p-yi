@@ -7,7 +7,10 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { DealStatus, type VoteType } from "@prisma/client";
 import { formatPrice, formatRelativeTime } from "@/lib/format";
-import { isRenderableImageUrl } from "@/lib/images";
+import {
+  isOptimizableImageUrl,
+  isRenderableImageUrl,
+} from "@/lib/images";
 import { rethrowIfNextInternal } from "@/lib/next-errors";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { getCurrentUser } from "@/lib/auth/current-user";
@@ -427,7 +430,7 @@ export default async function DealDetailPage(
                   src={dealPhotos[0].url}
                   alt={deal.title}
                   fill
-                  unoptimized
+                  unoptimized={!isOptimizableImageUrl(dealPhotos[0].url)}
                   priority
                   className="object-cover"
                 />
@@ -448,7 +451,7 @@ export default async function DealDetailPage(
               <h1 className="mt-1.5 break-words font-display text-[22px] font-extrabold leading-[1.12]">
                 {mtTitle.text}
               </h1>
-              <p className="mt-[5px] text-xs text-soleil-muted dark:text-soleil-muted-d">
+              <p className="mt-[5px] text-xs text-soleil-muted2 dark:text-soleil-muted-d">
                 {tFormat(t.dealDetail.postedMeta, {
                   seller: sellerName,
                   ago: formatRelativeTime(deal.publishedAt, locale),
@@ -500,7 +503,7 @@ export default async function DealDetailPage(
                     >
                       {tFormat(t.dealDetail.seeDealAt, { seller: sellerName })}
                     </a>
-                    <p className="mt-1.5 text-center text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
+                    <p className="mt-1.5 text-center text-[10.5px] text-soleil-muted2 dark:text-soleil-muted-d">
                       {t.dealDetail.noCommission}
                     </p>
                   </>
@@ -520,7 +523,7 @@ export default async function DealDetailPage(
               )}
 
               {contentTranslated && (
-                <details className="mt-2 text-xs text-soleil-muted dark:text-soleil-muted-d">
+                <details className="mt-2 text-xs text-soleil-muted2 dark:text-soleil-muted-d">
                   <summary className="cursor-pointer font-semibold">
                     {t.mt.translated} · {t.mt.seeOriginal}
                   </summary>
@@ -557,7 +560,7 @@ export default async function DealDetailPage(
                 )}
               </div>
 
-              <p className="mt-2 text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
+              <p className="mt-2 text-[10.5px] text-soleil-muted2 dark:text-soleil-muted-d">
                 {t.dealDetail.publishedOn}{" "}
                 <time dateTime={deal.publishedAt.toISOString()}>
                   {publishedDateLabel}
@@ -607,12 +610,12 @@ export default async function DealDetailPage(
               <div className="mt-5 rounded-2xl border-[1.5px] border-soleil-border p-3 dark:border-soleil-border-d lg:mt-0">
                 <p className="text-[13.5px] font-bold">{deal.store.name}</p>
                 {deal.store.address && (
-                  <p className="mt-0.5 text-[11.5px] text-soleil-muted dark:text-soleil-muted-d">
+                  <p className="mt-0.5 text-[11.5px] text-soleil-muted2 dark:text-soleil-muted-d">
                     {deal.store.address}
                   </p>
                 )}
                 {deal.store.city?.name && (
-                  <p className="text-[11.5px] text-soleil-muted dark:text-soleil-muted-d">
+                  <p className="text-[11.5px] text-soleil-muted2 dark:text-soleil-muted-d">
                     {deal.store.city.name}
                   </p>
                 )}

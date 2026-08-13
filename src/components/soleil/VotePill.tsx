@@ -126,7 +126,7 @@ export function VotePill({
         </button>
       </div>
       {error && (
-        <p role="alert" className="mt-1.5 text-center text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
+        <p role="alert" className="mt-1.5 text-center text-[10.5px] text-soleil-muted2 dark:text-soleil-muted-d">
           {error}
         </p>
       )}

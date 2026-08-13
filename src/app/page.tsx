@@ -7,7 +7,10 @@ import { fetchDealsPage } from "@/lib/deals/queries";
 import { fetchListingsPage, formatPriceType } from "@/lib/listings/queries";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { formatPrice, formatRelativeTime } from "@/lib/format";
-import { isRenderableImageUrl } from "@/lib/images";
+import {
+  isOptimizableImageUrl,
+  isRenderableImageUrl,
+} from "@/lib/images";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { getLocale, getMessages, tFormat, type Messages } from "@/lib/i18n";
 import { translateUserTexts } from "@/lib/i18n/translate";
@@ -208,7 +211,7 @@ export default async function HomePage(props: Props) {
                     →
                   </span>
                 </div>
-                <div className="mt-0.5 text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
+                <div className="mt-0.5 text-[10.5px] text-soleil-muted2 dark:text-soleil-muted-d">
                   {t.home.dealsCardSub}
                 </div>
               </Link>
@@ -225,7 +228,7 @@ export default async function HomePage(props: Props) {
                     →
                   </span>
                 </div>
-                <div className="mt-0.5 text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
+                <div className="mt-0.5 text-[10.5px] text-soleil-muted2 dark:text-soleil-muted-d">
                   {t.home.listingsCardSub}
                 </div>
               </Link>
@@ -274,7 +277,7 @@ export default async function HomePage(props: Props) {
                       src={dealOfTheDay.coverImageUrl}
                       alt=""
                       fill
-                      unoptimized
+                      unoptimized={!isOptimizableImageUrl(dealOfTheDay.coverImageUrl)}
                       className="object-cover"
                     />
                   </div>
@@ -332,7 +335,7 @@ export default async function HomePage(props: Props) {
                               : formatPrice(deal.price.toString())}
                           </span>
                         </span>
-                        <span className="mt-[3px] block text-[11px] text-soleil-muted dark:text-soleil-muted-d">
+                        <span className="mt-[3px] block text-[11px] text-soleil-muted2 dark:text-soleil-muted-d">
                           {[
                             deal.store?.name ?? deal.merchant?.name,
                             deal.city?.name,
@@ -362,7 +365,7 @@ export default async function HomePage(props: Props) {
                       src={activities[0].images[0].url}
                       alt=""
                       fill
-                      unoptimized
+                      unoptimized={!isOptimizableImageUrl(activities[0].images[0].url)}
                       className="object-cover"
                     />
                   </div>
@@ -373,7 +376,7 @@ export default async function HomePage(props: Props) {
                   <span className="block text-[13px] font-bold">
                     {tFormat(t.home.weekendTeaser, { name: activities[0].name })}
                   </span>
-                  <span className="mt-0.5 block text-[11px] text-soleil-muted dark:text-soleil-muted-d">
+                  <span className="mt-0.5 block text-[11px] text-soleil-muted2 dark:text-soleil-muted-d">
                     {[
                       activities[0].city.name,
                       activityPriceLabel(activities[0], t),
@@ -411,7 +414,7 @@ export default async function HomePage(props: Props) {
                         alt={listing.title}
                         fill
                         sizes="(max-width: 1024px) 50vw, 20vw"
-                        unoptimized
+                        unoptimized={!isOptimizableImageUrl(listing.coverImageUrl)}
                         className="object-cover"
                       />
                     ) : (
@@ -428,7 +431,7 @@ export default async function HomePage(props: Props) {
                     <div className="line-clamp-1 font-display text-[13px] font-bold leading-[1.3]">
                       {homeListingTitles[i]?.text ?? listing.title}
                     </div>
-                    <div className="mt-[5px] text-[11px] text-soleil-muted dark:text-soleil-muted-d">
+                    <div className="mt-[5px] text-[11px] text-soleil-muted2 dark:text-soleil-muted-d">
                       {listing.city.name}
                     </div>
                   </div>
@@ -475,7 +478,7 @@ export default async function HomePage(props: Props) {
                           src={activity.images[0].url}
                           alt=""
                           fill
-                          unoptimized
+                          unoptimized={!isOptimizableImageUrl(activity.images[0].url)}
                           className="object-cover"
                         />
                       </div>
@@ -486,7 +489,7 @@ export default async function HomePage(props: Props) {
                       <span className="block text-[13.5px] font-bold">
                         {activity.name}
                       </span>
-                      <span className="mt-0.5 block text-[11px] text-soleil-muted dark:text-soleil-muted-d">
+                      <span className="mt-0.5 block text-[11px] text-soleil-muted2 dark:text-soleil-muted-d">
                         {[activity.city.name, activityPriceLabel(activity, t)]
                           .filter(Boolean)
                           .join(" · ")}
@@ -526,7 +529,7 @@ export default async function HomePage(props: Props) {
         </div>
 
         {/* Signature — communes en lg, marque centrée en mobile. */}
-        <div className="mt-5 flex items-center justify-center gap-2 border-t border-soleil-line pt-4 text-[11.5px] text-soleil-muted dark:border-soleil-line-d dark:text-soleil-muted-d lg:justify-between">
+        <div className="mt-5 flex items-center justify-center gap-2 border-t border-soleil-line pt-4 text-[11.5px] text-soleil-muted2 dark:border-soleil-line-d dark:text-soleil-muted-d lg:justify-between">
           <span className="hidden text-[11px] lg:block">
             Cayenne · Kourou · Matoury · Rémire-Montjoly ·
             Saint-Laurent-du-Maroni · Macouria

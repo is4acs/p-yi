@@ -7,7 +7,10 @@ import { ArrowLeft, Package } from "lucide-react";
 import { requireUser } from "@/lib/auth/current-user";
 import { formatRelativeTime } from "@/lib/format";
 import { LEVEL_META } from "@/lib/deals/user-level";
-import { isRenderableImageUrl } from "@/lib/images";
+import {
+  isOptimizableImageUrl,
+  isRenderableImageUrl,
+} from "@/lib/images";
 import { formatPriceType } from "@/lib/listings/queries";
 import {
   fetchThread,
@@ -192,12 +195,12 @@ function ListingContextCard({
             fill
             sizes="48px"
             className="object-cover"
-            unoptimized
+            unoptimized={!isOptimizableImageUrl(listing.coverImageUrl)}
           />
         </div>
       ) : (
         <div
-          className="soleil-ph flex h-12 w-12 shrink-0 items-center justify-center rounded-[10px] text-soleil-muted dark:text-soleil-muted-d"
+          className="soleil-ph flex h-12 w-12 shrink-0 items-center justify-center rounded-[10px] text-soleil-muted2 dark:text-soleil-muted-d"
           aria-hidden
         >
           <Package className="h-5 w-5" />

@@ -75,7 +75,7 @@ export function CommentForm({
       )}
 
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[10px] tabular-nums text-soleil-muted dark:text-soleil-muted-d">
+        <span className="text-[10px] tabular-nums text-soleil-muted2 dark:text-soleil-muted-d">
           {value.length}/{MAX_LEN}
         </span>
         <div className="flex gap-2">

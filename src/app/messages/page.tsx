@@ -97,7 +97,7 @@ export default async function MessagesInboxPage() {
                 </li>
               ))}
             </ul>
-            <p className="py-6 text-center text-[11px] text-soleil-muted dark:text-soleil-muted-d">
+            <p className="py-6 text-center text-[11px] text-soleil-muted2 dark:text-soleil-muted-d">
               {t.messagesPage.allForNow}
             </p>
           </>
@@ -170,7 +170,7 @@ function ConversationRow({
           >
             {isTeam ? t.messagesPage.team : c.otherParty.username}
           </span>
-          <span className="flex-none text-[10.5px] tabular-nums text-soleil-muted dark:text-soleil-muted-d">
+          <span className="flex-none text-[10.5px] tabular-nums text-soleil-muted2 dark:text-soleil-muted-d">
             {formatRelativeTime(c.lastMessage.createdAt, locale)}
           </span>
         </div>
@@ -180,7 +180,7 @@ function ConversationRow({
             "mt-0.5 line-clamp-1 text-xs",
             isUnread && !c.lastMessage.isFromMe
               ? "font-bold"
-              : "text-soleil-muted dark:text-soleil-muted-d",
+              : "text-soleil-muted2 dark:text-soleil-muted-d",
           )}
         >
           {previewPrefix}

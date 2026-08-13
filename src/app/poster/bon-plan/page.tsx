@@ -57,7 +57,7 @@ export default async function PosterPage(
 
         <div className="px-5">
           <PosterFork selected="deal" className="pt-4" />
-          <p className="pt-3 text-xs text-soleil-muted dark:text-soleil-muted-d">
+          <p className="pt-3 text-xs text-soleil-muted2 dark:text-soleil-muted-d">
             {tFormat(t.poster.dealIntro, { name: user.username })}
           </p>
 

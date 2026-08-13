@@ -133,7 +133,7 @@ export default async function PosterAnnoncePage(
 
             <Link
               href="/poster/annonce"
-              className="mt-4 inline-flex min-h-[36px] items-center gap-1 text-xs font-bold text-soleil-muted dark:text-soleil-muted-d"
+              className="mt-4 inline-flex min-h-[36px] items-center gap-1 text-xs font-bold text-soleil-muted2 dark:text-soleil-muted-d"
             >
               <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
               {t.poster.changeCategory}
@@ -142,7 +142,7 @@ export default async function PosterAnnoncePage(
             <h1 className="mt-1 font-display text-[22px] font-extrabold leading-[1.12]">
               {selected.name}
             </h1>
-            <p className="mt-1 text-xs text-soleil-muted dark:text-soleil-muted-d">
+            <p className="mt-1 text-xs text-soleil-muted2 dark:text-soleil-muted-d">
               {tFormat(t.poster.listingIntro, { name: user.username })}
             </p>
 
@@ -190,7 +190,7 @@ export default async function PosterAnnoncePage(
       <h1 className="mt-5 font-display text-[17px] font-extrabold">
         {t.poster.chooseCategory}
       </h1>
-      <p className="mt-1 text-xs text-soleil-muted dark:text-soleil-muted-d">
+      <p className="mt-1 text-xs text-soleil-muted2 dark:text-soleil-muted-d">
         {t.poster.chooseCategoryHelp}
       </p>
 

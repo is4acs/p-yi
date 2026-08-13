@@ -57,7 +57,7 @@ export async function CategoryPicker({ parents, activeParent }: Props) {
       <div className="space-y-4">
         <Link
           href="/poster/annonce"
-          className="inline-flex min-h-[44px] items-center gap-1 text-sm font-bold text-soleil-muted transition dark:text-soleil-muted-d"
+          className="inline-flex min-h-[44px] items-center gap-1 text-sm font-bold text-soleil-muted2 transition dark:text-soleil-muted-d"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
           {t.poster.allCategories}
@@ -72,7 +72,7 @@ export async function CategoryPicker({ parents, activeParent }: Props) {
           <span className="font-bold text-soleil-otext dark:text-soleil-otext-d">
             {activeParent.name}
           </span>
-          <span className="text-soleil-muted dark:text-soleil-muted-d">
+          <span className="text-soleil-muted2 dark:text-soleil-muted-d">
             {t.poster.refineSub}
           </span>
         </div>
@@ -141,7 +141,7 @@ function CategoryTile({
       {showChevron && (
         <ChevronRight
           aria-hidden
-          className="absolute right-2 top-2 h-4 w-4 text-soleil-muted dark:text-soleil-muted-d"
+          className="absolute right-2 top-2 h-4 w-4 text-soleil-muted2 dark:text-soleil-muted-d"
         />
       )}
     </Link>

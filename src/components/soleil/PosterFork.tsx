@@ -65,7 +65,7 @@ export async function PosterFork({ selected = null, className }: Props) {
                 "mt-[3px] text-[11px] leading-[1.45]",
                 isSelected
                   ? "text-soleil-muted-d dark:text-soleil-muted"
-                  : "text-soleil-muted dark:text-soleil-muted-d",
+                  : "text-soleil-muted2 dark:text-soleil-muted-d",
               )}
             >
               {copy[card.key].sub}

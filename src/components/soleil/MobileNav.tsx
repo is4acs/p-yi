@@ -98,7 +98,7 @@ function NavItem({
         "relative flex min-h-[44px] min-w-[56px] flex-col items-center justify-end gap-1 px-1 pb-0.5 text-[11px] transition active:scale-95",
         active
           ? "font-bold text-soleil-forest dark:text-soleil-cream"
-          : "font-semibold text-soleil-muted dark:text-soleil-muted-d",
+          : "font-semibold text-soleil-muted2 dark:text-soleil-muted-d",
       )}
     >
       {active ? <Sun w={12} /> : <span aria-hidden className="h-1.5" />}

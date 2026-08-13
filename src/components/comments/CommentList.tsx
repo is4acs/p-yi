@@ -117,7 +117,7 @@ export async function CommentList({ dealId, dealSlug, currentUserId }: Props) {
         </div>
       ) : (
         <div className="mt-3 flex items-center justify-between gap-3 rounded-full border-[1.5px] border-soleil-border py-2.5 pl-4 pr-2.5 dark:border-soleil-border-d">
-          <span className="text-[12.5px] text-soleil-muted dark:text-soleil-muted-d">
+          <span className="text-[12.5px] text-soleil-muted2 dark:text-soleil-muted-d">
             {t.dealDetail.addComment}
           </span>
           <Button asChild size="sm" className="rounded-full">

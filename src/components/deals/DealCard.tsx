@@ -20,6 +20,7 @@ import { TempBadge } from "@/components/soleil/TempBadge";
 import { DealImagePlaceholder } from "./DealImagePlaceholder";
 import { VoteButtons } from "./VoteButtons";
 import { FavoriteButton } from "./FavoriteButton";
+import { isOptimizableImageUrl } from "@/lib/images";
 
 export type { DealCardData };
 
@@ -147,7 +148,7 @@ export async function DealCard({
               alt=""
               width={64}
               height={64}
-              unoptimized
+              unoptimized={!isOptimizableImageUrl(deal.coverImageUrl)}
               className="h-16 w-16 flex-none rounded-[14px] object-cover"
             />
           ) : (
@@ -155,7 +156,7 @@ export async function DealCard({
           )}
           <div className="min-w-0 flex-1">
             <h2 className="text-sm font-bold leading-tight">{displayTitle}</h2>
-            <p className="mt-[3px] text-[11px] text-soleil-muted dark:text-soleil-muted-d">
+            <p className="mt-[3px] text-[11px] text-soleil-muted2 dark:text-soleil-muted-d">
               {meta}
             </p>
             <div className="mt-1.5 flex flex-wrap items-center gap-2">
@@ -184,7 +185,7 @@ export async function DealCard({
           </div>
           <div className="flex flex-none flex-col items-center gap-1">
             <TempBadge temperature={deal.temperature} />
-            <span className="text-[10px] text-soleil-muted dark:text-soleil-muted-d">
+            <span className="text-[10px] text-soleil-muted2 dark:text-soleil-muted-d">
               {tFormat(t.deals.comments, { n: deal.commentCount })}
             </span>
           </div>

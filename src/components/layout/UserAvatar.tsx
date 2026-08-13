@@ -1,7 +1,10 @@
 import Image from "next/image";
 
 import { cn } from "@/lib/utils";
-import { isRenderableImageUrl } from "@/lib/images";
+import {
+  isOptimizableImageUrl,
+  isRenderableImageUrl,
+} from "@/lib/images";
 
 type Props = {
   username: string;
@@ -43,7 +46,7 @@ export function UserAvatar({
           width={PIXEL_SIZE[size]}
           height={PIXEL_SIZE[size]}
           className="h-full w-full object-cover"
-          unoptimized
+          unoptimized={!isOptimizableImageUrl(avatarUrl)}
         />
       </span>
     );
