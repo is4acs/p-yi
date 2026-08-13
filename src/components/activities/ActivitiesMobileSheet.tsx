@@ -47,11 +47,27 @@ import { tFormat } from "@/lib/i18n/tformat";
  */
 const RESERVED = 88;
 
-function snapPoints(viewportHeight: number): number[] {
+/**
+ * Inset bas réel (barre home iPhone) : l'offset CSS du panneau est
+ * `calc(5rem + env(safe-area-inset-bottom))`, donc le palier plein doit
+ * soustraire ce même inset, sinon le haut du panneau sort de l'écran de
+ * la valeur de l'inset. On lit env() via une custom property posée dans
+ * globals.css (`--safe-area-bottom`).
+ */
+function readBottomInset(): number {
+  if (typeof window === "undefined") return 0;
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(
+    "--safe-area-bottom",
+  );
+  const parsed = Number.parseFloat(raw);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function snapPoints(viewportHeight: number, bottomInset: number): number[] {
   return [
     136,
     Math.round(viewportHeight * 0.52),
-    Math.max(240, viewportHeight - RESERVED),
+    Math.max(240, viewportHeight - RESERVED - bottomInset),
   ];
 }
 
@@ -82,7 +98,7 @@ export function ActivitiesMobileSheet({
 }: Props) {
   const t = useMessages();
   const [isMobile, setIsMobile] = useState(false);
-  const [points, setPoints] = useState<number[]>(() => snapPoints(800));
+  const [points, setPoints] = useState<number[]>(() => snapPoints(800, 0));
   const [height, setHeight] = useState(136);
   const [dragging, setDragging] = useState(false);
   const dragRef = useRef<{ startY: number; startHeight: number } | null>(null);
@@ -108,7 +124,7 @@ export function ActivitiesMobileSheet({
   // hauteur courante sur le palier le plus proche.
   useEffect(() => {
     const sync = () => {
-      const next = snapPoints(window.innerHeight);
+      const next = snapPoints(window.innerHeight, readBottomInset());
       setPoints(next);
       setHeight((current) => nearestSnap(current, next));
     };

@@ -445,7 +445,7 @@ export default async function DealDetailPage(
                 {deal.category.name} ·{" "}
                 {deal.store ? t.dealDetail.inStore : t.dealDetail.web}
               </CountLine>
-              <h1 className="mt-1.5 font-display text-[22px] font-extrabold leading-[1.12]">
+              <h1 className="mt-1.5 break-words font-display text-[22px] font-extrabold leading-[1.12]">
                 {mtTitle.text}
               </h1>
               <p className="mt-[5px] text-xs text-soleil-muted dark:text-soleil-muted-d">

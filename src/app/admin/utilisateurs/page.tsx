@@ -6,6 +6,7 @@ import { UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth/current-user";
 import { formatRole, isSuperAdmin } from "@/lib/admin/roles";
+import { firstParam } from "@/lib/url-params";
 import {
   adminBanUserAction,
   adminToggleShadowBanAction,
@@ -44,7 +45,7 @@ export default async function AdminUsersPage(
   // rôle (promouvoir/rétrograder) seulement si super-admin.
   const admin = await requireRole(UserRole.MODERATOR, "/admin/utilisateurs");
 
-  const q = searchParams.q?.trim() || "";
+  const q = firstParam(searchParams.q)?.trim() || "";
   const page = parsePage(searchParams.page);
   const skip = (page - 1) * PAGE_SIZE;
   const filter = searchParams.filter || "all";

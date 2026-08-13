@@ -23,17 +23,19 @@ import { DEFAULT_LOCALE, type Locale } from "./config";
  *     `TRANSLATE_DISABLE=1`.
  *
  * Garde-fous :
- *  - interface en français (langue par défaut) → AUCUN appel réseau : le
- *    contenu publié sur Péyi est très majoritairement rédigé en français,
- *    la traduction sert les interfaces pt/ht (vendeur haïtien ↔ acheteur
- *    brésilien). Sans ce court-circuit, chaque rendu fr à froid partait en
- *    dizaines d'appels externes pour re-traduire du français en français ;
+ *  - interface en français (langue par défaut) SANS fournisseur contractuel
+ *    → aucun appel réseau : le contenu publié sur Péyi est très
+ *    majoritairement rédigé en français, et sans ce court-circuit chaque
+ *    rendu fr à froid partait en dizaines d'appels vers l'endpoint public
+ *    pour re-traduire du français en français. Dès qu'un fournisseur
+ *    contractuel est configuré, les interfaces fr retrouvent la traduction
+ *    ht/pt→fr (le cache 30 j + la détection sameLang bornent le coût) ;
  *  - contenu privé (`sensitive: true`, messages directs) → jamais envoyé à
  *    l'endpoint web public sans clé ; il faut un fournisseur contractuel
  *    (TRANSLATE_API_URL ou GOOGLE_TRANSLATE_API_KEY) pour traduire un DM ;
  *  - échec réseau / timeout (4 s) → texte original, jamais d'erreur page,
- *    et disjoncteur de 5 min par instance pour ne pas re-payer le timeout
- *    à chaque texte tant que le fournisseur est en panne ;
+ *    et disjoncteur par instance : 3 échecs consécutifs coupent les appels
+ *    pendant 5 min (un blip isolé ne prive pas tout le site de traduction) ;
  *  - langue détectée == langue cible → texte original (translated: false) ;
  *  - résultats mis en cache serveur 30 jours (clé = texte + cible), les
  *    échecs ne sont PAS mis en cache.
@@ -70,14 +72,38 @@ function hasContractualProvider(): boolean {
 // --- Disjoncteur d'échec ----------------------------------------------------
 // `unstable_cache` ne met pas les échecs en cache (rawTranslate lève) : sans
 // garde supplémentaire, un fournisseur en panne ferait re-payer le timeout de
-// 4 s à CHAQUE texte de CHAQUE rendu. On retient l'heure du dernier échec
-// (par instance serveur) et on coupe les appels pendant 5 min — les pages
-// affichent l'original, puis on réessaie une fois la fenêtre écoulée.
+// 4 s à CHAQUE texte de CHAQUE rendu. On compte les échecs consécutifs (par
+// instance serveur) : à partir de 3, on coupe les appels pendant 5 min — les
+// pages affichent l'original, puis on réessaie une fois la fenêtre écoulée.
+// Le seuil de 3 évite qu'un blip isolé fasse retomber tout le site en VO.
 const FAILURE_COOLDOWN_MS = 5 * 60 * 1000;
-let lastFailureAt = 0;
+const FAILURE_THRESHOLD = 3;
+let consecutiveFailures = 0;
+let breakerOpenedAt = 0;
 
 function providerOnCooldown(): boolean {
-  return Date.now() - lastFailureAt < FAILURE_COOLDOWN_MS;
+  return (
+    consecutiveFailures >= FAILURE_THRESHOLD &&
+    Date.now() - breakerOpenedAt < FAILURE_COOLDOWN_MS
+  );
+}
+
+function recordFailure(): void {
+  consecutiveFailures += 1;
+  if (consecutiveFailures === FAILURE_THRESHOLD) {
+    breakerOpenedAt = Date.now();
+  } else if (
+    consecutiveFailures > FAILURE_THRESHOLD &&
+    Date.now() - breakerOpenedAt >= FAILURE_COOLDOWN_MS
+  ) {
+    // Fenêtre écoulée, l'essai suivant a re-échoué : on ré-arme.
+    breakerOpenedAt = Date.now();
+    consecutiveFailures = FAILURE_THRESHOLD;
+  }
+}
+
+function recordSuccess(): void {
+  consecutiveFailures = 0;
 }
 
 type RawResult = {
@@ -230,9 +256,12 @@ export async function translateUserText(
   if (!trimmed || !translationEnabled()) {
     return { text, translated: false };
   }
-  // Interface dans la langue par défaut (fr) : le contenu est affiché tel
-  // quel, sans appel réseau — voir le bloc de doc en tête de fichier.
-  if (target === DEFAULT_LOCALE) {
+  // Interface dans la langue par défaut (fr) SANS fournisseur contractuel :
+  // le contenu est affiché tel quel, sans appel réseau — on n'envoie pas
+  // tout le site vers l'endpoint public pour re-traduire du fr en fr.
+  // Avec un fournisseur configuré, la traduction ht/pt→fr reste active
+  // (c'est le scénario acheteur français ↔ vendeur haïtien).
+  if (target === DEFAULT_LOCALE && !hasContractualProvider()) {
     return { text, translated: false };
   }
   if (options?.sensitive && !hasContractualProvider()) {
@@ -243,6 +272,7 @@ export async function translateUserText(
   }
   try {
     const result = await cachedTranslate(trimmed, PROVIDER_LANG[target]);
+    recordSuccess();
     const sameLang =
       result.detectedSource !== null &&
       result.detectedSource.toLowerCase().startsWith(PROVIDER_LANG[target]);
@@ -252,8 +282,8 @@ export async function translateUserText(
     return { text: result.text, translated: true };
   } catch {
     // Fournisseur injoignable / quota / timeout : on affiche l'original et
-    // on arme le disjoncteur pour les prochains textes.
-    lastFailureAt = Date.now();
+    // on incrémente le disjoncteur pour les prochains textes.
+    recordFailure();
     return { text, translated: false };
   }
 }

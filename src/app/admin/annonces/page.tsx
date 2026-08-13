@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ExternalLink, Search } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
+import { firstParam } from "@/lib/url-params";
 import { adminDeleteListingAction } from "./actions";
 
 export const metadata: Metadata = {
@@ -32,7 +33,7 @@ export default async function AdminListingsPage(
   }
 ) {
   const searchParams = await props.searchParams;
-  const q = searchParams.q?.trim() || "";
+  const q = firstParam(searchParams.q)?.trim() || "";
   const page = parsePage(searchParams.page);
   const skip = (page - 1) * PAGE_SIZE;
 

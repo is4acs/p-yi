@@ -687,7 +687,11 @@ export default async function AnnoncesPage(
             {tFormat(t.listings.count, { n: total, place: headingName })}
           </span>
 
-          <details className="group relative flex-none">
+          {/* key={sort} : après un clic sur une option, la navigation
+              re-rend le même arbre — sans key, React garde le <details>
+              ouvert (état DOM non contrôlé). Changer la key le remonte
+              fermé. */}
+          <details key={sort} className="group relative flex-none">
             <summary className="cursor-pointer list-none text-[13px] text-soleil-muted2 dark:text-soleil-muted-d [&::-webkit-details-marker]:hidden">
               {t.listings.sortLabel}{" "}
               <b className="font-bold text-soleil-forest dark:text-soleil-cream">

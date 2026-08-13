@@ -216,17 +216,12 @@ export async function getStaticPagesEntries(): Promise<SitemapUrlEntry[]> {
           },
           // Les annonces sont rattachées aux SOUS-catégories : le seuil
           // d'indexabilité d'un pilier de catégorie mère se juge sur le
-          // cumul parent + enfants (cf. pillar-queries).
+          // cumul parent + enfants (cf. pillar-queries). Annonces
+          // uniquement — les piliers deals filtrent sur le slug exact.
           children: {
             select: {
               _count: {
                 select: {
-                  deals: {
-                    where: {
-                      status: "PUBLISHED",
-                      OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-                    },
-                  },
                   listings: {
                     where: { status: "PUBLISHED", expiresAt: { gt: now } },
                   },
@@ -285,7 +280,7 @@ export async function getStaticPagesEntries(): Promise<SitemapUrlEntry[]> {
     _count: { deals: number; listings: number };
   };
   type CategoryCount = CityCount & {
-    children: Array<{ _count: { deals: number; listings: number } }>;
+    children: Array<{ _count: { listings: number } }>;
   };
   type LatestUpdate = { updatedAt: Date } | null;
 
@@ -389,18 +384,21 @@ export async function getStaticPagesEntries(): Promise<SitemapUrlEntry[]> {
   const cityCountBySlug = new Map(
     cityCounts.map((city) => [city.slug, city._count]),
   );
-  // Cumul parent + enfants : une catégorie mère dont les annonces vivent
-  // dans les sous-catégories reste indexable.
+  // Cumul parent + enfants pour les ANNONCES uniquement : une catégorie
+  // mère dont les annonces vivent dans les sous-catégories reste
+  // indexable, et `buildListingsPillarWhere` agrège pareil (slug OU
+  // parent). Les deals restent au compte propre — leur pilier filtre sur
+  // le slug exact, cumuler ici rendrait indexable une page vide.
   const categoryCountBySlug = new Map(
     categoryCounts.map((category) => [
       category.slug,
-      category.children.reduce(
-        (acc, child) => ({
-          deals: acc.deals + child._count.deals,
-          listings: acc.listings + child._count.listings,
-        }),
-        { ...category._count },
-      ),
+      {
+        deals: category._count.deals,
+        listings: category.children.reduce(
+          (acc, child) => acc + child._count.listings,
+          category._count.listings,
+        ),
+      },
     ]),
   );
 

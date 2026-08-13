@@ -6,6 +6,7 @@ import { UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth/current-user";
 import { formatRole } from "@/lib/admin/roles";
+import { firstParam } from "@/lib/url-params";
 import { adminSetRoleAction } from "./actions";
 
 export const metadata: Metadata = {
@@ -51,7 +52,7 @@ export default async function AdminRolesPage(
     "/admin/utilisateurs/roles",
   );
 
-  const q = searchParams.q?.trim() || "";
+  const q = firstParam(searchParams.q)?.trim() || "";
   const page = parsePage(searchParams.page);
   const skip = (page - 1) * PAGE_SIZE;
 

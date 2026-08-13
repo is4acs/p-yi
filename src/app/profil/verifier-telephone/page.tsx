@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { ArrowLeft, RefreshCcw, ShieldCheck } from "lucide-react";
 
 import { requireUser } from "@/lib/auth/current-user";
+import { firstParam } from "@/lib/url-params";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -19,14 +20,20 @@ export const metadata: Metadata = {
 };
 
 type Props = {
-  searchParams: Promise<{ phone?: string; error?: string; success?: string }>;
+  // Valeurs potentiellement en tableau si le paramètre est répété —
+  // lecture via `firstParam` uniquement.
+  searchParams: Promise<{
+    phone?: string | string[];
+    error?: string | string[];
+    success?: string | string[];
+  }>;
 };
 
 export default async function VerifyPhonePage(props: Props) {
   const searchParams = await props.searchParams;
   await requireUser("/profil");
 
-  const phone = searchParams.phone?.trim();
+  const phone = firstParam(searchParams.phone)?.trim();
   // Without a phone in the URL this page is meaningless — send the user back
   // to the edit form so they can (re)enter a number.
   if (!phone) redirect("/profil/edit");
@@ -58,20 +65,20 @@ export default async function VerifyPhonePage(props: Props) {
         </p>
       </section>
 
-      {searchParams.error && (
+      {firstParam(searchParams.error) && (
         <div
           role="alert"
           className="mt-5 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
         >
-          {searchParams.error}
+          {firstParam(searchParams.error)}
         </div>
       )}
-      {searchParams.success && (
+      {firstParam(searchParams.success) && (
         <div
           role="status"
           className="mt-5 rounded-lg border border-peyi-green-200 bg-peyi-green-50 p-3 text-sm text-peyi-green-800"
         >
-          {searchParams.success}
+          {firstParam(searchParams.success)}
         </div>
       )}
 

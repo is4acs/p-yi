@@ -5,12 +5,14 @@ import { Flame, Search, Tag } from "lucide-react";
 import { fetchDealsPage, fetchUserFavoriteSet, fetchUserVoteMap } from "@/lib/deals/queries";
 import { fetchListingsPage, fetchUserFavoriteListingSet } from "@/lib/listings/queries";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { firstParam } from "@/lib/url-params";
 import { DealCard } from "@/components/deals/DealCard";
 import { ListingCard } from "@/components/listings/ListingCard";
 
 export const dynamic = "force-dynamic";
 
-type SearchParams = { q?: string };
+// `q` peut arriver en tableau si le paramètre est répété — firstParam.
+type SearchParams = { q?: string | string[] };
 
 const TOP_N = 6;
 
@@ -18,7 +20,7 @@ export async function generateMetadata(props: {
   searchParams: Promise<SearchParams>;
 }): Promise<Metadata> {
   const searchParams = await props.searchParams;
-  const q = (searchParams.q ?? "").trim();
+  const q = (firstParam(searchParams.q) ?? "").trim();
   return {
     title: q ? `Recherche : ${q}` : "Recherche",
     description: q
@@ -42,7 +44,7 @@ export default async function RecherchePage(props: {
   searchParams: Promise<SearchParams>;
 }) {
   const searchParams = await props.searchParams;
-  const q = (searchParams.q ?? "").trim();
+  const q = (firstParam(searchParams.q) ?? "").trim();
 
   if (!q) {
     return (

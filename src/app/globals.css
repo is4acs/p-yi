@@ -10,6 +10,11 @@
 
 @layer base {
   :root {
+    /* Inset bas iOS (barre home), lisible depuis le JS via
+       getComputedStyle — utilisé par la feuille mobile des activités
+       pour calibrer son palier plein. 0px partout ailleurs. */
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+
     /* Base (light) */
     --background: 0 0% 100%;
     --foreground: 0 0% 10%;

@@ -64,7 +64,15 @@ const optionalTrimmed = (max: number) =>
 
 const optionalUrl = z.preprocess(
   emptyToUndefined,
-  z.string().trim().url("URL invalide (https://…)").max(500).optional(),
+  z
+    .string()
+    .trim()
+    .url("URL invalide (https://…)")
+    // `.url()` accepte n'importe quel schéma (javascript:, data:…) —
+    // on n'autorise que le web, le lien est rendu cliquable sur la fiche.
+    .regex(/^https?:\/\//i, "Le lien doit commencer par http:// ou https://.")
+    .max(500)
+    .optional(),
 );
 
 // "08:00-12:00, 14:00-17:30" → [["08:00","12:00"], ["14:00","17:30"]]

@@ -129,6 +129,13 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  // Sans `viewport-fit=cover`, iOS renvoie 0 pour
+  // env(safe-area-inset-bottom) : toutes les réserves safe-area du site
+  // (body, composer messages, feuille activités, InstallBanner)
+  // retomberaient sur leurs valeurs fixes en mode PWA installée — le mode
+  // qu'on promeut. Le haut reste sûr : `statusBarStyle: "default"` garde
+  // une barre de statut opaque en standalone.
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({

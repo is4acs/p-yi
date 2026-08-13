@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth/current-user";
 import { ACTIVITY_CATEGORIES, ACTIVITY_STATUSES } from "@/lib/activities/labels";
 import { cn } from "@/lib/utils";
+import { firstParam } from "@/lib/url-params";
 import {
   adminDeleteActivityAction,
   adminSetActivityStatusAction,
@@ -66,7 +67,7 @@ export default async function AdminActivitiesPage(props: {
   await requireRole(UserRole.ADMIN, "/admin/activites");
 
   const searchParams = await props.searchParams;
-  const q = searchParams.q?.trim() || "";
+  const q = firstParam(searchParams.q)?.trim() || "";
   const statut = parseStatus(searchParams.statut);
   const page = parsePage(searchParams.page);
   const skip = (page - 1) * PAGE_SIZE;

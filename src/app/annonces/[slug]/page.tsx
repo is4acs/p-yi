@@ -466,7 +466,7 @@ export default async function ListingDetailPage(
               <p className="font-display text-[30px] font-extrabold leading-none">
                 {priceLabel}
               </p>
-              <h1 className="mt-1.5 text-base font-bold">{mtTitle.text}</h1>
+              <h1 className="mt-1.5 break-words text-base font-bold">{mtTitle.text}</h1>
               <p className="mt-1 text-[11.5px] text-soleil-muted dark:text-soleil-muted-d">
                 {locationLabel} ·{" "}
                 {formatRelativeTime(listing.bumpedAt ?? listing.publishedAt, locale)}{" "}
