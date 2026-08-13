@@ -164,22 +164,39 @@ export async function fetchDealsPage({
 
   // sort === "hot"
   const windowStart = new Date(Date.now() - HOT_WINDOW_DAYS * 86_400_000);
+  // Pool LÉGER : le score ne dépend que de (temperature, publishedAt) —
+  // inutile de rapatrier 500 cartes complètes (relations comprises) pour
+  // n'en afficher que 20. On classe sur 3 colonnes, puis on re-sélectionne
+  // uniquement la page demandée par id.
   const pool = await prisma.deal.findMany({
     where: { ...where, publishedAt: { gte: windowStart } },
     orderBy: { publishedAt: "desc" },
     take: HOT_POOL_CAP,
-    select: dealCardSelect,
+    select: { id: true, temperature: true, publishedAt: true },
   });
 
   const now = Date.now();
   const ranked = pool
-    .map((d) => ({ d, score: hotScore(d.temperature, d.publishedAt, now) }))
+    .map((d) => ({ id: d.id, score: hotScore(d.temperature, d.publishedAt, now) }))
     // pinned deals always on top regardless of score (not selected here,
     // so we approximate by keeping the DB's order stability)
     .sort((a, b) => b.score - a.score);
 
+  const pageIds = ranked.slice(skip, skip + PAGE_SIZE).map((x) => x.id);
+  const rows = pageIds.length
+    ? await prisma.deal.findMany({
+        where: { id: { in: pageIds } },
+        select: dealCardSelect,
+      })
+    : [];
+  // `findMany({ in })` ne garantit pas l'ordre — on re-projette dans
+  // l'ordre du classement.
+  const rowById = new Map(rows.map((row) => [row.id, row]));
   return {
-    deals: ranked.slice(skip, skip + PAGE_SIZE).map((x) => x.d),
+    deals: pageIds.flatMap((id) => {
+      const row = rowById.get(id);
+      return row ? [row] : [];
+    }),
     total: ranked.length,
   };
 }

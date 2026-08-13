@@ -5,6 +5,7 @@ import { NotificationType } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { requireActiveUser } from "@/lib/auth/current-user";
+import { interactionLimiter } from "@/lib/rate-limit";
 import { dispatchNotification } from "@/lib/notifications/dispatch";
 
 export type FavoriteResult = {
@@ -25,6 +26,13 @@ export async function toggleListingFavoriteAction(
   }
 
   const user = await requireActiveUser();
+
+  // Chaque toggle écrit 2 lignes en transaction et peut déclencher une
+  // notification au vendeur — on plafonne par utilisateur.
+  const { success } = await interactionLimiter.limit(user.id);
+  if (!success) {
+    return { ok: false, error: "Doucement ! Réessaie dans une minute." };
+  }
 
   const listing = await prisma.listing.findUnique({
     where: { id: listingId },

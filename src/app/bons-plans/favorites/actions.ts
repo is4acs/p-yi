@@ -4,6 +4,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
 import { requireActiveUser } from "@/lib/auth/current-user";
+import { interactionLimiter } from "@/lib/rate-limit";
 
 export type FavoriteResult = {
   ok: boolean;
@@ -23,6 +24,11 @@ export async function toggleFavoriteAction(
   }
 
   const user = await requireActiveUser();
+
+  const { success } = await interactionLimiter.limit(user.id);
+  if (!success) {
+    return { ok: false, error: "Doucement ! Réessaie dans une minute." };
+  }
 
   const deal = await prisma.deal.findUnique({
     where: { id: dealId },

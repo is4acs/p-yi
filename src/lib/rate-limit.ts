@@ -104,6 +104,14 @@ export const writeLimiter = makeLimiter("write", 10, "1 m");
 export const reportLimiter = makeLimiter("report", 5, "1 h");
 
 /**
+ * Interactions légères mais côté écriture (votes, favoris). Clé = userId.
+ * 30 par minute : un humain qui toggle vite reste loin du plafond, mais
+ * un bot qui ferait yo-yo la température d'un deal (chaque vote écrit
+ * 3-4 lignes + karma + notifications potentielles) se fait couper.
+ */
+export const interactionLimiter = makeLimiter("interaction", 30, "1 m");
+
+/**
  * Export RGPD (portabilité). Clé = userId. 1 export toutes les 24 h :
  * l'export est coûteux (lit ~10 tables en parallèle, sérialise tout
  * le contenu de l'utilisateur), donc on limite fortement pour éviter

@@ -72,7 +72,9 @@ export function FilterSelect({
           keyboardInteraction.current = false;
         }}
         className={cn(
-          "min-h-[36px] cursor-pointer appearance-none rounded-full py-[7px] pl-3.5 pr-7 text-xs outline-none",
+          // `outline-none` seul rendait le focus clavier invisible — un
+          // ring visible au focus-visible uniquement (pas au clic).
+          "min-h-[36px] cursor-pointer appearance-none rounded-full py-[7px] pl-3.5 pr-7 text-xs outline-none focus-visible:ring-2 focus-visible:ring-soleil-orange focus-visible:ring-offset-2 focus-visible:ring-offset-soleil-cream dark:focus-visible:ring-offset-soleil-night",
           active
             ? "border-[1.5px] border-soleil-forest bg-soleil-forest font-bold text-soleil-cream dark:border-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
             : "border-[1.5px] border-soleil-border bg-transparent font-semibold text-soleil-forest dark:border-soleil-border-d dark:text-soleil-cream",

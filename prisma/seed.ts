@@ -255,11 +255,17 @@ async function main() {
       continue
     }
     for (const sub of subs) {
+      // Rattache les catégories créées AVANT cette hiérarchie, mais ne
+      // re-parente jamais une catégorie déjà rattachée : si un admin a
+      // déplacé une sous-catégorie en prod, relancer le seed ne doit pas
+      // écraser son choix.
+      const existing = await prisma.category.findUnique({
+        where: { slug: sub.slug },
+        select: { parentId: true },
+      })
       await prisma.category.upsert({
         where: { slug: sub.slug },
-        // Rattache aussi les catégories créées avant cette hiérarchie
-        // (idempotent : parentId identique à chaque exécution).
-        update: { parentId: parent.id },
+        update: existing && existing.parentId === null ? { parentId: parent.id } : {},
         create: { ...sub, type: 'LISTING', parentId: parent.id },
       })
     }

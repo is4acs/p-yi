@@ -45,7 +45,7 @@ export function SearchField({
         placeholder={placeholder}
         autoComplete="off"
         aria-label={placeholder}
-        className="min-h-[44px] w-full bg-transparent text-[13.5px] font-medium outline-none placeholder:text-soleil-muted dark:placeholder:text-soleil-muted-d"
+        className="min-h-[44px] w-full rounded-sm bg-transparent text-[13.5px] font-medium outline-none placeholder:text-soleil-muted focus-visible:ring-2 focus-visible:ring-soleil-orange dark:placeholder:text-soleil-muted-d"
       />
     </form>
   );

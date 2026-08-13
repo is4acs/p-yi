@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import {
   Prisma,
   ListingStatus,
@@ -152,24 +153,37 @@ function buildWhere({
  * `groupBy`, pas N counts. Alimente la colonne catégories du catalogue :
  * les counts des feuilles sont sommés côté appelant pour les parents.
  */
+// Les counts alimentent le méga-menu et l'accordéon de TOUTES les vues du
+// catalogue : re-grouper la table à chaque rendu est inutile — un compteur
+// en retard de 5 min est invisible pour l'utilisateur. `unstable_cache`
+// partage le résultat entre requêtes ; tag `listing-counts` si on veut
+// l'invalider à la publication un jour.
+const cachedListingCategoryCounts = unstable_cache(
+  async (): Promise<Record<string, number>> => {
+    const rows = await prisma.listing.groupBy({
+      by: ["categoryId"],
+      where: {
+        status: ListingStatus.PUBLISHED,
+        expiresAt: { gt: new Date() },
+      },
+      _count: { _all: true },
+    });
+    return Object.fromEntries(
+      rows
+        .filter((r): r is typeof r & { categoryId: string } =>
+          Boolean(r.categoryId),
+        )
+        .map((r) => [r.categoryId, r._count._all]),
+    );
+  },
+  ["listing-category-counts-v1"],
+  { revalidate: 300, tags: ["listing-counts"] },
+);
+
 export async function fetchListingCategoryCounts(): Promise<
   Record<string, number>
 > {
-  const rows = await prisma.listing.groupBy({
-    by: ["categoryId"],
-    where: {
-      status: ListingStatus.PUBLISHED,
-      expiresAt: { gt: new Date() },
-    },
-    _count: { _all: true },
-  });
-  return Object.fromEntries(
-    rows
-      .filter((r): r is typeof r & { categoryId: string } =>
-        Boolean(r.categoryId),
-      )
-      .map((r) => [r.categoryId, r._count._all]),
-  );
+  return cachedListingCategoryCounts();
 }
 
 export async function fetchListingsPage({

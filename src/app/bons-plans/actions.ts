@@ -5,6 +5,7 @@ import { KarmaAction, NotificationType, VoteType } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { requireActiveUser } from "@/lib/auth/current-user";
+import { interactionLimiter } from "@/lib/rate-limit";
 import { awardKarma } from "@/lib/gamification/karma";
 import { checkAndAwardBadges } from "@/lib/gamification/badges";
 import { dispatchNotification } from "@/lib/notifications/dispatch";
@@ -48,6 +49,13 @@ export async function voteDealAction(
   }
 
   const user = await requireActiveUser();
+
+  // Chaque vote écrit 3-4 lignes (vote + compteurs + karma) et peut
+  // déclencher notifications/badges — on plafonne par utilisateur.
+  const { success } = await interactionLimiter.limit(user.id);
+  if (!success) {
+    return { ok: false, error: "Doucement ! Réessaie dans une minute." };
+  }
 
   const deal = await prisma.deal.findUnique({
     where: { id: dealId },

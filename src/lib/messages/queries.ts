@@ -2,6 +2,20 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 /**
+ * Bornes de chargement : la messagerie n'était pas paginée du tout — un
+ * compte actif depuis des mois rapatriait TOUT son historique à chaque
+ * ouverture (et le fil le re-traduisait). On borne large :
+ *  - fil : les 200 derniers messages (aucune conversation marketplace
+ *    n'atteint ça en usage réel, et au-delà l'historique ancien n'a plus
+ *    de valeur opérationnelle) ;
+ *  - inbox : groupement construit sur les 500 messages les plus récents —
+ *    couvre toutes les conversations vivantes ; le badge global, lui,
+ *    reste exact via `fetchUnreadCount` (un count, pas un scan).
+ */
+const THREAD_MESSAGE_CAP = 200;
+const INBOX_SCAN_CAP = 500;
+
+/**
  * Select used to build the inbox view : last message, other party infos,
  * optional listing context.
  */
@@ -73,6 +87,7 @@ export async function fetchInbox(userId: string): Promise<InboxConversation[]> {
       OR: [{ senderId: userId }, { recipientId: userId }],
     },
     orderBy: { createdAt: "desc" },
+    take: INBOX_SCAN_CAP,
     select: messageInboxSelect,
   });
 
@@ -206,6 +221,8 @@ export async function fetchThread({
     if (!listing) return null;
   }
 
+  // Les N derniers messages, rendus en ordre chronologique : on
+  // sélectionne en desc + take puis on inverse.
   const messages = await prisma.message.findMany({
     where: {
       OR: [
@@ -214,9 +231,11 @@ export async function fetchThread({
       ],
       ...(listing ? { listingId: listing.id } : {}),
     },
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: "desc" },
+    take: THREAD_MESSAGE_CAP,
     select: messageThreadSelect,
   });
+  messages.reverse();
 
   return { other, listing, messages };
 }
