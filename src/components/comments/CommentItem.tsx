@@ -10,6 +10,7 @@ import type { UserLevel } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { deleteCommentAction } from "@/app/bons-plans/comments/actions";
 import { useLocale, useMessages } from "@/components/soleil/I18nProvider";
+import { tFormat } from "@/lib/i18n/tformat";
 
 import { CommentForm } from "./CommentForm";
 import { ReportDialog } from "@/components/reports/ReportDialog";
@@ -26,6 +27,10 @@ export type CommentView = {
     level: UserLevel;
   };
   replies?: CommentView[];
+  /** Contenu traduit vers la langue de l'interface (CommentList). */
+  displayContent?: string;
+  /** true si displayContent diffère du contenu original. */
+  translated?: boolean;
 };
 
 type Props = {
@@ -64,14 +69,14 @@ export function CommentItem({
   const level = LEVEL_META[comment.author.level] ?? LEVEL_META.BEGINNER;
 
   function onDelete() {
-    if (!confirm("Supprimer ce commentaire ?")) return;
+    if (!confirm(t.dealDetail.deleteCommentConfirm)) return;
     const fd = new FormData();
     fd.append("commentId", comment.id);
     setDeleteError(null);
     startTransition(async () => {
       const res = await deleteCommentAction(fd);
       if (!res.ok) {
-        setDeleteError(res.error ?? "Erreur lors de la suppression.");
+        setDeleteError(res.error ?? t.dealDetail.deleteCommentError);
       }
     });
   }
@@ -111,9 +116,21 @@ export function CommentItem({
               {t.dealDetail.deletedComment}
             </p>
           ) : (
-            <p className="whitespace-pre-line break-words text-[12.5px] leading-normal text-soleil-body dark:text-soleil-body-d">
-              {comment.content}
-            </p>
+            <>
+              <p className="whitespace-pre-line break-words text-[12.5px] leading-normal text-soleil-body dark:text-soleil-body-d">
+                {comment.displayContent ?? comment.content}
+              </p>
+              {comment.translated && (
+                <details className="text-[10.5px] text-soleil-muted2 dark:text-soleil-muted-d">
+                  <summary className="cursor-pointer font-semibold">
+                    {t.mt.translated} · {t.mt.seeOriginal}
+                  </summary>
+                  <p className="mt-1 whitespace-pre-line break-words">
+                    {comment.content}
+                  </p>
+                </details>
+              )}
+            </>
           )}
 
           {!comment.isDeleted && (
@@ -149,7 +166,7 @@ export function CommentItem({
                 <ReportDialog
                   kind="comment"
                   targetId={comment.id}
-                  title="Signaler ce commentaire"
+                  title={t.dealDetail.reportComment}
                   variant="ghost"
                 />
               )}
@@ -169,7 +186,9 @@ export function CommentItem({
                 parentId={comment.id}
                 compact
                 autoFocus
-                placeholder={`Répondre à @${comment.author.username}…`}
+                placeholder={tFormat(t.dealDetail.replyTo, {
+                  username: comment.author.username,
+                })}
                 onSuccess={() => setShowReply(false)}
                 onCancel={() => setShowReply(false)}
               />

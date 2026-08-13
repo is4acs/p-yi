@@ -31,6 +31,7 @@ import { Ph } from "@/components/soleil/Ph";
 import { VotePill } from "@/components/soleil/VotePill";
 import { getSiteUrl } from "@/lib/site-url";
 import { getLocale, getMessages, tFormat } from "@/lib/i18n";
+import { DetailUnavailable } from "@/components/soleil/DetailUnavailable";
 import { translateUserTexts } from "@/lib/i18n/translate";
 import {
   getDealCategoryBySlug,
@@ -221,29 +222,14 @@ export default async function DealDetailPage(
     // eslint-disable-next-line no-console
     console.error("[deal/page] load failed", { slug: params.slug, err: dealResult.reason });
     return (
-      <main className="flex min-h-[60vh] flex-col items-center justify-center bg-soleil-cream px-4 py-12 text-center text-soleil-forest dark:bg-soleil-night dark:text-soleil-cream">
-        <h1 className="font-display text-[22px] font-extrabold leading-[1.12]">
-          Bon plan indisponible temporairement
-        </h1>
-        <p className="mt-3 max-w-sm text-[13px] leading-relaxed text-soleil-body dark:text-soleil-body-d">
-          La fiche n&apos;a pas pu être chargée pour le moment. Réessaie dans
-          quelques secondes.
-        </p>
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-          <Link
-            href="/bons-plans"
-            className="inline-flex min-h-[44px] items-center rounded-full bg-soleil-forest px-4 text-sm font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
-          >
-            Retour aux bons plans
-          </Link>
-          <Link
-            href={`/bons-plans/${params.slug}`}
-            className="inline-flex min-h-[44px] items-center rounded-full border-[1.5px] border-soleil-forest px-4 text-sm font-bold dark:border-soleil-cream"
-          >
-            Recharger
-          </Link>
-        </div>
-      </main>
+      <DetailUnavailable
+        title={t.dealDetail.unavailableTitle}
+        body={t.common.unavailableBody}
+        backHref="/bons-plans"
+        backLabel={t.dealDetail.backToList}
+        reloadHref={`/bons-plans/${params.slug}`}
+        reloadLabel={t.common.reload}
+      />
     );
   }
 

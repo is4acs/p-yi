@@ -11,9 +11,9 @@ import type {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { useMessages } from "@/components/soleil/I18nProvider";
+import { useLocale, useMessages } from "@/components/soleil/I18nProvider";
 import { cn } from "@/lib/utils";
-import { CONDITION_LABEL, TYPE_LABEL } from "@/lib/listings/queries";
+import { formatCondition, formatListingType } from "@/lib/listings/queries";
 import { maxPhotosForCategory } from "@/lib/listings/photo-limits";
 import {
   type AttributeValue,
@@ -90,6 +90,7 @@ export function ListingForm({
   profilePhoneVerified,
 }: Props) {
   const t = useMessages();
+  const locale = useLocale();
   const v = defaults ?? {};
   const [priceType, setPriceType] = useState<PriceType>(v.priceType ?? "FIXED");
   const [categorySlug, setCategorySlug] = useState<string>(
@@ -158,7 +159,7 @@ export function ListingForm({
                 defaultChecked={(v.type ?? "OFFER") === t}
                 className="sr-only"
               />
-              {TYPE_LABEL[t]}
+              {formatListingType(t, locale)}
             </label>
           ))}
         </div>
@@ -173,7 +174,7 @@ export function ListingForm({
             required
             value={priceType}
             onChange={(e) => setPriceType(e.target.value as PriceType)}
-            className="flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-peyi-orange-300"
+            className="flex h-10 w-full rounded-[10px] border-[1.5px] border-soleil-border bg-soleil-input px-3 text-sm font-semibold text-soleil-forest transition focus:border-soleil-forest focus:outline-none dark:border-soleil-border-d dark:bg-soleil-forest dark:text-soleil-cream dark:focus:border-soleil-cream"
           >
             {PRICE_TYPES.map((pt) => (
               <option key={pt.id} value={pt.id}>
@@ -205,12 +206,12 @@ export function ListingForm({
           id="condition"
           name="condition"
           defaultValue={v.condition ?? ""}
-          className="flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-peyi-orange-300"
+          className="flex h-10 w-full rounded-[10px] border-[1.5px] border-soleil-border bg-soleil-input px-3 text-sm font-semibold text-soleil-forest transition focus:border-soleil-forest focus:outline-none dark:border-soleil-border-d dark:bg-soleil-forest dark:text-soleil-cream dark:focus:border-soleil-cream"
         >
           <option value="">{t.form.notApplicable}</option>
           {CONDITIONS.map((c) => (
             <option key={c} value={c}>
-              {CONDITION_LABEL[c]}
+              {formatCondition(c, locale)}
             </option>
           ))}
         </select>
@@ -222,7 +223,7 @@ export function ListingForm({
           id="categorySlug"
           name="categorySlug"
           required
-          className="flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-peyi-orange-300"
+          className="flex h-10 w-full rounded-[10px] border-[1.5px] border-soleil-border bg-soleil-input px-3 text-sm font-semibold text-soleil-forest transition focus:border-soleil-forest focus:outline-none dark:border-soleil-border-d dark:bg-soleil-forest dark:text-soleil-cream dark:focus:border-soleil-cream"
           value={categorySlug}
           onChange={(e) => setCategorySlug(e.target.value)}
         >
@@ -250,7 +251,7 @@ export function ListingForm({
             name="citySlug"
             required
             defaultValue={v.citySlug ?? ""}
-            className="flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-peyi-orange-300"
+            className="flex h-10 w-full rounded-[10px] border-[1.5px] border-soleil-border bg-soleil-input px-3 text-sm font-semibold text-soleil-forest transition focus:border-soleil-forest focus:outline-none dark:border-soleil-border-d dark:bg-soleil-forest dark:text-soleil-cream dark:focus:border-soleil-cream"
           >
             <option value="" disabled>
               {t.form.chooseCity}
@@ -287,7 +288,7 @@ export function ListingForm({
           maxLength={5000}
           defaultValue={v.description ?? ""}
           placeholder="Décris ton annonce : état, caractéristiques, conditions de retrait…"
-          className="flex w-full rounded-md border border-border bg-background px-3 py-2 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-peyi-orange-300"
+          className="flex w-full rounded-[10px] border-[1.5px] border-soleil-border bg-soleil-input px-3 py-2 text-sm font-semibold text-soleil-forest transition focus:border-soleil-forest focus:outline-none dark:border-soleil-border-d dark:bg-soleil-forest dark:text-soleil-cream dark:focus:border-soleil-cream"
         />
       </div>
 
@@ -366,7 +367,7 @@ function PhoneHint({
 }) {
   if (profilePhone && profilePhoneVerified) {
     return (
-      <p className="flex items-center gap-1 text-xs text-peyi-green-700">
+      <p className="flex items-center gap-1 text-xs font-semibold text-soleil-forest dark:text-soleil-cream">
         <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
         Pré-rempli depuis ton profil (numéro vérifié).
       </p>
@@ -374,13 +375,13 @@ function PhoneHint({
   }
   if (profilePhone && !profilePhoneVerified) {
     return (
-      <p className="flex items-start gap-1 text-xs text-muted-foreground">
+      <p className="flex items-start gap-1 text-xs text-soleil-muted2 dark:text-soleil-muted-d">
         <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
         <span>
           Ton numéro de profil n&apos;est pas encore vérifié.{" "}
           <a
             href={`/profil/verifier-telephone?phone=${encodeURIComponent(profilePhone)}`}
-            className="font-medium text-peyi-orange-600 hover:underline"
+            className="font-bold text-soleil-otext hover:underline dark:text-soleil-otext-d"
           >
             Vérifier
           </a>{" "}
@@ -390,13 +391,13 @@ function PhoneHint({
     );
   }
   return (
-    <p className="flex items-start gap-1 text-xs text-muted-foreground">
+    <p className="flex items-start gap-1 text-xs text-soleil-muted2 dark:text-soleil-muted-d">
       <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
       <span>
         Ajoute un numéro à{" "}
         <a
           href="/profil/edit"
-          className="font-medium text-peyi-orange-600 hover:underline"
+          className="font-bold text-soleil-otext hover:underline dark:text-soleil-otext-d"
         >
           ton profil
         </a>{" "}

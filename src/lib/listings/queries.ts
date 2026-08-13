@@ -319,18 +319,74 @@ export function formatPriceType(
   }
 }
 
-export const CONDITION_LABEL: Record<ItemCondition, string> = {
-  NEW: "Neuf",
-  LIKE_NEW: "Comme neuf",
-  VERY_GOOD: "Très bon état",
-  GOOD: "Bon état",
-  ACCEPTABLE: "État correct",
-  FOR_PARTS: "Pour pièces",
+// Libellés d'état et de type par langue de l'interface — même modèle
+// que PRICE_TYPE_WORDS : les enums Prisma ne passent pas par les
+// dictionnaires, ils sont traduits ici, au plus près de la donnée.
+const CONDITION_WORDS: Record<Locale, Record<ItemCondition, string>> = {
+  fr: {
+    NEW: "Neuf",
+    LIKE_NEW: "Comme neuf",
+    VERY_GOOD: "Très bon état",
+    GOOD: "Bon état",
+    ACCEPTABLE: "État correct",
+    FOR_PARTS: "Pour pièces",
+  },
+  pt: {
+    NEW: "Novo",
+    LIKE_NEW: "Seminovo",
+    VERY_GOOD: "Muito bom estado",
+    GOOD: "Bom estado",
+    ACCEPTABLE: "Estado razoável",
+    FOR_PARTS: "Para peças",
+  },
+  ht: {
+    NEW: "Tou nèf",
+    LIKE_NEW: "Tankou nèf",
+    VERY_GOOD: "Trè bon eta",
+    GOOD: "Bon eta",
+    ACCEPTABLE: "Eta korèk",
+    FOR_PARTS: "Pou pyès",
+  },
 };
 
-export const TYPE_LABEL: Record<ListingType, string> = {
-  OFFER: "Propose",
-  DEMAND: "Recherche",
-  EXCHANGE: "Échange",
-  DONATION: "Don",
+const TYPE_WORDS: Record<Locale, Record<ListingType, string>> = {
+  fr: {
+    OFFER: "Propose",
+    DEMAND: "Recherche",
+    EXCHANGE: "Échange",
+    DONATION: "Don",
+  },
+  pt: {
+    OFFER: "Oferece",
+    DEMAND: "Procura",
+    EXCHANGE: "Troca",
+    DONATION: "Doação",
+  },
+  ht: {
+    OFFER: "Ofri",
+    DEMAND: "Chèche",
+    EXCHANGE: "Twoke",
+    DONATION: "Don",
+  },
 };
+
+export function formatCondition(
+  condition: ItemCondition,
+  locale: Locale = "fr",
+): string {
+  return (CONDITION_WORDS[locale] ?? CONDITION_WORDS.fr)[condition];
+}
+
+export function formatListingType(
+  type: ListingType,
+  locale: Locale = "fr",
+): string {
+  return (TYPE_WORDS[locale] ?? TYPE_WORDS.fr)[type];
+}
+
+/** @deprecated libellés fr uniquement — préférer formatCondition(locale). */
+export const CONDITION_LABEL: Record<ItemCondition, string> =
+  CONDITION_WORDS.fr;
+
+/** @deprecated libellés fr uniquement — préférer formatListingType(locale). */
+export const TYPE_LABEL: Record<ListingType, string> = TYPE_WORDS.fr;

@@ -3,7 +3,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { Button } from "@/components/ui/button";
-import { getMessages } from "@/lib/i18n";
+import { getLocale, getMessages } from "@/lib/i18n";
+import { translateUserTexts } from "@/lib/i18n/translate";
 
 import { CommentForm } from "./CommentForm";
 import { CommentItem, type CommentView } from "./CommentItem";
@@ -83,7 +84,23 @@ async function fetchThread(dealId: string): Promise<CommentView[]> {
 
 export async function CommentList({ dealId, dealSlug, currentUserId }: Props) {
   const t = await getMessages();
+  const locale = await getLocale();
   const comments = await fetchThread(dealId);
+
+  // Traduction du contenu des commentaires vers la langue de l'interface
+  // (un seul batch, réponses comprises) — même mécanique que les fiches :
+  // l'original reste accessible via le bloc « voir l'original ».
+  const flat = comments.flatMap((c) => [c, ...(c.replies ?? [])]);
+  const translations = await translateUserTexts(
+    flat.map((c) => (c.isDeleted ? "" : c.content)),
+    locale,
+  );
+  flat.forEach((c, i) => {
+    if (translations[i]?.translated) {
+      c.displayContent = translations[i].text;
+      c.translated = true;
+    }
+  });
 
   return (
     <div>
@@ -103,7 +120,7 @@ export async function CommentList({ dealId, dealSlug, currentUserId }: Props) {
                 dealId={dealId}
                 currentUserId={currentUserId}
                 canReply={Boolean(currentUserId)}
-                replyDisabledHint="Connecte-toi pour répondre."
+                replyDisabledHint={t.dealDetail.loginToReply}
                 tone={i % 2 === 0 ? "orange" : "forest"}
               />
             </li>

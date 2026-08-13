@@ -330,13 +330,13 @@ export async function ListingCardTile({
             </span>
           ) : showNewBadge ? (
             <Badge variant="new" className="absolute left-2 top-2 shadow">
-              Nouveau
+              {t.listings.newBadge}
             </Badge>
           ) : null}
 
           {showTypeChip && (
             <span className="absolute bottom-2 left-2">
-              <ListingTypeChip type={listing.type} />
+              <ListingTypeChip type={listing.type} locale={locale} />
             </span>
           )}
 

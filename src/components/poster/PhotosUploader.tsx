@@ -263,7 +263,7 @@ export function PhotosUploader({ initialUrls = [], max, className }: Props) {
               />
 
               {isCover && !isError && (
-                <span className="absolute left-1 top-1 inline-flex items-center gap-0.5 rounded-full bg-peyi-orange-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow">
+                <span className="absolute left-1 top-1 inline-flex items-center gap-0.5 rounded-full bg-soleil-orange px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow">
                   <Star className="h-2.5 w-2.5" aria-hidden />
                   {t.poster.cover}
                 </span>
@@ -333,7 +333,7 @@ export function PhotosUploader({ initialUrls = [], max, className }: Props) {
       )}
 
       {photos.length === 0 && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-soleil-muted2 dark:text-soleil-muted-d">
           {t.poster.photoHint}
         </p>
       )}

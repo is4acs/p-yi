@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { createCommentAction } from "@/app/bons-plans/comments/actions";
+import { useMessages } from "@/components/soleil/I18nProvider";
 
 type Props = {
   dealId: string;
@@ -23,23 +24,25 @@ const MAX_LEN = 2000;
 export function CommentForm({
   dealId,
   parentId,
-  placeholder = "Partage ton avis sur ce bon plan…",
+  placeholder,
   autoFocus = false,
   compact = false,
   onSuccess,
   onCancel,
 }: Props) {
+  const t = useMessages();
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const effectivePlaceholder = placeholder ?? t.dealDetail.addComment;
 
   function submit(formData: FormData) {
     setError(null);
     startTransition(async () => {
       const res = await createCommentAction(formData);
       if (!res.ok) {
-        setError(res.error ?? "Erreur lors de l'envoi.");
+        setError(res.error ?? t.dealDetail.sendCommentError);
         return;
       }
       setValue("");
@@ -61,8 +64,8 @@ export function CommentForm({
         autoFocus={autoFocus}
         rows={compact ? 2 : 2}
         maxLength={MAX_LEN}
-        placeholder={placeholder}
-        aria-label={placeholder}
+        placeholder={effectivePlaceholder}
+        aria-label={effectivePlaceholder}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         className="flex w-full resize-y rounded-[22px] border-[1.5px] border-soleil-border bg-transparent px-4 py-2.5 text-[12.5px] text-soleil-forest transition placeholder:text-soleil-muted focus:border-soleil-forest focus:outline-none dark:border-soleil-border-d dark:text-soleil-cream dark:placeholder:text-soleil-muted-d dark:focus:border-soleil-cream"
@@ -87,17 +90,21 @@ export function CommentForm({
               onClick={onCancel}
               disabled={pending}
             >
-              Annuler
+              {t.listingDetail.cancel}
             </Button>
           )}
           <SubmitButton
             size="sm"
             disabled={disabled}
             pending={pending}
-            pendingLabel={compact ? "Envoi…" : "Publication…"}
+            pendingLabel={
+              compact
+                ? t.dealDetail.sendingComment
+                : t.dealDetail.publishingComment
+            }
           >
             <Send className="h-3.5 w-3.5" aria-hidden />
-            {compact ? "Répondre" : "Publier"}
+            {compact ? t.dealDetail.reply : t.dealDetail.publishComment}
           </SubmitButton>
         </div>
       </div>

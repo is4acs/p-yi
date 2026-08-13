@@ -3,6 +3,19 @@ import type { Messages } from "./fr";
 /** Portugais brésilien. */
 export const pt: Messages = {
   common: {
+    save: "Salvar",
+    saved: "Salvo",
+    error: "Erro.",
+    edit: "Editar",
+    delete: "Excluir",
+    deleting: "Excluindo…",
+    bump: "Subir",
+    bumping: "Subindo…",
+    deleteDealConfirm: "Excluir esta oferta? Esta ação é definitiva.",
+    deleteListingConfirm: "Excluir este anúncio? Esta ação é definitiva.",
+    reload: "Recarregar",
+    unavailableBody:
+      "Não foi possível carregar a página agora. Tente novamente em alguns segundos.",
     search: "Buscar",
     seeAll: "Ver tudo",
     back: "Voltar",
@@ -88,6 +101,17 @@ export const pt: Messages = {
     page: "Página",
   },
   dealDetail: {
+    replyTo: "Responder a @{username}…",
+    deleteCommentConfirm: "Excluir este comentário?",
+    deleteCommentError: "Erro ao excluir.",
+    sendCommentError: "Erro ao enviar.",
+    reportComment: "Denunciar este comentário",
+    loginToReply: "Entre para responder.",
+    publishComment: "Publicar",
+    publishingComment: "Publicando…",
+    sendingComment: "Enviando…",
+    unavailableTitle: "Oferta temporariamente indisponível",
+    backToList: "Voltar às ofertas",
     title: "Oferta",
     inStore: "Na loja",
     web: "Web",
@@ -122,6 +146,7 @@ export const pt: Messages = {
     loginToSave: "Entre para salvar.",
   },
   listings: {
+    newBadge: "Novo",
     title: "Classificados da Guiana",
     searchPlaceholder: "Buscar um anúncio…",
     sortRecent: "Recentes",
@@ -173,6 +198,8 @@ export const pt: Messages = {
     allCities: "Toda a Guiana",
   },
   listingDetail: {
+    unavailableTitle: "Anúncio temporariamente indisponível",
+    backToList: "Voltar aos anúncios",
     title: "Anúncio",
     views: "{n} visualizações",
     message: "Mensagem",

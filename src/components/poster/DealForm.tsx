@@ -107,7 +107,7 @@ export function DealForm({
           id="categorySlug"
           name="categorySlug"
           required
-          className="flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-peyi-orange-300"
+          className="flex h-10 w-full rounded-[10px] border-[1.5px] border-soleil-border bg-soleil-input px-3 text-sm font-semibold text-soleil-forest transition focus:border-soleil-forest focus:outline-none dark:border-soleil-border-d dark:bg-soleil-forest dark:text-soleil-cream dark:focus:border-soleil-cream"
           defaultValue={v.categorySlug ?? ""}
         >
           <option value="" disabled>
@@ -129,7 +129,7 @@ export function DealForm({
             name="citySlug"
             value={citySlug}
             onChange={(e) => setCitySlug(e.target.value)}
-            className="flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-peyi-orange-300"
+            className="flex h-10 w-full rounded-[10px] border-[1.5px] border-soleil-border bg-soleil-input px-3 text-sm font-semibold text-soleil-forest transition focus:border-soleil-forest focus:outline-none dark:border-soleil-border-d dark:bg-soleil-forest dark:text-soleil-cream dark:focus:border-soleil-cream"
           >
             <option value="">{t.form.allGuyane}</option>
             {cities.map((c) => (
@@ -151,7 +151,7 @@ export function DealForm({
             placeholder="Ex: Carrefour Matoury, Super U Kourou…"
             autoComplete="off"
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-soleil-muted2 dark:text-soleil-muted-d">
             {t.form.storeHelp}
           </p>
         </div>
@@ -166,7 +166,7 @@ export function DealForm({
           defaultValue={v.externalUrl ?? ""}
           placeholder="https://..."
         />
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-soleil-muted2 dark:text-soleil-muted-d">
           {t.form.linkHelp}
         </p>
       </div>
@@ -190,7 +190,7 @@ export function DealForm({
           maxLength={2000}
           defaultValue={v.description ?? ""}
           placeholder="Donne les détails : conditions, code promo, dispo en magasin…"
-          className="flex w-full rounded-md border border-border bg-background px-3 py-2 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-peyi-orange-300"
+          className="flex w-full rounded-[10px] border-[1.5px] border-soleil-border bg-soleil-input px-3 py-2 text-sm font-semibold text-soleil-forest transition focus:border-soleil-forest focus:outline-none dark:border-soleil-border-d dark:bg-soleil-forest dark:text-soleil-cream dark:focus:border-soleil-cream"
         />
       </div>
 

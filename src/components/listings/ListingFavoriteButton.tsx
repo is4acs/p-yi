@@ -5,6 +5,7 @@ import { Bookmark } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { toggleListingFavoriteAction } from "@/app/annonces/favorites/actions";
+import { useMessages } from "@/components/soleil/I18nProvider";
 
 type Props = {
   listingId: string;
@@ -23,6 +24,7 @@ export function ListingFavoriteButton({
   size = "sm",
   className,
 }: Props) {
+  const t = useMessages();
   const [favorited, setFavorited] = useState(initialFavorited);
   const [optimistic, addOptimistic] = useOptimistic<boolean, boolean>(
     favorited,
@@ -39,7 +41,7 @@ export function ListingFavoriteButton({
       addOptimistic(next);
       const res = await toggleListingFavoriteAction(listingId);
       if (!res.ok) {
-        setError(res.error ?? "Erreur.");
+        setError(res.error ?? t.common.error);
         return;
       }
       setFavorited(Boolean(res.favorited));
@@ -58,9 +60,7 @@ export function ListingFavoriteButton({
         onClick={onClick}
         disabled={!canFavorite || pending}
         aria-pressed={optimistic}
-        aria-label={
-          optimistic ? "Retirer des favoris" : "Ajouter aux favoris"
-        }
+        aria-label={optimistic ? t.dealDetail.favRemove : t.dealDetail.favAdd}
         title={disabledHint}
         className={cn(
           "inline-flex items-center justify-center gap-1.5 border transition",
@@ -77,7 +77,7 @@ export function ListingFavoriteButton({
           aria-hidden
         />
         {size === "md" && (
-          <span>{optimistic ? "Sauvegardé" : "Sauvegarder"}</span>
+          <span>{optimistic ? t.common.saved : t.common.save}</span>
         )}
       </button>
 

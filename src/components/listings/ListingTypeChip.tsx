@@ -1,9 +1,12 @@
 import type { ListingType } from "@prisma/client";
 import { cn } from "@/lib/utils";
-import { TYPE_LABEL } from "@/lib/listings/queries";
+import { formatListingType } from "@/lib/listings/queries";
+import type { Locale } from "@/lib/i18n/config";
 
 type Props = {
   type: ListingType;
+  /** Langue de l'interface — fr par défaut (pages legacy sans locale). */
+  locale?: Locale;
   className?: string;
 };
 
@@ -14,7 +17,7 @@ const TONE: Record<ListingType, string> = {
   DONATION: "bg-violet-100 text-violet-800",
 };
 
-export function ListingTypeChip({ type, className }: Props) {
+export function ListingTypeChip({ type, locale = "fr", className }: Props) {
   return (
     <span
       className={cn(
@@ -23,7 +26,7 @@ export function ListingTypeChip({ type, className }: Props) {
         className,
       )}
     >
-      {TYPE_LABEL[type]}
+      {formatListingType(type, locale)}
     </span>
   );
 }

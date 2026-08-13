@@ -9,6 +9,7 @@ import {
   bumpListingAction,
   deleteListingAction,
 } from "@/app/poster/annonce/actions";
+import { useMessages } from "@/components/soleil/I18nProvider";
 
 type Props = {
   listingId: string;
@@ -16,27 +17,28 @@ type Props = {
 };
 
 export function ListingAuthorControls({ listingId, editHref }: Props) {
+  const t = useMessages();
   return (
     <div className="flex flex-wrap gap-2">
       <Button asChild variant="outline" size="sm">
         <Link href={editHref}>
           <Pencil className="h-4 w-4" aria-hidden />
-          Modifier
+          {t.common.edit}
         </Link>
       </Button>
 
       <form action={bumpListingAction}>
         <input type="hidden" name="listingId" value={listingId} />
-        <SubmitButton variant="outline" size="sm" pendingLabel="Remontée…">
+        <SubmitButton variant="outline" size="sm" pendingLabel={t.common.bumping}>
           <ArrowUp className="h-4 w-4" aria-hidden />
-          Remonter
+          {t.common.bump}
         </SubmitButton>
       </form>
 
       <form
         action={deleteListingAction}
         onSubmit={(e) => {
-          if (!confirm("Supprimer cette annonce ? Cette action est définitive.")) {
+          if (!confirm(t.common.deleteListingConfirm)) {
             e.preventDefault();
           }
         }}
@@ -45,11 +47,11 @@ export function ListingAuthorControls({ listingId, editHref }: Props) {
         <SubmitButton
           variant="outline"
           size="sm"
-          pendingLabel="Suppression…"
+          pendingLabel={t.common.deleting}
           className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
         >
           <Trash2 className="h-4 w-4" aria-hidden />
-          Supprimer
+          {t.common.delete}
         </SubmitButton>
       </form>
     </div>

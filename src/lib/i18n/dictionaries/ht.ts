@@ -3,6 +3,19 @@ import type { Messages } from "./fr";
 /** Créole haïtien. */
 export const ht: Messages = {
   common: {
+    save: "Sove",
+    saved: "Fin sove",
+    error: "Erè.",
+    edit: "Modifye",
+    delete: "Efase",
+    deleting: "Efasman…",
+    bump: "Remonte",
+    bumping: "Remontaj…",
+    deleteDealConfirm: "Efase bon plan sa a ? Aksyon sa a definitif.",
+    deleteListingConfirm: "Efase anons sa a ? Aksyon sa a definitif.",
+    reload: "Rechaje",
+    unavailableBody:
+      "Paj la pa t ka chaje pou kounye a. Eseye ankò nan kèk segond.",
     search: "Chèche",
     seeAll: "Wè tout",
     back: "Tounen",
@@ -87,6 +100,17 @@ export const ht: Messages = {
     page: "Paj",
   },
   dealDetail: {
+    replyTo: "Reponn @{username}…",
+    deleteCommentConfirm: "Efase kòmantè sa a ?",
+    deleteCommentError: "Erè pandan efasman an.",
+    sendCommentError: "Erè pandan voye a.",
+    reportComment: "Siyale kòmantè sa a",
+    loginToReply: "Konekte w pou reponn.",
+    publishComment: "Pibliye",
+    publishingComment: "Piblikasyon…",
+    sendingComment: "Voye…",
+    unavailableTitle: "Bon plan an pa disponib pou kounye a",
+    backToList: "Tounen nan bon plan yo",
     title: "Bon plan",
     inStore: "Nan magazen",
     web: "Sou entènèt",
@@ -121,6 +145,7 @@ export const ht: Messages = {
     loginToSave: "Konekte pou sove li.",
   },
   listings: {
+    newBadge: "Nouvo",
     title: "Ti anons Giyàn yo",
     searchPlaceholder: "Chèche yon anons…",
     sortRecent: "Pi resan yo",
@@ -172,6 +197,8 @@ export const ht: Messages = {
     allCities: "Tout Giyàn",
   },
   listingDetail: {
+    unavailableTitle: "Anons lan pa disponib pou kounye a",
+    backToList: "Tounen nan anons yo",
     title: "Anons",
     views: "{n} moun wè l",
     message: "Mesaj",
@@ -244,7 +271,7 @@ export const ht: Messages = {
     expiry: "Dat li fini",
     description: "Deskripsyon",
     typeLabel: "Kalite anons",
-    priceKind: "Tarif",
+    priceKind: "Kalite pri",
     condition: "Eta (pou objè yo)",
     notApplicable: "Pa aplikab",
     neighborhood: "Katye",

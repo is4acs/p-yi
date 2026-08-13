@@ -6,6 +6,19 @@
  */
 export const fr = {
   common: {
+    save: "Sauvegarder",
+    saved: "Sauvegardé",
+    error: "Erreur.",
+    edit: "Modifier",
+    delete: "Supprimer",
+    deleting: "Suppression…",
+    bump: "Remonter",
+    bumping: "Remontée…",
+    deleteDealConfirm: "Supprimer ce bon plan ? Cette action est définitive.",
+    deleteListingConfirm: "Supprimer cette annonce ? Cette action est définitive.",
+    reload: "Recharger",
+    unavailableBody:
+      "La fiche n'a pas pu être chargée pour le moment. Réessaie dans quelques secondes.",
     search: "Rechercher",
     seeAll: "Tout voir",
     back: "Retour",
@@ -91,6 +104,17 @@ export const fr = {
     page: "Page",
   },
   dealDetail: {
+    replyTo: "Répondre à @{username}…",
+    deleteCommentConfirm: "Supprimer ce commentaire ?",
+    deleteCommentError: "Erreur lors de la suppression.",
+    sendCommentError: "Erreur lors de l'envoi.",
+    reportComment: "Signaler ce commentaire",
+    loginToReply: "Connecte-toi pour répondre.",
+    publishComment: "Publier",
+    publishingComment: "Publication…",
+    sendingComment: "Envoi…",
+    unavailableTitle: "Bon plan indisponible temporairement",
+    backToList: "Retour aux bons plans",
     title: "Bon plan",
     inStore: "En magasin",
     web: "Web",
@@ -125,6 +149,7 @@ export const fr = {
     loginToSave: "Connecte-toi pour sauvegarder.",
   },
   listings: {
+    newBadge: "Nouveau",
     title: "Petites annonces de Guyane",
     searchPlaceholder: "Chercher une annonce…",
     sortRecent: "Récentes",
@@ -176,6 +201,8 @@ export const fr = {
     allCities: "Toute la Guyane",
   },
   listingDetail: {
+    unavailableTitle: "Annonce indisponible temporairement",
+    backToList: "Retour aux annonces",
     title: "Annonce",
     views: "{n} vues",
     message: "Message",

@@ -12,9 +12,9 @@ import { isRenderableImageUrl } from "@/lib/images";
 import { rethrowIfNextInternal } from "@/lib/next-errors";
 import { withTimeout } from "@/lib/async/with-timeout";
 import {
-  CONDITION_LABEL,
+  formatCondition,
+  formatListingType,
   formatPriceType,
-  TYPE_LABEL,
 } from "@/lib/listings/queries";
 import { summarizeAttributesForCard } from "@/lib/listings/field-registry";
 import {
@@ -34,6 +34,7 @@ import { HeartButton } from "@/components/soleil/HeartButton";
 import { Ph } from "@/components/soleil/Ph";
 import { getSiteUrl } from "@/lib/site-url";
 import { getLocale, getMessages, tFormat } from "@/lib/i18n";
+import { DetailUnavailable } from "@/components/soleil/DetailUnavailable";
 import { translateUserTexts } from "@/lib/i18n/translate";
 import {
   getListingCategoryBySlug,
@@ -238,29 +239,14 @@ export default async function ListingDetailPage(
       err: listingResult.reason,
     });
     return (
-      <main className="flex min-h-[60vh] flex-col items-center justify-center bg-soleil-cream px-4 py-12 text-center text-soleil-forest dark:bg-soleil-night dark:text-soleil-cream">
-        <h1 className="font-display text-[22px] font-extrabold leading-[1.12]">
-          Annonce indisponible temporairement
-        </h1>
-        <p className="mt-3 max-w-sm text-[13px] leading-relaxed text-soleil-body dark:text-soleil-body-d">
-          La fiche n&apos;a pas pu être chargée pour le moment. Réessaie dans
-          quelques secondes.
-        </p>
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-          <Link
-            href="/annonces"
-            className="inline-flex min-h-[44px] items-center rounded-full bg-soleil-forest px-4 text-sm font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
-          >
-            Retour aux annonces
-          </Link>
-          <Link
-            href={`/annonces/${params.slug}`}
-            className="inline-flex min-h-[44px] items-center rounded-full border-[1.5px] border-soleil-forest px-4 text-sm font-bold dark:border-soleil-cream"
-          >
-            Recharger
-          </Link>
-        </div>
-      </main>
+      <DetailUnavailable
+        title={t.listingDetail.unavailableTitle}
+        body={t.common.unavailableBody}
+        backHref="/annonces"
+        backLabel={t.listingDetail.backToList}
+        reloadHref={`/annonces/${params.slug}`}
+        reloadLabel={t.common.reload}
+      />
     );
   }
 
@@ -335,8 +321,8 @@ export default async function ListingDetailPage(
     ...(summarizeAttributesForCard(listing.category.slug, listing.attributes)
       ?.split(" · ")
       .filter(Boolean) ?? []),
-    ...(listing.condition ? [CONDITION_LABEL[listing.condition]] : []),
-    ...(listing.type !== "OFFER" ? [TYPE_LABEL[listing.type]] : []),
+    ...(listing.condition ? [formatCondition(listing.condition, locale)] : []),
+    ...(listing.type !== "OFFER" ? [formatListingType(listing.type, locale)] : []),
   ];
   const cityPath = getListingsCityPath(listing.city.slug);
   const categoryPath = getListingCategoryBySlug(listing.category.slug)
