@@ -145,6 +145,7 @@ async function main() {
       { name: 'Colocation', slug: 'colocation', icon: '👥' },
       { name: 'Location saisonnière', slug: 'location-saisonniere', icon: '🏖️' },
       { name: 'Bureau & Local commercial', slug: 'bureau-local-commercial', icon: '🏪' },
+      { name: 'Services de déménagement', slug: 'services-demenagement', icon: '🚚' },
     ]
     for (const sub of realEstateSubcats) {
       await prisma.category.upsert({

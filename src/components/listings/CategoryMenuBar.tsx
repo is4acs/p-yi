@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 
 import { useMessages } from "@/components/soleil/I18nProvider";
+import type { Messages } from "@/lib/i18n/dictionaries/fr";
 import { tFormat } from "@/lib/i18n/tformat";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +38,39 @@ export type MenuFamily = {
 };
 
 const HOVER_OPEN_DELAY_MS = 120;
+
+/**
+ * Groupes de présentation du panneau (thème leboncoin — ex. Immobilier :
+ * « Ventes immobilières » / « Locations » avec libellés courts, puis les
+ * entrées autonomes en gras : Colocation, Bureaux & Commerces…). Purement
+ * visuel : les sous-catégories restent celles de la base ; une famille
+ * absente d'ici garde la liste en colonnes classique.
+ */
+const FAMILY_GROUPS: Record<
+  string,
+  { titleKey: "immoSales" | "immoRentals"; slugs: string[] }[]
+> = {
+  immobilier: [
+    {
+      titleKey: "immoSales",
+      slugs: ["vente-appartement", "vente-maison", "vente-terrain"],
+    },
+    {
+      titleKey: "immoRentals",
+      slugs: ["location-appartement", "location-maison", "location-saisonniere"],
+    },
+  ],
+};
+
+/**
+ * Libellé court d'une sous-catégorie affichée SOUS un intitulé de groupe :
+ * « Vente - Appartement » → « Appartement » (marche aussi sur les noms
+ * traduits, le séparateur « - » étant conservé par la traduction).
+ */
+function shortName(name: string): string {
+  const parts = name.split(/\s+[-–—]\s+/);
+  return parts[parts.length - 1] || name;
+}
 
 export function CategoryMenuBar({
   families,
@@ -185,40 +219,134 @@ export function CategoryMenuBar({
                 </span>
               </Link>
 
-              <ul className="mt-1 gap-x-8 lg:columns-2 xl:columns-3">
-                {open.children.map((child) => (
-                  <li key={child.slug} className="break-inside-avoid">
+              {FAMILY_GROUPS[open.slug] ? (
+                <GroupedPanel
+                  family={open}
+                  groups={FAMILY_GROUPS[open.slug]}
+                  activeSlug={activeSlug}
+                  t={t}
+                />
+              ) : (
+                <ul className="mt-1 gap-x-8 lg:columns-2 xl:columns-3">
+                  {open.children.map((child) => (
+                    <li key={child.slug} className="break-inside-avoid">
+                      <ChildLink child={child} activeSlug={activeSlug} />
+                    </li>
+                  ))}
+                  <li className="break-inside-avoid">
                     <Link
-                      href={`/annonces?category=${encodeURIComponent(child.slug)}`}
+                      href={`/annonces?category=${encodeURIComponent(open.slug)}`}
                       scroll={false}
-                      className={cn(
-                        "flex min-h-[40px] items-center justify-between gap-3 text-sm transition hover:underline",
-                        activeSlug === child.slug
-                          ? "font-extrabold text-soleil-forest dark:text-soleil-cream"
-                          : "font-medium text-soleil-body hover:text-soleil-forest dark:text-soleil-body-d dark:hover:text-soleil-cream",
-                      )}
+                      className="flex min-h-[40px] items-center text-sm font-bold text-soleil-otext hover:underline dark:text-soleil-otext-d"
                     >
-                      <span className="min-w-0 truncate">{child.name}</span>
-                      <span className="font-mono text-[11px] text-soleil-strike dark:text-soleil-strike-d">
-                        {child.count}
-                      </span>
+                      {t.listings.seeAllOf}
                     </Link>
                   </li>
-                ))}
-                <li className="break-inside-avoid">
-                  <Link
-                    href={`/annonces?category=${encodeURIComponent(open.slug)}`}
-                    scroll={false}
-                    className="flex min-h-[40px] items-center text-sm font-bold text-soleil-otext hover:underline dark:text-soleil-otext-d"
-                  >
-                    {t.listings.seeAllOf}
-                  </Link>
-                </li>
-              </ul>
+                </ul>
+              )}
             </div>
           </div>
         </div>
       )}
     </nav>
+  );
+}
+
+function ChildLink({
+  child,
+  activeSlug,
+  label,
+}: {
+  child: MenuChild;
+  activeSlug: string | null;
+  /** Libellé affiché (défaut : nom complet ; groupes : nom court). */
+  label?: string;
+}) {
+  return (
+    <Link
+      href={`/annonces?category=${encodeURIComponent(child.slug)}`}
+      scroll={false}
+      className={cn(
+        "flex min-h-[40px] items-center justify-between gap-3 text-sm transition hover:underline",
+        activeSlug === child.slug
+          ? "font-extrabold text-soleil-forest dark:text-soleil-cream"
+          : "font-medium text-soleil-body hover:text-soleil-forest dark:text-soleil-body-d dark:hover:text-soleil-cream",
+      )}
+    >
+      <span className="min-w-0 truncate">{label ?? child.name}</span>
+      <span className="font-mono text-[11px] text-soleil-strike dark:text-soleil-strike-d">
+        {child.count}
+      </span>
+    </Link>
+  );
+}
+
+/**
+ * Panneau groupé (thème leboncoin Immobilier) : colonnes « Ventes
+ * immobilières » / « Locations » avec libellés courts, puis les
+ * sous-catégories hors groupe en entrées autonomes graisseuses
+ * (Colocation, Bureaux & Commerces, Services de déménagement…).
+ */
+function GroupedPanel({
+  family,
+  groups,
+  activeSlug,
+  t,
+}: {
+  family: MenuFamily;
+  groups: { titleKey: "immoSales" | "immoRentals"; slugs: string[] }[];
+  activeSlug: string | null;
+  t: Messages;
+}) {
+  const bySlug = new Map(family.children.map((c) => [c.slug, c]));
+  const grouped = new Set(groups.flatMap((g) => g.slugs));
+  const standalone = family.children.filter((c) => !grouped.has(c.slug));
+
+  return (
+    <div className="mt-2 grid gap-x-10 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+      {groups.map((group) => {
+        const children = group.slugs
+          .map((slug) => bySlug.get(slug))
+          .filter((c): c is MenuChild => Boolean(c));
+        if (children.length === 0) return null;
+        return (
+          <div key={group.titleKey}>
+            <h3 className="mb-1 font-display text-[15px] font-extrabold text-soleil-forest dark:text-soleil-cream">
+              {t.listings[group.titleKey]}
+            </h3>
+            {children.map((child) => (
+              <ChildLink
+                key={child.slug}
+                child={child}
+                activeSlug={activeSlug}
+                label={shortName(child.name)}
+              />
+            ))}
+          </div>
+        );
+      })}
+      {standalone.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          {standalone.map((child) => (
+            <Link
+              key={child.slug}
+              href={`/annonces?category=${encodeURIComponent(child.slug)}`}
+              scroll={false}
+              className={cn(
+                "flex min-h-[40px] items-center justify-between gap-3 font-display text-[15px] font-extrabold transition hover:underline",
+                activeSlug === child.slug
+                  ? "text-soleil-otext dark:text-soleil-otext-d"
+                  : "text-soleil-forest dark:text-soleil-cream",
+              )}
+            >
+              <span className="min-w-0 truncate">{child.name}</span>
+              <span className="font-mono text-[11px] font-medium text-soleil-strike dark:text-soleil-strike-d">
+                {child.count}
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

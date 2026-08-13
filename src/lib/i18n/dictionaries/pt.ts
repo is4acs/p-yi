@@ -165,6 +165,8 @@ export const pt: Messages = {
     allFilters: "Todos os filtros",
     dealsBang: "Ofertas!",
     seeAllOf: "Ver tudo",
+    immoSales: "Vendas imobiliárias",
+    immoRentals: "Aluguéis",
     showResults: "Ver os {n} anúncios",
     clearAll: "Limpar tudo",
     remove: "Remover",

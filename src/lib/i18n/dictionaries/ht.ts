@@ -164,6 +164,8 @@ export const ht: Messages = {
     allFilters: "Tout filtè yo",
     dealsBang: "Bon plan !",
     seeAllOf: "Wè tout",
+    immoSales: "Vann kay ak tè",
+    immoRentals: "Lokasyon",
     showResults: "Montre {n} anons yo",
     clearAll: "Efase tout",
     remove: "Retire",

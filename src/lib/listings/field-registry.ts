@@ -709,6 +709,8 @@ const CATEGORY_SLUG_ALIASES: Record<string, string> = {
   rongeurs: 'animaux',
   'autres-animaux': 'animaux',
   'accessoires-animaux': 'autres',
+  // Immobilier — services (modèle leboncoin)
+  'services-demenagement': 'autres',
   // Covoiturage
   'trajets-reguliers': 'covoiturage',
   'trajets-ponctuels': 'covoiturage',

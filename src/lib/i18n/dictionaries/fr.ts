@@ -168,6 +168,8 @@ export const fr = {
     allFilters: "Tous les filtres",
     dealsBang: "Bons plans !",
     seeAllOf: "Voir tout",
+    immoSales: "Ventes immobilières",
+    immoRentals: "Locations",
     showResults: "Afficher les {n} annonces",
     clearAll: "Tout effacer",
     remove: "Retirer",
