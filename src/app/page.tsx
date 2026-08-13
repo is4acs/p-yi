@@ -23,6 +23,7 @@ import { Ph } from "@/components/soleil/Ph";
 import { SearchField } from "@/components/soleil/SearchField";
 import { SectionHead } from "@/components/soleil/SectionHead";
 import { Sun } from "@/components/soleil/Sun";
+import { MobileHeader } from "@/components/soleil/MobileHeader";
 import { TempBadge } from "@/components/soleil/TempBadge";
 
 export const dynamic = "force-dynamic";
@@ -43,6 +44,7 @@ export const metadata: Metadata = {
 };
 
 const ACTIVITIES_TIMEOUT_MS = 3_000;
+const HOME_DATA_TIMEOUT_MS = 4_500;
 
 /** Communes des pages piliers — mêmes slugs que /bons-plans/{ville}. */
 const COMMUNE_CHIPS = [
@@ -72,21 +74,41 @@ export default async function HomePage(props: Props) {
   const searchParams = await props.searchParams;
   const t = await getMessages();
   const locale = await getLocale();
-  const [dealsPayload, listingsPayload, currentUser] = await Promise.all([
-    fetchDealsPage({ sort: "hot", page: 1, category: null, city: null, q: null }),
-    fetchListingsPage({
-      sort: "new",
-      page: 1,
-      category: null,
-      city: null,
-      type: null,
-      q: null,
-    }),
-    getCurrentUser(),
-  ]);
+  // Fail-soft aligné sur /annonces et /bons-plans : un hoquet Prisma sur
+  // UNE requête ne doit pas envoyer la page d'accueil sur error.tsx — la
+  // section concernée s'affiche vide, le reste vit.
+  const [dealsResult, listingsResult, currentUserResult] =
+    await Promise.allSettled([
+      withTimeout(
+        fetchDealsPage({ sort: "hot", page: 1, category: null, city: null, q: null }),
+        HOME_DATA_TIMEOUT_MS,
+        "home/deals",
+      ),
+      withTimeout(
+        fetchListingsPage({
+          sort: "new",
+          page: 1,
+          category: null,
+          city: null,
+          type: null,
+          q: null,
+        }),
+        HOME_DATA_TIMEOUT_MS,
+        "home/listings",
+      ),
+      withTimeout(getCurrentUser(), HOME_DATA_TIMEOUT_MS, "home/current-user"),
+    ]);
 
-  const { deals, total: dealsTotal } = dealsPayload;
-  const { listings, total: listingsTotal } = listingsPayload;
+  const { deals, total: dealsTotal } =
+    dealsResult.status === "fulfilled"
+      ? dealsResult.value
+      : { deals: [], total: 0 };
+  const { listings, total: listingsTotal } =
+    listingsResult.status === "fulfilled"
+      ? listingsResult.value
+      : { listings: [], total: 0 };
+  const currentUser =
+    currentUserResult.status === "fulfilled" ? currentUserResult.value : null;
 
   const dealOfTheDay = deals[0] ?? null;
   const hotDeals = deals.slice(1, 4);
@@ -142,34 +164,12 @@ export default async function HomePage(props: Props) {
   return (
     <main className="min-h-screen bg-soleil-cream pb-14 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
       <div className="mx-auto w-full max-w-md px-5 lg:max-w-6xl lg:px-8">
-        {/* Header wordmark mobile (le Header global prend le relais en lg). */}
-        <div className="flex items-center justify-between pt-4 lg:hidden">
-          <Link href="/" className="flex items-end gap-2" aria-label={t.nav.home}>
-            <Sun w={22} />
-            <span className="font-display text-[25px] font-extrabold leading-[0.9] tracking-[-0.5px]">
-              péyi
-            </span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <LanguageSwitcher />
-            {currentUser ? (
-              <Link
-                href="/profil"
-                aria-label={t.home.myProfile}
-                className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-soleil-forest text-[11.5px] font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
-              >
-                {currentUser.username.trim().slice(0, 2).toUpperCase()}
-              </Link>
-            ) : (
-              <Link
-                href="/connexion"
-                className="rounded-full bg-soleil-forest px-3 py-1.5 text-xs font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
-              >
-                {t.home.connection}
-              </Link>
-            )}
-          </div>
-        </div>
+        <MobileHeader
+          user={currentUser}
+          t={t}
+          variant="home"
+          right={<LanguageSwitcher />}
+        />
 
         {searchParams?.deleted === "1" && (
           <div

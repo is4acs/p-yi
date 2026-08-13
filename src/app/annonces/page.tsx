@@ -21,6 +21,7 @@ import {
 } from "@/lib/listings/url";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { firstParam } from "@/lib/url-params";
+import { buildFacetMetadata } from "@/lib/seo/facet-metadata";
 import { getListingsFacetCanonicalPath } from "@/lib/seo/local-pages";
 import { getFilterSlotsForCategory } from "@/lib/listings/field-registry";
 import { ListingCardTile } from "@/components/listings/ListingCardTile";
@@ -44,65 +45,17 @@ import {
   type MenuFamily,
 } from "@/components/listings/CategoryMenuBar";
 import { FilterPill } from "@/components/listings/FilterPill";
-import { Icon } from "@/components/ui/Icon";
-import { Sun } from "@/components/soleil/Sun";
+import { MobileHeader } from "@/components/soleil/MobileHeader";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { getLocale, getMessages, tFormat } from "@/lib/i18n";
 import { translateUserTexts } from "@/lib/i18n/translate";
 
 export const dynamic = "force-dynamic";
-const METADATA_TIMEOUT_MS = 2_000;
 const PAGE_DATA_TIMEOUT_MS = 4_500;
 
 // Chaque valeur peut être un TABLEAU si le paramètre est répété dans
 // l'URL — lecture uniquement via `firstParam` / `parseFilters`.
 type SearchParams = Record<string, string | string[] | undefined>;
-
-/**
- * Même logique que `/bons-plans` : on résout les slugs en noms
- * humains pour un titre SEO de qualité. Cf.
- * `src/app/bons-plans/page.tsx::resolveFacets` pour la justification.
- */
-async function resolveFacets(
-  categorySlug: string | null,
-  citySlug: string | null,
-) {
-  try {
-    const [category, city] = await withTimeout(
-      Promise.all([
-        categorySlug
-          ? prisma.category.findUnique({
-              where: { slug: categorySlug },
-              select: { name: true },
-            })
-          : null,
-        citySlug
-          ? prisma.city.findUnique({
-              where: { slug: citySlug },
-              select: { name: true },
-            })
-          : null,
-      ]),
-      METADATA_TIMEOUT_MS,
-      "listings/metadata-facets",
-    );
-    return {
-      categoryName: category?.name ?? categorySlug ?? null,
-      cityName: city?.name ?? citySlug ?? null,
-    };
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error("[listings/metadata] facet resolution failed", {
-      categorySlug,
-      citySlug,
-      err,
-    });
-    return {
-      categoryName: categorySlug ?? null,
-      cityName: citySlug ?? null,
-    };
-  }
-}
 
 export async function generateMetadata(
   props: {
@@ -118,9 +71,6 @@ export async function generateMetadata(
   const citySlug = firstParam(searchParams.city)?.trim() || null;
   const filters = parseFilters(searchParams);
 
-  // Toutes les vues filtrées/recherchées restent noindex pour éviter
-  // l'indexation de variantes combinatoires. Les pages piliers propres
-  // portent la visibilité locale.
   const hasFacet = Boolean(categorySlug || citySlug);
   const hasQueryVariant =
     Boolean(q) ||
@@ -128,44 +78,22 @@ export async function generateMetadata(
     page > 1 ||
     Boolean(type) ||
     hasActiveFilters(filters);
-  const isFilteredView = hasFacet || hasQueryVariant;
-  const facetCanonical =
-    getListingsFacetCanonicalPath({ categorySlug, citySlug }) ?? "/annonces";
 
-  const { categoryName, cityName } = await resolveFacets(
+  return buildFacetMetadata({
     categorySlug,
     citySlug,
-  );
-
-  const parts: string[] = [];
-  if (categoryName) parts.push(categoryName);
-  if (cityName) parts.push(cityName);
-
-  if (parts.length > 0) {
-    const label = parts.join(" · ");
-    const title = `Annonces ${label}`;
-    const description = `Les petites annonces ${label.toLowerCase()} en Guyane sur Péyi. Achète, vends, échange entre Guyanais.`;
-    return {
-      title,
-      description,
-      alternates: { canonical: facetCanonical },
-      robots: { index: !isFilteredView, follow: true },
-      openGraph: { title, description, url: facetCanonical },
-      twitter: { title, description, card: "summary_large_image" },
-    };
-  }
-
-  const title = "Petites annonces de Guyane";
-  const description =
-    "Achète, vends, échange et donne entre Guyanais. Petites annonces locales sur Péyi.";
-  return {
-    title,
-    description,
-    alternates: { canonical: "/annonces" },
-    robots: { index: true, follow: true },
-    openGraph: { title, description, url: "/annonces" },
-    twitter: { title, description, card: "summary_large_image" },
-  };
+    isFilteredView: hasFacet || hasQueryVariant,
+    facetCanonical:
+      getListingsFacetCanonicalPath({ categorySlug, citySlug }) ?? "/annonces",
+    basePath: "/annonces",
+    titlePrefix: "Annonces",
+    facetDescription: (label) =>
+      `Les petites annonces ${label} en Guyane sur Péyi. Achète, vends, échange entre Guyanais.`,
+    defaultTitle: "Petites annonces de Guyane",
+    defaultDescription:
+      "Achète, vends, échange et donne entre Guyanais. Petites annonces locales sur Péyi.",
+    logLabel: "listings",
+  });
 }
 
 const SORT_VALUES = ["new", "price-asc", "price-desc"] as const;
@@ -395,32 +323,7 @@ export default async function AnnoncesPage(
   return (
     <main className="min-h-screen bg-soleil-cream text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
       <div className="mx-auto w-full max-w-md px-5 pb-12 lg:max-w-5xl lg:px-8">
-        {/* Header wordmark mobile (le Header global prend le relais en lg). */}
-        <div className="flex items-end justify-between pt-4 lg:hidden">
-          <Link href="/" className="flex items-end gap-2" aria-label={t.nav.home}>
-            <Sun w={20} />
-            <span className="font-display text-[23px] font-extrabold leading-[0.9] tracking-[-0.5px]">
-              péyi
-            </span>
-          </Link>
-          {currentUser ? (
-            <Link
-              href="/profil"
-              aria-label={t.home.myProfile}
-              className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-soleil-forest text-[11.5px] font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
-            >
-              {currentUser.username.trim().slice(0, 2).toUpperCase()}
-            </Link>
-          ) : (
-            <Link
-              href="/connexion"
-              aria-label={t.home.myProfile}
-              className="flex h-[34px] w-[34px] items-center justify-center rounded-full border-[1.5px] border-soleil-forest dark:border-soleil-cream"
-            >
-              <Icon name="user" size={15} />
-            </Link>
-          )}
-        </div>
+        <MobileHeader user={currentUser} t={t} />
 
         {/* Méga-menu de catégories (modèle Leboncoin). */}
         <div className="pt-2 lg:pt-3">

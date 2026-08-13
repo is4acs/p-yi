@@ -8,6 +8,7 @@ import { getMessages } from "@/lib/i18n";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 import { updatePasswordAction } from "./actions";
+import { INPUT_CLASS } from "@/components/soleil/field";
 
 export const metadata: Metadata = {
   title: "Choisir un nouveau mot de passe",
@@ -91,7 +92,7 @@ export default async function ResetPasswordPage(props: {
               minLength={8}
               autoComplete="new-password"
               placeholder={t.auth.passwordPlaceholder}
-              className="w-full rounded-[14px] border-[1.5px] border-soleil-border bg-soleil-input px-3.5 py-3 text-[14px] font-semibold text-soleil-forest placeholder:font-medium placeholder:text-soleil-muted focus:border-soleil-forest focus:outline-none dark:border-soleil-border-d dark:bg-soleil-forest dark:text-soleil-cream dark:placeholder:text-soleil-muted-d dark:focus:border-soleil-cream"
+              className={INPUT_CLASS}
             />
             <p className="text-xs text-soleil-muted2 dark:text-soleil-muted-d">
               {t.auth.passwordHelp}

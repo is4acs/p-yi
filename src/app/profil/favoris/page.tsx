@@ -41,32 +41,41 @@ export default async function FavorisPage(
   const user = await requireUser("/profil/favoris");
   const tab = parseTab(searchParams.tab);
 
-  const [dealFavorites, listingFavorites] = await Promise.all([
-    prisma.favorite.findMany({
-      where: {
-        userId: user.id,
-        dealId: { not: null },
-        deal: { status: DealStatus.PUBLISHED },
-      },
-      orderBy: { createdAt: "desc" },
-      select: {
-        createdAt: true,
-        deal: { select: dealCardSelect },
-      },
-    }),
-    prisma.favorite.findMany({
-      where: {
-        userId: user.id,
-        listingId: { not: null },
-        listing: { status: ListingStatus.PUBLISHED },
-      },
-      orderBy: { createdAt: "desc" },
-      select: {
-        createdAt: true,
-        listing: { select: listingCardSelect },
-      },
-    }),
-  ]);
+  // Fail-soft : un onglet qui hoquette s'affiche vide au lieu d'envoyer
+  // toute la page favoris sur error.tsx.
+  const [dealFavoritesResult, listingFavoritesResult] =
+    await Promise.allSettled([
+      prisma.favorite.findMany({
+        where: {
+          userId: user.id,
+          dealId: { not: null },
+          deal: { status: DealStatus.PUBLISHED },
+        },
+        orderBy: { createdAt: "desc" },
+        select: {
+          createdAt: true,
+          deal: { select: dealCardSelect },
+        },
+      }),
+      prisma.favorite.findMany({
+        where: {
+          userId: user.id,
+          listingId: { not: null },
+          listing: { status: ListingStatus.PUBLISHED },
+        },
+        orderBy: { createdAt: "desc" },
+        select: {
+          createdAt: true,
+          listing: { select: listingCardSelect },
+        },
+      }),
+    ]);
+  const dealFavorites =
+    dealFavoritesResult.status === "fulfilled" ? dealFavoritesResult.value : [];
+  const listingFavorites =
+    listingFavoritesResult.status === "fulfilled"
+      ? listingFavoritesResult.value
+      : [];
 
   const deals: DealCardData[] = dealFavorites
     .map((f) => f.deal)
@@ -75,10 +84,15 @@ export default async function FavorisPage(
     .map((f) => f.listing)
     .filter((l): l is ListingCardData => Boolean(l));
 
-  const voteMap = await fetchUserVoteMap(
-    user.id,
-    deals.map((d) => d.id),
-  );
+  let voteMap: Awaited<ReturnType<typeof fetchUserVoteMap>> = new Map();
+  try {
+    voteMap = await fetchUserVoteMap(
+      user.id,
+      deals.map((d) => d.id),
+    );
+  } catch {
+    // Votes indisponibles : les pilules s'affichent sans l'état perso.
+  }
 
   return (
     <main className="mx-auto max-w-md px-4 pb-16 pt-6 animate-in fade-in duration-300 sm:max-w-2xl sm:pt-10">

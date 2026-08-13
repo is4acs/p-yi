@@ -10,15 +10,15 @@ import {
 import { parsePage, parseQuery, parseSort } from "@/lib/deals/url";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { firstParam } from "@/lib/url-params";
+import { buildFacetMetadata } from "@/lib/seo/facet-metadata";
 import { DealCard } from "@/components/deals/DealCard";
 import { DealsPagination } from "@/components/deals/DealsPagination";
 import { EmptyDeals } from "@/components/deals/EmptyDeals";
-import { Icon } from "@/components/ui/Icon";
 import { CountLine } from "@/components/soleil/CountLine";
 import { FilterSelect } from "@/components/soleil/FilterSelect";
 import { Ph } from "@/components/soleil/Ph";
 import { SearchField } from "@/components/soleil/SearchField";
-import { Sun } from "@/components/soleil/Sun";
+import { MobileHeader } from "@/components/soleil/MobileHeader";
 import { TabsPeyi } from "@/components/soleil/TabsPeyi";
 import { formatPrice, formatRelativeTime } from "@/lib/format";
 import Link from "next/link";
@@ -28,64 +28,11 @@ import { withTimeout } from "@/lib/async/with-timeout";
 import { getDealsFacetCanonicalPath } from "@/lib/seo/local-pages";
 
 export const dynamic = "force-dynamic";
-const METADATA_TIMEOUT_MS = 2_000;
 const PAGE_DATA_TIMEOUT_MS = 4_500;
 
 // Chaque valeur peut être un TABLEAU si le paramètre est répété dans
 // l'URL — lecture uniquement via `firstParam`.
 type SearchParams = Record<string, string | string[] | undefined>;
-
-/**
- * Resout les slugs `category` / `city` en noms humains pour enrichir
- * le titre et la description. On fait UNE seule requête (les deux
- * slugs sont uniques). Si un slug n'existe pas en DB, on retombe
- * sur le slug tel quel (évite de perdre la requête SEO si la DB et
- * l'URL divergent temporairement).
- */
-async function resolveFacets(
-  categorySlug: string | null,
-  citySlug: string | null,
-) {
-  try {
-    const [category, city] = await withTimeout(
-      Promise.all([
-        categorySlug
-          ? prisma.category.findUnique({
-              where: { slug: categorySlug },
-              select: { name: true },
-            })
-          : null,
-        citySlug
-          ? prisma.city.findUnique({
-              where: { slug: citySlug },
-              select: { name: true },
-            })
-          : null,
-      ]),
-      METADATA_TIMEOUT_MS,
-      "deals/metadata-facets",
-    );
-    return {
-      categoryName: category?.name ?? categorySlug ?? null,
-      cityName: city?.name ?? citySlug ?? null,
-    };
-  } catch (err) {
-    // Pendant la génération des metadata, un crash Prisma remonte
-    // jusqu'au boundary global et affiche "Quelque chose s'est
-    // mal passé" à la place de la page. On retombe proprement sur
-    // les slugs bruts : le titre reste lisible, la page s'affiche.
-    // eslint-disable-next-line no-console
-    console.error("[deals/metadata] facet resolution failed", {
-      categorySlug,
-      citySlug,
-      err,
-    });
-    return {
-      categoryName: categorySlug ?? null,
-      cityName: citySlug ?? null,
-    };
-  }
-}
 
 export async function generateMetadata(
   props: {
@@ -99,50 +46,24 @@ export async function generateMetadata(
   const categorySlug = firstParam(searchParams.category)?.trim() || null;
   const citySlug = firstParam(searchParams.city)?.trim() || null;
 
-  // Toutes les vues filtrées/recherchées (query params) passent en
-  // noindex pour éviter la bloat SEO. Les pages piliers dédiées
-  // (/bons-plans/guyane, /bons-plans/{ville}, /bons-plans/{cat}/guyane)
-  // portent l'indexation locale.
   const hasFacet = Boolean(categorySlug || citySlug);
   const hasQueryVariant = Boolean(q) || sort !== "hot" || page > 1;
-  const isFilteredView = hasFacet || hasQueryVariant;
-  const facetCanonical =
-    getDealsFacetCanonicalPath({ categorySlug, citySlug }) ?? "/bons-plans";
 
-  const { categoryName, cityName } = await resolveFacets(
+  return buildFacetMetadata({
     categorySlug,
     citySlug,
-  );
-
-  const parts: string[] = [];
-  if (categoryName) parts.push(categoryName);
-  if (cityName) parts.push(cityName);
-
-  if (parts.length > 0) {
-    const label = parts.join(" · ");
-    const title = `Bons plans ${label}`;
-    const description = `Les bons plans ${label.toLowerCase()} partagés par la communauté en Guyane sur Péyi.`;
-    return {
-      title,
-      description,
-      alternates: { canonical: facetCanonical },
-      robots: { index: !isFilteredView, follow: true },
-      openGraph: { title, description, url: facetCanonical },
-      twitter: { title, description, card: "summary_large_image" },
-    };
-  }
-
-  const title = "Bons plans de Guyane";
-  const description =
-    "Les bons plans partagés par la communauté en Guyane. Partage, vote et profite des meilleures promos.";
-  return {
-    title,
-    description,
-    alternates: { canonical: "/bons-plans" },
-    robots: { index: true, follow: true },
-    openGraph: { title, description, url: "/bons-plans" },
-    twitter: { title, description, card: "summary_large_image" },
-  };
+    isFilteredView: hasFacet || hasQueryVariant,
+    facetCanonical:
+      getDealsFacetCanonicalPath({ categorySlug, citySlug }) ?? "/bons-plans",
+    basePath: "/bons-plans",
+    titlePrefix: "Bons plans",
+    facetDescription: (label) =>
+      `Les bons plans ${label} partagés par la communauté en Guyane sur Péyi.`,
+    defaultTitle: "Bons plans de Guyane",
+    defaultDescription:
+      "Les bons plans partagés par la communauté en Guyane. Partage, vote et profite des meilleures promos.",
+    logLabel: "deals",
+  });
 }
 
 export default async function BonsPlansPage(
@@ -312,36 +233,15 @@ export default async function BonsPlansPage(
       <h1 className="sr-only">{t.deals.title}</h1>
       <div className="mx-auto w-full max-w-md px-5 pb-12 lg:max-w-6xl lg:px-8">
         {/* Header wordmark + pilule ville (mobile-first, maquette 4a). */}
-        <div className="flex items-end justify-between pt-4 lg:hidden">
-          <Link href="/" className="flex items-end gap-2" aria-label={t.nav.home}>
-            <Sun w={20} />
-            <span className="font-display text-[23px] font-extrabold leading-[0.9] tracking-[-0.5px]">
-              péyi
-            </span>
-          </Link>
-          <div className="flex items-center gap-2">
+        <MobileHeader
+          user={currentUser}
+          t={t}
+          right={
             <span className="rounded-full border-[1.5px] border-soleil-forest px-3 py-1.5 text-xs font-bold dark:border-soleil-cream">
               {cityName ?? "Guyane"}
             </span>
-            {currentUser ? (
-              <Link
-                href="/profil"
-                aria-label={t.home.myProfile}
-                className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-soleil-forest text-[11.5px] font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
-              >
-                {currentUser.username.trim().slice(0, 2).toUpperCase()}
-              </Link>
-            ) : (
-              <Link
-                href="/connexion"
-                aria-label={t.home.myProfile}
-                className="flex h-[34px] w-[34px] items-center justify-center rounded-full border-[1.5px] border-soleil-forest dark:border-soleil-cream"
-              >
-                <Icon name="user" size={15} />
-              </Link>
-            )}
-          </div>
-        </div>
+          }
+        />
 
         <TabsPeyi active="deals" className="pt-3" />
 

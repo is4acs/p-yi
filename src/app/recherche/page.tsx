@@ -6,6 +6,7 @@ import { fetchDealsPage, fetchUserFavoriteSet, fetchUserVoteMap } from "@/lib/de
 import { fetchListingsPage, fetchUserFavoriteListingSet } from "@/lib/listings/queries";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { firstParam } from "@/lib/url-params";
+import { withTimeout } from "@/lib/async/with-timeout";
 import { DealCard } from "@/components/deals/DealCard";
 import { ListingCard } from "@/components/listings/ListingCard";
 
@@ -15,6 +16,7 @@ export const dynamic = "force-dynamic";
 type SearchParams = { q?: string | string[] };
 
 const TOP_N = 6;
+const SEARCH_TIMEOUT_MS = 4_500;
 
 export async function generateMetadata(props: {
   searchParams: Promise<SearchParams>;
@@ -63,36 +65,59 @@ export default async function RecherchePage(props: {
     );
   }
 
-  const currentUser = await getCurrentUser();
+  // Fail-soft aligné sur /annonces et /bons-plans : une verticale qui
+  // hoquette affiche sa section vide au lieu d'envoyer la recherche
+  // entière sur error.tsx.
+  const [currentUserResult, dealsResult, listingsResult] =
+    await Promise.allSettled([
+      withTimeout(getCurrentUser(), SEARCH_TIMEOUT_MS, "search/current-user"),
+      withTimeout(
+        fetchDealsPage({ sort: "hot", page: 1, category: null, city: null, q }),
+        SEARCH_TIMEOUT_MS,
+        "search/deals",
+      ),
+      withTimeout(
+        fetchListingsPage({
+          sort: "new",
+          page: 1,
+          category: null,
+          city: null,
+          type: null,
+          q,
+        }),
+        SEARCH_TIMEOUT_MS,
+        "search/listings",
+      ),
+    ]);
 
-  const [{ deals }, { listings }] = await Promise.all([
-    fetchDealsPage({
-      sort: "hot",
-      page: 1,
-      category: null,
-      city: null,
-      q,
-    }),
-    fetchListingsPage({
-      sort: "new",
-      page: 1,
-      category: null,
-      city: null,
-      type: null,
-      q,
-    }),
-  ]);
+  const currentUser =
+    currentUserResult.status === "fulfilled" ? currentUserResult.value : null;
+  const deals =
+    dealsResult.status === "fulfilled" ? dealsResult.value.deals : [];
+  const listings =
+    listingsResult.status === "fulfilled" ? listingsResult.value.listings : [];
 
   const topDeals = deals.slice(0, TOP_N);
   const topListings = listings.slice(0, TOP_N);
   const dealIds = topDeals.map((d) => d.id);
   const listingIds = topListings.map((l) => l.id);
 
-  const [voteMap, dealFavoriteSet, listingFavoriteSet] = await Promise.all([
-    fetchUserVoteMap(currentUser?.id ?? null, dealIds),
-    fetchUserFavoriteSet(currentUser?.id ?? null, dealIds),
-    fetchUserFavoriteListingSet(currentUser?.id ?? null, listingIds),
-  ]);
+  const [voteMapResult, dealFavoriteSetResult, listingFavoriteSetResult] =
+    await Promise.allSettled([
+      fetchUserVoteMap(currentUser?.id ?? null, dealIds),
+      fetchUserFavoriteSet(currentUser?.id ?? null, dealIds),
+      fetchUserFavoriteListingSet(currentUser?.id ?? null, listingIds),
+    ]);
+  const voteMap =
+    voteMapResult.status === "fulfilled" ? voteMapResult.value : new Map();
+  const dealFavoriteSet =
+    dealFavoriteSetResult.status === "fulfilled"
+      ? dealFavoriteSetResult.value
+      : new Set<string>();
+  const listingFavoriteSet =
+    listingFavoriteSetResult.status === "fulfilled"
+      ? listingFavoriteSetResult.value
+      : new Set<string>();
 
   const totalHits = topDeals.length + topListings.length;
 
