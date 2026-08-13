@@ -96,7 +96,9 @@ export function InstallBanner() {
     <div
       role="dialog"
       aria-labelledby="install-banner-title"
-      className="fixed inset-x-3 bottom-[calc(var(--bottom-nav-height,64px)+12px)] z-40 mx-auto max-w-md rounded-xl border border-border bg-card p-4 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-300 sm:mx-0 sm:w-[22rem] lg:inset-x-auto lg:left-4 lg:bottom-4"
+      // 4rem = hauteur de la MobileNav + env() = barre home iPhone. L'ancien
+      // offset lisait une variable CSS `--bottom-nav-height` jamais définie.
+      className="fixed inset-x-3 bottom-[calc(4rem+env(safe-area-inset-bottom)+0.75rem)] z-40 mx-auto max-w-md rounded-xl border border-border bg-card p-4 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-300 sm:mx-0 sm:w-[22rem] lg:inset-x-auto lg:left-4 lg:bottom-4"
     >
       <button
         type="button"

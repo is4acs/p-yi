@@ -214,6 +214,26 @@ export async function getStaticPagesEntries(): Promise<SitemapUrlEntry[]> {
               },
             },
           },
+          // Les annonces sont rattachées aux SOUS-catégories : le seuil
+          // d'indexabilité d'un pilier de catégorie mère se juge sur le
+          // cumul parent + enfants (cf. pillar-queries).
+          children: {
+            select: {
+              _count: {
+                select: {
+                  deals: {
+                    where: {
+                      status: "PUBLISHED",
+                      OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+                    },
+                  },
+                  listings: {
+                    where: { status: "PUBLISHED", expiresAt: { gt: now } },
+                  },
+                },
+              },
+            },
+          },
         },
       }),
       SITEMAP_QUERY_TIMEOUT_MS,
@@ -264,7 +284,9 @@ export async function getStaticPagesEntries(): Promise<SitemapUrlEntry[]> {
     slug: string;
     _count: { deals: number; listings: number };
   };
-  type CategoryCount = CityCount;
+  type CategoryCount = CityCount & {
+    children: Array<{ _count: { deals: number; listings: number } }>;
+  };
   type LatestUpdate = { updatedAt: Date } | null;
 
   const unwrap = <T>(i: number, fallback: T): T => {
@@ -367,8 +389,19 @@ export async function getStaticPagesEntries(): Promise<SitemapUrlEntry[]> {
   const cityCountBySlug = new Map(
     cityCounts.map((city) => [city.slug, city._count]),
   );
+  // Cumul parent + enfants : une catégorie mère dont les annonces vivent
+  // dans les sous-catégories reste indexable.
   const categoryCountBySlug = new Map(
-    categoryCounts.map((category) => [category.slug, category._count]),
+    categoryCounts.map((category) => [
+      category.slug,
+      category.children.reduce(
+        (acc, child) => ({
+          deals: acc.deals + child._count.deals,
+          listings: acc.listings + child._count.listings,
+        }),
+        { ...category._count },
+      ),
+    ]),
   );
 
   const cityPaths = CORE_CITIES.flatMap((city) => {

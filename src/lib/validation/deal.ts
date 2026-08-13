@@ -22,6 +22,9 @@ export const createDealSchema = z
     externalUrl: z
       .string()
       .url("Lien invalide.")
+      // `.url()` accepte N'IMPORTE QUEL schéma (javascript:, data:…) —
+      // on n'autorise que le web, le lien est rendu cliquable sur la fiche.
+      .regex(/^https?:\/\//i, "Le lien doit commencer par http:// ou https://.")
       .max(500)
       .optional()
       .or(z.literal("").transform(() => undefined)),

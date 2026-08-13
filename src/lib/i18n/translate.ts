@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 
-import type { Locale } from "./config";
+import { DEFAULT_LOCALE, type Locale } from "./config";
 
 /**
  * Traduction automatique du contenu utilisateur (titres, descriptions,
@@ -23,7 +23,17 @@ import type { Locale } from "./config";
  *     `TRANSLATE_DISABLE=1`.
  *
  * Garde-fous :
- *  - échec réseau / timeout (4 s) → texte original, jamais d'erreur page ;
+ *  - interface en français (langue par défaut) → AUCUN appel réseau : le
+ *    contenu publié sur Péyi est très majoritairement rédigé en français,
+ *    la traduction sert les interfaces pt/ht (vendeur haïtien ↔ acheteur
+ *    brésilien). Sans ce court-circuit, chaque rendu fr à froid partait en
+ *    dizaines d'appels externes pour re-traduire du français en français ;
+ *  - contenu privé (`sensitive: true`, messages directs) → jamais envoyé à
+ *    l'endpoint web public sans clé ; il faut un fournisseur contractuel
+ *    (TRANSLATE_API_URL ou GOOGLE_TRANSLATE_API_KEY) pour traduire un DM ;
+ *  - échec réseau / timeout (4 s) → texte original, jamais d'erreur page,
+ *    et disjoncteur de 5 min par instance pour ne pas re-payer le timeout
+ *    à chaque texte tant que le fournisseur est en panne ;
  *  - langue détectée == langue cible → texte original (translated: false) ;
  *  - résultats mis en cache serveur 30 jours (clé = texte + cible), les
  *    échecs ne sont PAS mis en cache.
@@ -44,6 +54,30 @@ const PROVIDER_LANG: Record<Locale, string> = {
 
 export function translationEnabled(): boolean {
   return process.env.TRANSLATE_DISABLE !== "1";
+}
+
+/**
+ * Vrai si un fournisseur contractuel est configuré (instance LibreTranslate
+ * auto-hébergée ou Google Cloud avec clé). L'endpoint web public par défaut
+ * n'en est pas un — on ne lui confie jamais de contenu privé.
+ */
+function hasContractualProvider(): boolean {
+  return Boolean(
+    process.env.TRANSLATE_API_URL || process.env.GOOGLE_TRANSLATE_API_KEY,
+  );
+}
+
+// --- Disjoncteur d'échec ----------------------------------------------------
+// `unstable_cache` ne met pas les échecs en cache (rawTranslate lève) : sans
+// garde supplémentaire, un fournisseur en panne ferait re-payer le timeout de
+// 4 s à CHAQUE texte de CHAQUE rendu. On retient l'heure du dernier échec
+// (par instance serveur) et on coupe les appels pendant 5 min — les pages
+// affichent l'original, puis on réessaie une fois la fenêtre écoulée.
+const FAILURE_COOLDOWN_MS = 5 * 60 * 1000;
+let lastFailureAt = 0;
+
+function providerOnCooldown(): boolean {
+  return Date.now() - lastFailureAt < FAILURE_COOLDOWN_MS;
 }
 
 type RawResult = {
@@ -174,6 +208,14 @@ const cachedTranslate = unstable_cache(rawTranslate, ["mt-v1"], {
   tags: ["mt"],
 });
 
+export type TranslateOptions = {
+  /**
+   * Contenu privé (messages directs). N'est traduit QUE si un fournisseur
+   * contractuel est configuré — jamais via l'endpoint web public sans clé.
+   */
+  sensitive?: boolean;
+};
+
 /**
  * Traduit un texte utilisateur vers `target`. Ne lève jamais : en cas de
  * fournisseur absent, d'échec ou de texte déjà dans la bonne langue, le
@@ -182,9 +224,21 @@ const cachedTranslate = unstable_cache(rawTranslate, ["mt-v1"], {
 export async function translateUserText(
   text: string,
   target: Locale,
+  options?: TranslateOptions,
 ): Promise<TranslatedText> {
   const trimmed = text.trim();
   if (!trimmed || !translationEnabled()) {
+    return { text, translated: false };
+  }
+  // Interface dans la langue par défaut (fr) : le contenu est affiché tel
+  // quel, sans appel réseau — voir le bloc de doc en tête de fichier.
+  if (target === DEFAULT_LOCALE) {
+    return { text, translated: false };
+  }
+  if (options?.sensitive && !hasContractualProvider()) {
+    return { text, translated: false };
+  }
+  if (providerOnCooldown()) {
     return { text, translated: false };
   }
   try {
@@ -197,7 +251,9 @@ export async function translateUserText(
     }
     return { text: result.text, translated: true };
   } catch {
-    // Fournisseur injoignable / quota / timeout : on affiche l'original.
+    // Fournisseur injoignable / quota / timeout : on affiche l'original et
+    // on arme le disjoncteur pour les prochains textes.
+    lastFailureAt = Date.now();
     return { text, translated: false };
   }
 }
@@ -206,6 +262,9 @@ export async function translateUserText(
 export async function translateUserTexts(
   texts: string[],
   target: Locale,
+  options?: TranslateOptions,
 ): Promise<TranslatedText[]> {
-  return Promise.all(texts.map((text) => translateUserText(text, target)));
+  return Promise.all(
+    texts.map((text) => translateUserText(text, target, options)),
+  );
 }

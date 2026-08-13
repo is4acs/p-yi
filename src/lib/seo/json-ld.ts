@@ -41,7 +41,7 @@ export function buildOrganizationJsonLd(): JsonLd {
     "@id": `${base}/#organization`,
     name: "Péyi",
     url: base,
-    logo: `${base}/icon`,
+    logo: `${base}/icons/peyi-icon-512.png`,
     description:
       "Plateforme communautaire des bons plans et petites annonces 100% Guyane.",
     areaServed: {

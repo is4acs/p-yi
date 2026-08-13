@@ -36,7 +36,21 @@ function buildListingsPillarWhere(
     status: "PUBLISHED",
     expiresAt: { gt: new Date() },
     ...(filters.citySlug ? { city: { slug: filters.citySlug } } : {}),
-    ...(filters.categorySlug ? { category: { slug: filters.categorySlug } } : {}),
+    // Les annonces vivent dans les SOUS-catégories (taxonomie Leboncoin,
+    // S38) : le pilier d'une catégorie mère (vehicules, immobilier…)
+    // agrège le slug lui-même OU le slug parent — même logique que
+    // `buildWhere` côté catalogue, sinon les pages piliers se vident et
+    // passent sous le seuil d'indexation.
+    ...(filters.categorySlug
+      ? {
+          category: {
+            OR: [
+              { slug: filters.categorySlug },
+              { parent: { slug: filters.categorySlug } },
+            ],
+          },
+        }
+      : {}),
   };
 }
 

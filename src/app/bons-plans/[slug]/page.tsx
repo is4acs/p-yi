@@ -311,7 +311,12 @@ export default async function DealDetailPage(
     ? t.dealDetail.loginToSave
     : undefined;
 
-  const ctaUrl = deal.affiliateUrl ?? deal.externalUrl ?? deal.store?.website ?? null;
+  // Défense en profondeur : la validation impose http(s) depuis S39, mais
+  // les liens déjà en base peuvent porter n'importe quel schéma
+  // (javascript:, data:…) — on ne rend jamais un CTA non web cliquable.
+  const rawCtaUrl =
+    deal.affiliateUrl ?? deal.externalUrl ?? deal.store?.website ?? null;
+  const ctaUrl = rawCtaUrl && /^https?:\/\//i.test(rawCtaUrl) ? rawCtaUrl : null;
   const sellerName =
     deal.store?.name ?? deal.merchant?.name ?? "Vendeur non précisé";
   const placeholderLabel = deal.store?.name ?? deal.merchant?.name ?? deal.title;
@@ -509,7 +514,7 @@ export default async function DealDetailPage(
               </div>
 
               {deal.description && (
-                <p className="mt-4 whitespace-pre-line text-[13px] leading-relaxed text-soleil-body dark:text-soleil-body-d">
+                <p className="mt-4 whitespace-pre-line break-words text-[13px] leading-relaxed text-soleil-body dark:text-soleil-body-d">
                   {mtDescription.text}
                 </p>
               )}
@@ -520,9 +525,9 @@ export default async function DealDetailPage(
                     {t.mt.translated} · {t.mt.seeOriginal}
                   </summary>
                   <div className="mt-2 space-y-1.5">
-                    <p className="font-bold">{deal.title}</p>
+                    <p className="break-words font-bold">{deal.title}</p>
                     {deal.description && (
-                      <p className="whitespace-pre-line leading-relaxed">
+                      <p className="whitespace-pre-line break-words leading-relaxed">
                         {deal.description}
                       </p>
                     )}

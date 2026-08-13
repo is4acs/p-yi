@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { UserRole, type User } from "@prisma/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
@@ -44,8 +45,13 @@ async function syncAuthDriftToPrisma(
 /**
  * Returns the current Prisma User row, or null if not authenticated or the
  * profile has not been created yet (OAuth first login).
+ *
+ * Mémoïsé par requête via `React.cache` : le root layout ET la page (ET
+ * certains composants serveur) l'appellent dans le même rendu — sans
+ * mémoïsation ça faisait 2-3 allers-retours Supabase + Prisma identiques
+ * par requête.
  */
-export async function getCurrentUser(): Promise<User | null> {
+export const getCurrentUser = cache(async (): Promise<User | null> => {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user: authUser },
@@ -59,7 +65,7 @@ export async function getCurrentUser(): Promise<User | null> {
   if (!profile) return null;
 
   return syncAuthDriftToPrisma(profile, authUser);
-}
+});
 
 /**
  * Enforces authentication. Redirects to /connexion if not signed in, and

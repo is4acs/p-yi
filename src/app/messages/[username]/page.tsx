@@ -18,6 +18,7 @@ import {
 } from "@/lib/messages/queries";
 import { getLocale, getMessages, tFormat, type Messages } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n/config";
+import { firstParam } from "@/lib/url-params";
 import {
   translateUserTexts,
   type TranslatedText,
@@ -31,7 +32,12 @@ export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ username: string }>;
-  searchParams: Promise<{ listing?: string; error?: string }>;
+  // Valeurs potentiellement en tableau si le paramètre est répété —
+  // lecture via `firstParam` uniquement.
+  searchParams: Promise<{
+    listing?: string | string[];
+    error?: string | string[];
+  }>;
 };
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
@@ -46,16 +52,18 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 export default async function ThreadPage(props: Props) {
   const searchParams = await props.searchParams;
   const params = await props.params;
+  const listingSlug = firstParam(searchParams.listing) ?? null;
+  const errorMessage = firstParam(searchParams.error) ?? null;
   const t = await getMessages();
   const locale = await getLocale();
   const user = await requireUser(
-    `/messages/${params.username}${searchParams.listing ? `?listing=${searchParams.listing}` : ""}`,
+    `/messages/${params.username}${listingSlug ? `?listing=${listingSlug}` : ""}`,
   );
 
   const thread = await fetchThread({
     userId: user.id,
     otherUsername: params.username,
-    listingSlug: searchParams.listing ?? null,
+    listingSlug,
   });
   if (!thread) notFound();
 
@@ -69,11 +77,14 @@ export default async function ThreadPage(props: Props) {
 
   // Traduction automatique des messages REÇUS vers la langue de
   // l'interface — c'est ici qu'un vendeur haïtien et un acheteur
-  // brésilien se parlent. Passthrough sans fournisseur configuré.
+  // brésilien se parlent. `sensitive` : un DM ne part JAMAIS vers
+  // l'endpoint public sans clé — passthrough tant qu'aucun fournisseur
+  // contractuel n'est configuré.
   const received = thread.messages.filter((m) => m.senderId !== user.id);
   const receivedMt = await translateUserTexts(
     received.map((m) => m.content),
     locale,
+    { sensitive: true },
   );
   const mtById = new Map<string, TranslatedText>();
   received.forEach((m, i) => mtById.set(m.id, receivedMt[i]));
@@ -95,12 +106,12 @@ export default async function ThreadPage(props: Props) {
           <ListingContextCard listing={thread.listing} t={t} locale={locale} />
         )}
 
-        {searchParams.error && (
+        {errorMessage && (
           <div
             role="alert"
             className="mt-4 rounded-[14px] border-[1.5px] border-destructive/40 bg-destructive/10 p-3 text-sm font-semibold text-destructive"
           >
-            {searchParams.error}
+            {errorMessage}
           </div>
         )}
 
@@ -262,7 +273,7 @@ function ReplyForm({
   return (
     <form
       action={sendMessageAction}
-      className="sticky bottom-20 z-30 mt-4 flex items-end gap-2 border-t border-soleil-line bg-soleil-cream/95 py-3 backdrop-blur supports-[backdrop-filter]:bg-soleil-cream/80 dark:border-soleil-line-d dark:bg-soleil-night/95 dark:supports-[backdrop-filter]:bg-soleil-night/80 lg:bottom-0"
+      className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 mt-4 flex items-end gap-2 border-t border-soleil-line bg-soleil-cream/95 py-3 backdrop-blur supports-[backdrop-filter]:bg-soleil-cream/80 dark:border-soleil-line-d dark:bg-soleil-night/95 dark:supports-[backdrop-filter]:bg-soleil-night/80 lg:bottom-0"
     >
       <input type="hidden" name="recipientUsername" value={recipientUsername} />
       {listingSlug && (

@@ -241,7 +241,10 @@ export default async function RootLayout({
           utilitaire (bg-background) écraserait la règle @layer base de
           globals.css — c'est exactement le bug des bandes blanches vues
           sous la nav basse et au-dessus du footer sur iPhone. */}
-      <body className="min-h-screen bg-soleil-cream pb-20 font-sans text-foreground antialiased dark:bg-soleil-night lg:pb-0">
+      {/* pb : réserve pour la MobileNav (4rem) + son inset safe-area iOS
+          + 1rem d'air — sans le env(), la barre home iPhone mord sur le
+          bas des pages. */}
+      <body className="min-h-screen bg-soleil-cream pb-[calc(5rem+env(safe-area-inset-bottom))] font-sans text-foreground antialiased dark:bg-soleil-night lg:pb-0">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: rootJsonLd }}

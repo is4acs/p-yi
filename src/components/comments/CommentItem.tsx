@@ -111,7 +111,7 @@ export function CommentItem({
               {t.dealDetail.deletedComment}
             </p>
           ) : (
-            <p className="whitespace-pre-line text-[12.5px] leading-normal text-soleil-body dark:text-soleil-body-d">
+            <p className="whitespace-pre-line break-words text-[12.5px] leading-normal text-soleil-body dark:text-soleil-body-d">
               {comment.content}
             </p>
           )}

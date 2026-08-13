@@ -31,9 +31,9 @@ import { tFormat } from "@/lib/i18n/tformat";
  *     overflow-y-auto` : le dernier pixel du contenu est toujours
  *     atteignable, quel que soit le palier.
  *
- * Le panneau se place AU-DESSUS de la BottomNav (`bottom-20 sm:bottom-0`,
- * la même réserve que `pb-20 sm:pb-0` du body) : la navigation reste
- * accessible en permanence.
+ * Le panneau se place AU-DESSUS de la BottomNav — même réserve que le
+ * `pb` du body : 4rem de nav + `env(safe-area-inset-bottom)` (barre home
+ * iPhone) + 1rem d'air. La navigation reste accessible en permanence.
  */
 
 /**
@@ -204,7 +204,7 @@ export function ActivitiesMobileSheet({
       aria-label={t.act.listAria}
       style={{ height }}
       className={cn(
-        "fixed inset-x-0 bottom-20 z-30 flex flex-col rounded-t-[20px] border-t border-soleil-line bg-soleil-cream text-soleil-forest shadow-lg dark:border-soleil-line-d dark:bg-soleil-night dark:text-soleil-cream lg:bottom-0",
+        "fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 flex flex-col rounded-t-[20px] border-t border-soleil-line bg-soleil-cream text-soleil-forest shadow-lg dark:border-soleil-line-d dark:bg-soleil-night dark:text-soleil-cream lg:bottom-0",
         // Pas de transition pendant le glissement : le panneau doit coller
         // au doigt. Elle ne sert qu'à l'aimantation et aux boutons.
         !dragging && "transition-[height] duration-slow ease-out",

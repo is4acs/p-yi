@@ -9,6 +9,7 @@ import {
 } from "@/lib/deals/queries";
 import { parsePage, parseQuery, parseSort } from "@/lib/deals/url";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { firstParam } from "@/lib/url-params";
 import { DealCard } from "@/components/deals/DealCard";
 import { DealsPagination } from "@/components/deals/DealsPagination";
 import { EmptyDeals } from "@/components/deals/EmptyDeals";
@@ -30,13 +31,9 @@ export const dynamic = "force-dynamic";
 const METADATA_TIMEOUT_MS = 2_000;
 const PAGE_DATA_TIMEOUT_MS = 4_500;
 
-type SearchParams = {
-  sort?: string;
-  category?: string;
-  city?: string;
-  page?: string;
-  q?: string;
-};
+// Chaque valeur peut être un TABLEAU si le paramètre est répété dans
+// l'URL — lecture uniquement via `firstParam`.
+type SearchParams = Record<string, string | string[] | undefined>;
 
 /**
  * Resout les slugs `category` / `city` en noms humains pour enrichir
@@ -96,11 +93,11 @@ export async function generateMetadata(
   }
 ): Promise<Metadata> {
   const searchParams = await props.searchParams;
-  const q = parseQuery(searchParams.q);
-  const sort = parseSort(searchParams.sort);
-  const page = parsePage(searchParams.page);
-  const categorySlug = searchParams.category?.trim() || null;
-  const citySlug = searchParams.city?.trim() || null;
+  const q = parseQuery(firstParam(searchParams.q));
+  const sort = parseSort(firstParam(searchParams.sort));
+  const page = parsePage(firstParam(searchParams.page));
+  const categorySlug = firstParam(searchParams.category)?.trim() || null;
+  const citySlug = firstParam(searchParams.city)?.trim() || null;
 
   // Toutes les vues filtrées/recherchées (query params) passent en
   // noindex pour éviter la bloat SEO. Les pages piliers dédiées
@@ -156,11 +153,11 @@ export default async function BonsPlansPage(
   const searchParams = await props.searchParams;
   const t = await getMessages();
   const locale = await getLocale();
-  const sort = parseSort(searchParams.sort);
-  const page = parsePage(searchParams.page);
-  const category = searchParams.category?.trim() || null;
-  const city = searchParams.city?.trim() || null;
-  const q = parseQuery(searchParams.q);
+  const sort = parseSort(firstParam(searchParams.sort));
+  const page = parsePage(firstParam(searchParams.page));
+  const category = firstParam(searchParams.category)?.trim() || null;
+  const city = firstParam(searchParams.city)?.trim() || null;
+  const q = parseQuery(firstParam(searchParams.q));
 
   const [dealsResult, categoriesResult, citiesResult, currentUserResult] =
     await Promise.allSettled([

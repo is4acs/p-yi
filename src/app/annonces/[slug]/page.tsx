@@ -489,7 +489,7 @@ export default async function ListingDetailPage(
                 </div>
               )}
 
-              <p className="mt-3 whitespace-pre-line text-[13px] leading-relaxed text-soleil-body dark:text-soleil-body-d">
+              <p className="mt-3 whitespace-pre-line break-words text-[13px] leading-relaxed text-soleil-body dark:text-soleil-body-d">
                 {mtDescription.text}
               </p>
 
@@ -499,8 +499,8 @@ export default async function ListingDetailPage(
                     {t.mt.translated} · {t.mt.seeOriginal}
                   </summary>
                   <div className="mt-2 space-y-1.5">
-                    <p className="font-bold">{listing.title}</p>
-                    <p className="whitespace-pre-line leading-relaxed">
+                    <p className="break-words font-bold">{listing.title}</p>
+                    <p className="whitespace-pre-line break-words leading-relaxed">
                       {listing.description}
                     </p>
                   </div>

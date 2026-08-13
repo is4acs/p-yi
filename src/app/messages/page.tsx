@@ -37,12 +37,15 @@ export default async function MessagesInboxPage() {
   const conversations = await fetchInbox(user.id);
 
   // Aperçus : les derniers messages reçus sont traduits vers la langue de
-  // l'interface (comme dans le fil). Passthrough sans fournisseur.
+  // l'interface (comme dans le fil). `sensitive` : passthrough tant
+  // qu'aucun fournisseur contractuel n'est configuré — un DM ne part
+  // jamais vers l'endpoint public sans clé.
   const previews = await translateUserTexts(
     conversations.map((c) =>
       c.lastMessage.isFromMe ? "" : c.lastMessage.content,
     ),
     locale,
+    { sensitive: true },
   );
 
   return (

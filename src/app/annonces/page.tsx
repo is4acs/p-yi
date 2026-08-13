@@ -20,6 +20,7 @@ import {
   parseType,
 } from "@/lib/listings/url";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { firstParam } from "@/lib/url-params";
 import { getListingsFacetCanonicalPath } from "@/lib/seo/local-pages";
 import { getFilterSlotsForCategory } from "@/lib/listings/field-registry";
 import { ListingCardTile } from "@/components/listings/ListingCardTile";
@@ -53,23 +54,9 @@ export const dynamic = "force-dynamic";
 const METADATA_TIMEOUT_MS = 2_000;
 const PAGE_DATA_TIMEOUT_MS = 4_500;
 
-type SearchParams = {
-  sort?: string;
-  category?: string;
-  city?: string;
-  type?: string;
-  page?: string;
-  q?: string;
-  prixMin?: string;
-  prixMax?: string;
-  anneeMin?: string;
-  kmMax?: string;
-  surfaceMin?: string;
-  pieces?: string;
-  carburant?: string;
-  marque?: string;
-  contrat?: string;
-};
+// Chaque valeur peut être un TABLEAU si le paramètre est répété dans
+// l'URL — lecture uniquement via `firstParam` / `parseFilters`.
+type SearchParams = Record<string, string | string[] | undefined>;
 
 /**
  * Même logique que `/bons-plans` : on résout les slugs en noms
@@ -123,12 +110,12 @@ export async function generateMetadata(
   }
 ): Promise<Metadata> {
   const searchParams = await props.searchParams;
-  const q = parseQuery(searchParams.q);
-  const sort = parseSort(searchParams.sort);
-  const page = parsePage(searchParams.page);
-  const type = parseType(searchParams.type);
-  const categorySlug = searchParams.category?.trim() || null;
-  const citySlug = searchParams.city?.trim() || null;
+  const q = parseQuery(firstParam(searchParams.q));
+  const sort = parseSort(firstParam(searchParams.sort));
+  const page = parsePage(firstParam(searchParams.page));
+  const type = parseType(firstParam(searchParams.type));
+  const categorySlug = firstParam(searchParams.category)?.trim() || null;
+  const citySlug = firstParam(searchParams.city)?.trim() || null;
   const filters = parseFilters(searchParams);
 
   // Toutes les vues filtrées/recherchées restent noindex pour éviter
@@ -191,12 +178,12 @@ export default async function AnnoncesPage(
   const searchParams = await props.searchParams;
   const t = await getMessages();
   const locale = await getLocale();
-  const sort = parseSort(searchParams.sort);
-  const page = parsePage(searchParams.page);
-  const type = parseType(searchParams.type);
-  const category = searchParams.category?.trim() || null;
-  const city = searchParams.city?.trim() || null;
-  const q = parseQuery(searchParams.q);
+  const sort = parseSort(firstParam(searchParams.sort));
+  const page = parsePage(firstParam(searchParams.page));
+  const type = parseType(firstParam(searchParams.type));
+  const category = firstParam(searchParams.category)?.trim() || null;
+  const city = firstParam(searchParams.city)?.trim() || null;
+  const q = parseQuery(firstParam(searchParams.q));
   const filters = parseFilters(searchParams);
 
   const [
