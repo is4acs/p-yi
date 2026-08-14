@@ -1,8 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { AlertCircle, ArrowLeft, Mail } from "lucide-react";
+import { AlertCircle, ArrowLeft } from "lucide-react";
 
 import { safeInternalPath } from "@/lib/safe-redirect";
+import { authErrorMessage, isAuthErrorCode } from "@/lib/auth/errors";
 import { getMessages } from "@/lib/i18n";
 import { Sun } from "@/components/soleil/Sun";
 
@@ -18,24 +19,38 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
 };
 
+// Valeurs potentiellement en tableau si le paramètre est répété.
 type SearchParams = {
-  mode?: string;
-  error?: string;
-  confirmSent?: string;
-  next?: string;
+  mode?: string | string[];
+  error?: string | string[];
+  next?: string | string[];
 };
+
+function first(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
 
 export default async function ConnexionPage(props: {
   searchParams: Promise<SearchParams>;
 }) {
   const searchParams = await props.searchParams;
   const t = await getMessages();
-  const isSignup = searchParams.mode === "signup";
-  const confirmSent = searchParams.confirmSent === "1";
+  const isSignup = first(searchParams.mode) === "signup";
   // `next` vient de l'URL, donc de l'utilisateur : on le contraint à un
   // chemin interne dès l'entrée (cf. safe-redirect) avant de le confier au
   // formulaire ou au bouton Google.
-  const next = safeInternalPath(searchParams.next, "/bons-plans");
+  const next = safeInternalPath(first(searchParams.next), "/bons-plans");
+
+  // Erreurs venant des flux à navigation (/auth/callback, /auth/confirm,
+  // bouton Google) : un CODE de la liste blanche, traduit ici. Tout le
+  // reste (ancien lien, texte forgé) retombe sur le message générique —
+  // on n'affiche jamais de texte libre venu de l'URL.
+  const rawError = first(searchParams.error);
+  const urlErrorMessage = rawError
+    ? authErrorMessage(t, {
+        error: isAuthErrorCode(rawError) ? rawError : "signin_failed",
+      })
+    : null;
 
   // Le template CGU contient {terms} et {privacy} : on le découpe pour
   // intercaler les liens sans dangerouslySetInnerHTML.
@@ -64,26 +79,13 @@ export default async function ConnexionPage(props: {
           </p>
         </div>
 
-        {confirmSent && (
-          <div
-            role="status"
-            className="mt-6 flex items-start gap-2.5 rounded-[14px] bg-soleil-valid p-3.5 text-sm text-soleil-forest dark:bg-soleil-valid-d"
-          >
-            <Mail className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-            <div>
-              <p className="font-extrabold">{t.auth.checkInbox}</p>
-              <p className="mt-0.5 text-xs font-medium">{t.auth.checkInboxSub}</p>
-            </div>
-          </div>
-        )}
-
-        {searchParams.error && (
+        {urlErrorMessage && (
           <div
             role="alert"
             className="mt-6 flex items-start gap-2.5 rounded-[14px] border-[1.5px] border-destructive/40 bg-destructive/10 p-3.5 text-sm font-semibold text-destructive"
           >
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-            <span>{searchParams.error}</span>
+            <span>{urlErrorMessage}</span>
           </div>
         )}
 

@@ -322,6 +322,32 @@ export const ht: Messages = {
       "Omwen 8 karaktè. Nou rekòmande yon melanj lèt, chif ak senbòl.",
     resetCta: "Mete ajou",
     resetPending: "Ap mete ajou…",
+    resetDone: "Modpas la mete ajou !",
+    resetDoneSub: "Ou ka kontinye kote w te ye a.",
+    continueCta: "Kontinye",
+    cpTitle: "Chwazi non itilizatè w",
+    cpSub:
+      "L ap parèt sou bon plan ak anons ou yo. Li pa fasil pou chanje, kidonk chwazi byen.",
+    cpCta: "Ann ale",
+    cpPending: "Kreyasyon…",
+    errors: {
+      rateLimitedSec: "Twòp tantativ. Eseye ankò nan {n} segond.",
+      rateLimitedMin: "Twòp tantativ. Eseye ankò nan {n} minit.",
+      invalidForm: "Fòmilè a pa valid. Verifye chan yo epi eseye ankò.",
+      emailUnconfirmed:
+        "Imèl ou poko konfime. Klike sou lyen ou resevwa nan imèl la.",
+      invalidCredentials: "Imèl oswa modpas la pa kòrèk.",
+      signinFailed: "Koneksyon an pa t mache. Eseye ankò.",
+      usernameTaken: "Non itilizatè sa a deja pran.",
+      emailTaken: "Imèl sa a deja itilize.",
+      signupFailed: "Nou pa t ka kreye kont lan. Eseye pita.",
+      linkInvalid: "Lyen an pa valid oswa li ekspire. Mande yon nouvo lyen.",
+      cookiesBlocked:
+        "Navigatè w la bloke yon cookie ki nesesè pou koneksyon Google la. Aktive cookies yo oswa konekte ak imèl.",
+      googleFailed: "Koneksyon Google pa disponib pou kounye a.",
+      passwordSame: "Nouvo modpas la dwe diferan de ansyen an.",
+      updateFailed: "Nou pa t ka mete modpas la ajou. Eseye ankò.",
+    },
   },
   act: {
     categories: {

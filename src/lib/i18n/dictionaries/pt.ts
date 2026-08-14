@@ -325,6 +325,32 @@ export const pt: Messages = {
       "Pelo menos 8 caracteres. Recomendamos misturar letras, números e símbolos.",
     resetCta: "Atualizar",
     resetPending: "Atualizando…",
+    resetDone: "Senha atualizada!",
+    resetDoneSub: "Você pode continuar de onde parou.",
+    continueCta: "Continuar",
+    cpTitle: "Escolha seu nome de usuário",
+    cpSub:
+      "Ele aparecerá nas suas ofertas e anúncios. Não dá para mudar facilmente, então escolha bem.",
+    cpCta: "Vamos lá",
+    cpPending: "Criando…",
+    errors: {
+      rateLimitedSec: "Muitas tentativas. Tente novamente em {n} s.",
+      rateLimitedMin: "Muitas tentativas. Tente novamente em {n} min.",
+      invalidForm: "Formulário inválido. Verifique os campos e tente novamente.",
+      emailUnconfirmed:
+        "E-mail ainda não confirmado. Clique no link recebido por e-mail.",
+      invalidCredentials: "E-mail ou senha incorretos.",
+      signinFailed: "Não foi possível entrar. Tente novamente.",
+      usernameTaken: "Este nome de usuário já está em uso.",
+      emailTaken: "Este e-mail já está em uso.",
+      signupFailed: "Não foi possível criar a conta. Tente mais tarde.",
+      linkInvalid: "Link inválido ou expirado. Solicite um novo link.",
+      cookiesBlocked:
+        "Seu navegador bloqueou um cookie necessário para o login com o Google. Ative os cookies ou entre por e-mail.",
+      googleFailed: "Login com o Google indisponível no momento.",
+      passwordSame: "A nova senha deve ser diferente da antiga.",
+      updateFailed: "Não foi possível atualizar a senha. Tente novamente.",
+    },
   },
   act: {
     categories: {

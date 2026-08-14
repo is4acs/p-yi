@@ -1,12 +1,11 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { AlertCircle, ArrowLeft, Mail } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 import { getMessages } from "@/lib/i18n";
-import { SubmitButton } from "@/components/ui/submit-button";
 
 import { requestPasswordResetAction } from "./actions";
-import { INPUT_CLASS } from "@/components/soleil/field";
+import { ForgotPasswordForm } from "./forgot-form";
 
 export const metadata: Metadata = {
   title: "Mot de passe oublié",
@@ -16,18 +15,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
 };
 
-type SearchParams = {
-  error?: string;
-  sent?: string;
-};
-
-export default async function MotDePasseOubliePage(props: {
-  searchParams: Promise<SearchParams>;
-}) {
-  const searchParams = await props.searchParams;
+export default async function MotDePasseOubliePage() {
   const t = await getMessages();
-  const error = searchParams.error;
-  const sent = searchParams.sent === "1";
 
   return (
     <main className="min-h-screen bg-soleil-cream px-4 pb-10 text-soleil-forest dark:bg-soleil-night dark:text-soleil-cream">
@@ -49,58 +38,7 @@ export default async function MotDePasseOubliePage(props: {
           </p>
         </div>
 
-        {sent ? (
-          <div
-            role="status"
-            className="mt-6 flex items-start gap-2.5 rounded-[14px] bg-soleil-valid p-4 text-sm text-soleil-forest dark:bg-soleil-valid-d"
-          >
-            <Mail className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
-            <div>
-              <p className="font-extrabold">{t.auth.checkInbox}</p>
-              <p className="mt-1 text-xs font-medium">{t.auth.forgotSentSub}</p>
-            </div>
-          </div>
-        ) : (
-          <>
-            {error && (
-              <div
-                role="alert"
-                className="mt-6 flex items-start gap-2.5 rounded-[14px] border-[1.5px] border-destructive/40 bg-destructive/10 p-3.5 text-sm font-semibold text-destructive"
-              >
-                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                <span>{error}</span>
-              </div>
-            )}
-
-            <form action={requestPasswordResetAction} className="mt-6 space-y-4">
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="email"
-                  className="text-[11px] font-extrabold uppercase tracking-[0.5px] text-soleil-muted2 dark:text-soleil-muted-d"
-                >
-                  {t.auth.email}
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  inputMode="email"
-                  placeholder={t.auth.emailPlaceholder}
-                  className={INPUT_CLASS}
-                />
-              </div>
-
-              <SubmitButton
-                className="min-h-[48px] w-full rounded-full bg-soleil-forest text-[14px] font-extrabold text-soleil-cream hover:bg-soleil-forest/90 dark:bg-soleil-cream dark:text-soleil-forest dark:hover:bg-soleil-cream/90"
-                pendingLabel={t.auth.forgotPending}
-              >
-                {t.auth.forgotCta}
-              </SubmitButton>
-            </form>
-          </>
-        )}
+        <ForgotPasswordForm action={requestPasswordResetAction} />
 
         <p className="mt-8 text-center text-xs text-soleil-muted2 dark:text-soleil-muted-d">
           {t.auth.remember}{" "}

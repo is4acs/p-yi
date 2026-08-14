@@ -13,23 +13,18 @@ export async function GET(request: NextRequest) {
   const next = safeInternalPath(searchParams.get("next"), "/bons-plans");
 
   // Supabase may also redirect here with an explicit error param on
-  // invalid/expired links. Surface it rather than silently 302'ing.
+  // invalid/expired links. Log the detail server-side; the UI receives a
+  // CODE (jamais de texte libre en query — cf. lib/auth/errors.ts).
   const supabaseError =
     searchParams.get("error_description") ?? searchParams.get("error");
   if (supabaseError) {
     console.error("[auth/callback] supabase error param:", supabaseError);
-    return NextResponse.redirect(
-      `${origin}/connexion?error=${encodeURIComponent(supabaseError)}`,
-    );
+    return NextResponse.redirect(`${origin}/connexion?error=link_invalid`);
   }
 
   if (!code) {
     console.error("[auth/callback] no ?code param");
-    return NextResponse.redirect(
-      `${origin}/connexion?error=${encodeURIComponent(
-        "Lien invalide : code d'authentification manquant.",
-      )}`,
-    );
+    return NextResponse.redirect(`${origin}/connexion?error=link_invalid`);
   }
 
   // Diagnostic : si le cookie PKCE verifier n'a pas voyagé jusqu'ici,
@@ -54,22 +49,21 @@ export async function GET(request: NextRequest) {
     });
 
     // Si le verifier est absent, c'est quasi-certainement un blocage
-    // cookie (Safari ITP, navigation privée, bloqueur). Message UX
+    // cookie (Safari ITP, navigation privée, bloqueur). Code UX
     // explicite plutôt que l'opaque « PKCE code verifier not found ».
-    const message = !hasVerifier
-      ? "Ton navigateur a bloqué un cookie nécessaire à la connexion Google. " +
-        "Active les cookies pour peyi.com ou utilise la connexion par e-mail."
-      : error.message || "Lien invalide ou expiré.";
-
+    const errorCode = !hasVerifier ? "cookies_blocked" : "link_invalid";
     return NextResponse.redirect(
-      `${origin}/connexion?error=${encodeURIComponent(message)}`,
+      `${origin}/connexion?error=${errorCode}`,
     );
   }
 
   const profile = await ensureUserProfile();
   if (!profile) {
-    // OAuth first login without a chosen username — collect one now.
-    return NextResponse.redirect(`${origin}/auth/complete-profile`);
+    // OAuth first login without a chosen username — collect one now,
+    // en conservant la destination d'origine.
+    return NextResponse.redirect(
+      `${origin}/auth/complete-profile?next=${encodeURIComponent(next)}`,
+    );
   }
   return NextResponse.redirect(`${origin}${next}`);
 }

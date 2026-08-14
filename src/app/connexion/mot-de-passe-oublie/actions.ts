@@ -1,11 +1,13 @@
 "use server";
 
-import { redirect } from "next/navigation";
-
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { authLimiter, getClientIp } from "@/lib/rate-limit";
 import { getSiteUrl } from "@/lib/site-url";
 import { requestPasswordResetSchema } from "@/lib/validation/auth";
+import {
+  rateLimitedState,
+  type AuthFormState,
+} from "@/lib/auth/errors";
 
 /**
  * Envoie un email de réinitialisation de mot de passe via Supabase.
@@ -22,38 +24,20 @@ import { requestPasswordResetSchema } from "@/lib/validation/auth";
  *
  * Sécurité :
  *   - Rate limit IP (authLimiter 5/10 min) pour éviter le flood d'emails.
- *   - Message identique en cas de succès OU d'e-mail inconnu : on ne
+ *   - État `sent` identique en cas de succès OU d'e-mail inconnu : on ne
  *     confirme jamais l'existence d'un compte (anti-énumération).
  */
-function redirectWithError(message: string): never {
-  redirect(
-    `/connexion/mot-de-passe-oublie?error=${encodeURIComponent(message)}`,
-  );
-}
-
-function formatRateLimitMessage(reset: number): string {
-  const secondsLeft = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
-  if (secondsLeft >= 60) {
-    return `Trop de tentatives. Réessaye dans ${Math.ceil(secondsLeft / 60)} min.`;
-  }
-  return `Trop de tentatives. Réessaye dans ${secondsLeft}s.`;
-}
-
-export async function requestPasswordResetAction(formData: FormData) {
+export async function requestPasswordResetAction(
+  _prev: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
   const { success, reset } = await authLimiter.limit(await getClientIp());
-  if (!success) {
-    redirectWithError(formatRateLimitMessage(reset));
-  }
+  if (!success) return rateLimitedState(reset);
 
   const parsed = requestPasswordResetSchema.safeParse({
     email: formData.get("email"),
   });
-
-  if (!parsed.success) {
-    redirectWithError(
-      parsed.error.issues[0]?.message ?? "Formulaire invalide.",
-    );
-  }
+  if (!parsed.success) return { error: "invalid_form" };
 
   const { email } = parsed.data;
   const supabase = await createSupabaseServerClient();
@@ -67,10 +51,10 @@ export async function requestPasswordResetAction(formData: FormData) {
 
   if (error) {
     // On logge côté serveur mais on ne fuit pas l'info à l'utilisateur —
-    // on affiche le même message "email envoyé" quoi qu'il arrive pour
-    // éviter de confirmer qu'un email est inscrit dans la base.
+    // même état "envoyé" quoi qu'il arrive pour éviter de confirmer
+    // qu'un email est inscrit dans la base.
     console.error("[resetPasswordForEmail] failed:", error);
   }
 
-  redirect("/connexion/mot-de-passe-oublie?sent=1");
+  return { error: null, sent: true };
 }

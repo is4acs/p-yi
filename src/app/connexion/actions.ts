@@ -6,9 +6,26 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { signInSchema, signUpSchema } from "@/lib/validation/auth";
 import { ensureUserProfile } from "@/lib/auth/ensure-profile";
+import {
+  rateLimitedState,
+  type AuthFormState,
+} from "@/lib/auth/errors";
 import { safeInternalPath } from "@/lib/safe-redirect";
 import { getSiteUrl } from "@/lib/site-url";
 import { authLimiter, getClientIp } from "@/lib/rate-limit";
+
+/**
+ * Actions du parcours connexion / inscription.
+ *
+ * Modèle `useActionState` : chaque action renvoie un `AuthFormState`
+ * (code d'erreur typé, traduit côté client) au lieu de rediriger avec
+ * un message en query string. Conséquences :
+ *  - la saisie de l'utilisateur n'est plus perdue à chaque erreur
+ *    (l'ancien redirect vidait tous les champs) ;
+ *  - plus aucun texte libre injectable dans l'URL ;
+ *  - les messages suivent la langue de l'interface.
+ * Les SUCCÈS restent des `redirect()` (navigation réelle).
+ */
 
 /** Destination après connexion : `?next=` si sûr, sinon le flux bons plans. */
 const DEFAULT_DESTINATION = "/bons-plans";
@@ -22,113 +39,81 @@ function nextFrom(formData: FormData): string {
   );
 }
 
-/**
- * Renvoie sur /connexion en conservant le contexte : l'onglet en cours et
- * la destination d'origine. Sans ça, une erreur à l'inscription rebasculait
- * l'utilisateur sur l'onglet « Se connecter » (il perdait son pseudo saisi),
- * et la destination `?next=` était oubliée en route.
- */
-function redirectWithError(
-  message: string,
-  options: { mode?: "signup"; next?: string } = {},
-): never {
-  const params = new URLSearchParams();
-  if (options.mode) params.set("mode", options.mode);
-  if (options.next && options.next !== DEFAULT_DESTINATION) {
-    params.set("next", options.next);
-  }
-  params.set("error", message);
-  redirect(`/connexion?${params.toString()}`);
+/** /auth/complete-profile en conservant la destination d'origine. */
+function completeProfilePath(next: string): string {
+  return next !== DEFAULT_DESTINATION
+    ? `/auth/complete-profile?next=${encodeURIComponent(next)}`
+    : "/auth/complete-profile";
 }
 
-function formatRateLimitMessage(reset: number): string {
-  const secondsLeft = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
-  if (secondsLeft >= 60) {
-    return `Trop de tentatives. Réessaye dans ${Math.ceil(secondsLeft / 60)} min.`;
-  }
-  return `Trop de tentatives. Réessaye dans ${secondsLeft}s.`;
-}
-
-export async function signInAction(formData: FormData) {
+export async function signInAction(
+  _prev: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
   const next = nextFrom(formData);
 
   // Rate limit par IP — protège contre le brute force.
   const { success, reset } = await authLimiter.limit(await getClientIp());
-  if (!success) {
-    redirectWithError(formatRateLimitMessage(reset), { next });
-  }
+  if (!success) return rateLimitedState(reset);
 
   const parsed = signInSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
   });
-
-  if (!parsed.success) {
-    redirectWithError(parsed.error.issues[0]?.message ?? "Formulaire invalide.", {
-      next,
-    });
-  }
+  if (!parsed.success) return { error: "invalid_form" };
 
   const { email, password } = parsed.data;
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    // Map common Supabase error codes to friendly French messages.
     if (error.code === "email_not_confirmed") {
-      redirectWithError(
-        "E-mail pas encore confirmé. Clique sur le lien reçu par mail.",
-        { next },
-      );
+      return { error: "email_unconfirmed" };
     }
     if (error.code === "invalid_credentials") {
-      redirectWithError("E-mail ou mot de passe incorrect.", { next });
+      return { error: "invalid_credentials" };
     }
-    // Unknown code — log server-side for later diagnosis, show generic message.
+    // Code inconnu — log serveur pour diagnostic, message générique.
     console.error("[signInAction] unexpected error:", error);
-    redirectWithError("Connexion impossible. Réessaie.", { next });
+    return { error: "signin_failed" };
   }
 
   const profile = await ensureUserProfile();
   if (!profile) {
-    // User authenticated but has no Prisma profile yet (e.g. Supabase Dashboard
-    // or OAuth first-login without `username` metadata). Collect one now.
-    redirect("/auth/complete-profile");
+    // Authentifié mais sans profil Prisma (OAuth première connexion,
+    // pseudo pris entre-temps…) : on collecte un pseudo maintenant.
+    redirect(completeProfilePath(next));
   }
   redirect(next);
 }
 
-export async function signUpAction(formData: FormData) {
+export async function signUpAction(
+  _prev: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
   const next = nextFrom(formData);
 
   const { success, reset } = await authLimiter.limit(await getClientIp());
-  if (!success) {
-    redirectWithError(formatRateLimitMessage(reset), { mode: "signup", next });
-  }
+  if (!success) return rateLimitedState(reset);
 
   const parsed = signUpSchema.safeParse({
     email: formData.get("email"),
     username: formData.get("username"),
     password: formData.get("password"),
   });
-
-  if (!parsed.success) {
-    redirectWithError(parsed.error.issues[0]?.message ?? "Formulaire invalide.", {
-      mode: "signup",
-      next,
-    });
-  }
+  if (!parsed.success) return { error: "invalid_form" };
 
   const { email, username, password } = parsed.data;
 
-  // Check username availability against Prisma (auth.users table has no username).
+  // Disponibilité du pseudo côté Prisma (auth.users n'a pas de username).
+  // Check UX seulement : la vraie garantie est la contrainte unique +
+  // le rattrapage P2002 dans ensureUserProfile (deux inscriptions
+  // simultanées avec le même pseudo ne peuvent pas se bloquer).
   const existing = await prisma.user.findFirst({
     where: { username: { equals: username, mode: "insensitive" } },
     select: { id: true },
   });
-  if (existing) {
-    redirectWithError("Ce pseudo est déjà pris.", { mode: "signup", next });
-  }
+  if (existing) return { error: "username_taken" };
 
   const supabase = await createSupabaseServerClient();
 
@@ -136,35 +121,41 @@ export async function signUpAction(formData: FormData) {
     email,
     password,
     options: {
-      emailRedirectTo: `${getSiteUrl()}/auth/confirm`,
+      // `next` voyage jusque dans l'e-mail de confirmation : pour qu'il
+      // soit honoré, le template Supabase « Confirm signup » doit
+      // pointer sur {{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=signup
+      // (sinon Supabase garde son next statique et l'utilisateur repart
+      // sur /bons-plans — fonctionnel mais moins fin).
+      emailRedirectTo: `${getSiteUrl()}/auth/confirm?next=${encodeURIComponent(next)}`,
       data: { username },
     },
   });
 
   if (error) {
-    redirectWithError(
-      error.message === "User already registered"
-        ? "Cet e-mail est déjà utilisé."
-        : "Impossible de créer le compte. Réessaie plus tard.",
-      { mode: "signup", next },
-    );
+    if (error.message === "User already registered") {
+      return { error: "email_taken" };
+    }
+    console.error("[signUpAction] unexpected error:", error);
+    return { error: "signup_failed" };
   }
 
-  // If Supabase is configured with "Confirm email = OFF", signUp returns a
-  // live session and the user is already logged in — go straight to the app.
+  // Supabase configuré avec « Confirm email = OFF » : session immédiate.
   if (data?.session) {
     const profile = await ensureUserProfile();
-    if (!profile) redirect("/auth/complete-profile");
+    if (!profile) redirect(completeProfilePath(next));
     redirect(next);
   }
 
-  const params = new URLSearchParams({ mode: "signup", confirmSent: "1" });
-  if (next !== DEFAULT_DESTINATION) params.set("next", next);
-  redirect(`/connexion?${params.toString()}`);
+  // Confirm email = ON : le formulaire affiche la bannière « vérifie ta
+  // boîte mail » sans navigation (la saisie reste visible).
+  return { error: null, sent: true };
 }
 
 export async function signOutAction() {
   const supabase = await createSupabaseServerClient();
-  await supabase.auth.signOut();
+  // `scope: "local"` : on déconnecte CE navigateur, pas tous les
+  // appareils de l'utilisateur (le défaut supabase-js est "global" —
+  // surprenant pour un simple bouton « Se déconnecter »).
+  await supabase.auth.signOut({ scope: "local" });
   redirect("/");
 }

@@ -36,6 +36,7 @@ function isSoleilRoute(pathname: string): boolean {
     pathname === "/connexion" ||
     pathname.startsWith("/connexion/") ||
     pathname === "/auth/reset-password" ||
+    pathname === "/auth/complete-profile" ||
     pathname === "/activites"
   ) {
     return true;

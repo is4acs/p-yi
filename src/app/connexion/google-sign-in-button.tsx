@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -43,6 +43,18 @@ export function GoogleSignInButton({ next }: { next?: string }) {
   const t = useMessages();
   const [loading, setLoading] = useState(false);
 
+  // Retour depuis Google via le bouton « précédent » : Safari/Chrome
+  // restaurent la page depuis le bfcache avec `loading=true` figé — le
+  // bouton resterait bloqué sur son spinner. `pageshow(persisted)` le
+  // réarme.
+  useEffect(() => {
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) setLoading(false);
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
   async function handleClick() {
     setLoading(true);
     const supabase = createSupabaseBrowserClient();
@@ -64,8 +76,8 @@ export function GoogleSignInButton({ next }: { next?: string }) {
       // eslint-disable-next-line no-console
       console.error("[google-sign-in] signInWithOAuth failed:", error);
       setLoading(false);
-      const params = new URLSearchParams({ error: t.auth.googleError });
-      window.location.href = `/connexion?${params.toString()}`;
+      // Code d'erreur (traduit par la page), jamais de texte en query.
+      window.location.href = "/connexion?error=google_failed";
       return;
     }
 

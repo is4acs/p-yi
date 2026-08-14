@@ -329,6 +329,32 @@ export const fr = {
       "Au moins 8 caractères. Un mélange de lettres, chiffres et symboles est recommandé.",
     resetCta: "Mettre à jour",
     resetPending: "Mise à jour…",
+    resetDone: "Mot de passe mis à jour !",
+    resetDoneSub: "Tu peux reprendre là où tu en étais.",
+    continueCta: "Continuer",
+    cpTitle: "Choisis ton pseudo",
+    cpSub:
+      "Il sera visible sur tes bons plans et tes annonces. On ne peut pas le changer facilement, alors choisis bien.",
+    cpCta: "C'est parti",
+    cpPending: "Création…",
+    errors: {
+      rateLimitedSec: "Trop de tentatives. Réessaie dans {n} s.",
+      rateLimitedMin: "Trop de tentatives. Réessaie dans {n} min.",
+      invalidForm: "Formulaire invalide. Vérifie les champs et réessaie.",
+      emailUnconfirmed:
+        "E-mail pas encore confirmé. Clique sur le lien reçu par mail.",
+      invalidCredentials: "E-mail ou mot de passe incorrect.",
+      signinFailed: "Connexion impossible. Réessaie.",
+      usernameTaken: "Ce pseudo est déjà pris.",
+      emailTaken: "Cet e-mail est déjà utilisé.",
+      signupFailed: "Impossible de créer le compte. Réessaie plus tard.",
+      linkInvalid: "Lien invalide ou expiré. Demande un nouveau lien.",
+      cookiesBlocked:
+        "Ton navigateur a bloqué un cookie nécessaire à la connexion Google. Active les cookies ou utilise la connexion par e-mail.",
+      googleFailed: "Connexion Google indisponible pour le moment.",
+      passwordSame: "Le nouveau mot de passe doit être différent de l'ancien.",
+      updateFailed: "Impossible de mettre à jour le mot de passe. Réessaie.",
+    },
   },
   mt: {
     translated: "Traduit automatiquement",

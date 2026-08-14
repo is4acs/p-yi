@@ -26,27 +26,23 @@ export async function GET(request: NextRequest) {
       token_hash: Boolean(token_hash),
       type,
     });
-    return NextResponse.redirect(
-      `${origin}/connexion?error=${encodeURIComponent(
-        "Lien invalide : paramètres manquants.",
-      )}`,
-    );
+    // Code, jamais de texte libre en query — cf. lib/auth/errors.ts.
+    return NextResponse.redirect(`${origin}/connexion?error=link_invalid`);
   }
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.verifyOtp({ type, token_hash });
   if (error) {
     console.error("[auth/confirm] verifyOtp failed:", error);
-    return NextResponse.redirect(
-      `${origin}/connexion?error=${encodeURIComponent(
-        error.message || "Lien invalide ou expiré.",
-      )}`,
-    );
+    return NextResponse.redirect(`${origin}/connexion?error=link_invalid`);
   }
 
   const profile = await ensureUserProfile();
   if (!profile) {
-    return NextResponse.redirect(`${origin}/auth/complete-profile`);
+    // Conserve la destination d'origine à travers l'étape pseudo.
+    return NextResponse.redirect(
+      `${origin}/auth/complete-profile?next=${encodeURIComponent(next)}`,
+    );
   }
   return NextResponse.redirect(`${origin}${next}`);
 }

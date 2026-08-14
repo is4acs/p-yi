@@ -1,14 +1,13 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { AlertCircle, ArrowLeft, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ShieldCheck } from "lucide-react";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getMessages } from "@/lib/i18n";
-import { SubmitButton } from "@/components/ui/submit-button";
 
 import { updatePasswordAction } from "./actions";
-import { INPUT_CLASS } from "@/components/soleil/field";
+import { ResetPasswordForm } from "./reset-form";
 
 export const metadata: Metadata = {
   title: "Choisir un nouveau mot de passe",
@@ -21,16 +20,8 @@ export const metadata: Metadata = {
 // de recovery a bien été consommé avant d'afficher le formulaire.
 export const dynamic = "force-dynamic";
 
-type SearchParams = {
-  error?: string;
-};
-
-export default async function ResetPasswordPage(props: {
-  searchParams: Promise<SearchParams>;
-}) {
-  const searchParams = await props.searchParams;
+export default async function ResetPasswordPage() {
   const t = await getMessages();
-  const error = searchParams.error;
 
   // Sans session active (user arrive en tapant l'URL direct), on l'envoie
   // vers le form de demande plutôt que de montrer un écran de changement
@@ -66,46 +57,7 @@ export default async function ResetPasswordPage(props: {
           </p>
         </div>
 
-        {error && (
-          <div
-            role="alert"
-            className="mt-6 flex items-start gap-2.5 rounded-[14px] border-[1.5px] border-destructive/40 bg-destructive/10 p-3.5 text-sm font-semibold text-destructive"
-          >
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-            <span>{error}</span>
-          </div>
-        )}
-
-        <form action={updatePasswordAction} className="mt-6 space-y-4">
-          <div className="space-y-1.5">
-            <label
-              htmlFor="password"
-              className="text-[11px] font-extrabold uppercase tracking-[0.5px] text-soleil-muted2 dark:text-soleil-muted-d"
-            >
-              {t.auth.newPassword}
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              minLength={8}
-              autoComplete="new-password"
-              placeholder={t.auth.passwordPlaceholder}
-              className={INPUT_CLASS}
-            />
-            <p className="text-xs text-soleil-muted2 dark:text-soleil-muted-d">
-              {t.auth.passwordHelp}
-            </p>
-          </div>
-
-          <SubmitButton
-            className="min-h-[48px] w-full rounded-full bg-soleil-forest text-[14px] font-extrabold text-soleil-cream hover:bg-soleil-forest/90 dark:bg-soleil-cream dark:text-soleil-forest dark:hover:bg-soleil-cream/90"
-            pendingLabel={t.auth.resetPending}
-          >
-            {t.auth.resetCta}
-          </SubmitButton>
-        </form>
+        <ResetPasswordForm action={updatePasswordAction} />
       </div>
     </main>
   );

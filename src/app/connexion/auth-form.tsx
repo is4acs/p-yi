@@ -1,12 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, Mail } from "lucide-react";
 
 import { SubmitButton } from "@/components/ui/submit-button";
 import { cn } from "@/lib/utils";
 import { useMessages } from "@/components/soleil/I18nProvider";
+import {
+  AUTH_FORM_IDLE,
+  authErrorMessage,
+  type AuthFormState,
+} from "@/lib/auth/errors";
 
 import { GoogleSignInButton } from "./google-sign-in-button";
 import { INPUT_CLASS, LABEL_CLASS } from "@/components/soleil/field";
@@ -14,26 +19,28 @@ import { INPUT_CLASS, LABEL_CLASS } from "@/components/soleil/field";
 /**
  * Formulaire connexion / inscription « Soleil péyi ».
  *
- * Le basculement entre les deux onglets est purement client : avant, chaque
- * clic sur « Créer un compte » déclenchait une navigation serveur complète
- * (`/connexion?mode=signup`) — un aller-retour réseau pour afficher un champ
- * de plus, ce qui se sent immédiatement sur le réseau mobile guyanais. Ici
- * c'est instantané, et l'e-mail déjà saisi n'est pas perdu au passage.
- *
- * Les Server Actions restent la cible du `<form>` : on ne perd ni le
- * rate-limiting, ni la validation zod, ni le fonctionnement sans JavaScript.
- * `next` est propagé en champ caché (formulaire) et en paramètre du callback
- * OAuth (Google) — sans lui, l'utilisateur qui se connecte depuis « Poster »
- * atterrissait sur le flux des bons plans au lieu de revenir à son
- * formulaire.
+ * Le basculement entre les deux onglets est purement client (instantané,
+ * l'e-mail saisi n'est pas perdu). Les Server Actions sont branchées via
+ * `useActionState` : une erreur revient comme CODE typé rendu ici dans
+ * la langue de l'interface, SANS navigation — les champs gardent leur
+ * valeur (l'ancien pattern redirect-avec-erreur vidait le formulaire à
+ * chaque « pseudo déjà pris »). Les succès restent des redirects
+ * serveur ; l'envoi de l'e-mail de confirmation affiche sa bannière ici
+ * même, en conservant la saisie.
  */
 
 type Props = {
   initialMode: "signin" | "signup";
   /** Chemin interne déjà validé côté serveur. */
   next: string;
-  signInAction: (formData: FormData) => Promise<void>;
-  signUpAction: (formData: FormData) => Promise<void>;
+  signInAction: (
+    prev: AuthFormState,
+    formData: FormData,
+  ) => Promise<AuthFormState>;
+  signUpAction: (
+    prev: AuthFormState,
+    formData: FormData,
+  ) => Promise<AuthFormState>;
 };
 
 export function AuthForm({
@@ -45,7 +52,21 @@ export function AuthForm({
   const t = useMessages();
   const [mode, setMode] = useState(initialMode);
   const [showPassword, setShowPassword] = useState(false);
+  const [signInState, signInFormAction] = useActionState(
+    signInAction,
+    AUTH_FORM_IDLE,
+  );
+  const [signUpState, signUpFormAction] = useActionState(
+    signUpAction,
+    AUTH_FORM_IDLE,
+  );
   const isSignup = mode === "signup";
+
+  // Chaque onglet a son état : une erreur de connexion ne s'affiche pas
+  // sur l'onglet inscription et réciproquement.
+  const state = isSignup ? signUpState : signInState;
+  const errorMessage = authErrorMessage(t, state);
+  const confirmSent = isSignup && signUpState.sent === true;
 
   return (
     <>
@@ -57,9 +78,11 @@ export function AuthForm({
         {(["signin", "signup"] as const).map((value) => (
           <button
             key={value}
+            id={`auth-tab-${value}`}
             type="button"
             role="tab"
             aria-selected={mode === value}
+            aria-controls="auth-panel"
             onClick={() => setMode(value)}
             className={cn(
               "min-h-[40px] rounded-full px-3 text-center font-bold transition",
@@ -72,6 +95,29 @@ export function AuthForm({
           </button>
         ))}
       </div>
+
+      {confirmSent && (
+        <div
+          role="status"
+          className="mt-5 flex items-start gap-2.5 rounded-[14px] bg-soleil-valid p-3.5 text-sm text-soleil-forest dark:bg-soleil-valid-d"
+        >
+          <Mail className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <div>
+            <p className="font-extrabold">{t.auth.checkInbox}</p>
+            <p className="mt-0.5 text-xs font-medium">{t.auth.checkInboxSub}</p>
+          </div>
+        </div>
+      )}
+
+      {errorMessage && (
+        <div
+          role="alert"
+          className="mt-5 flex items-start gap-2.5 rounded-[14px] border-[1.5px] border-destructive/40 bg-destructive/10 p-3.5 text-sm font-semibold text-destructive"
+        >
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <span>{errorMessage}</span>
+        </div>
+      )}
 
       <GoogleSignInButton next={next} />
 
@@ -87,7 +133,13 @@ export function AuthForm({
         />
       </div>
 
-      <form action={isSignup ? signUpAction : signInAction} className="space-y-4">
+      <form
+        id="auth-panel"
+        role="tabpanel"
+        aria-labelledby={`auth-tab-${mode}`}
+        action={isSignup ? signUpFormAction : signInFormAction}
+        className="space-y-4"
+      >
         <input type="hidden" name="next" value={next} />
 
         <div className="space-y-1.5">
