@@ -39,7 +39,7 @@ export function MobileNav({ active, unreadCount = 0 }: Props) {
       aria-label={t.nav.main}
       className="fixed inset-x-0 bottom-0 z-40 border-t border-soleil-line bg-soleil-cream pb-[env(safe-area-inset-bottom)] dark:border-soleil-line-d dark:bg-soleil-night lg:hidden"
     >
-      <div className="flex items-end justify-around px-2 pb-3 pt-2">
+      <div className="grid grid-cols-5 items-end gap-1 px-2 pb-3 pt-2">
         <NavItem
           href="/bons-plans"
           label={t.nav.deals}
@@ -55,7 +55,7 @@ export function MobileNav({ active, unreadCount = 0 }: Props) {
           aria-label={t.nav.post}
           aria-current={posterActive ? "page" : undefined}
           className={cn(
-            "-mt-6 flex h-[46px] w-[46px] flex-none items-center justify-center rounded-full transition active:scale-95",
+            "-mt-6 flex h-[46px] w-[46px] items-center justify-center justify-self-center rounded-full transition active:scale-95",
             posterActive
               ? "bg-soleil-orange text-soleil-forest"
               : "bg-soleil-forest text-soleil-orange dark:bg-soleil-cream dark:text-soleil-forest",
@@ -95,14 +95,14 @@ function NavItem({
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "relative flex min-h-[44px] min-w-[56px] flex-col items-center justify-end gap-1 px-1 pb-0.5 text-[11px] transition active:scale-95",
+        "relative flex min-h-11 min-w-0 flex-col items-center justify-end gap-1 px-0.5 pb-0.5 text-center text-[11px] leading-tight transition active:scale-95",
         active
           ? "font-bold text-soleil-forest dark:text-soleil-cream"
           : "font-semibold text-soleil-muted dark:text-soleil-muted-d",
       )}
     >
       {active ? <Sun w={12} /> : <span aria-hidden className="h-1.5" />}
-      <span>{label}</span>
+      <span className="max-w-full [overflow-wrap:anywhere]">{label}</span>
       {badge > 0 && (
         <span
           aria-label={`${badge} non lu${badge > 1 ? "s" : ""}`}

@@ -422,6 +422,11 @@ export default async function HomePage(props: Props) {
             {listingsResult.status === "rejected" && (
               <p role="status" className="mt-2 text-sm text-soleil-muted dark:text-soleil-muted-d">{t.common.loadIssue}</p>
             )}
+            {listingsResult.status === "fulfilled" && homeListings.length === 0 && (
+              <p className="mt-2 text-sm text-soleil-muted dark:text-soleil-muted-d">
+                {t.listings.emptyTitle}
+              </p>
+            )}
             <div className="mt-3 grid grid-cols-2 gap-4">
               {homeListings.map((listing) => (
                 <Link
@@ -459,7 +464,10 @@ export default async function HomePage(props: Props) {
               ))}
               <Link
                 href="/poster/annonce"
-                className="flex min-h-36 min-w-0 flex-col items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-dashed border-soleil-border bg-soleil-sand/30 p-4 transition-colors hover:bg-soleil-sand dark:border-soleil-border-d dark:bg-soleil-forest/30 dark:hover:bg-soleil-forest"
+                className={cn(
+                  "flex min-h-36 min-w-0 flex-col items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-dashed border-soleil-border bg-soleil-sand/30 p-4 transition-colors hover:bg-soleil-sand dark:border-soleil-border-d dark:bg-soleil-forest/30 dark:hover:bg-soleil-forest",
+                  homeListings.length === 0 && "col-span-2",
+                )}
               >
                 <span className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-soleil-forest text-soleil-orange dark:bg-soleil-cream dark:text-soleil-forest">
                   <Icon name="plus" size={15} />

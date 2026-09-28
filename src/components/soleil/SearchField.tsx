@@ -28,6 +28,7 @@ export function SearchField({
     <form
       role="search"
       action={action}
+      method="get"
       className={cn(
         "flex min-w-0 items-center gap-2.5 border-b-2 border-soleil-forest pb-1 text-soleil-forest focus-within:border-soleil-orange dark:border-soleil-cream dark:text-soleil-cream dark:focus-within:border-soleil-orange",
         className,

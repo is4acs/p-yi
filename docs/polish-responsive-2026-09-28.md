@@ -92,3 +92,61 @@ Fichier cree : `docs/polish-responsive-2026-09-28.md`.
   a jour a traiter dans une intervention distincte, pas via npm audit fix --force.
 - Apres push : attendre les checks Vercel, verifier la preview avec les vraies
   donnees, puis fusionner la PR. Aucun merge automatique en production.
+
+## Finition et correction du cache PWA
+
+- Second pull propre sur la branche avant cette passe; main reste a `a4ff720`.
+- Premier commit `540b982` : checks Vercel reussis, PR #48 sans conflit.
+- La preview Vercel demande une connexion et n'a pas pu etre validee visuellement
+  avec les donnees reelles. Ne pas confondre succes du build et test du backend.
+- Recherche globale : bouton de 44 px et formulaire GET natif, comme sur les
+  listes. Les espaces sont normalises par la page de resultats; fonctionnement
+  au clic verifie avec `maison & jardin` et des espaces en debut/fin.
+- Navigation basse : cinq colonnes stables, libelles pouvant revenir a la ligne.
+- Padding du body : ajout du safe-area-inset-bottom deja utilise par la nav.
+  Le comportement sur un iPhone physique reste a verifier.
+- Aucun resultat : message traduit explicite et tuile de publication pleine
+  largeur; etat vide distingue de l'indisponibilite des donnees.
+
+### Cache PWA
+
+Le test de langue a revele la reapparition d'un ancien etat. Le service worker
+v2 traitait toutes les requetes GET non HTML comme des fichiers statiques,
+y compris les reponses RSC de Next. Le code stockait egalement du HTML pouvant
+contenir un en-tete personnalise. La v3 corrige ces deux comportements :
+
+- Reponses RSC, requetes API/auth et ressources non explicitement statiques
+  exclues du cache. HTML servi directement depuis le reseau, jamais stocke.
+- Cache limite aux fichiers Next statiques, logos et icones publics.
+- Shell hors ligne precache sans cookies (`credentials: omit`). Plus de replay
+  d'anciennes pages visitées hors ligne; seule la page hors ligne reste disponible.
+- Anciens caches Peyi purges a l'activation, caches etrangers conserves.
+- En-tetes private/no-store respectes, ecritures statiques attendues par le worker.
+
+### Controles reproductibles
+
+```sh
+node --test scripts/service-worker.test.mjs
+node scripts/check-polish.mjs http://localhost:3100
+```
+
+- 5 tests unitaires du worker passes (RSC, HTML frais, repli anonyme, purge,
+  cache statique). Ils ne necessitent aucun secret ni reseau.
+- 3 smoke checks SSR passes avec DB volontairement inaccessible : accueil,
+  bons plans filtres, annonces filtrees. Verifient H1/title/description/canonical,
+  noindex des filtres, formulaires GET, bouton nomme et parametres conserves.
+- Tests navigateur supplementaires : navigation PT a 320 px, etat vide traduit,
+  recherche globale native. Les fixtures de test restent hors depot et hors SQL.
+- Build de production local : aller-retour FR/PT/FR confirme sur une origine
+  locale propre. TypeScript, lint et build Next passes; smoke SSR repasse avec
+  next start, sans fixtures. La page hors ligne ne promet plus de pages en cache.
+
+Fichiers modifies pendant cette finition : `src/app/offline/page.tsx`, `src/app/layout.tsx`,
+`src/app/page.tsx`, `src/components/layout/GlobalSearchBar.tsx`,
+`src/components/soleil/MobileNav.tsx`, `src/components/soleil/SearchField.tsx`,
+`public/sw.js`, `CODEX.md` et ce rapport.
+
+Fichiers crees : `scripts/check-polish.mjs`, `scripts/service-worker.test.mjs`.
+
+Message du commit de finition :
+`fix(ui): finish responsive polish and prevent stale PWA renders`.

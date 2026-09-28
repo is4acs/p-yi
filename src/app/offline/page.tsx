@@ -1,17 +1,16 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { RefreshCcw, WifiOff } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Hors ligne",
   description:
-    "Tu es actuellement hors connexion. Certaines pages restent accessibles.",
+    "Tu es actuellement hors connexion. Retrouve les offres dès le retour du réseau.",
   robots: { index: false, follow: false },
 };
 
 /**
  * Shown by the service worker when a navigation fails because the device is
- * offline and we have no cached copy of the requested page. Keep this file
+ * offline. We do not cache personalized pages. Keep this file
  * tiny — the SW pre-caches it at install time, and it's the single page most
  * likely to render from the cache on a bad connection.
  */
@@ -42,12 +41,9 @@ export default function OfflinePage() {
           <RefreshCcw className="h-4 w-4" aria-hidden />
           Réessayer
         </a>
-        <Link
-          href="/bons-plans"
-          className="text-xs text-muted-foreground hover:text-foreground"
-        >
-          Voir les bons plans en cache
-        </Link>
+        <p className="text-xs text-muted-foreground">
+          Les offres seront à nouveau disponibles au retour du réseau.
+        </p>
       </div>
     </main>
   );

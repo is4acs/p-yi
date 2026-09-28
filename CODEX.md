@@ -96,3 +96,18 @@ Des erreurs intermittentes en production faisaient tomber `error.tsx` sur les pa
   aucun secret changé, aucune garantie de correction d'une panne Supabase.
 - Détails, fichiers, méthode de test et limites :
   [docs/polish-responsive-2026-09-28.md](docs/polish-responsive-2026-09-28.md).
+
+### Finition de la PR #48
+
+- Recherche globale native GET avec bouton, navigation basse à cinq colonnes,
+  réserve de safe area mobile et état sans annonces explicite.
+- Important : le service worker passe de `peyi-v2` à `peyi-v3`. Ne pas remettre
+  de cache générique sur les requêtes App Router/RSC : il réaffichait des états
+  périmés après changement de langue. Le HTML personnalisé n'est plus stocké;
+  le repli hors ligne est préchargé sans cookies. Seuls les assets publics
+  explicitement autorisés restent en cache.
+- Régression cache : `node --test scripts/service-worker.test.mjs` (5 tests).
+- Smoke SSR sur serveur démarré :
+  `node scripts/check-polish.mjs http://localhost:3100` (3 routes).
+- Premier déploiement Vercel validé; preview protégée par connexion Vercel.
+  Aucun accès à la base de production, aucun merge automatique.
