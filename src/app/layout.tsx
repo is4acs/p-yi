@@ -229,7 +229,7 @@ export default async function RootLayout({
       )}
       suppressHydrationWarning
     >
-      <body className="min-h-screen bg-background pb-20 font-sans text-foreground antialiased lg:pb-0">
+      <body className="min-h-screen bg-background pb-[calc(5rem+env(safe-area-inset-bottom,0px))] font-sans text-foreground antialiased lg:pb-0">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: rootJsonLd }}

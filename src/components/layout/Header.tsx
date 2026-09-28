@@ -29,7 +29,7 @@ export async function Header({ user, unreadCount, unreadNotifications }: Props) 
 
   return (
     <header className="sticky top-0 z-30 w-full border-b border-soleil-line bg-soleil-cream/95 text-soleil-forest backdrop-blur supports-[backdrop-filter]:bg-soleil-cream/85 dark:border-soleil-line-d dark:bg-soleil-night/95 dark:text-soleil-cream dark:supports-[backdrop-filter]:bg-soleil-night/85">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:h-16 lg:px-8">
+      <div className="mx-auto flex min-h-14 max-w-6xl flex-wrap items-center gap-3 px-4 py-2 sm:min-h-16 lg:px-8">
         <Link
           href="/"
           aria-label={t.nav.home}
@@ -52,7 +52,7 @@ export async function Header({ user, unreadCount, unreadNotifications }: Props) 
             connecté ou non. Sur mobile ils vivent sur l'accueil. */}
         <LanguageSwitcher className="hidden lg:flex" />
 
-        <div className="flex items-center gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-2">
           {user && (
             <Link
               href="/notifications"
@@ -61,7 +61,7 @@ export async function Header({ user, unreadCount, unreadNotifications }: Props) 
                   ? `${t.nav.notifications} — ${tFormat(t.nav.unread, { n: unreadNotifications })}`
                   : t.nav.notifications
               }
-              className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border-[1.5px] border-soleil-border bg-soleil-input transition hover:border-soleil-forest dark:border-soleil-border-d dark:bg-soleil-forest dark:hover:border-soleil-cream"
+              className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border-[1.5px] border-soleil-border bg-soleil-input transition hover:border-soleil-forest dark:border-soleil-border-d dark:bg-soleil-forest dark:hover:border-soleil-cream"
             >
               <Bell className="h-4 w-4" aria-hidden />
               {unreadNotifications > 0 && (
@@ -78,7 +78,8 @@ export async function Header({ user, unreadCount, unreadNotifications }: Props) 
           {user ? (
             <Link
               href="/profil"
-              className="flex min-h-[40px] items-center gap-2 rounded-full border-[1.5px] border-soleil-border bg-soleil-input py-1 pl-1.5 pr-2.5 text-sm font-bold transition hover:border-soleil-forest dark:border-soleil-border-d dark:bg-soleil-forest dark:hover:border-soleil-cream"
+              aria-label={t.home.myProfile}
+              className="flex min-h-11 min-w-11 items-center gap-2 rounded-full border-[1.5px] border-soleil-border bg-soleil-input py-1 pl-1.5 pr-2.5 text-sm font-bold transition hover:border-soleil-forest dark:border-soleil-border-d dark:bg-soleil-forest dark:hover:border-soleil-cream"
             >
               <UserAvatar username={user.username} avatarUrl={user.avatarUrl} />
               <span className="hidden max-w-[120px] truncate sm:inline">
@@ -88,10 +89,11 @@ export async function Header({ user, unreadCount, unreadNotifications }: Props) 
           ) : (
             <Link
               href="/connexion"
-              className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full bg-soleil-forest px-4 text-sm font-extrabold text-soleil-cream transition active:scale-95 dark:bg-soleil-cream dark:text-soleil-forest"
+              aria-label={t.common.login}
+              className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full bg-soleil-forest px-3 text-sm font-extrabold text-soleil-cream transition active:scale-95 dark:bg-soleil-cream dark:text-soleil-forest sm:px-4"
             >
               <LogIn className="h-4 w-4" aria-hidden />
-              {t.common.login}
+              <span className="hidden sm:inline">{t.common.login}</span>
             </Link>
           )}
         </div>

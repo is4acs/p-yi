@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
+import { LogIn } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
 import { fetchDealsPage } from "@/lib/deals/queries";
@@ -9,6 +10,8 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { formatPrice, formatRelativeTime } from "@/lib/format";
 import { isRenderableImageUrl } from "@/lib/images";
 import { withTimeout } from "@/lib/async/with-timeout";
+import { rethrowIfNextInternal } from "@/lib/next-errors";
+import { cn } from "@/lib/utils";
 import { getLocale, getMessages, tFormat, type Messages } from "@/lib/i18n";
 
 import { CountLine } from "@/components/soleil/CountLine";
@@ -40,6 +43,7 @@ export const metadata: Metadata = {
 };
 
 const ACTIVITIES_TIMEOUT_MS = 3_000;
+const HOME_DATA_TIMEOUT_MS = 4_500;
 
 /** Communes des pages piliers — mêmes slugs que /bons-plans/{ville}. */
 const COMMUNE_CHIPS = [
@@ -69,21 +73,36 @@ export default async function HomePage(props: Props) {
   const searchParams = await props.searchParams;
   const t = await getMessages();
   const locale = await getLocale();
-  const [dealsPayload, listingsPayload, currentUser] = await Promise.all([
-    fetchDealsPage({ sort: "hot", page: 1, category: null, city: null, q: null }),
-    fetchListingsPage({
-      sort: "new",
-      page: 1,
-      category: null,
-      city: null,
-      type: null,
-      q: null,
-    }),
-    getCurrentUser(),
+  const [dealsResult, listingsResult, userResult] = await Promise.allSettled([
+    withTimeout(
+      fetchDealsPage({ sort: "hot", page: 1, category: null, city: null, q: null }),
+      HOME_DATA_TIMEOUT_MS,
+      "home/deals",
+    ),
+    withTimeout(
+      fetchListingsPage({
+        sort: "new", page: 1, category: null, city: null, type: null, q: null,
+      }),
+      HOME_DATA_TIMEOUT_MS,
+      "home/listings",
+    ),
+    withTimeout(getCurrentUser(), HOME_DATA_TIMEOUT_MS, "home/user"),
   ]);
 
-  const { deals, total: dealsTotal } = dealsPayload;
-  const { listings, total: listingsTotal } = listingsPayload;
+  for (const [label, result] of [
+    ["deals", dealsResult], ["listings", listingsResult], ["user", userResult],
+  ] as const) {
+    if (result.status === "rejected") {
+      rethrowIfNextInternal(result.reason);
+      // eslint-disable-next-line no-console
+      console.error(`[home/${label}] load failed`, result.reason);
+    }
+  }
+  const deals = dealsResult.status === "fulfilled" ? dealsResult.value.deals : [];
+  const listings = listingsResult.status === "fulfilled" ? listingsResult.value.listings : [];
+  const dealsTotal = dealsResult.status === "fulfilled" ? dealsResult.value.total : null;
+  const listingsTotal = listingsResult.status === "fulfilled" ? listingsResult.value.total : null;
+  const currentUser = userResult.status === "fulfilled" ? userResult.value : null;
 
   const dealOfTheDay = deals[0] ?? null;
   const hotDeals = deals.slice(1, 4);
@@ -122,6 +141,7 @@ export default async function HomePage(props: Props) {
       "home/activities",
     );
   } catch (err) {
+    rethrowIfNextInternal(err);
     // eslint-disable-next-line no-console
     console.error("[home] activities load failed", err);
   }
@@ -132,12 +152,12 @@ export default async function HomePage(props: Props) {
 
   return (
     <main className="min-h-screen bg-soleil-cream pb-14 text-soleil-forest animate-in fade-in duration-300 dark:bg-soleil-night dark:text-soleil-cream">
-      <div className="mx-auto w-full max-w-md px-5 lg:max-w-6xl lg:px-8">
+      <div className="mx-auto w-full max-w-md px-4 sm:max-w-3xl sm:px-6 lg:max-w-6xl lg:px-8">
         {/* Header wordmark mobile (le Header global prend le relais en lg). */}
-        <div className="flex items-center justify-between pt-4 lg:hidden">
-          <Link href="/" className="flex items-end gap-2" aria-label={t.nav.home}>
+        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-3 pt-4 lg:hidden">
+          <Link href="/" className="flex min-h-11 shrink-0 items-center gap-1.5" aria-label={t.nav.home}>
             <Sun w={22} />
-            <span className="font-display text-[25px] font-extrabold leading-[0.9] tracking-[-0.5px]">
+            <span className="font-display text-[23px] font-extrabold leading-[0.9] tracking-[-0.5px]">
               péyi
             </span>
           </Link>
@@ -147,16 +167,18 @@ export default async function HomePage(props: Props) {
               <Link
                 href="/profil"
                 aria-label={t.home.myProfile}
-                className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-soleil-forest text-[11.5px] font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-soleil-forest text-xs font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
               >
                 {currentUser.username.trim().slice(0, 2).toUpperCase()}
               </Link>
             ) : (
               <Link
                 href="/connexion"
-                className="rounded-full bg-soleil-forest px-3 py-1.5 text-xs font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
+                aria-label={t.home.connection}
+                className="flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full bg-soleil-forest px-3 text-xs font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
               >
-                {t.home.connection}
+                <LogIn className="h-4 w-4" aria-hidden />
+                <span className="hidden min-[400px]:inline">{t.home.connection}</span>
               </Link>
             )}
           </div>
@@ -171,11 +193,15 @@ export default async function HomePage(props: Props) {
           </div>
         )}
 
-        {/* Héros : titre, recherche (mobile), double compteur, communes |
+        {/* Héros : titre, recherche, double compteur, communes |
             deal du jour à droite en lg. */}
-        <div className="lg:grid lg:grid-cols-12 lg:items-start lg:gap-9 lg:pt-6">
-          <div className="lg:col-span-7">
-            <h1 className="pt-[18px] font-display text-[28px] font-extrabold leading-[1.05] tracking-[-0.6px] lg:pt-0 lg:text-[40px] lg:leading-[1.02] lg:tracking-[-1px]">
+        <div className="pt-6 sm:pt-8 lg:grid lg:grid-cols-12 lg:items-center lg:gap-10 lg:pt-10">
+          <div className={cn("min-w-0", dealOfTheDay ? "lg:col-span-7" : "lg:col-span-10")}>
+            <p className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-soleil-muted dark:text-soleil-muted-d">
+              <Sun w={16} />
+              {t.home.allGuyane}
+            </p>
+            <h1 className="font-display text-[clamp(1.75rem,6vw,3rem)] font-extrabold leading-[1.08] tracking-[-0.8px] [text-wrap:balance]">
               {t.home.heroL1}
               <br />
               {t.home.heroL2}
@@ -183,43 +209,44 @@ export default async function HomePage(props: Props) {
 
             <SearchField
               placeholder={t.home.searchPlaceholder}
+              submitLabel={t.common.search}
               action="/recherche"
-              className="mt-3 lg:hidden"
+              className="mt-5 max-w-xl"
             />
 
             {/* Double compteur — les deux pôles du produit à égalité. */}
-            <div className="mt-3.5 grid grid-cols-2 gap-2.5 lg:max-w-[460px] lg:gap-3">
+            <div className="mt-5 grid max-w-xl grid-cols-2 gap-3">
               <Link
                 href="/bons-plans"
-                className="rounded-2xl border-[1.5px] border-soleil-forest p-3 transition active:scale-[0.99] dark:border-soleil-cream"
+                className="min-w-0 rounded-2xl border-[1.5px] border-soleil-forest bg-soleil-sand/50 p-4 transition-colors hover:bg-soleil-sand dark:border-soleil-cream dark:bg-soleil-forest/50 dark:hover:bg-soleil-forest"
               >
                 <div className="font-display text-[21px] font-extrabold lg:text-[23px]">
-                  {dealsTotal}
+                  {dealsTotal === null ? "—" : dealsTotal.toLocaleString(locale)}
                 </div>
-                <div className="mt-px text-[11.5px] font-bold">
+                <div className="mt-px text-sm font-bold">
                   {t.home.dealsCard}{" "}
                   <span className="text-soleil-otext dark:text-soleil-otext-d">
                     →
                   </span>
                 </div>
-                <div className="mt-0.5 text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
+                <div className="mt-1 text-xs leading-relaxed text-soleil-muted dark:text-soleil-muted-d">
                   {t.home.dealsCardSub}
                 </div>
               </Link>
               <Link
                 href="/annonces"
-                className="rounded-2xl border-[1.5px] border-soleil-border p-3 transition active:scale-[0.99] dark:border-soleil-border-d"
+                className="min-w-0 rounded-2xl border-[1.5px] border-soleil-border p-4 transition-colors hover:bg-soleil-sand dark:border-soleil-border-d dark:hover:bg-soleil-forest"
               >
                 <div className="font-display text-[21px] font-extrabold lg:text-[23px]">
-                  {listingsTotal}
+                  {listingsTotal === null ? "—" : listingsTotal.toLocaleString(locale)}
                 </div>
-                <div className="mt-px text-[11.5px] font-bold">
+                <div className="mt-px text-sm font-bold">
                   {t.home.listingsCard}{" "}
                   <span className="text-soleil-otext dark:text-soleil-otext-d">
                     →
                   </span>
                 </div>
-                <div className="mt-0.5 text-[10.5px] text-soleil-muted dark:text-soleil-muted-d">
+                <div className="mt-1 text-xs leading-relaxed text-soleil-muted dark:text-soleil-muted-d">
                   {t.home.listingsCardSub}
                 </div>
               </Link>
@@ -229,7 +256,7 @@ export default async function HomePage(props: Props) {
             <FilterChips
               className="pt-3.5"
               chips={[
-                { label: t.home.allGuyane, href: "/bons-plans/guyane", active: true },
+                { label: t.home.allGuyane, href: "/bons-plans/guyane" },
                 ...COMMUNE_CHIPS.map((c) => ({
                   label: c.label,
                   href: `/bons-plans/${c.slug}`,
@@ -240,21 +267,21 @@ export default async function HomePage(props: Props) {
 
           {/* Le deal du jour — carte forêt (inversée crème en nuit). */}
           {dealOfTheDay && (
-            <aside className="pt-5 lg:col-span-5 lg:pt-0">
+            <aside className="min-w-0 pt-6 lg:col-span-5 lg:pt-0">
               <CountLine className="pb-2.5">{t.home.dealOfDay}</CountLine>
               <div className="rounded-[20px] bg-soleil-forest p-[18px] text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest">
-                <div className="flex items-center justify-between">
-                  <span className="rounded-full bg-soleil-orange px-3 py-1 font-display text-sm font-extrabold text-soleil-forest">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="shrink-0 rounded-full bg-soleil-orange px-3 py-1 font-display text-sm font-extrabold text-soleil-forest">
                     {dealOfTheDay.temperature >= 0 ? "+" : ""}
                     {dealOfTheDay.temperature}°
                   </span>
-                  <span className="text-xs font-semibold text-soleil-muted-d dark:text-soleil-muted">
+                  <span className="min-w-0 text-right text-xs font-semibold text-soleil-muted-d [overflow-wrap:anywhere] dark:text-soleil-muted">
                     {dealOfTheDaySeller}
                   </span>
                 </div>
-                <div className="mt-3 font-display text-2xl font-extrabold leading-[1.1]">
+                <h2 className="mt-3 font-display text-2xl font-extrabold leading-[1.15] [overflow-wrap:anywhere]">
                   {dealOfTheDay.title}
-                </div>
+                </h2>
                 <div className="mt-1.5 text-xs text-soleil-muted-d dark:text-soleil-muted">
                   {dealOfTheDay.isFree
                     ? t.common.free
@@ -263,17 +290,18 @@ export default async function HomePage(props: Props) {
                   {formatRelativeTime(dealOfTheDay.publishedAt, locale)}
                 </div>
                 {isRenderableImageUrl(dealOfTheDay.coverImageUrl) ? (
-                  <div className="relative mt-3 h-[84px] overflow-hidden rounded-xl">
+                  <div className="relative mt-4 aspect-[16/7] overflow-hidden rounded-xl bg-white">
                     <Image
                       src={dealOfTheDay.coverImageUrl}
                       alt=""
                       fill
+                      sizes="(min-width: 1024px) 400px, (min-width: 640px) 660px, 90vw"
                       unoptimized
-                      className="object-cover"
+                      className="object-contain p-2"
                     />
                   </div>
                 ) : (
-                  <Ph label="visuel" className="mt-3 h-[84px] rounded-xl" />
+                  <Ph className="mt-4 aspect-[16/7] rounded-xl" />
                 )}
                 <Link
                   href={`/bons-plans/${dealOfTheDay.slug}`}
@@ -286,17 +314,17 @@ export default async function HomePage(props: Props) {
           )}
         </div>
 
-        <div className="lg:grid lg:grid-cols-12 lg:items-start lg:gap-9">
+        <div className="mt-2 lg:grid lg:grid-cols-12 lg:items-start lg:gap-10">
           {/* Ça chauffe cette semaine — liste éditoriale numérotée. */}
-          <section className="pt-6 lg:col-span-7">
+          <section className="min-w-0 pt-6 lg:col-span-7">
             <SectionHead
               title={t.home.hotWeek}
               href="/bons-plans"
               linkLabel={t.common.seeAll}
             />
             {hotDeals.length === 0 ? (
-              <p className="rounded-[14px] bg-soleil-sand p-4 pt-3.5 text-[12.5px] text-soleil-body dark:bg-soleil-forest dark:text-soleil-body-d">
-                {t.home.hotWeekEmpty}
+              <p role="status" className="rounded-[14px] bg-soleil-sand p-4 pt-3.5 text-sm text-soleil-body dark:bg-soleil-forest dark:text-soleil-body-d">
+                {dealsResult.status === "rejected" ? t.common.loadIssue : t.home.hotWeekEmpty}
               </p>
             ) : (
               <ul>
@@ -316,7 +344,7 @@ export default async function HomePage(props: Props) {
                         {String(i + 1).padStart(2, "0")}
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-bold leading-[1.25]">
+                        <span className="block text-sm font-bold leading-snug [overflow-wrap:anywhere]">
                           {deal.title}
                           <span className="text-soleil-otext dark:text-soleil-otext-d">
                             {" "}
@@ -326,7 +354,7 @@ export default async function HomePage(props: Props) {
                               : formatPrice(deal.price.toString())}
                           </span>
                         </span>
-                        <span className="mt-[3px] block text-[11px] text-soleil-muted dark:text-soleil-muted-d">
+                        <span className="mt-[3px] block text-xs text-soleil-muted [overflow-wrap:anywhere] dark:text-soleil-muted-d">
                           {[
                             deal.store?.name ?? deal.merchant?.name,
                             deal.city?.name,
@@ -385,20 +413,28 @@ export default async function HomePage(props: Props) {
           </section>
 
           {/* Côté annonces — grille photo-first + tuile « Dépose ». */}
-          <section className="pt-6 lg:col-span-5">
+          <section className="min-w-0 pt-6 lg:col-span-5">
             <SectionHead
               title={t.home.listingsSide}
               href="/annonces"
               linkLabel={t.common.seeAll}
             />
-            <div className="mt-3 grid grid-cols-2 gap-3">
+            {listingsResult.status === "rejected" && (
+              <p role="status" className="mt-2 text-sm text-soleil-muted dark:text-soleil-muted-d">{t.common.loadIssue}</p>
+            )}
+            {listingsResult.status === "fulfilled" && homeListings.length === 0 && (
+              <p className="mt-2 text-sm text-soleil-muted dark:text-soleil-muted-d">
+                {t.listings.emptyTitle}
+              </p>
+            )}
+            <div className="mt-3 grid grid-cols-2 gap-4">
               {homeListings.map((listing) => (
                 <Link
                   key={listing.id}
                   href={`/annonces/${listing.slug}`}
-                  className="transition active:scale-[0.99]"
+                  className="group min-w-0 rounded-2xl transition-colors hover:bg-soleil-sand/50 dark:hover:bg-soleil-forest/50"
                 >
-                  <div className="relative h-[118px] overflow-hidden rounded-[14px] lg:h-[104px]">
+                  <div className="relative aspect-[4/3] overflow-hidden rounded-[14px]">
                     {isRenderableImageUrl(listing.coverImageUrl) ? (
                       <Image
                         src={listing.coverImageUrl}
@@ -418,17 +454,20 @@ export default async function HomePage(props: Props) {
                       {formatPriceType(listing.priceType, listing.price, locale)}
                     </PriceTag>
                   </div>
-                  <div className="mt-1.5 line-clamp-1 text-[12.5px] font-bold">
+                  <div className="mt-2 line-clamp-2 text-sm font-bold leading-snug [overflow-wrap:anywhere] group-hover:underline group-hover:underline-offset-4">
                     {listing.title}
                   </div>
-                  <div className="text-[11px] text-soleil-muted dark:text-soleil-muted-d">
+                  <div className="mt-1 text-xs text-soleil-muted dark:text-soleil-muted-d">
                     {listing.city.name}
                   </div>
                 </Link>
               ))}
               <Link
                 href="/poster/annonce"
-                className="flex min-h-[118px] flex-col items-center justify-center gap-1.5 rounded-[14px] border-[1.5px] border-dashed border-soleil-border transition active:scale-[0.99] dark:border-soleil-border-d lg:min-h-[104px]"
+                className={cn(
+                  "flex min-h-36 min-w-0 flex-col items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-dashed border-soleil-border bg-soleil-sand/30 p-4 transition-colors hover:bg-soleil-sand dark:border-soleil-border-d dark:bg-soleil-forest/30 dark:hover:bg-soleil-forest",
+                  homeListings.length === 0 && "col-span-2",
+                )}
               >
                 <span className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-soleil-forest text-soleil-orange dark:bg-soleil-cream dark:text-soleil-forest">
                   <Icon name="plus" size={15} />
@@ -498,10 +537,10 @@ export default async function HomePage(props: Props) {
 
         {/* Bannière « Pataj to bon plan ! » — la seule exception hex
             tolérée : le sous-texte #5C3413 sur l'aplat orange. */}
-        <div className="relative mt-5 overflow-hidden rounded-[20px] bg-soleil-orange p-5">
+        <div className="relative mt-8 overflow-hidden rounded-[20px] bg-soleil-orange p-5 sm:p-7">
           <span
             aria-hidden
-            className="absolute -right-6 -top-6 h-[100px] w-[100px] rounded-full bg-soleil-cream/25"
+            className="pointer-events-none absolute -right-6 -top-6 h-[100px] w-[100px] rounded-full bg-soleil-cream/25"
           />
           <div className="font-display text-[21px] font-extrabold leading-[1.05] text-soleil-forest">
             {t.home.bannerTitle}
@@ -511,7 +550,7 @@ export default async function HomePage(props: Props) {
           </div>
           <Link
             href="/poster/bon-plan"
-            className="mt-3 inline-block rounded-full bg-soleil-forest px-[17px] py-2.5 text-[12.5px] font-extrabold text-soleil-cream transition active:scale-[0.98]"
+            className="relative mt-4 inline-flex min-h-11 items-center rounded-full bg-soleil-forest px-5 py-3 text-sm font-extrabold text-soleil-cream transition hover:bg-soleil-forest/90"
           >
             {t.home.bannerCta}
           </Link>
