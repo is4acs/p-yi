@@ -54,7 +54,7 @@ export function HeaderNav({ unreadCount = 0 }: { unreadCount?: number }) {
   return (
     <nav
       aria-label={t.nav.main}
-      className="hidden items-center gap-1 text-sm lg:flex"
+      className="order-last hidden w-full flex-wrap items-center justify-center gap-1 text-sm lg:flex xl:order-none xl:w-auto"
     >
       {items.map((item) => (
         <Link
@@ -62,7 +62,7 @@ export function HeaderNav({ unreadCount = 0 }: { unreadCount?: number }) {
           href={item.href}
           aria-current={item.active ? "page" : undefined}
           className={cn(
-            "relative rounded-full px-3.5 py-1.5 transition active:scale-95",
+            "relative inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-3 py-2 transition active:scale-95",
             item.active
               ? "bg-soleil-forest font-extrabold text-soleil-cream dark:bg-soleil-cream dark:text-soleil-forest"
               : "font-bold text-soleil-muted2 hover:bg-soleil-sand hover:text-soleil-forest dark:text-soleil-muted-d dark:hover:bg-soleil-forest dark:hover:text-soleil-cream",

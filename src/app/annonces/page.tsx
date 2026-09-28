@@ -319,6 +319,7 @@ export default async function AnnoncesPage(
         <TabsPeyi active="annonces" className="pt-3" />
 
         <SearchField
+          submitLabel={t.common.search}
           placeholder={t.listings.searchPlaceholder}
           action="/annonces"
           defaultValue={q ?? ""}

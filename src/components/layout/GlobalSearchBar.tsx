@@ -51,8 +51,9 @@ export function GlobalSearchBar() {
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder={t.common.search}
-          className="h-10 w-full rounded-full border-[1.5px] border-soleil-border bg-soleil-input pl-9 pr-3 text-sm font-semibold text-soleil-forest placeholder:font-medium placeholder:text-soleil-muted focus-visible:border-soleil-forest focus-visible:outline-none dark:border-soleil-border-d dark:bg-soleil-forest dark:text-soleil-cream dark:placeholder:text-soleil-muted-d dark:focus-visible:border-soleil-cream"
+          className="h-11 min-w-0 w-full rounded-full border-[1.5px] border-soleil-border bg-soleil-input pl-9 pr-3 text-base font-semibold text-soleil-forest placeholder:font-medium placeholder:text-soleil-muted focus-visible:border-soleil-forest focus-visible:outline-none dark:border-soleil-border-d dark:bg-soleil-forest dark:text-soleil-cream dark:placeholder:text-soleil-muted-d dark:focus-visible:border-soleil-cream lg:text-sm"
           autoComplete="off"
+          enterKeyHint="search"
         />
       </div>
     </form>

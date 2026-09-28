@@ -87,12 +87,28 @@
     @apply bg-soleil-cream text-foreground dark:bg-soleil-night;
   }
 
+  :where(a, button, input, select, textarea, summary):focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 3px;
+  }
+
   /* Fond crème/nuit sur <html> aussi : c'est LUI qui apparaît derrière le
      rubber-band iOS (scroll élastique en haut/bas de page) et sous les
      zones de padding réservées à la nav basse. Sans ça, bande blanche
      laide sur iPhone dès qu'on tire la page. */
   html {
     @apply bg-soleil-cream font-sans dark:bg-soleil-night;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

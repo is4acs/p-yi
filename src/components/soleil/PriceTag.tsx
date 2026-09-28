@@ -13,7 +13,7 @@ export function PriceTag({ children, className }: Props) {
   return (
     <span
       className={cn(
-        "absolute bottom-2 left-2 rounded-[7px] bg-soleil-cream px-2 py-[3px] text-xs font-extrabold text-soleil-forest",
+        "absolute bottom-2 left-2 max-w-[calc(100%-1rem)] rounded-[7px] bg-soleil-cream px-2 py-1 text-xs font-extrabold leading-snug text-soleil-forest [overflow-wrap:anywhere]",
         className,
       )}
     >

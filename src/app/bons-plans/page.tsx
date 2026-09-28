@@ -349,6 +349,7 @@ export default async function BonsPlansPage(
         <TabsPeyi active="deals" className="pt-3" />
 
         <SearchField
+          submitLabel={t.common.search}
           placeholder={t.deals.searchPlaceholder}
           action="/bons-plans"
           defaultValue={q ?? ""}

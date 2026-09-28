@@ -88,7 +88,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
 
   return (
     <div
-      className={cn("flex flex-none items-center gap-1.5", className)}
+      className={cn("flex flex-none items-center gap-1", className)}
       role="group"
       aria-label="Langue / Idioma / Lang"
     >
@@ -105,7 +105,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
             aria-label={LOCALE_LABELS[locale]}
             title={LOCALE_LABELS[locale]}
             className={cn(
-              "flex h-9 w-9 flex-none items-center justify-center rounded-full transition active:scale-95",
+              "flex h-11 w-11 flex-none items-center justify-center rounded-full transition active:scale-95 disabled:cursor-wait",
               active
                 ? "ring-2 ring-soleil-forest dark:ring-soleil-cream"
                 : "opacity-55 hover:opacity-90",
